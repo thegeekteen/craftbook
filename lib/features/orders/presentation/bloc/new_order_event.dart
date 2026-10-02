@@ -1,0 +1,86 @@
+import 'package:equatable/equatable.dart';
+
+/// Base class for new order events
+abstract class NewOrderEvent extends Equatable {
+  const NewOrderEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Set customer details for the new order
+class SetCustomerDetails extends NewOrderEvent {
+  final String customerName;
+  final String customerAddress;
+  final int channelId;
+  final DateTime orderDate;
+  final DateTime shipByDate;
+  final String? note;
+
+  const SetCustomerDetails({
+    required this.customerName,
+    required this.customerAddress,
+    required this.channelId,
+    required this.orderDate,
+    required this.shipByDate,
+    this.note,
+  });
+
+  @override
+  List<Object?> get props => [
+        customerName,
+        customerAddress,
+        channelId,
+        orderDate,
+        shipByDate,
+        note,
+      ];
+}
+
+/// Add an item to the order
+class AddItem extends NewOrderEvent {
+  final int productId;
+  final String productName;
+  final int quantity;
+  final double unitPrice;
+
+  const AddItem({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.unitPrice,
+  });
+
+  @override
+  List<Object?> get props => [productId, productName, quantity, unitPrice];
+}
+
+/// Remove an item from the order by product ID
+class RemoveItem extends NewOrderEvent {
+  final int productId;
+
+  const RemoveItem(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}
+
+/// Update the quantity of an existing item
+class UpdateItemQuantity extends NewOrderEvent {
+  final int productId;
+  final int quantity;
+
+  const UpdateItemQuantity({
+    required this.productId,
+    required this.quantity,
+  });
+
+  @override
+  List<Object?> get props => [productId, quantity];
+}
+
+/// Save the order to the database
+class SaveOrder extends NewOrderEvent {}
+
+/// Reset the order form to initial state
+class ResetOrder extends NewOrderEvent {}

@@ -1,8 +1,172 @@
 import 'package:get_it/get_it.dart';
 
+import '../../database/app_database.dart';
+import '../../database/daos/channel_dao.dart';
+import '../../database/daos/earnings_dao.dart';
+import '../../database/daos/material_dao.dart';
+import '../../database/daos/order_dao.dart';
+import '../../database/daos/product_dao.dart';
+
+import '../../features/products/data/repositories/channel_repository_impl.dart';
+import '../../features/products/data/repositories/product_repository_impl.dart';
+import '../../features/products/domain/repositories/channel_repository.dart';
+import '../../features/products/domain/repositories/product_repository.dart';
+import '../../features/products/domain/usecases/get_channels.dart';
+import '../../features/products/domain/usecases/update_channel.dart';
+import '../../features/products/domain/usecases/get_products.dart';
+import '../../features/products/domain/usecases/create_product.dart';
+import '../../features/products/domain/usecases/update_product.dart';
+import '../../features/products/domain/usecases/calculate_bom_cost.dart';
+import '../../features/products/domain/usecases/calculate_buildable_quantity.dart';
+
+import '../../features/stock/data/repositories/material_repository_impl.dart';
+import '../../features/stock/domain/repositories/material_repository.dart';
+import '../../features/stock/domain/usecases/get_materials.dart';
+import '../../features/stock/domain/usecases/get_material_detail.dart';
+import '../../features/stock/domain/usecases/receive_stock.dart';
+import '../../features/stock/domain/usecases/adjust_stock.dart';
+import '../../features/stock/domain/usecases/get_buy_list.dart';
+import '../../features/stock/domain/usecases/get_blocked_products.dart';
+
+import '../../features/orders/data/repositories/order_repository_impl.dart';
+import '../../features/orders/domain/repositories/order_repository.dart';
+import '../../features/orders/domain/usecases/get_orders.dart';
+import '../../features/orders/domain/usecases/create_order.dart';
+import '../../features/orders/domain/usecases/pack_order.dart';
+import '../../features/orders/domain/usecases/ship_order.dart';
+import '../../features/orders/domain/usecases/adjust_materials_used.dart';
+import '../../features/orders/domain/usecases/calculate_order_profit.dart';
+
+import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
+import '../../features/earnings/domain/repositories/earnings_repository.dart';
+import '../../features/earnings/domain/usecases/get_earnings_summary.dart';
+import '../../features/earnings/domain/usecases/get_product_earnings.dart';
+import '../../features/earnings/domain/usecases/get_waste_summary.dart';
+
+import '../../features/today/domain/usecases/get_today_orders.dart';
+import '../../features/today/domain/usecases/get_week_orders.dart';
+import '../../features/today/domain/usecases/get_alert_summary.dart';
+
+import '../../features/products/presentation/bloc/products_bloc.dart';
+import '../../features/products/presentation/bloc/channels_bloc.dart';
+import '../../features/stock/presentation/bloc/materials_bloc.dart';
+import '../../features/orders/presentation/bloc/orders_list_bloc.dart';
+import '../../features/orders/presentation/bloc/new_order_bloc.dart';
+import '../../features/orders/presentation/bloc/order_detail_bloc.dart';
+import '../../features/today/presentation/bloc/today_bloc.dart';
+import '../../features/earnings/presentation/bloc/earnings_bloc.dart';
+
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
-  // Manual dependency injection setup
-  // Register services, repositories, and use cases here
+  final db = AppDatabase();
+
+  // Database
+  getIt.registerSingleton<AppDatabase>(db);
+
+  // DAOs
+  getIt.registerSingleton(OrderDao(db));
+  getIt.registerSingleton(MaterialDao(db));
+  getIt.registerSingleton(ProductDao(db));
+  getIt.registerSingleton(ChannelDao(db));
+  getIt.registerSingleton(EarningsDao(db));
+
+  // Repositories
+  getIt.registerLazySingleton<ChannelRepository>(
+    () => ChannelRepositoryImpl(getIt<ChannelDao>()),
+  );
+  getIt.registerLazySingleton<ProductRepository>(
+    () => ProductRepositoryImpl(getIt<ProductDao>()),
+  );
+  getIt.registerLazySingleton<MaterialRepository>(
+    () => MaterialRepositoryImpl(getIt<MaterialDao>(), getIt<ProductDao>()),
+  );
+  getIt.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(getIt<OrderDao>()),
+  );
+  getIt.registerLazySingleton<EarningsRepository>(
+    () => EarningsRepositoryImpl(getIt<EarningsDao>()),
+  );
+
+  // Use Cases - Products
+  getIt.registerFactory(() => GetChannels(getIt()));
+  getIt.registerFactory(() => UpdateChannel(getIt()));
+  getIt.registerFactory(() => GetProducts(getIt()));
+  getIt.registerFactory(() => CreateProduct(getIt()));
+  getIt.registerFactory(() => UpdateProduct(getIt()));
+  getIt.registerFactory(() => CalculateBomCost(getIt()));
+  getIt.registerFactory(() => CalculateBuildableQuantity(getIt()));
+
+  // Use Cases - Stock
+  getIt.registerFactory(() => GetMaterials(getIt()));
+  getIt.registerFactory(() => GetMaterialDetail(getIt()));
+  getIt.registerFactory(() => ReceiveStock(getIt()));
+  getIt.registerFactory(() => AdjustStock(getIt()));
+  getIt.registerFactory(() => GetBuyList(getIt()));
+  getIt.registerFactory(() => GetBlockedProducts(getIt()));
+
+  // Use Cases - Orders
+  getIt.registerFactory(() => GetOrders(getIt()));
+  getIt.registerFactory(() => CreateOrder(
+    orderRepository: getIt(),
+    productRepository: getIt(),
+    materialRepository: getIt(),
+  ));
+  getIt.registerFactory(() => PackOrder(
+    orderRepository: getIt(),
+    materialRepository: getIt(),
+  ));
+  getIt.registerFactory(() => ShipOrder(getIt()));
+  getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
+  getIt.registerFactory(() => CalculateOrderProfit(getIt()));
+
+  // Use Cases - Earnings
+  getIt.registerFactory(() => GetEarningsSummary(getIt()));
+  getIt.registerFactory(() => GetProductEarnings(getIt()));
+  getIt.registerFactory(() => GetWasteSummary(getIt()));
+
+  // Use Cases - Today
+  getIt.registerFactory(() => GetTodayOrders(getIt()));
+  getIt.registerFactory(() => GetWeekOrders(getIt()));
+  getIt.registerFactory(() => GetAlertSummary(getIt()));
+
+  // BLoCs
+  getIt.registerFactory(() => ProductsBloc(
+    getProducts: getIt(),
+    createProduct: getIt(),
+    updateProduct: getIt(),
+  ));
+  getIt.registerFactory(() => ChannelsBloc(
+    getChannels: getIt(),
+    updateChannel: getIt(),
+  ));
+  getIt.registerFactory(() => MaterialsBloc(
+    getMaterials: getIt(),
+    getBuyList: getIt(),
+    receiveStock: getIt(),
+  ));
+  getIt.registerFactory(() => OrdersListBloc(
+    getOrders: getIt(),
+    packOrder: getIt(),
+    shipOrder: getIt(),
+  ));
+  getIt.registerFactory(() => NewOrderBloc(
+    createOrder: getIt(),
+    calculateOrderProfit: getIt(),
+  ));
+  getIt.registerFactory(() => OrderDetailBloc(
+    orderRepository: getIt(),
+    adjustMaterialsUsed: getIt(),
+    packOrder: getIt(),
+    shipOrder: getIt(),
+  ));
+  getIt.registerFactory(() => TodayBloc(
+    getTodayOrders: getIt(),
+    getAlertSummary: getIt(),
+  ));
+  getIt.registerFactory(() => EarningsBloc(
+    getEarningsSummary: getIt(),
+    getProductEarnings: getIt(),
+    getWasteSummary: getIt(),
+  ));
 }

@@ -563,11 +563,19 @@ class GetOrdersUseCase {
 
 ## Testing Strategy
 
+**MANDATORY RULE: When working on any feature, always write test cases.** Every use case must have unit tests, every BLoC must have `bloc_test` coverage, and every new widget must have a widget test. No feature is considered complete without its tests.
+
 | Level | Tool | Coverage Target |
 |-------|------|----------------|
 | Unit Tests | `test`, `mocktail` | Use cases, BLoCs, repositories |
 | Widget Tests | `flutter_test` | Key widgets, pip strip, stepper |
 | Integration Tests | `integration_test` | Critical flows (create order, pack) |
+
+### Testing Requirements
+1. **Every use case** — at least one test for the happy path, one for each validation failure
+2. **Every BLoC** — test each event handler using `bloc_test`, verify correct states are emitted
+3. **Every new widget** — widget test verifying it renders correctly with expected data
+4. **Business logic** — dedicated tests for profit calculation, stock reservation/deduction, BOM expansion, weighted average cost
 
 ### Testing Priorities
 1. **Profit calculation** — must be exact
