@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craftbook — offline order & BOM tracker · UI flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#15191B;
+  --board2:#1E2427;
+  --ink:#121917;
+  --paper:#F4F5F1;
+  --paperhi:#FFFFFF;
+  --hair:#DDDFD7;
+  --mute:#727A75;
+  --go:#1F6F5C;
+  --go-soft:#DDEBE5;
+  --alert:#B93B22;
+  --alert-soft:#F6E1DA;
+  --warn:#B4771A;
+  --warn-soft:#F7ECD6;
+  --tape:#E5D8BC;
+  --coin:#4B4C8A;
+  --coin-soft:#E2E2F0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--board);
+  color:#E8EAE6;
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.06) 1px,transparent 0);
+  background-size:22px 22px;
+}
+a{color:inherit}
+
+/* ---------- board chrome ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;background:rgba(21,25,27,.93);
+  backdrop-filter:blur(10px);border-bottom:1px solid #2C3336;
+  display:flex;gap:6px;overflow-x:auto;padding:9px 14px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.topnav::-webkit-scrollbar{display:none}
+.topnav b{font-family:"Space Grotesk";font-size:13px;letter-spacing:-.01em;white-space:nowrap;margin-right:6px;padding:5px 0}
+.topnav a{
+  font:500 11px/1 "IBM Plex Mono",monospace;text-decoration:none;white-space:nowrap;
+  padding:6px 9px;border:1px solid #333B3E;border-radius:999px;color:#AEB6B1;
+}
+.topnav a:hover,.topnav a:focus-visible{background:#2A3235;color:#fff;outline:none}
+
+header.hero{padding:44px 20px 30px;max-width:760px}
+.eyebrow{font:600 10px/1 "IBM Plex Mono",monospace;letter-spacing:.18em;color:#8CA79B;text-transform:uppercase}
+h1{font-family:"Space Grotesk";font-weight:700;font-size:clamp(30px,7vw,52px);line-height:.98;letter-spacing:-.03em;margin:14px 0 0}
+h1 em{font-style:normal;color:#8FD4BE}
+.lede{color:#A9B2AD;font-size:15px;line-height:1.55;max-width:56ch;margin:16px 0 0}
+.legend{
+  margin-top:26px;border:1px solid #2C3336;border-radius:14px;padding:14px 16px;background:#1A1F21;
+  display:flex;flex-wrap:wrap;gap:18px;align-items:center;
+}
+.legend p{margin:0;font-size:12.5px;color:#9AA39E;max-width:42ch;line-height:1.5}
+.legend .demo{display:flex;flex-direction:column;gap:5px}
+.legend .demo span{font:600 9px/1 "IBM Plex Mono",monospace;color:#8CA79B;letter-spacing:.1em}
+
+/* ---------- flow sections ---------- */
+.flow{padding:34px 0 10px;border-top:1px solid #262C2F;margin-top:26px}
+.flow-head{padding:0 20px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.flow-num{font:700 11px/1 "IBM Plex Mono",monospace;color:#12191700;background:#8FD4BE;color:#12332B;padding:5px 8px;border-radius:5px;letter-spacing:.06em}
+.flow-head h2{font-family:"Space Grotesk";font-weight:600;font-size:clamp(20px,4vw,27px);letter-spacing:-.02em;margin:0}
+.flow-head p{margin:6px 0 0;flex-basis:100%;color:#96A09B;font-size:13.5px;max-width:64ch;line-height:1.5}
+
+.rail{
+  display:flex;gap:0;align-items:flex-start;overflow-x:auto;padding:26px 20px 30px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+}
+.rail::-webkit-scrollbar{height:8px}
+.rail::-webkit-scrollbar-thumb{background:#333B3E;border-radius:9px}
+.rail::-webkit-scrollbar-track{background:transparent}
+.step{flex:0 0 auto;width:320px;scroll-snap-align:center}
+.cap{padding:16px 4px 0}
+.cap .id{font:600 10px/1 "IBM Plex Mono",monospace;color:#8FD4BE;letter-spacing:.1em}
+.cap h3{font-family:"Space Grotesk";font-weight:600;font-size:15px;margin:7px 0 5px;letter-spacing:-.01em}
+.cap p{margin:0;font-size:12.5px;line-height:1.5;color:#949E99}
+.cap p b{color:#C9D2CD;font-weight:600}
+.arrow{flex:0 0 auto;width:46px;align-self:flex-start;margin-top:300px;text-align:center;color:#4A5457;font:600 11px/1 "IBM Plex Mono",monospace}
+.arrow svg{width:30px;height:14px;display:block;margin:0 auto 5px}
+
+/* ---------- phone ---------- */
+.ph{width:320px;background:#0B0F0E;border-radius:36px;padding:9px;box-shadow:0 20px 44px -18px rgba(0,0,0,.85),0 0 0 1px #2E3538 inset}
+.scr{height:648px;background:var(--paper);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;color:var(--ink);position:relative}
+.scr::after{content:"";position:absolute;left:0;right:0;bottom:56px;height:26px;background:linear-gradient(to top,var(--paper),transparent);pointer-events:none}
+.scr.nofade::after{display:none}
+.sb{height:24px;flex:0 0 24px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font:600 9px/1 "IBM Plex Mono",monospace;color:#5C6663}
+.sb .off{display:flex;align-items:center;gap:4px;background:var(--go-soft);color:var(--go);padding:3px 6px;border-radius:4px;letter-spacing:.04em}
+
+.appbar{padding:6px 14px 10px;display:flex;align-items:center;gap:9px;flex:0 0 auto;background:var(--paper)}
+.appbar.line{border-bottom:1px solid var(--hair)}
+.appbar h4{font-family:"Space Grotesk";font-weight:600;font-size:17px;letter-spacing:-.02em;margin:0;flex:1}
+.appbar .sub{display:block;font:400 10px/1.2 "IBM Plex Sans";color:var(--mute);margin-top:3px;letter-spacing:0}
+.iconbtn{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#E7E9E2;color:#3C4643;flex:0 0 auto}
+.iconbtn.ghost{background:transparent}
+.icon{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.icon.sm{width:12px;height:12px}
+.icon.fill{fill:currentColor;stroke:none}
+
+.body{flex:1;padding:0 14px 8px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+.body.pad{padding-top:4px}
+
+.tabbar{flex:0 0 56px;display:flex;border-top:1px solid var(--hair);background:var(--paperhi)}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 8.5px/1 "IBM Plex Sans";color:#9AA29E;letter-spacing:.02em}
+.tabbar div.on{color:var(--go)}
+.tabbar div.on .icon{stroke-width:2.1}
+
+/* ---------- app atoms ---------- */
+.sect{font:600 9px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;color:#8B948F;text-transform:uppercase;margin:3px 0 -2px}
+.card{background:var(--paperhi);border:1px solid var(--hair);border-radius:13px;padding:11px 12px}
+.card.flat{background:#EDEFE9;border-color:transparent}
+.card.tape{background:#FBF7EC;border-color:var(--tape)}
+.card.alert{background:var(--alert-soft);border-color:#E9C6B9}
+.card.go{background:var(--go-soft);border-color:#BFDBD0}
+.card.coin{background:var(--coin-soft);border-color:#C9C9E4}
+.rowx{display:flex;align-items:center;gap:9px}
+.rowx.top{align-items:flex-start}
+.grow{flex:1;min-width:0}
+.t{font-size:12.5px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+.t.lg{font-size:14px}
+.s{font-size:10.5px;color:var(--mute);line-height:1.35;margin-top:2px}
+.s.mono{font-family:"IBM Plex Mono";font-size:9.5px;letter-spacing:.02em}
+.num{font-family:"Space Grotesk";font-weight:600;letter-spacing:-.02em}
+.num.xl{font-size:27px}
+.num.lg{font-size:18px}
+.num.md{font-size:14px}
+.pill{font:600 8.5px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;padding:4px 6px;border-radius:5px;background:#E7E9E2;color:#4E5854;text-transform:uppercase;white-space:nowrap}
+.pill.go{background:var(--go-soft);color:var(--go)}
+.pill.alert{background:var(--alert-soft);color:var(--alert)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.coin{background:var(--coin-soft);color:var(--coin)}
+.pill.ink{background:var(--ink);color:#DCE5E1}
+.hr{height:1px;background:var(--hair);margin:2px 0}
+.kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;padding:3px 0}
+.kv span:first-child{color:var(--mute)}
+.kv b{font-family:"Space Grotesk";font-weight:600}
+.kv.big{font-size:13px;padding-top:6px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--go);color:#fff;border-radius:10px;padding:11px;font-weight:600;font-size:12.5px;letter-spacing:-.01em}
+.btn.sec{background:transparent;border:1px solid #C7CCC5;color:#3B4441}
+.btn.dark{background:var(--ink)}
+.btn.sm{padding:8px 10px;font-size:11px;border-radius:8px}
+.field{border:1px solid var(--hair);background:var(--paperhi);border-radius:10px;padding:8px 10px}
+.field .lab{font:600 8.5px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;color:#8B948F;text-transform:uppercase}
+.field .val{font-size:12.5px;font-weight:500;margin-top:5px}
+.field .val.ph{color:#A8B0AC;font-weight:400}
+.field.focus{border-color:var(--go);box-shadow:0 0 0 2px var(--go-soft)}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font:500 10.5px/1 "IBM Plex Sans";padding:6px 9px;border-radius:999px;border:1px solid var(--hair);background:var(--paperhi);color:#4E5854}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.seg{display:flex;background:#E7E9E2;border-radius:9px;padding:2px}
+.seg div{flex:1;text-align:center;font:600 10.5px/1 "IBM Plex Sans";padding:7px 0;border-radius:7px;color:#6B746F}
+.seg div.on{background:var(--paperhi);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tabs2{display:flex;gap:14px;border-bottom:1px solid var(--hair);margin:0 -14px;padding:0 14px}
+.tabs2 div{font:600 11px/1 "IBM Plex Sans";padding:0 0 8px;color:#8B948F;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2 div.on{color:var(--ink);border-color:var(--go)}
+.fab{position:absolute;right:14px;bottom:70px;width:48px;height:48px;border-radius:16px;background:var(--ink);color:#fff;display:grid;place-items:center;box-shadow:0 8px 18px -6px rgba(0,0,0,.5)}
+.fab .icon{width:20px;height:20px;stroke-width:2}
+
+/* bar + pips (signature) */
+.bar{height:5px;border-radius:3px;background:#E2E5DE;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--go);border-radius:3px}
+.bar i.alert{background:var(--alert)}
+.bar i.warn{background:var(--warn)}
+.bar i.coin{background:var(--coin)}
+.pips{display:flex;gap:2px;flex-wrap:wrap;align-items:center}
+.pips u{width:6px;height:9px;border-radius:1.5px;background:#DCE0D8;display:block}
+.pips u.f{background:var(--go)}
+.pips u.f.low{background:var(--alert)}
+.pips u.f.mid{background:var(--warn)}
+.pips u.burn{background:repeating-linear-gradient(135deg,var(--alert) 0 2px,#F0C9BC 2px 4px)}
+.pips.tiny u{width:4px;height:7px}
+.pips em{font:600 9px/1 "IBM Plex Mono",monospace;color:var(--mute);font-style:normal;margin-left:4px}
+
+/* bottom sheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paperhi);border-radius:20px 20px 0 0;box-shadow:0 -12px 30px -10px rgba(0,0,0,.3);padding:10px 14px 16px;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--hair);z-index:5}
+.grab{width:34px;height:4px;border-radius:3px;background:#D3D8D1;margin:0 auto 4px}
+.scrim{position:absolute;inset:0;background:rgba(18,25,23,.36);z-index:4}
+.dialog{position:absolute;left:14px;right:14px;top:120px;background:var(--paperhi);border-radius:16px;padding:15px;z-index:5;box-shadow:0 24px 50px -14px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
+.stepper{display:flex;align-items:center;gap:0;border:1px solid var(--hair);border-radius:8px;overflow:hidden;background:var(--paperhi)}
+.stepper b{width:24px;height:26px;display:grid;place-items:center;font:600 13px/1 "IBM Plex Sans";color:#5A6460;background:#EDEFE9}
+.stepper span{width:30px;text-align:center;font:600 12px/1 "Space Grotesk";}
+.toast{position:absolute;left:14px;right:14px;bottom:70px;background:var(--ink);color:#EAF0ED;border-radius:11px;padding:10px 12px;font-size:11.5px;display:flex;gap:8px;align-items:center;z-index:6}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .dh{font:600 8.5px/1 "IBM Plex Mono",monospace;color:#8B948F;text-align:center;padding-bottom:3px}
+.cal .d{aspect-ratio:1;border-radius:6px;background:var(--paperhi);border:1px solid var(--hair);padding:3px;font:600 9px/1 "IBM Plex Mono",monospace;color:#5A6460;display:flex;flex-direction:column;gap:2px}
+.cal .d.dim{opacity:.4}
+.cal .d.today{border-color:var(--ink);border-width:1.5px}
+.cal .d i{display:block;height:3px;border-radius:2px;background:var(--go)}
+.cal .d i.a{background:var(--alert)}
+.cal .d i.w{background:var(--warn)}
+.wk{display:flex;flex-direction:column;gap:5px}
+.wkrow{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center}
+.wkrow .dd{font:600 9px/1.3 "IBM Plex Mono",monospace;color:#5A6460;text-align:right}
+.wkrow .dd b{display:block;font-family:"Space Grotesk";font-size:14px;color:var(--ink)}
+.lane{position:relative;height:22px;background:#EAECE5;border-radius:6px}
+.lane b{position:absolute;top:3px;height:16px;border-radius:5px;background:var(--go);color:#fff;font:600 8.5px/16px "IBM Plex Mono",monospace;padding:0 5px;overflow:hidden;white-space:nowrap}
+.lane b.a{background:var(--alert)}
+.lane b.w{background:var(--warn)}
+.lane b.g{background:#8FA6A0}
+
+/* footer */
+footer{padding:40px 20px 60px;border-top:1px solid #262C2F;margin-top:30px;color:#7C8681;font-size:12.5px;line-height:1.6;max-width:70ch}
+footer h5{font-family:"Space Grotesk";font-weight:600;font-size:16px;color:#E8EAE6;margin:0 0 10px}
+footer ul{padding-left:18px;margin:8px 0}
+@media (prefers-reduced-motion:no-preference){
+  .step{transition:transform .25s ease}
+  .step:hover{transform:translateY(-4px)}
+}
+@media (max-width:520px){
+  .arrow{display:none}
+  .rail{padding:22px 14px 26px;gap:16px}
+  header.hero{padding:32px 16px 22px}
+  .flow-head{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3 3 7.5v9L12 21l9-4.5v-9z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2c-1.3 0-2.4-.5-3-1.5M12 6v12"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16z"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 7h11v9H2zM13 11h4l3 3v2h-7z"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h3l2.5 11h9L20 7H6.5"/><circle cx="9" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+</svg>
+
+<nav class="topnav">
+  <b>Craftbook</b>
+  <a href="#f1">1 · Day view</a>
+  <a href="#f2">2 · New order</a>
+  <a href="#f3">3 · Pack &amp; ship</a>
+  <a href="#f4">4 · Stock</a>
+  <a href="#f5">5 · Products &amp; BOM</a>
+  <a href="#f6">6 · Earnings</a>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">UI flow mockup · Android · works with no signal</div>
+  <h1>Craftbook<br><em>orders that count their own materials.</em></h1>
+  <p class="lede">Twenty screens, in the order you'd actually touch them: an order comes in from Shopee, the app works out which magnet sheets and photo tops it will eat, holds them, deducts them when you pack, and tells you what to rebuy before a product goes dark.</p>
+  <div class="legend">
+    <div class="demo">
+      <span>PACK OF 20 · 6 LEFT</span>
+      <div class="pips" data-total="20" data-full="6" data-tone="low"></div>
+    </div>
+    <p><b style="color:#C9D2CD">The pip strip is the one visual idea in the app.</b> You buy in packs, so stock is drawn as the pack: one mark per piece, filled = still on the shelf. Hatched marks are pieces already promised to open orders.</p>
+  </div>
+</header>
+
+<!-- ══════════════ FLOW 1 ══════════════ -->
+<section class="flow" id="f1">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 1</span>
+    <h2>The day view</h2>
+    <p>Opening screen answers one question: what has to leave the house today, and is anything about to stop me. The calendar treats every order as a task bar that sits on the board from the day it arrived until the day it ships.</p>
+  </div>
+  <div class="rail">
+
+    <!-- 1.1 Today -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>Tuesday, 26 Aug<span class="sub">4 orders to pack · 2 ship today</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-search"/></svg></div></div>
+        <div class="body">
+          <div class="card alert rowx top">
+            <svg class="icon" style="color:var(--alert);margin-top:1px"><use href="#i-alert"/></svg>
+            <div class="grow">
+              <div class="t">3 materials below alert level</div>
+              <div class="s">Acrylic blank, Photo top, Thank-you card — this blocks 2 products and 7 open orders.</div>
+            </div>
+            <svg class="icon sm" style="color:var(--alert)"><use href="#i-chev"/></svg>
+          </div>
+
+          <div class="sect">Ships today</div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">#1039 · Jessa Ramos</div><div class="s">3× Custom Magnets · 1× Sticker Pack</div></div><span class="pill warn">PACKED</span></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="rowx"><span class="pill">SHOPEE</span><div class="s grow">Last pickup 4:00 PM</div><span class="btn sm dark" style="display:inline-flex">Mark shipped</span></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">#1040 · Kim Delgado</div><div class="s">2× Acrylic Keychain</div></div><span class="pill alert">SHORT</span></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="rowx"><svg class="icon sm" style="color:var(--alert)"><use href="#i-alert"/></svg><div class="s grow" style="color:var(--alert)">Needs 2 acrylic blanks, 5 on shelf but 4 promised</div></div>
+          </div>
+
+          <div class="sect">New today</div>
+          <div class="card flat">
+            <div class="rowx"><div class="grow"><div class="t">#1042 · Maricel Bautista</div><div class="s">₱647 · ships by 28 Aug</div></div><span class="pill go">₱501 PROFIT</span></div>
+          </div>
+        </div>
+        <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+        <div class="tabbar">
+          <div class="on"><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div><svg class="icon"><use href="#i-layers"/></svg>Orders</div>
+          <div><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">1.1</div><h3>Today</h3><p>Shortfalls surface here, not buried in stock. <b>Short</b> means the shelf count looks fine but other open orders already claimed the pieces.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>tap<br>calendar</div>
+
+    <!-- 1.2 Week -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>24 – 30 Aug<span class="sub">9 orders in flight</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-filter"/></svg></div></div>
+        <div class="body">
+          <div class="seg"><div>Day</div><div class="on">Week</div><div>Month</div></div>
+          <div class="wk">
+            <div class="wkrow"><div class="dd">MON<b>24</b></div><div class="lane"><b class="g" style="left:0;right:14%">#1036 Alvarez · shipped</b></div></div>
+            <div class="wkrow"><div class="dd">TUE<b>25</b></div><div class="lane"><b style="left:0;right:52%">#1039 Ramos</b><b class="w" style="left:52%;right:0">#1040 Delgado</b></div></div>
+            <div class="wkrow"><div class="dd" style="color:var(--go)">TUE<b style="color:var(--go)">26</b></div><div class="lane" style="background:var(--go-soft)"><b style="left:0;right:60%">#1039 · ship</b><b class="a" style="left:40%;right:0">#1040 · short</b></div></div>
+            <div class="wkrow"><div class="dd">WED<b>27</b></div><div class="lane"><b style="left:0;right:35%">#1042 Bautista</b><b class="w" style="left:65%;right:0">#1043</b></div></div>
+            <div class="wkrow"><div class="dd">THU<b>28</b></div><div class="lane"><b style="left:0;right:44%">#1042 · ship</b><b class="w" style="left:56%;right:0">#1043 Uy</b></div></div>
+            <div class="wkrow"><div class="dd">FRI<b>29</b></div><div class="lane"><b class="w" style="left:0;right:30%">#1043 · ship by</b></div></div>
+            <div class="wkrow"><div class="dd">SAT<b>30</b></div><div class="lane"></div></div>
+          </div>
+          <div class="card flat">
+            <div class="rowx" style="gap:12px;flex-wrap:wrap">
+              <div class="rowx" style="gap:5px"><i style="width:12px;height:7px;border-radius:2px;background:var(--go);display:block"></i><span class="s">On track</span></div>
+              <div class="rowx" style="gap:5px"><i style="width:12px;height:7px;border-radius:2px;background:var(--warn);display:block"></i><span class="s">Due soon</span></div>
+              <div class="rowx" style="gap:5px"><i style="width:12px;height:7px;border-radius:2px;background:var(--alert);display:block"></i><span class="s">Missing materials</span></div>
+            </div>
+            <div class="s" style="margin-top:8px">A bar starts the day the order arrived and ends the day it must ship. It only leaves the board when you mark it shipped.</div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div class="on"><svg class="icon"><use href="#i-cal"/></svg>Calendar</div>
+          <div><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">1.2</div><h3>Calendar · week</h3><p>Orders as task bars, arrival date to ship-by date. Colour is <b>material readiness</b>, not order status — a red bar means don't promise this one.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>switch<br>range</div>
+
+    <!-- 1.3 Month -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>August 2026<span class="sub">31 orders · ₱18,420 booked</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-filter"/></svg></div></div>
+        <div class="body">
+          <div class="seg"><div>Day</div><div>Week</div><div class="on">Month</div></div>
+          <div class="cal" id="cal-aug"></div>
+          <div class="card tape">
+            <div class="rowx"><div class="grow"><div class="t">Thu 28 Aug</div><div class="s">3 ship-by deadlines · 1 blocked</div></div><span class="pill warn">BUSIEST</span></div>
+          </div>
+          <div class="sect">Selected · 26 Aug</div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">#1039 Ramos · ship today</div><div class="s">Packed 8:10 AM · Shopee</div></div><span class="pill warn">PACKED</span></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">#1040 Delgado · ship today</div><div class="s">Waiting on acrylic blanks</div></div><span class="pill alert">SHORT</span></div></div>
+        </div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div class="on"><svg class="icon"><use href="#i-cal"/></svg>Calendar</div>
+          <div><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">1.3</div><h3>Calendar · month</h3><p>Density view for planning buys. Each day shows one tick per order; tap a day to load its list underneath.</p></div>
+    </div>
+
+  </div>
+</section>
+<!-- ══════════════ FLOW 2 ══════════════ -->
+<section class="flow" id="f2">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 2</span>
+    <h2>An order comes in</h2>
+    <p>You type customer, channel and dates, then add <b style="color:#C9D2CD">products</b> — never materials. The app expands the bill of materials behind the scenes and shows you the damage before you save.</p>
+  </div>
+  <div class="rail">
+
+    <!-- 2.1 Orders list -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>Orders<span class="sub">9 open · 22 done this month</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-search"/></svg></div></div>
+        <div class="body">
+          <div class="tabs2"><div class="on">To pack 4</div><div>Packed 2</div><div>Shipped</div><div>Done</div></div>
+          <div class="card">
+            <div class="rowx top"><div class="grow"><div class="t">#1040 · Kim Delgado</div><div class="s">2× Acrylic Keychain · ₱498</div></div><div style="text-align:right"><span class="pill alert">SHORT</span><div class="s mono" style="margin-top:5px">SHIP TODAY</div></div></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="rowx"><span class="pill">TIKTOK</span><div class="pips grow" data-total="10" data-full="5" data-burn="4" data-tone="low"></div></div>
+            <div class="s" style="margin-top:6px;color:var(--alert)">Acrylic blank: 5 on shelf, 4 already promised</div>
+          </div>
+          <div class="card">
+            <div class="rowx top"><div class="grow"><div class="t">#1042 · Maricel Bautista</div><div class="s">2× Custom Magnets · 1× Sticker Pack</div></div><div style="text-align:right"><span class="pill go">READY</span><div class="s mono" style="margin-top:5px">SHIP 28 AUG</div></div></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="rowx"><span class="pill">SHOPEE</span><div class="s grow">₱647 · materials ₱94 · fees ₱52</div><b class="num md" style="color:var(--go)">₱501</b></div>
+          </div>
+          <div class="card">
+            <div class="rowx top"><div class="grow"><div class="t">#1043 · Ronnie Uy</div><div class="s">4× Custom Magnets</div></div><div style="text-align:right"><span class="pill warn">1 SHORT</span><div class="s mono" style="margin-top:5px">SHIP 29 AUG</div></div></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="rowx"><span class="pill">LAZADA</span><div class="s grow">Needs 4 photo tops, 4 on shelf</div></div>
+          </div>
+          <div class="card">
+            <div class="rowx top"><div class="grow"><div class="t">#1044 · Anna Lim</div><div class="s">1× Sticker Pack · ₱149</div></div><div style="text-align:right"><span class="pill go">READY</span><div class="s mono" style="margin-top:5px">SHIP 30 AUG</div></div></div>
+          </div>
+        </div>
+        <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div class="on"><svg class="icon"><use href="#i-layers"/></svg>Orders</div>
+          <div><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">2.1</div><h3>Orders</h3><p>Tabs follow the physical stages. Every card carries the money and the material risk, so you can triage without opening anything.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>tap<br>+</div>
+
+    <!-- 2.2 New order details -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-x"/></svg></div><div class="grow"><h4>New order<span class="sub">Step 1 of 3 · Details</span></h4></div><span class="pill ink">DRAFT</span></div>
+        <div class="body pad">
+          <div class="field focus"><div class="lab">Customer</div><div class="val">Maricel Bautista</div></div>
+          <div class="card flat" style="padding:8px 10px">
+            <div class="s mono" style="margin-bottom:6px">FROM PAST ORDERS</div>
+            <div class="rowx"><svg class="icon sm" style="color:var(--mute)"><use href="#i-search"/></svg><div class="grow"><div class="t" style="font-size:11.5px">Maricel Bautista</div><div class="s">3 orders · Cebu City · last 12 Aug</div></div><span class="pill go">FILL</span></div>
+          </div>
+          <div class="field"><div class="lab">Address</div><div class="val">14 Sampaguita St, Lahug, Cebu City 6000</div></div>
+          <div>
+            <div class="lab" style="font:600 8.5px/1 'IBM Plex Mono';letter-spacing:.1em;color:#8B948F;text-transform:uppercase;margin-bottom:6px">Sold on</div>
+            <div class="chips"><span class="chip on">Shopee</span><span class="chip">TikTok</span><span class="chip">Lazada</span><span class="chip">Facebook</span><span class="chip">Walk-in</span><span class="chip" style="border-style:dashed;color:var(--mute)">+ Add</span></div>
+            <div class="s" style="margin-top:6px">Shopee is set to 8% total fees. <span style="color:var(--go);font-weight:600">Edit channels</span></div>
+          </div>
+          <div class="rowx" style="gap:8px">
+            <div class="field grow"><div class="lab">Order date</div><div class="val">26 Aug 2026</div></div>
+            <div class="field grow"><div class="lab">Ship by</div><div class="val">28 Aug 2026</div></div>
+          </div>
+          <div class="field"><div class="lab">Note</div><div class="val ph">Buyer asked for pink cards</div></div>
+        </div>
+        <div style="padding:0 14px 12px"><div class="btn">Next · add items <svg class="icon sm"><use href="#i-chev"/></svg></div></div>
+      </div></div>
+      <div class="cap"><div class="id">2.2</div><h3>New order · details</h3><p>Customer and address autocomplete from your own past orders — no server needed. Channels are a list you edit, each carrying its own fee rate.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>next</div>
+
+    <!-- 2.3 Add items -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Items<span class="sub">Step 2 of 3 · #1042</span></h4></div></div>
+        <div class="body pad">
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Custom Magnets · set of 3</div><div class="s">₱249 each · materials ₱33.00</div></div><div class="stepper"><b>–</b><span>2</span><b>+</b></div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Sticker Pack · A5</div><div class="s">₱149 each · materials ₱28.30</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div></div></div>
+          <div class="kv big"><span>Order total</span><b>₱647.00</b></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" style="max-height:400px">
+          <div class="grab"></div>
+          <div class="rowx"><div class="grow"><div class="t lg">Add product</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-x"/></svg></div>
+          <div class="field"><div class="rowx"><svg class="icon sm" style="color:var(--mute)"><use href="#i-search"/></svg><div class="val ph" style="margin:0">Search products</div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Acrylic Keychain</div><div class="s">₱249 · <span style="color:var(--alert)">only 2 buildable</span></div></div><span class="pill alert">LOW</span></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Custom Magnets · set of 3</div><div class="s">₱249 · 6 buildable from stock</div></div><span class="pill go">ADDED ×2</span></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Sticker Pack · A5</div><div class="s">₱149 · 9 buildable from stock</div></div><span class="pill go">ADDED ×1</span></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t">Fridge Magnet · single</div><div class="s">₱99 · 14 buildable from stock</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-plus"/></svg></div></div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">2.3</div><h3>Add products</h3><p><b>Buildable from stock</b> is the number the picker leads with — it's the BOM divided by what's on the shelf, so you never promise what you can't make.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>review</div>
+
+    <!-- 2.4 Review -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Review<span class="sub">Step 3 of 3 · #1042</span></h4></div></div>
+        <div class="body pad">
+          <div class="sect">This order will use</div>
+          <div class="card" style="padding:10px 12px">
+            <div class="rowx" style="margin-bottom:7px"><div class="grow"><div class="t" style="font-size:11.5px">Magnet sheet</div><div class="s">2 pcs · 14 → 12 left</div></div><div class="pips" data-total="20" data-full="14" data-burn="2"></div></div>
+            <div class="hr"></div>
+            <div class="rowx" style="margin:7px 0"><div class="grow"><div class="t" style="font-size:11.5px;color:var(--alert)">Photo top</div><div class="s" style="color:var(--alert)">2 pcs · 6 → 4 left, under alert 15</div></div><div class="pips" data-total="20" data-full="6" data-burn="2" data-tone="low"></div></div>
+            <div class="hr"></div>
+            <div class="rowx" style="margin:7px 0"><div class="grow"><div class="t" style="font-size:11.5px">Resealable pouch</div><div class="s">6 pcs · 62 → 56 left</div></div><div class="pips tiny" data-total="20" data-full="20" data-scale="5"></div></div>
+            <div class="hr"></div>
+            <div class="rowx" style="margin:7px 0"><div class="grow"><div class="t" style="font-size:11.5px">Plastic mailer</div><div class="s">3 pcs · 41 → 38 left</div></div><div class="pips tiny" data-total="20" data-full="16" data-scale="5"></div></div>
+            <div class="hr"></div>
+            <div class="rowx" style="margin-top:7px"><div class="grow"><div class="t" style="font-size:11.5px">Thank-you card</div><div class="s" style="color:var(--warn)">3 pcs · 9 → 6 left, under alert 25</div></div><div class="pips tiny" data-total="20" data-full="7" data-burn="2" data-scale="5" data-tone="mid"></div></div>
+          </div>
+          <div class="card coin">
+            <div class="kv"><span>Sales</span><b>₱647.00</b></div>
+            <div class="kv"><span>Materials (BOM)</span><b>– ₱94.30</b></div>
+            <div class="kv"><span>Shopee fees 8%</span><b>– ₱51.76</b></div>
+            <div class="kv"><span>Shipping paid by you</span><b>– ₱0.00</b></div>
+            <div class="hr"></div>
+            <div class="kv big"><span style="color:var(--coin);font-weight:600">Profit</span><b class="num lg" style="color:var(--coin)">₱500.94</b></div>
+          </div>
+        </div>
+        <div style="padding:0 14px 12px;display:flex;gap:8px">
+          <div class="btn sec" style="flex:0 0 auto;padding:11px 14px">Hold</div>
+          <div class="btn grow">Save order</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">2.4</div><h3>Review · stock check</h3><p>The moment the app earns its keep. Saving <b>reserves</b> these pieces — they stay on the shelf but are marked promised, which is what drives the "short" flags elsewhere.</p></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ FLOW 3 ══════════════ -->
+<section class="flow" id="f3">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 3</span>
+    <h2>Pack, fix mistakes, ship</h2>
+    <p>Reality never matches the recipe. You cut a magnet sheet wrong and burn two instead of one — this is where that gets recorded in ten seconds, and where the deduction actually happens.</p>
+  </div>
+  <div class="rail">
+
+    <!-- 3.1 Order detail -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>#1042<span class="sub">Maricel Bautista · Shopee</span></h4></div><div class="iconbtn ghost"><svg class="icon"><use href="#i-dots"/></svg></div></div>
+        <div class="body pad">
+          <div class="card flat rowx" style="gap:0;padding:9px 12px">
+            <div class="grow" style="text-align:center"><svg class="icon sm" style="color:var(--go)"><use href="#i-check"/></svg><div class="s mono" style="color:var(--go)">PLACED</div></div>
+            <div style="flex:0 0 22px;height:1px;background:#C7CCC5"></div>
+            <div class="grow" style="text-align:center"><svg class="icon sm" style="color:var(--ink)"><use href="#i-box"/></svg><div class="s mono" style="color:var(--ink);font-weight:600">TO PACK</div></div>
+            <div style="flex:0 0 22px;height:1px;background:#C7CCC5"></div>
+            <div class="grow" style="text-align:center;opacity:.45"><svg class="icon sm"><use href="#i-truck"/></svg><div class="s mono">SHIPPED</div></div>
+          </div>
+          <div class="sect">Items</div>
+          <div class="card"><div class="rowx"><span class="pill">×2</span><div class="grow"><div class="t">Custom Magnets · set of 3</div><div class="s">₱249 each</div></div><b class="num md">₱498</b></div></div>
+          <div class="card"><div class="rowx"><span class="pill">×1</span><div class="grow"><div class="t">Sticker Pack · A5</div><div class="s">₱149 each</div></div><b class="num md">₱149</b></div></div>
+
+          <div class="rowx"><div class="sect grow">Materials for this order</div><span class="pill go">EDIT</span></div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:6px"><div class="s grow" style="font-size:11px">Magnet sheet</div><span class="s mono">2 pcs · ₱18.00</span></div>
+            <div class="rowx" style="margin-bottom:6px"><div class="s grow" style="font-size:11px">Photo top</div><span class="s mono">2 pcs · ₱24.00</span></div>
+            <div class="rowx" style="margin-bottom:6px"><div class="s grow" style="font-size:11px">Resealable pouch</div><span class="s mono">6 pcs · ₱9.00</span></div>
+            <div class="rowx" style="margin-bottom:6px"><div class="s grow" style="font-size:11px">Bubble wrap · mailer · card</div><span class="s mono">8 pcs · ₱43.30</span></div>
+            <div class="hr"></div>
+            <div class="kv"><span>Planned material cost</span><b>₱94.30</b></div>
+          </div>
+          <div class="card tape rowx"><svg class="icon sm" style="color:var(--warn)"><use href="#i-edit"/></svg><div class="s grow">Used more or less than planned? Adjust while you pack.</div></div>
+        </div>
+        <div style="padding:0 14px 12px"><div class="btn">Pack this order</div></div>
+      </div></div>
+      <div class="cap"><div class="id">3.1</div><h3>Order detail</h3><p>Materials are shown as a real, editable line list on the order itself — not a hidden calculation you have to trust.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>tap<br>edit</div>
+
+    <!-- 3.2 Adjust sheet -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>#1042<span class="sub">Maricel Bautista · Shopee</span></h4></div></div>
+        <div class="body pad" style="opacity:.5">
+          <div class="sect">Items</div>
+          <div class="card"><div class="rowx"><span class="pill">×2</span><div class="grow"><div class="t">Custom Magnets · set of 3</div></div><b class="num md">₱498</b></div></div>
+          <div class="card"><div class="rowx"><span class="pill">×1</span><div class="grow"><div class="t">Sticker Pack · A5</div></div><b class="num md">₱149</b></div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" style="max-height:470px">
+          <div class="grab"></div>
+          <div class="rowx"><div class="grow"><div class="t lg">Materials actually used</div><div class="s">Recipe says 15 pcs. Change anything you burned.</div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">Magnet sheet</div><div class="s" style="color:var(--alert)">recipe 2 · +1 wasted</div></div><div class="stepper"><b>–</b><span style="color:var(--alert)">3</span><b>+</b></div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">Photo top</div><div class="s">recipe 2</div></div><div class="stepper"><b>–</b><span>2</span><b>+</b></div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">Resealable pouch</div><div class="s">recipe 6</div></div><div class="stepper"><b>–</b><span>6</span><b>+</b></div></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">Thank-you card</div><div class="s">recipe 3</div></div><div class="stepper"><b>–</b><span>3</span><b>+</b></div></div></div>
+          <div class="chips"><span class="chip on">Cut wrong</span><span class="chip">Print error</span><span class="chip">Damaged</span><span class="chip">Extra freebie</span></div>
+          <div class="card alert"><div class="kv"><span>Material cost</span><b>₱94.30 → ₱103.30</b></div><div class="kv"><span>Profit on this order</span><b>₱500.94 → ₱491.94</b></div></div>
+          <div class="btn">Save materials used</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">3.2</div><h3>Adjust what you used</h3><p>Steppers, not typing. The reason chip is optional but feeds a waste report later, so you can see which product keeps eating extra sheets.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>pack</div>
+
+    <!-- 3.3 Confirm deduct -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>#1042<span class="sub">Maricel Bautista · Shopee</span></h4></div></div>
+        <div class="body pad" style="opacity:.4">
+          <div class="sect">Items</div>
+          <div class="card"><div class="rowx"><span class="pill">×2</span><div class="grow"><div class="t">Custom Magnets · set of 3</div></div></div></div>
+          <div class="card"><div class="rowx"><span class="pill">×1</span><div class="grow"><div class="t">Sticker Pack · A5</div></div></div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="dialog" style="top:96px">
+          <div class="t lg">Pack #1042 and deduct stock?</div>
+          <div class="s">16 pieces come off the shelf now. This is the only moment stock actually moves.</div>
+          <div class="card flat">
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">Magnet sheet</div><span class="s mono">14 → 11</span></div>
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px;color:var(--alert)">Photo top</div><span class="s mono" style="color:var(--alert)">6 → 4 · LOW</span></div>
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">Resealable pouch</div><span class="s mono">62 → 56</span></div>
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">Plastic mailer</div><span class="s mono">41 → 38</span></div>
+            <div class="rowx"><div class="s grow" style="font-size:11px;color:var(--warn)">Thank-you card</div><span class="s mono" style="color:var(--warn)">9 → 6 · LOW</span></div>
+          </div>
+          <div class="card alert rowx"><svg class="icon sm" style="color:var(--alert)"><use href="#i-alert"/></svg><div class="s grow">Photo top drops under alert. <b>Custom Magnets</b> and <b>Fridge Magnet</b> become unbuildable after 4 more sets.</div></div>
+          <div class="rowx" style="gap:8px"><div class="btn sec grow">Cancel</div><div class="btn grow">Pack &amp; deduct</div></div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">3.3</div><h3>Pack &amp; deduct</h3><p>One confirmation, showing before → after per material and naming the products you're about to put at risk. Undo stays available for 24 hours.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>ship</div>
+
+    <!-- 3.4 Shipped -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>#1042<span class="sub">Shipped 26 Aug · 11:20 AM</span></h4></div><span class="pill go">DONE</span></div>
+        <div class="body pad">
+          <div class="card flat rowx" style="gap:0;padding:9px 12px">
+            <div class="grow" style="text-align:center"><svg class="icon sm" style="color:var(--go)"><use href="#i-check"/></svg><div class="s mono" style="color:var(--go)">PLACED</div></div>
+            <div style="flex:0 0 22px;height:1px;background:var(--go)"></div>
+            <div class="grow" style="text-align:center"><svg class="icon sm" style="color:var(--go)"><use href="#i-check"/></svg><div class="s mono" style="color:var(--go)">PACKED</div></div>
+            <div style="flex:0 0 22px;height:1px;background:var(--go)"></div>
+            <div class="grow" style="text-align:center"><svg class="icon sm" style="color:var(--go)"><use href="#i-truck"/></svg><div class="s mono" style="color:var(--go);font-weight:600">SHIPPED</div></div>
+          </div>
+          <div class="card coin">
+            <div class="s mono" style="color:var(--coin)">WHAT THIS ORDER MADE</div>
+            <div class="num xl" style="color:var(--coin);margin:5px 0 8px">₱491.94</div>
+            <div class="bar" style="margin-bottom:8px"><i class="coin" style="width:76%"></i></div>
+            <div class="kv"><span>Sales</span><b>₱647.00</b></div>
+            <div class="kv"><span>Materials used</span><b>– ₱103.30</b></div>
+            <div class="kv"><span>Shopee fees 8%</span><b>– ₱51.76</b></div>
+            <div class="kv"><span>Margin</span><b>76.0%</b></div>
+          </div>
+          <div class="sect">Recorded</div>
+          <div class="card"><div class="rowx"><svg class="icon sm" style="color:var(--go)"><use href="#i-check"/></svg><div class="s grow">16 pieces deducted from stock</div><span class="s mono">11:19</span></div></div>
+          <div class="card"><div class="rowx"><svg class="icon sm" style="color:var(--warn)"><use href="#i-alert"/></svg><div class="s grow">1 magnet sheet logged as waste · cut wrong</div><span class="s mono">11:18</span></div></div>
+          <div class="card"><div class="rowx"><svg class="icon sm" style="color:var(--alert)"><use href="#i-alert"/></svg><div class="s grow">Photo top added to buy list</div><span class="s mono">11:19</span></div></div>
+        </div>
+        <div class="toast"><svg class="icon sm"><use href="#i-check"/></svg><div class="grow">Order shipped. Stock updated.</div><b style="font:600 10px/1 'IBM Plex Mono';color:#8FD4BE">UNDO</b></div>
+      </div></div>
+      <div class="cap"><div class="id">3.4</div><h3>Shipped</h3><p>The per-order P&amp;L closes with the <b>real</b> material cost, waste included, and drops straight into the earnings figures in flow 6.</p></div>
+    </div>
+
+  </div>
+</section>
+<!-- ══════════════ FLOW 4 ══════════════ -->
+<section class="flow" id="f4">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 4</span>
+    <h2>Stock, and what it blocks</h2>
+    <p>Stock is kept in pieces but bought in packs, so every screen shows both. The low-stock list is written backwards from the thing you care about: which products go dark, and what to put in the cart.</p>
+  </div>
+  <div class="rail">
+
+    <!-- 4.1 Materials -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>Materials<span class="sub">8 items · ₱3,140 on the shelf</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-search"/></svg></div></div>
+        <div class="body">
+          <div class="tabs2"><div class="on">All</div><div style="color:var(--alert)">Low 3</div><div>Promised</div></div>
+          <div class="card alert">
+            <div class="rowx"><div class="grow"><div class="t">Acrylic blank</div><div class="s">pack of 25 · ₱20.00/pc · alert at 10</div></div><div style="text-align:right"><b class="num lg" style="color:var(--alert)">5</b><div class="s mono">PCS</div></div></div>
+            <div class="pips" style="margin-top:8px" data-total="25" data-full="5" data-burn="4" data-tone="low"></div>
+          </div>
+          <div class="card alert">
+            <div class="rowx"><div class="grow"><div class="t">Photo top</div><div class="s">pack of 20 · ₱12.00/pc · alert at 15</div></div><div style="text-align:right"><b class="num lg" style="color:var(--alert)">6</b><div class="s mono">PCS</div></div></div>
+            <div class="pips" style="margin-top:8px" data-total="20" data-full="6" data-burn="2" data-tone="low"></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">Thank-you card</div><div class="s">pack of 100 · ₱1.50/pc · alert at 25</div></div><div style="text-align:right"><b class="num lg" style="color:var(--warn)">9</b><div class="s mono">PCS</div></div></div>
+            <div class="pips tiny" style="margin-top:8px" data-total="20" data-full="2" data-burn="1" data-scale="5" data-tone="mid"></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">Magnet sheet</div><div class="s">pack of 20 · ₱9.00/pc · alert at 20</div></div><div style="text-align:right"><b class="num lg">14</b><div class="s mono">PCS</div></div></div>
+            <div class="pips" style="margin-top:8px" data-total="20" data-full="14" data-burn="2"></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">Resealable pouch</div><div class="s">pack of 100 · ₱1.50/pc · alert at 30</div></div><div style="text-align:right"><b class="num lg">62</b><div class="s mono">PCS</div></div></div>
+            <div class="pips tiny" style="margin-top:8px" data-total="20" data-full="13" data-burn="1" data-scale="5"></div>
+          </div>
+        </div>
+        <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div><svg class="icon"><use href="#i-layers"/></svg>Orders</div>
+          <div class="on"><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">4.1</div><h3>Materials</h3><p>Solid pips are free, hatched pips are promised to open orders. Alert level is per material, since 10 acrylic blanks is thin but 10 pouches is nothing.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>tap<br>item</div>
+
+    <!-- 4.2 Material detail -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Photo top<span class="sub">Pack of 20 · ₱240.00 per pack</span></h4></div><div class="iconbtn ghost"><svg class="icon"><use href="#i-edit"/></svg></div></div>
+        <div class="body pad">
+          <div class="card alert">
+            <div class="rowx" style="align-items:flex-end"><div class="grow"><div class="s mono" style="color:var(--alert)">ON SHELF</div><div class="num xl" style="color:var(--alert)">6 <span style="font-size:13px;font-weight:500">pcs</span></div></div><div style="text-align:right"><div class="s">2 promised</div><div class="s">4 free</div><div class="s">alert at 15</div></div></div>
+            <div class="pips" style="margin-top:9px" data-total="20" data-full="6" data-burn="2" data-tone="low"></div>
+          </div>
+          <div class="rowx" style="gap:8px">
+            <div class="btn sm grow" style="padding:10px">Receive stock</div>
+            <div class="btn sm sec grow" style="padding:10px">Count / adjust</div>
+          </div>
+          <div class="sect">Used in</div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:7px"><div class="grow"><div class="t" style="font-size:11.5px">Custom Magnets · set of 3</div><div class="s">1 pc per set</div></div><span class="pill alert">4 LEFT</span></div>
+            <div class="hr"></div>
+            <div class="rowx" style="margin-top:7px"><div class="grow"><div class="t" style="font-size:11.5px">Fridge Magnet · single</div><div class="s">1 pc each</div></div><span class="pill alert">4 LEFT</span></div>
+          </div>
+          <div class="sect">Movements</div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">#1042 packed</div><span class="s mono" style="color:var(--alert)">– 2</span></div>
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">#1039 packed</div><span class="s mono" style="color:var(--alert)">– 3</span></div>
+            <div class="rowx" style="margin-bottom:7px"><div class="s grow" style="font-size:11px">Waste · print error</div><span class="s mono" style="color:var(--warn)">– 1</span></div>
+            <div class="rowx"><div class="s grow" style="font-size:11px">Received 1 pack · 12 Aug</div><span class="s mono" style="color:var(--go)">+ 20</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">4.2</div><h3>Material detail</h3><p><b>Used in</b> is the reverse BOM lookup — the answer to "if I run out of this, what stops selling", with a buildable count per product.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>receive</div>
+
+    <!-- 4.3 Receive stock -->
+    <div class="step">
+      <div class="ph"><div class="scr nofade">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-x"/></svg></div><div class="grow"><h4>Receive stock<span class="sub">Photo top</span></h4></div></div>
+        <div class="body pad">
+          <div class="rowx" style="gap:8px">
+            <div class="field grow"><div class="lab">Packs bought</div><div class="rowx" style="margin-top:5px"><div class="stepper"><b>–</b><span>2</span><b>+</b></div><div class="s grow">= 40 pcs</div></div></div>
+          </div>
+          <div class="field focus"><div class="lab">Price per pack</div><div class="val">₱ 235.00</div></div>
+          <div class="card tape rowx"><svg class="icon sm" style="color:var(--warn)"><use href="#i-alert"/></svg><div class="s grow">Cheaper than your last pack (₱240). Unit cost will move to <b>₱11.83</b> as a weighted average.</div></div>
+          <div class="rowx" style="gap:8px">
+            <div class="field grow"><div class="lab">Date</div><div class="val">26 Aug 2026</div></div>
+            <div class="field grow"><div class="lab">Supplier</div><div class="val">Divisoria</div></div>
+          </div>
+          <div class="card">
+            <div class="kv"><span>On shelf now</span><b>6 pcs</b></div>
+            <div class="kv"><span>Receiving</span><b>+ 40 pcs</b></div>
+            <div class="hr"></div>
+            <div class="kv big"><span>After</span><b class="num lg" style="color:var(--go)">46 pcs</b></div>
+            <div class="pips" style="margin-top:9px" data-total="20" data-full="20"></div>
+            <div class="s" style="margin-top:6px;color:var(--go)">Clears the alert. Unblocks Custom Magnets and Fridge Magnet.</div>
+          </div>
+          <div class="kv"><span>Spend recorded</span><b>₱470.00</b></div>
+        </div>
+        <div style="padding:0 14px 12px"><div class="btn">Add to stock</div></div>
+      </div></div>
+      <div class="cap"><div class="id">4.3</div><h3>Receive stock</h3><p>You enter <b>packs</b>, because that's how you buy. The app keeps pieces and rolls a weighted average unit cost so old profit figures stay honest.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>low<br>stock</div>
+
+    <!-- 4.4 Blocked report -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>What to buy<span class="sub">3 materials · blocks 2 products</span></h4></div></div>
+        <div class="body pad">
+          <div class="card alert">
+            <div class="rowx"><div class="grow"><div class="t">Acrylic blank</div><div class="s">5 pcs · 4 promised · <b>1 free</b></div></div><span class="pill alert">CRITICAL</span></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="s mono" style="margin-bottom:5px">STOPS</div>
+            <div class="rowx" style="margin-bottom:4px"><svg class="icon sm" style="color:var(--alert)"><use href="#i-x"/></svg><div class="s grow">Acrylic Keychain — 0 buildable</div></div>
+            <div class="rowx"><svg class="icon sm" style="color:var(--alert)"><use href="#i-alert"/></svg><div class="s grow">#1040 ships today and is 1 pc short</div></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">Photo top</div><div class="s">6 pcs · alert at 15</div></div><span class="pill warn">4 SETS LEFT</span></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="s">Stops <b>Custom Magnets</b> and <b>Fridge Magnet</b> · 3 open orders</div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t">Thank-you card</div><div class="s">9 pcs · alert at 25</div></div><span class="pill warn">SOFT</span></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="s">Goes in every parcel — affects <b>all 4 products</b></div>
+          </div>
+          <div class="card coin">
+            <div class="s mono" style="color:var(--coin)">SHOPPING LIST</div>
+            <div class="kv" style="margin-top:4px"><span>1 pack · Acrylic blank ×25</span><b>₱500.00</b></div>
+            <div class="kv"><span>2 packs · Photo top ×20</span><b>₱470.00</b></div>
+            <div class="kv"><span>1 pack · Thank-you card ×100</span><b>₱150.00</b></div>
+            <div class="hr"></div>
+            <div class="kv big"><span style="color:var(--coin);font-weight:600">Total</span><b class="num lg" style="color:var(--coin)">₱1,120.00</b></div>
+          </div>
+        </div>
+        <div style="padding:0 14px 12px"><div class="btn dark"><svg class="icon sm"><use href="#i-cart"/></svg>Share list · copy as text</div></div>
+      </div></div>
+      <div class="cap"><div class="id">4.4</div><h3>What to buy</h3><p>Sorted by damage, not by quantity. Suggested pack counts cover open orders plus your alert level, and the list copies out as plain text for a supplier chat.</p></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ FLOW 5 ══════════════ -->
+<section class="flow" id="f5">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 5</span>
+    <h2>Set up once: products, BOM, channels</h2>
+    <p>Everything above is driven by these three screens. The recipe editor is where "1 sheet, 1 photo top, 3 pouches, packaging" gets typed in, and where you find out your real cost per unit.</p>
+  </div>
+  <div class="rail">
+
+    <!-- 5.1 Products -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>Products<span class="sub">4 items · avg margin 71%</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-search"/></svg></div></div>
+        <div class="body">
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Custom Magnets · set of 3</div><div class="s">6 materials · ₱33.00 cost · ₱249 price</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-chev"/></svg></div>
+            <div class="rowx" style="margin-top:9px"><div class="bar grow"><i style="width:87%"></i></div><span class="s mono">87% MARGIN</span></div>
+            <div class="s" style="margin-top:6px">4 buildable from stock</div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Acrylic Keychain</div><div class="s">5 materials · ₱31.30 cost · ₱249 price</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-chev"/></svg></div>
+            <div class="rowx" style="margin-top:9px"><div class="bar grow"><i style="width:87%"></i></div><span class="s mono">87% MARGIN</span></div>
+            <div class="s" style="margin-top:6px;color:var(--alert)">0 buildable — out of acrylic blanks</div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Sticker Pack · A5</div><div class="s">4 materials · ₱28.30 cost · ₱149 price</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-chev"/></svg></div>
+            <div class="rowx" style="margin-top:9px"><div class="bar grow"><i class="warn" style="width:81%"></i></div><span class="s mono">81% MARGIN</span></div>
+            <div class="s" style="margin-top:6px">9 buildable from stock</div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Fridge Magnet · single</div><div class="s">5 materials · ₱21.50 cost · ₱99 price</div></div><svg class="icon sm" style="color:var(--mute)"><use href="#i-chev"/></svg></div>
+            <div class="rowx" style="margin-top:9px"><div class="bar grow"><i class="warn" style="width:78%"></i></div><span class="s mono">78% MARGIN</span></div>
+          </div>
+        </div>
+        <div class="fab"><svg class="icon"><use href="#i-plus"/></svg></div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div><svg class="icon"><use href="#i-layers"/></svg>Orders</div>
+          <div class="on"><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">5.1</div><h3>Products</h3><p>Margin is calculated from the live weighted material cost, so it moves when Divisoria prices move. Buildable count comes free with it.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>tap</div>
+
+    <!-- 5.2 BOM editor -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Custom Magnets<span class="sub">set of 3 · recipe</span></h4></div><span class="pill go">SAVE</span></div>
+        <div class="body pad">
+          <div class="rowx" style="gap:8px">
+            <div class="field grow"><div class="lab">Sell price</div><div class="val">₱ 249.00</div></div>
+            <div class="field grow"><div class="lab">Makes</div><div class="val">1 set of 3</div></div>
+          </div>
+          <div class="rowx"><div class="sect grow">Bill of materials</div><span class="s mono" style="color:var(--go)">+ ADD</span></div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:8px"><div class="grow"><div class="t" style="font-size:11.5px">Magnet sheet</div><div class="s">₱9.00/pc</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱9.00</span></div>
+            <div class="rowx" style="margin-bottom:8px"><div class="grow"><div class="t" style="font-size:11.5px">Photo top</div><div class="s">₱12.00/pc</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱12.00</span></div>
+            <div class="rowx" style="margin-bottom:8px"><div class="grow"><div class="t" style="font-size:11.5px">Resealable pouch</div><div class="s">₱1.50/pc</div></div><div class="stepper"><b>–</b><span>3</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱4.50</span></div>
+            <div class="rowx" style="margin-bottom:8px"><div class="grow"><div class="t" style="font-size:11.5px">Bubble wrap</div><div class="s">₱3.20/pc</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱3.20</span></div>
+            <div class="rowx" style="margin-bottom:8px"><div class="grow"><div class="t" style="font-size:11.5px">Plastic mailer</div><div class="s">₱2.80/pc</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱2.80</span></div>
+            <div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">Thank-you card</div><div class="s">₱1.50/pc</div></div><div class="stepper"><b>–</b><span>1</span><b>+</b></div><span class="s mono" style="width:44px;text-align:right">₱1.50</span></div>
+          </div>
+          <div class="card coin">
+            <div class="kv"><span>Material cost per set</span><b>₱33.00</b></div>
+            <div class="kv"><span>Shopee fees 8%</span><b>₱19.92</b></div>
+            <div class="hr"></div>
+            <div class="kv big"><span style="color:var(--coin);font-weight:600">Profit per set</span><b class="num lg" style="color:var(--coin)">₱196.08</b></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">5.2</div><h3>Recipe editor</h3><p>Type it once. Changing a quantity here only affects <b>future</b> orders — already-packed orders keep the cost they were actually built at.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>settings</div>
+
+    <!-- 5.3 Channels -->
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Channels &amp; fees<span class="sub">5 shops · applied per order</span></h4></div><div class="iconbtn ghost"><svg class="icon"><use href="#i-plus"/></svg></div></div>
+        <div class="body pad">
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Shopee</div><div class="s">18 orders in Aug</div></div><b class="num md">8.0%</b></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="kv"><span>Commission</span><b>6.0%</b></div>
+            <div class="kv"><span>Transaction fee</span><b>2.0%</b></div>
+            <div class="kv"><span>Shipping paid by you</span><b>₱0.00</b></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">TikTok Shop</div><div class="s">9 orders in Aug</div></div><b class="num md">9.0%</b></div>
+            <div class="hr" style="margin:9px 0"></div>
+            <div class="kv"><span>Commission + transaction</span><b>7.0%</b></div>
+            <div class="kv"><span>Flat fee per order</span><b>₱15.00</b></div>
+          </div>
+          <div class="card">
+            <div class="rowx"><div class="grow"><div class="t lg">Lazada</div><div class="s">4 orders in Aug</div></div><b class="num md">7.5%</b></div>
+          </div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t lg">Facebook / DM</div><div class="s">Shipping ₱95 paid by you</div></div><b class="num md">0%</b></div></div>
+          <div class="card flat rowx"><svg class="icon sm" style="color:var(--mute)"><use href="#i-alert"/></svg><div class="s grow">Fee rates are yours to set — the app never goes online to check them.</div></div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">5.3</div><h3>Channels &amp; fees</h3><p>The configurable list behind the chips in 2.2. Each channel's cut is subtracted automatically, which is what makes per-order profit real rather than gross sales.</p></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ FLOW 6 ══════════════ -->
+<section class="flow" id="f6">
+  <div class="flow-head">
+    <span class="flow-num">FLOW 6</span>
+    <h2>What you actually earned</h2>
+    <p>One screen, any date range, three levels of zoom: total, per product, per order. Material cost here is what you really used, waste included.</p>
+  </div>
+  <div class="rail">
+
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar"><div class="grow"><h4>Money<span class="sub">1 – 26 Aug 2026</span></h4></div><div class="iconbtn"><svg class="icon"><use href="#i-cal"/></svg></div></div>
+        <div class="body">
+          <div class="seg"><div>Week</div><div class="on">Month</div><div>Year</div><div>Custom</div></div>
+          <div class="card coin">
+            <div class="s mono" style="color:var(--coin)">PROFIT</div>
+            <div class="num xl" style="color:var(--coin);margin:4px 0 9px">₱12,146.40</div>
+            <div class="bar" style="height:8px;display:flex"><i class="coin" style="width:66%"></i><i class="alert" style="width:23%;border-radius:0"></i><i class="warn" style="width:11%"></i></div>
+            <div class="kv" style="margin-top:8px"><span>Sales · 31 orders</span><b>₱18,420.00</b></div>
+            <div class="kv"><span>Materials used</span><b>– ₱4,179.60</b></div>
+            <div class="kv"><span>Channel fees</span><b>– ₱1,474.00</b></div>
+            <div class="kv"><span>Shipping you paid</span><b>– ₱620.00</b></div>
+            <div class="hr"></div>
+            <div class="kv"><span>Margin</span><b>66.0%</b></div>
+          </div>
+          <div class="card tape rowx"><svg class="icon sm" style="color:var(--warn)"><use href="#i-alert"/></svg><div class="s grow"><b>₱386 lost to waste</b> this month — mostly magnet sheets cut wrong.</div></div>
+          <div class="sect">Per product</div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:5px"><div class="grow"><div class="t" style="font-size:11.5px">Custom Magnets</div><div class="s">17 sold · ₱4,233 sales</div></div><b class="num md" style="color:var(--coin)">₱3,168</b></div>
+            <div class="bar"><i class="coin" style="width:100%"></i></div>
+          </div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:5px"><div class="grow"><div class="t" style="font-size:11.5px">Sticker Pack</div><div class="s">24 sold · ₱3,576 sales</div></div><b class="num md" style="color:var(--coin)">₱2,604</b></div>
+            <div class="bar"><i class="coin" style="width:82%"></i></div>
+          </div>
+          <div class="card">
+            <div class="rowx" style="margin-bottom:5px"><div class="grow"><div class="t" style="font-size:11.5px">Acrylic Keychain</div><div class="s">9 sold · ₱2,241 sales</div></div><b class="num md" style="color:var(--coin)">₱1,689</b></div>
+            <div class="bar"><i class="coin" style="width:53%"></i></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div><svg class="icon"><use href="#i-home"/></svg>Today</div>
+          <div><svg class="icon"><use href="#i-layers"/></svg>Orders</div>
+          <div><svg class="icon"><use href="#i-box"/></svg>Stock</div>
+          <div class="on"><svg class="icon"><use href="#i-coin"/></svg>Money</div>
+          <div><svg class="icon"><use href="#i-dots"/></svg>More</div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">6.1</div><h3>Earnings</h3><p>Sales minus real materials minus fees minus shipping. Waste is called out separately because it's the number you can actually shrink.</p></div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 30 14"><path d="M0 7h26M20 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>drill<br>in</div>
+
+    <div class="step">
+      <div class="ph"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="off"><svg class="icon sm"><use href="#i-check"/></svg>OFFLINE</span></div>
+        <div class="appbar line"><div class="iconbtn ghost"><svg class="icon"><use href="#i-back"/></svg></div><div class="grow"><h4>Custom Magnets<span class="sub">1 – 26 Aug · 17 sold</span></h4></div></div>
+        <div class="body pad">
+          <div class="card coin">
+            <div class="rowx" style="align-items:flex-end"><div class="grow"><div class="s mono" style="color:var(--coin)">PROFIT</div><div class="num xl" style="color:var(--coin)">₱3,168</div></div><div style="text-align:right"><div class="num lg" style="color:var(--coin)">₱186</div><div class="s mono">PER SET</div></div></div>
+            <div class="s" style="margin-top:6px">Recipe says ₱196 per set. You're ₱10 under because of waste.</div>
+          </div>
+          <div class="sect">Where the money went</div>
+          <div class="card">
+            <div class="kv"><span>Sales · 17 × ₱249</span><b>₱4,233.00</b></div>
+            <div class="kv"><span>Materials per recipe</span><b>– ₱561.00</b></div>
+            <div class="kv"><span>Waste · 12 extra pcs</span><b style="color:var(--alert)">– ₱166.00</b></div>
+            <div class="kv"><span>Channel fees</span><b>– ₱338.00</b></div>
+            <div class="hr"></div>
+            <div class="kv big"><span>Profit</span><b>₱3,168.00</b></div>
+          </div>
+          <div class="sect">Orders in range</div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">#1042 · Bautista</div><div class="s">2 sets · 26 Aug · Shopee</div></div><b class="num md" style="color:var(--coin)">₱372</b></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">#1039 · Ramos</div><div class="s">3 sets · 25 Aug · Shopee</div></div><b class="num md" style="color:var(--coin)">₱558</b></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">#1036 · Alvarez</div><div class="s">1 set · 24 Aug · Lazada</div></div><b class="num md" style="color:var(--coin)">₱181</b></div></div>
+          <div class="card"><div class="rowx"><div class="grow"><div class="t" style="font-size:11.5px">#1031 · Santos</div><div class="s">4 sets · 21 Aug · TikTok</div></div><b class="num md" style="color:var(--coin)">₱701</b></div></div>
+        </div>
+      </div></div>
+      <div class="cap"><div class="id">6.2</div><h3>Per product</h3><p>The gap between recipe profit and real profit, in pesos. Then every order that contributed, so you can find the one that went wrong.</p></div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <h5>How the whole thing hangs together</h5>
+  <ul>
+    <li><b>Products</b> hold a recipe of <b>materials</b>. Materials are stored in pieces, bought in packs, and carry a weighted average unit cost.</li>
+    <li><b>Saving an order</b> reserves pieces. <b>Packing an order</b> deducts them. Nothing moves in between, so a cancelled order costs you nothing.</li>
+    <li><b>Materials used</b> lives on the order and is editable, so waste is recorded where it happens and profit stays true.</li>
+    <li><b>Alert levels</b> are per material; the buy list reads the recipes backwards to name the products and orders each shortage blocks.</li>
+    <li>No accounts, no sync, no network calls. Backup is a file you export yourself.</li>
+  </ul>
+  <p style="margin-top:18px">Mockup only — nothing here is wired up. Screens 1.1 → 6.2 are in tap order.</p>
+</footer>
+
+<script>
+// pip strips: one mark per piece; solid = free, hatched = promised to open orders
+document.querySelectorAll('.pips').forEach(function(el){
+  var total = +el.dataset.total || 20,
+      full  = +el.dataset.full || 0,
+      burn  = +el.dataset.burn || 0,
+      tone  = el.dataset.tone || '',
+      scale = el.dataset.scale ? ' ×' + el.dataset.scale : '';
+  var html = '';
+  for (var i = 0; i < total; i++){
+    if (i < full - burn)      html += '<u class="f ' + tone + '"></u>';
+    else if (i < full)        html += '<u class="f burn"></u>';
+    else                      html += '<u></u>';
+  }
+  el.innerHTML = html + (scale ? '<em>' + scale + '</em>' : '');
+});
+
+// month grid for 1.3 — Aug 2026 starts on a Saturday
+(function(){
+  var cal = document.getElementById('cal-aug');
+  if (!cal) return;
+  var heads = ['S','M','T','W','T','F','S'], out = '';
+  heads.forEach(function(h){ out += '<div class="dh">' + h + '</div>'; });
+  var load = {3:1,4:2,5:1,10:1,11:2,12:1,17:1,18:1,19:2,21:2,24:1,25:2,26:2,27:2,28:3,29:1};
+  var alert = {26:1, 28:1};
+  for (var i = 0; i < 6; i++) out += '<div class="d dim"></div>';   // Jul 26–31 lead-in
+  for (var d = 1; d <= 31; d++){
+    var cls = 'd' + (d === 26 ? ' today' : '') + (d > 26 ? ' dim' : '');
+    var ticks = '';
+    for (var n = 0; n < (load[d] || 0); n++){
+      ticks += '<i class="' + (alert[d] && n === 0 ? 'a' : (d > 26 ? 'w' : '')) + '"></i>';
+    }
+    out += '<div class="' + cls + '">' + d + ticks + '</div>';
+  }
+  cal.innerHTML = out;
+})();
+</script>
+</body>
+</html>
