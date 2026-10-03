@@ -13,6 +13,7 @@ import '../../domain/usecases/adjust_materials_used.dart';
 import '../../domain/usecases/delete_order.dart';
 import '../../domain/usecases/pack_order.dart';
 import '../../domain/usecases/ship_order.dart';
+import '../../domain/usecases/update_order_note.dart';
 import 'order_detail_event.dart';
 import 'order_detail_state.dart';
 
@@ -26,6 +27,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final PackOrder packOrder;
   final ShipOrder shipOrder;
   final DeleteOrder deleteOrder;
+  final UpdateOrderNote updateOrderNote;
 
   OrderDetailBloc({
     required this.orderRepository,
@@ -36,11 +38,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     required this.packOrder,
     required this.shipOrder,
     required this.deleteOrder,
+    required this.updateOrderNote,
   }) : super(OrderDetailInitial()) {
     on<LoadOrderDetail>(_onLoadOrderDetail);
     on<AdjustMaterials>(_onAdjustMaterials);
     on<PackOrderDetail>(_onPackOrder);
     on<ShipOrderDetail>(_onShipOrder);
+    on<SaveOrderNote>(_onSaveNote);
     on<DeleteOrderEvent>(_onDeleteOrder);
   }
 
@@ -186,6 +190,23 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) =>
       _runAction(emit, event.orderId, () => shipOrder(event.orderId), 'Marked as shipped');
+
+  /// Quiet on success: ticking a to-do shouldn't flash a progress bar or a
+  /// snackbar. The reload hands the note view back what was stored, which
+  /// also undoes the tick on screen if the write failed.
+  Future<void> _onSaveNote(
+    SaveOrderNote event,
+    Emitter<OrderDetailState> emit,
+  ) async {
+    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    final result = await updateOrderNote(event.orderId, event.note);
+    if (result case Error(:final failure)) {
+      emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+      // Back to the screen before reloading, or the reload shows a spinner.
+      if (loaded != null) emit(loaded);
+    }
+    await _onLoadOrderDetail(LoadOrderDetail(event.orderId), emit);
+  }
 
   Future<void> _onDeleteOrder(
     DeleteOrderEvent event,

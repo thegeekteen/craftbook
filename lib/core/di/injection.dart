@@ -44,6 +44,7 @@ import '../../features/orders/domain/usecases/get_orders.dart';
 import '../../features/orders/domain/usecases/create_order.dart';
 import '../../features/orders/domain/usecases/pack_order.dart';
 import '../../features/orders/domain/usecases/ship_order.dart';
+import '../../features/orders/domain/usecases/update_order_note.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/update_order.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
@@ -151,6 +152,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     productRepository: getIt(),
   ));
   getIt.registerFactory(() => ShipOrder(getIt()));
+  getIt.registerFactory(() => UpdateOrderNote(getIt()));
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
   getIt.registerFactory(() => PreviewOrder(
@@ -234,6 +236,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     packOrder: getIt(),
     shipOrder: getIt(),
     deleteOrder: getIt(),
+    updateOrderNote: getIt(),
   ));
   // App-wide: lives above the router, so a singleton.
   getIt.registerSingleton(ThemeCubit(getIt()));

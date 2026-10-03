@@ -11,6 +11,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -22,9 +23,11 @@ import '../../domain/entities/order.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
+import '../widgets/note_view.dart';
 import '../widgets/order_status_ui.dart';
 import '../widgets/pack_confirm_sheet.dart';
 import 'adjust_materials_page.dart';
+import 'note_editor_page.dart';
 
 /// One order: progress, customer, items, and where the money went.
 class OrderDetailsPage extends StatelessWidget {
@@ -158,7 +161,12 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
             children: [
               _StatusTrack(order: order),
               const SizedBox(height: 12),
-              _CustomerCard(order: order, channelName: state.channel?.name),
+              _CustomerCard(
+                order: order,
+                channelName: state.channel?.name,
+                onEditNote: () => _editNote(order),
+                onNoteChanged: (note) => _saveNote(order, note),
+              ),
               const SizedBox(height: 12),
               if (state.items.isNotEmpty) ...[
                 AppCard.flush(
@@ -286,6 +294,16 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         ],
       ),
     );
+  }
+
+  Future<void> _editNote(Order order) async {
+    final saved = await NoteEditorPage.open(context, note: order.note);
+    if (saved != null && mounted) _saveNote(order, saved.note);
+  }
+
+  void _saveNote(Order order, String? note) {
+    _changed = true;
+    _bloc.add(SaveOrderNote(orderId: order.id!, note: note));
   }
 
   Future<void> _edit(Order order) async {
@@ -508,8 +526,15 @@ class _TrackDot extends StatelessWidget {
 class _CustomerCard extends StatelessWidget {
   final Order order;
   final String? channelName;
+  final VoidCallback onEditNote;
+  final ValueChanged<String?> onNoteChanged;
 
-  const _CustomerCard({required this.order, this.channelName});
+  const _CustomerCard({
+    required this.order,
+    this.channelName,
+    required this.onEditNote,
+    required this.onNoteChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -548,11 +573,11 @@ class _CustomerCard extends StatelessWidget {
               ),
             ),
           ],
-          if (order.note != null && order.note!.isNotEmpty) ...[
+          if (!NoteCodec.isBlank(order.note)) ...[
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
               decoration: BoxDecoration(
                 color: c.warnSoft,
                 borderRadius: AppRadii.controlAll,
@@ -560,13 +585,22 @@ class _CustomerCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.sticky_note_2_outlined, size: 16, color: c.warn),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Icon(Icons.sticky_note_2_outlined, size: 16, color: c.warn),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      order.note!,
-                      style: AppTextStyles.bodySmall.copyWith(color: c.ink, fontSize: 13),
-                    ),
+                  // To-dos tick right here, so a packing checklist works
+                  // without opening the editor.
+                  Expanded(child: NoteView(raw: order.note!, onChanged: onNoteChanged)),
+                  IconButton(
+                    tooltip: 'Edit note',
+                    onPressed: onEditNote,
+                    icon: Icon(Icons.edit_outlined, size: 16, color: c.warn),
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(width: 32, height: 28),
+                    padding: EdgeInsets.zero,
+                    style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   ),
                 ],
               ),

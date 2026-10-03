@@ -54,6 +54,17 @@ class ShipOrderDetail extends OrderDetailEvent {
   List<Object?> get props => [orderId];
 }
 
+/// Store a new note for the order (edited, or a to-do ticked)
+class SaveOrderNote extends OrderDetailEvent {
+  final int orderId;
+  final String? note;
+
+  const SaveOrderNote({required this.orderId, required this.note});
+
+  @override
+  List<Object?> get props => [orderId, note];
+}
+
 /// Delete the order (with stock reversal)
 class DeleteOrderEvent extends OrderDetailEvent {
   final int orderId;
