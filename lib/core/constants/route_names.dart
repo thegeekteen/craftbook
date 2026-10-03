@@ -23,8 +23,9 @@ class RouteNames {
 
   // Products
   static const String products = '/products';
-  static const String productEditor = '/products/:id/edit';
   static const String newProduct = '/products/new';
+  static const String productDetail = '/products/:id';
+  static const String productEditor = '/products/:id/edit';
   static const String receiveProductStock = '/products/:id/receive';
   static const String channels = '/channels';
 
@@ -38,6 +39,7 @@ class RouteNames {
   static String materialPath(int id) => '/materials/$id';
   static String editMaterialPath(int id) => '/materials/$id/edit';
   static String receiveStockPath(int id) => '/materials/$id/receive';
+  static String productPath(int id) => '/products/$id';
   static String productEditorPath(int id) => '/products/$id/edit';
   static String receiveProductStockPath(int id) => '/products/$id/receive';
   static String productEarningsPath(int id, DateTime start, DateTime end) =>
