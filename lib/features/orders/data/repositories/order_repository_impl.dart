@@ -237,15 +237,21 @@ class OrderRepositoryImpl implements OrderRepository {
         }
       }
 
-      // Recalculate total material cost for the order
+      // Recalculate total material cost and profit for the order
       final updatedMaterials = await dao.getOrderMaterials(orderId);
       final totalCost = updatedMaterials
           .fold<double>(0.0, (sum, m) => sum + m.actualQuantity * m.unitCost);
+
+      final order = await dao.getOrderById(orderId);
+      final newProfit = order != null
+          ? order.totalSales - totalCost - order.channelFees - order.shippingCost
+          : 0.0;
 
       final now = DateTime.now();
       await (dao.update(dao.orders)..where((t) => t.id.equals(orderId)))
           .write(db.OrdersCompanion(
         totalMaterialCost: Value(totalCost),
+        profit: Value(newProfit),
         updatedAt: Value(now),
       ));
 
