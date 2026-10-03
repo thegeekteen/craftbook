@@ -227,60 +227,37 @@ class _EarningsViewState extends State<_EarningsView> {
             if (state.wasteSummary.totalWasteQuantity > 0) ...[
               SectionCard(
                 label: 'Waste',
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                padding: EdgeInsets.zero,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${state.wasteSummary.totalWasteQuantity} pcs wasted',
-                            style: AppTextStyles.bodyMedium
-                                .copyWith(color: AppColors.alert),
+                  children: state.wasteSummary.items.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.materialName,
+                              style: AppTextStyles.bodyMedium
+                                  .copyWith(color: AppColors.ink),
+                            ),
                           ),
-                        ),
-                        CurrencyText(
-                          amount: state.wasteSummary.totalWasteCost,
-                          style: AppTextStyles.bodyLarge
-                              .copyWith(color: AppColors.alert, fontWeight: FontWeight.w700),
-                        ),
-                      ],
-                    ),
-                    if (state.wasteSummary.items.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      ...state.wasteSummary.items.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.materialName,
-                                      style: AppTextStyles.bodyMedium
-                                          .copyWith(color: AppColors.ink),
-                                    ),
-                                    Text(
-                                      '${item.quantity} pcs',
-                                      style: AppTextStyles.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              CurrencyText(
-                                amount: item.cost,
-                                style: AppTextStyles.bodySmall
-                                    .copyWith(color: AppColors.alert, fontWeight: FontWeight.w600),
-                              ),
-                            ],
+                          Text(
+                            '${item.quantity} pcs wasted',
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: AppColors.muted),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          CurrencyText(
+                            amount: item.cost,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.alert,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ),
-                    ],
-                  ],
+                    ),
+                  ).toList(),
                 ),
               ),
             ],
