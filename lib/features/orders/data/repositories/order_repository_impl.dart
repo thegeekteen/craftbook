@@ -221,6 +221,81 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<Result<void>> updateOrder({
+    required int id,
+    required String customerName,
+    required String customerAddress,
+    String? note,
+    required DateTime orderDate,
+    required DateTime shipByDate,
+    required int channelId,
+    required double totalSales,
+    required double totalMaterialCost,
+    required double channelFees,
+    required double shippingCost,
+    required double profit,
+    List<OrderItemInput>? items,
+    List<OrderMaterialInput>? materials,
+    List<OrderProductInput>? products,
+  }) async {
+    try {
+      await dao.transaction(() async {
+        await (dao.update(dao.orders)..where((t) => t.id.equals(id)))
+            .write(db.OrdersCompanion(
+          customerName: Value(customerName),
+          customerAddress: Value(customerAddress),
+          note: Value(note),
+          orderDate: Value(orderDate),
+          shipByDate: Value(shipByDate),
+          channelId: Value(channelId),
+          totalSales: Value(totalSales),
+          totalMaterialCost: Value(totalMaterialCost),
+          channelFees: Value(channelFees),
+          shippingCost: Value(shippingCost),
+          profit: Value(profit),
+          updatedAt: Value(DateTime.now()),
+        ));
+
+        if (items == null) return;
+        await dao.deleteOrderItemsByOrderId(id);
+        await dao.deleteOrderMaterialsByOrderId(id);
+        await dao.deleteOrderProductsByOrderId(id);
+        for (final item in items) {
+          await dao.addOrderItem(db.OrderItemsCompanion(
+            orderId: Value(id),
+            productId: Value(item.productId),
+            quantity: Value(item.quantity),
+            unitPrice: Value(item.unitPrice),
+            subtotal: Value(item.subtotal),
+          ));
+        }
+        for (final material in materials ?? const <OrderMaterialInput>[]) {
+          await dao.addOrderMaterial(db.OrderMaterialsCompanion(
+            orderId: Value(id),
+            materialId: Value(material.materialId),
+            plannedQuantity: Value(material.plannedQuantity),
+            actualQuantity: Value(material.actualQuantity),
+            wasteQuantity: Value(material.wasteQuantity),
+            wasteReason: Value(material.wasteReason),
+            unitCost: Value(material.unitCost),
+          ));
+        }
+        for (final product in products ?? const <OrderProductInput>[]) {
+          await dao.addOrderProduct(db.OrderProductsCompanion(
+            orderId: Value(id),
+            productId: Value(product.productId),
+            quantity: Value(product.quantity),
+            unitCost: Value(product.unitCost),
+          ));
+        }
+      });
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> packOrder(int orderId) async {
     try {
       final now = DateTime.now();

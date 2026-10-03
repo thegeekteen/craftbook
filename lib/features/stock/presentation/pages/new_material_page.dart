@@ -11,25 +11,33 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/section_label.dart';
+import '../../../../core/error/result.dart';
+import '../../domain/repositories/material_repository.dart';
 import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
 import '../bloc/materials_state.dart';
 
-/// Add a material: what it is, how it's sold, when to reorder.
+/// Add or edit a material: what it is, how it's sold, when to reorder.
+/// Pass [materialId] to edit; stock counts are changed by receiving or
+/// counting, never here.
 class NewMaterialPage extends StatelessWidget {
-  const NewMaterialPage({super.key});
+  final int? materialId;
+
+  const NewMaterialPage({super.key, this.materialId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<MaterialsBloc>(),
-      child: const _NewMaterialView(),
+      child: _NewMaterialView(materialId: materialId),
     );
   }
 }
 
 class _NewMaterialView extends StatefulWidget {
-  const _NewMaterialView();
+  final int? materialId;
+
+  const _NewMaterialView({this.materialId});
 
   @override
   State<_NewMaterialView> createState() => _NewMaterialViewState();
@@ -44,18 +52,58 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   final _initialQty = TextEditingController(text: '0');
   final _supplier = TextEditingController();
   bool _saving = false;
+  bool _loading = false;
+  String? _loadError;
+
+  bool get _isEditing => widget.materialId != null;
 
   @override
   void initState() {
     super.initState();
+    if (_isEditing) {
+      _loading = true;
+      _loadMaterial();
+    }
     for (final ctrl in [_packSize, _packPrice]) {
       ctrl.addListener(() => setState(() {}));
     }
   }
 
+  Future<void> _loadMaterial() async {
+    final result =
+        await getIt<MaterialRepository>().getMaterialById(widget.materialId!);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        setState(() {
+          _loadError = failure.message;
+          _loading = false;
+        });
+      case Success(value: null):
+        setState(() {
+          _loadError = 'Material not found';
+          _loading = false;
+        });
+      case Success(:final value?):
+        _name.text = value.name;
+        _packSize.text = '${value.packSize}';
+        _packPrice.text = value.packPrice.toStringAsFixed(2);
+        _alertLevel.text = '${value.alertLevel}';
+        _supplier.text = value.supplier ?? '';
+        setState(() => _loading = false);
+    }
+  }
+
   @override
   void dispose() {
-    for (final ctrl in [_name, _packSize, _packPrice, _alertLevel, _initialQty, _supplier]) {
+    for (final ctrl in [
+      _name,
+      _packSize,
+      _packPrice,
+      _alertLevel,
+      _initialQty,
+      _supplier
+    ]) {
       ctrl.dispose();
     }
     super.dispose();
@@ -71,14 +119,28 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    context.read<MaterialsBloc>().add(CreateMaterialEvent(
-          name: _name.text.trim(),
-          packSize: int.parse(_packSize.text),
-          packPrice: double.parse(_packPrice.text),
-          alertLevel: int.tryParse(_alertLevel.text) ?? 0,
-          initialQuantity: int.tryParse(_initialQty.text) ?? 0,
-          supplier: _supplier.text.trim().isEmpty ? null : _supplier.text.trim(),
-        ));
+    final supplier =
+        _supplier.text.trim().isEmpty ? null : _supplier.text.trim();
+    final bloc = context.read<MaterialsBloc>();
+    if (_isEditing) {
+      bloc.add(UpdateMaterialEvent(
+        id: widget.materialId!,
+        name: _name.text.trim(),
+        packSize: int.parse(_packSize.text),
+        packPrice: double.parse(_packPrice.text),
+        alertLevel: int.tryParse(_alertLevel.text) ?? 0,
+        supplier: supplier,
+      ));
+      return;
+    }
+    bloc.add(CreateMaterialEvent(
+      name: _name.text.trim(),
+      packSize: int.parse(_packSize.text),
+      packPrice: double.parse(_packPrice.text),
+      alertLevel: int.tryParse(_alertLevel.text) ?? 0,
+      initialQuantity: int.tryParse(_initialQty.text) ?? 0,
+      supplier: supplier,
+    ));
   }
 
   String? _positiveInt(String? v) {
@@ -97,12 +159,18 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final digits = [FilteringTextInputFormatter.digitsOnly];
-    final money = [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))];
+    final money = [
+      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
+    ];
 
     return BlocListener<MaterialsBloc, MaterialsState>(
       listener: (context, state) {
         if (state is MaterialCreated) {
           context.showSnackBar('${_name.text.trim()} added');
+          context.pop(true);
+        }
+        if (state is MaterialUpdated) {
+          context.showSnackBar('${_name.text.trim()} updated');
           context.pop(true);
         }
         if (state is MaterialsError) {
@@ -111,106 +179,131 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('New material')),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: AppSpacing.page.copyWith(top: 8),
-            children: [
-              TextFormField(
-                controller: _name,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'e.g. Glass seed beads 2mm',
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
-              ),
-              const SectionLabel('How you buy it'),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _packSize,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digits,
-                      decoration: const InputDecoration(labelText: 'Pieces per pack'),
-                      validator: _positiveInt,
+        appBar:
+            AppBar(title: Text(_isEditing ? 'Edit material' : 'New material')),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _loadError != null
+                ? Center(
+                    child: Text(_loadError!,
+                        style:
+                            AppTextStyles.bodySmall.copyWith(color: c.alert)))
+                : Form(
+                    key: _formKey,
+                    child: ListView(
+                      padding: AppSpacing.page.copyWith(top: 8),
+                      children: [
+                        TextFormField(
+                          controller: _name,
+                          autofocus: !_isEditing,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Name',
+                            hintText: 'e.g. Glass seed beads 2mm',
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter a name'
+                              : null,
+                        ),
+                        const SectionLabel('How you buy it'),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _packSize,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: digits,
+                                decoration: const InputDecoration(
+                                    labelText: 'Pieces per pack'),
+                                validator: _positiveInt,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _packPrice,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                inputFormatters: money,
+                                decoration: const InputDecoration(
+                                    labelText: 'Pack price', prefixText: '₱ '),
+                                validator: (v) {
+                                  final n = double.tryParse(v ?? '');
+                                  return (n == null || n < 0)
+                                      ? 'Enter a price'
+                                      : null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_unitCost != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                            child: Text(
+                              '${CurrencyFormatter.format(_unitCost!)} per piece',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                  color: c.coin, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _supplier,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                              labelText: 'Supplier (optional)'),
+                        ),
+                        const SectionLabel('Stock'),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!_isEditing) ...[
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _initialQty,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: digits,
+                                  decoration: const InputDecoration(
+                                      labelText: 'Pieces on hand now'),
+                                  validator: _nonNegativeInt,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Expanded(
+                              child: TextFormField(
+                                controller: _alertLevel,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: digits,
+                                decoration: const InputDecoration(
+                                    labelText: 'Reorder at'),
+                                validator: _nonNegativeInt,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                          child: Text(
+                            "You'll see a warning and it goes on the buy list when stock drops to the reorder level.",
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: c.muted),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _packPrice,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: money,
-                      decoration: const InputDecoration(labelText: 'Pack price', prefixText: '₱ '),
-                      validator: (v) {
-                        final n = double.tryParse(v ?? '');
-                        return (n == null || n < 0) ? 'Enter a price' : null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              if (_unitCost != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                  child: Text(
-                    '${CurrencyFormatter.format(_unitCost!)} per piece',
-                    style: AppTextStyles.bodySmall.copyWith(color: c.coin, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _supplier,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(labelText: 'Supplier (optional)'),
-              ),
-              const SectionLabel('Stock'),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _initialQty,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digits,
-                      decoration: const InputDecoration(labelText: 'Pieces on hand now'),
-                      validator: _nonNegativeInt,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _alertLevel,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: digits,
-                      decoration: const InputDecoration(labelText: 'Reorder at'),
-                      validator: _nonNegativeInt,
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                child: Text(
-                  "You'll see a warning and it goes on the buy list when stock drops to the reorder level.",
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
-                ),
-              ),
-            ],
-          ),
-        ),
         bottomNavigationBar: BottomActionBar(children: [
           Expanded(
             child: FilledButton(
               onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Saving…' : 'Add material'),
+              child: Text(_saving
+                  ? 'Saving…'
+                  : (_isEditing ? 'Save changes' : 'Add material')),
             ),
           ),
         ]),

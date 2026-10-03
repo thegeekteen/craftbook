@@ -17,6 +17,17 @@ abstract class MaterialRepository {
     required int alertLevel,
     String? supplier,
   });
+  /// Edits the master data. Stock counts are never touched. [unitCost]
+  /// (the weighted average) is only reset to packPrice / packSize when the
+  /// price or pack size actually changed.
+  Future<Result<void>> updateMaterial({
+    required int id,
+    required String name,
+    required int packSize,
+    required double packPrice,
+    required int alertLevel,
+    String? supplier,
+  });
   Future<Result<void>> receiveStock({
     required int materialId,
     required int packsReceived,

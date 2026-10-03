@@ -43,6 +43,9 @@ class StockReceived extends MaterialsState {}
 /// Material was created successfully
 class MaterialCreated extends MaterialsState {}
 
+/// Material was edited successfully
+class MaterialUpdated extends MaterialsState {}
+
 /// Material was deleted successfully
 class MaterialDeleted extends MaterialsState {}
 

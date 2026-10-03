@@ -46,18 +46,25 @@ class UpdateProductEvent extends ProductsEvent {
   final String? name;
   final String? description;
   final double? sellPrice;
+  final double? unitCost;
   final bool? isActive;
+  final bool? isStandalone;
+  final int? alertLevel;
 
   const UpdateProductEvent({
     required this.id,
     this.name,
     this.description,
     this.sellPrice,
+    this.unitCost,
     this.isActive,
+    this.isStandalone,
+    this.alertLevel,
   });
 
   @override
-  List<Object?> get props => [id, name, description, sellPrice, isActive];
+  List<Object?> get props =>
+      [id, name, description, sellPrice, unitCost, isActive, isStandalone, alertLevel];
 }
 
 /// Delete a product

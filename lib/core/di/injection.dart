@@ -32,6 +32,7 @@ import '../../features/stock/domain/usecases/adjust_stock.dart';
 import '../../features/stock/domain/usecases/get_buy_list.dart';
 import '../../features/stock/domain/usecases/get_blocked_products.dart';
 import '../../features/stock/domain/usecases/delete_material.dart';
+import '../../features/stock/domain/usecases/update_material.dart';
 
 import '../../features/orders/data/repositories/order_repository_impl.dart';
 import '../../features/orders/domain/repositories/order_repository.dart';
@@ -40,6 +41,7 @@ import '../../features/orders/domain/usecases/create_order.dart';
 import '../../features/orders/domain/usecases/pack_order.dart';
 import '../../features/orders/domain/usecases/ship_order.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
+import '../../features/orders/domain/usecases/update_order.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
 import '../../features/orders/domain/usecases/delete_order.dart';
 import '../../features/orders/domain/usecases/get_order_list_entries.dart';
@@ -117,6 +119,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   // Use Cases - Stock
   getIt.registerFactory(() => GetMaterials(getIt()));
   getIt.registerFactory(() => GetMaterialDetail(getIt()));
+  getIt.registerFactory(() => UpdateMaterial(getIt()));
   getIt.registerFactory(() => ReceiveStock(getIt()));
   getIt.registerFactory(() => AdjustStock(getIt()));
   getIt.registerFactory(() => GetBuyList(getIt()));
@@ -142,6 +145,13 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
   getIt.registerFactory(() => PreviewOrder(
+    productRepository: getIt(),
+    materialRepository: getIt(),
+    calculateOrderProfit: getIt(),
+    orderRepository: getIt(),
+  ));
+  getIt.registerFactory(() => UpdateOrder(
+    orderRepository: getIt(),
     productRepository: getIt(),
     materialRepository: getIt(),
     calculateOrderProfit: getIt(),
@@ -192,6 +202,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     getBuyList: getIt(),
     receiveStock: getIt(),
     deleteMaterial: getIt(),
+    updateMaterial: getIt(),
     materialRepository: getIt(),
   ));
   getIt.registerFactory(() => OrdersListBloc(
@@ -200,6 +211,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   ));
   getIt.registerFactory(() => NewOrderBloc(
     createOrder: getIt(),
+    updateOrder: getIt(),
+    orderRepository: getIt(),
     calculateOrderProfit: getIt(),
     previewOrder: getIt(),
   ));

@@ -103,6 +103,7 @@ class ProductRepositoryImpl implements ProductRepository {
     String? name,
     String? description,
     double? sellPrice,
+    double? unitCost,
     bool? isActive,
     bool? isStandalone,
     int? alertLevel,
@@ -116,13 +117,15 @@ class ProductRepositoryImpl implements ProductRepository {
       await dao.updateProduct(db.Product(
         id: existing.id,
         name: name ?? existing.name,
-        description: description ?? existing.description,
+        description: description == null
+            ? existing.description
+            : (description.trim().isEmpty ? null : description.trim()),
         sellPrice: sellPrice ?? existing.sellPrice,
         isActive: isActive ?? existing.isActive,
         isStandalone: isStandalone ?? existing.isStandalone,
         quantityOnHand: existing.quantityOnHand,
         quantityPromised: existing.quantityPromised,
-        unitCost: existing.unitCost,
+        unitCost: unitCost ?? existing.unitCost,
         alertLevel: alertLevel ?? existing.alertLevel,
         createdAt: existing.createdAt,
         updatedAt: DateTime.now(),
@@ -139,20 +142,20 @@ class ProductRepositoryImpl implements ProductRepository {
     List<BomItemInput> items,
   ) async {
     try {
-      // Delete existing BOM items for this product
-      final existing = await dao.getBomItems(productId);
-      for (final item in existing) {
-        await dao.deleteBomItem(item.id);
-      }
-
-      // Insert new BOM items
-      for (final item in items) {
-        await dao.addBomItem(db.BomItemsCompanion(
-          productId: Value(productId),
-          materialId: Value(item.materialId),
-          quantityRequired: Value(item.quantityRequired),
-        ));
-      }
+      // One transaction so a failed insert can't leave the BOM half-replaced.
+      await dao.transaction(() async {
+        final existing = await dao.getBomItems(productId);
+        for (final item in existing) {
+          await dao.deleteBomItem(item.id);
+        }
+        for (final item in items) {
+          await dao.addBomItem(db.BomItemsCompanion(
+            productId: Value(productId),
+            materialId: Value(item.materialId),
+            quantityRequired: Value(item.quantityRequired),
+          ));
+        }
+      });
 
       return const Success(null);
     } catch (e) {

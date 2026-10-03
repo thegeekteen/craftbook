@@ -8,6 +8,8 @@ import 'package:craftbook/features/earnings/data/repositories/earnings_repositor
 import 'package:craftbook/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
+import 'package:craftbook/features/products/data/repositories/product_repository_impl.dart';
+import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/data/repositories/material_repository_impl.dart';
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
@@ -91,6 +93,101 @@ void main() {
       await materials.deductMaterials(id, 6);
       final m = ok(await materials.getMaterialById(id))!;
       expect(m.quantityPromised, 4);
+    });
+  });
+
+  group('updateMaterial', () {
+    test('edits master data without touching stock counts', () async {
+      final id = await material(onHand: 40, promised: 15);
+      ok(await materials.updateMaterial(
+        id: id,
+        name: 'Wool',
+        packSize: 10,
+        packPrice: 100,
+        alertLevel: 8,
+        supplier: 'Local shop',
+      ));
+      final m = ok(await materials.getMaterialById(id))!;
+      expect(m.name, 'Wool');
+      expect(m.alertLevel, 8);
+      expect(m.supplier, 'Local shop');
+      expect(m.quantityOnHand, 40);
+      expect(m.quantityPromised, 15);
+    });
+
+    test('keeps the weighted-average cost when price and pack are unchanged', () async {
+      final id = await material(pack: 10);
+      ok(await materials.receiveStock(materialId: id, packsReceived: 1, pricePerPack: 200));
+      final before = ok(await materials.getMaterialById(id))!;
+      ok(await materials.updateMaterial(
+        id: id,
+        name: 'Renamed',
+        packSize: before.packSize,
+        packPrice: before.packPrice,
+        alertLevel: before.alertLevel,
+      ));
+      expect(ok(await materials.getMaterialById(id))!.unitCost, before.unitCost);
+    });
+
+    test('resets unit cost to packPrice / packSize when the price changes', () async {
+      final id = await material(pack: 10);
+      ok(await materials.updateMaterial(
+        id: id,
+        name: 'Yarn',
+        packSize: 20,
+        packPrice: 100,
+        alertLevel: 5,
+      ));
+      expect(ok(await materials.getMaterialById(id))!.unitCost, 5);
+    });
+
+    test('unknown id fails with NotFound', () async {
+      final r = await materials.updateMaterial(
+        id: 999,
+        name: 'x',
+        packSize: 1,
+        packPrice: 1,
+        alertLevel: 0,
+      );
+      expect(r, isA<Error<void>>());
+    });
+  });
+
+  group('updateProduct', () {
+    test('clears the description when given an empty one', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(name: 'Tulip', description: 'Pink', sellPrice: 450));
+      ok(await repo.updateProduct(id: id, description: ''));
+      expect(ok(await repo.getProductById(id))!.description, isNull);
+    });
+
+    test('null description and unitCost leave existing values alone', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(
+        name: 'Pin',
+        description: 'Gold',
+        sellPrice: 100,
+        isStandalone: true,
+        initialQuantity: 5,
+        initialUnitCost: 20,
+      ));
+      ok(await repo.updateProduct(id: id, name: 'Pin v2'));
+      var p = ok(await repo.getProductById(id))!;
+      expect((p.name, p.description, p.unitCost, p.quantityOnHand), ('Pin v2', 'Gold', 20.0, 5));
+
+      ok(await repo.updateProduct(id: id, unitCost: 25));
+      p = ok(await repo.getProductById(id))!;
+      expect((p.unitCost, p.quantityOnHand), (25.0, 5));
+    });
+
+    test('saveBomItems replaces the previous BOM', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
+      final yarn = await material();
+      ok(await repo.saveBomItems(id, [BomItemInput(materialId: yarn, quantityRequired: 2)]));
+      ok(await repo.saveBomItems(id, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
+      final bom = ok(await repo.getBomItems(id));
+      expect(bom.map((b) => b.quantityRequired), [5]);
     });
   });
 

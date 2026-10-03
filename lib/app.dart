@@ -105,6 +105,13 @@ class CraftbookApp extends StatelessWidget {
         builder: (context, state) => const NewOrderPage(),
       ),
       GoRoute(
+        path: RouteNames.editOrder,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return NewOrderPage(orderId: id);
+        },
+      ),
+      GoRoute(
         path: RouteNames.orderDetail,
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
@@ -114,6 +121,13 @@ class CraftbookApp extends StatelessWidget {
       GoRoute(
         path: RouteNames.newMaterial,
         builder: (context, state) => const NewMaterialPage(),
+      ),
+      GoRoute(
+        path: RouteNames.editMaterial,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return NewMaterialPage(materialId: id);
+        },
       ),
       GoRoute(
         path: RouteNames.materialDetail,

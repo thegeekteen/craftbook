@@ -24,6 +24,7 @@ import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/usecases/get_channels.dart';
+import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/usecases/preview_order.dart';
 import '../bloc/new_order_bloc.dart';
@@ -31,29 +32,34 @@ import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
 import '../widgets/product_picker_sheet.dart';
 
-/// New order: Customer → Items → Review.
+/// New order: Customer → Items → Review. With [orderId] it edits that order
+/// instead: pending orders go through all three steps, packed orders only
+/// get the details form (items are locked), shipped orders only the note.
 class NewOrderPage extends StatelessWidget {
-  const NewOrderPage({super.key});
+  final int? orderId;
+
+  const NewOrderPage({super.key, this.orderId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<NewOrderBloc>()..add(ResetOrder()),
-      child: const _NewOrderView(),
+      create: (_) => getIt<NewOrderBloc>()
+        ..add(orderId == null ? ResetOrder() : LoadExistingOrder(orderId!)),
+      child: _NewOrderView(orderId: orderId),
     );
   }
 }
 
 class _NewOrderView extends StatefulWidget {
-  const _NewOrderView();
+  final int? orderId;
+
+  const _NewOrderView({this.orderId});
 
   @override
   State<_NewOrderView> createState() => _NewOrderViewState();
 }
 
 class _NewOrderViewState extends State<_NewOrderView> {
-  static const _stepNames = ['Customer', 'Items', 'Review'];
-
   final _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
   int _step = 0;
@@ -66,6 +72,26 @@ class _NewOrderViewState extends State<_NewOrderView> {
   int? _channelId;
   List<Channel> _channels = [];
   bool _channelsLoaded = false;
+
+  /// True once the form has been filled from the order being edited.
+  bool _seeded = false;
+  OrderStatus? _editingStatus;
+
+  bool get _isEditing => widget.orderId != null;
+
+  /// Packed and shipped orders have had their stock deducted, so items stay.
+  bool get _itemsLocked => _editingStatus == OrderStatus.packed || _editingStatus == OrderStatus.shipped;
+
+  /// Shipped orders are history; only the note can change.
+  bool get _noteOnly => _editingStatus == OrderStatus.shipped;
+
+  List<String> get _stepNames => _itemsLocked ? const ['Details'] : const ['Customer', 'Items', 'Review'];
+
+  /// Inactive channels are hidden, except the one this order already uses.
+  List<Channel> get _visibleChannels => [
+        for (final ch in _channels)
+          if (ch.isActive || ch.id == _channelId) ch,
+      ];
 
   @override
   void initState() {
@@ -83,13 +109,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
   }
 
   Future<void> _loadChannels() async {
-    final result = await getIt<GetChannels>()(activeOnly: true);
+    final result = await getIt<GetChannels>()(activeOnly: !_isEditing);
     if (!mounted) return;
     setState(() {
       _channelsLoaded = true;
       if (result case Success(:final value)) {
         _channels = value;
-        if (_channelId == null && value.isNotEmpty) _channelId = value.first.id;
+        if (_channelId == null && value.isNotEmpty) _channelId = value.where((c) => c.isActive).firstOrNull?.id;
       }
     });
     if (result case Error(:final failure)) {
@@ -97,7 +123,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     }
   }
 
-  Channel? get _channel => _channels.where((c) => c.id == _channelId).firstOrNull;
+  Channel? get _channel => _visibleChannels.where((c) => c.id == _channelId).firstOrNull;
 
   void _goTo(int step) {
     FocusScope.of(context).unfocus();
@@ -127,13 +153,44 @@ class _NewOrderViewState extends State<_NewOrderView> {
     _goTo(1);
   }
 
+  void _seed(NewOrderDetailsFilled d) {
+    _seeded = true;
+    _editingStatus = d.editingStatus;
+    _nameController.text = d.customerName;
+    _addressController.text = d.customerAddress;
+    _noteController.text = d.note ?? '';
+    _orderDate = DateUtils.dateOnly(d.orderDate);
+    _shipByDate = DateUtils.dateOnly(d.shipByDate);
+    _channelId = d.channelId == 0 ? _channelId : d.channelId;
+  }
+
+  /// Packed and shipped orders have no later steps, so the details form saves
+  /// straight away.
+  void _saveDetailsOnly() {
+    if (!_formKey.currentState!.validate()) return;
+    if (_channelId == null) {
+      context.showSnackBar('Pick a sales channel', isError: true);
+      return;
+    }
+    final bloc = context.read<NewOrderBloc>();
+    bloc.add(SetCustomerDetails(
+      customerName: _nameController.text.trim(),
+      customerAddress: _addressController.text.trim(),
+      channelId: _channelId!,
+      orderDate: _orderDate,
+      shipByDate: _shipByDate,
+      note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+    ));
+    bloc.add(SaveOrder());
+  }
+
   Future<bool> _confirmDiscard(List<OrderItemInput> items) async {
-    final dirty = _nameController.text.trim().isNotEmpty || items.isNotEmpty;
+    final dirty = _isEditing || _nameController.text.trim().isNotEmpty || items.isNotEmpty;
     if (!dirty) return true;
     return ConfirmDialog.show(
       context,
-      title: 'Discard this order?',
-      message: "What you've entered so far will be lost.",
+      title: _isEditing ? 'Discard your changes?' : 'Discard this order?',
+      message: _isEditing ? 'The order stays as it was.' : "What you've entered so far will be lost.",
       confirmText: 'Discard',
       cancelText: 'Keep editing',
       isDestructive: true,
@@ -152,18 +209,30 @@ class _NewOrderViewState extends State<_NewOrderView> {
   Widget build(BuildContext context) {
     return BlocConsumer<NewOrderBloc, NewOrderState>(
       listener: (context, state) {
+        if (state is NewOrderDetailsFilled && _isEditing && !_seeded) {
+          setState(() => _seed(state));
+        }
         if (state is NewOrderSaved) {
-          context.showSnackBar('Order #${state.orderId} saved');
+          context.showSnackBar(_isEditing ? 'Order #${state.orderId} updated' : 'Order #${state.orderId} saved');
           context.pop(true);
         }
         if (state is NewOrderError) {
           context.showSnackBar(state.message, isError: true);
+          // Couldn't even load the order to edit; nothing to show.
+          if (_isEditing && !_seeded) context.pop();
         }
       },
       buildWhen: (_, s) => s is! NewOrderError,
       builder: (context, state) {
         final details = state is NewOrderDetailsFilled ? state : null;
         final items = details?.items ?? const <OrderItemInput>[];
+
+        if (_isEditing && !_seeded) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Edit order')),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
         return PopScope(
           canPop: false,
@@ -177,22 +246,26 @@ class _NewOrderViewState extends State<_NewOrderView> {
                 icon: Icon(_step == 0 ? Icons.close_rounded : Icons.arrow_back_rounded),
                 onPressed: () => _handleBack(items),
               ),
-              title: const Text('New order'),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(40),
-                child: _StepHeader(names: _stepNames, current: _step),
-              ),
+              title: Text(_isEditing ? 'Edit order #${widget.orderId}' : 'New order'),
+              bottom: _itemsLocked
+                  ? null
+                  : PreferredSize(
+                      preferredSize: const Size.fromHeight(40),
+                      child: _StepHeader(names: _stepNames, current: _step),
+                    ),
             ),
             body: PageView(
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildCustomerStep(),
-                _buildItemsStep(items),
-                _buildReviewStep(details),
+                if (!_itemsLocked) ...[
+                  _buildItemsStep(items),
+                  _buildReviewStep(details),
+                ],
               ],
             ),
-            bottomNavigationBar: _buildBottomBar(details, items),
+            bottomNavigationBar: _itemsLocked ? _buildDetailsOnlyBar(details) : _buildBottomBar(details, items),
           ),
         );
       },
@@ -212,6 +285,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
+            enabled: !_noteOnly,
             decoration: const InputDecoration(labelText: 'Customer name'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
           ),
@@ -221,6 +295,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
             textCapitalization: TextCapitalization.sentences,
             minLines: 1,
             maxLines: 3,
+            enabled: !_noteOnly,
             decoration: const InputDecoration(labelText: 'Address (optional)'),
           ),
           const SizedBox(height: 8),
@@ -231,7 +306,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
               padding: EdgeInsets.symmetric(vertical: 8),
               child: LinearProgressIndicator(),
             )
-          else if (_channels.isEmpty)
+          else if (_visibleChannels.isEmpty)
             InlineBanner(
               icon: Icons.storefront_outlined,
               tone: BannerTone.warn,
@@ -244,14 +319,14 @@ class _NewOrderViewState extends State<_NewOrderView> {
               },
             )
           else
-            ChoiceChipRow<int?>.single(
+            _locked(ChoiceChipRow<int?>.single(
               wrap: true,
               selected: _channelId,
               onSelected: (id) => setState(() => _channelId = id),
-              options: [for (final ch in _channels) ChipOption(ch.id, ch.name)],
-            ),
+              options: [for (final ch in _visibleChannels) ChipOption(ch.id, ch.name)],
+            )),
           const SizedBox(height: 16),
-          Row(
+          _locked(Row(
             children: [
               Expanded(
                 child: DateField(
@@ -273,7 +348,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                 ),
               ),
             ],
-          ),
+          )),
           const SizedBox(height: 12),
           TextFormField(
             controller: _noteController,
@@ -290,6 +365,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
       ),
     );
   }
+
+  /// Dims and blocks [child] when only the note may change.
+  Widget _locked(Widget child) =>
+      _noteOnly ? IgnorePointer(child: Opacity(opacity: 0.5, child: child)) : child;
 
   // ── Step 2 ───────────────────────────────────────────────────────────
 
@@ -442,6 +521,18 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
   // ── Bottom bar ───────────────────────────────────────────────────────
 
+  Widget _buildDetailsOnlyBar(NewOrderDetailsFilled? d) {
+    final saving = d?.isSaving ?? false;
+    return BottomActionBar(children: [
+      Expanded(
+        child: FilledButton(
+          onPressed: saving ? null : _saveDetailsOnly,
+          child: Text(saving ? 'Saving…' : 'Save changes'),
+        ),
+      ),
+    ]);
+  }
+
   Widget _buildBottomBar(NewOrderDetailsFilled? d, List<OrderItemInput> items) {
     final total = CurrencyFormatter.formatShort(d?.totalSales ?? 0);
     switch (_step) {
@@ -477,7 +568,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check_rounded, size: 20),
-            label: const Text('Save order'),
+            label: Text(_isEditing ? 'Save changes' : 'Save order'),
           ),
         ]);
     }

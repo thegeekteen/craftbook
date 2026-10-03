@@ -6,6 +6,7 @@ import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_buy_list.dart';
 import '../../domain/usecases/get_materials.dart';
 import '../../domain/usecases/receive_stock.dart';
+import '../../domain/usecases/update_material.dart';
 import 'materials_event.dart';
 import 'materials_state.dart';
 
@@ -15,6 +16,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
   final GetBuyList getBuyList;
   final ReceiveStock receiveStock;
   final DeleteMaterial deleteMaterial;
+  final UpdateMaterial updateMaterial;
   final MaterialRepository materialRepository;
 
   MaterialsBloc({
@@ -22,12 +24,14 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     required this.getBuyList,
     required this.receiveStock,
     required this.deleteMaterial,
+    required this.updateMaterial,
     required this.materialRepository,
   }) : super(MaterialsInitial()) {
     on<LoadMaterials>(_onLoadMaterials);
     on<LoadBuyList>(_onLoadBuyList);
     on<ReceiveStockEvent>(_onReceiveStock);
     on<CreateMaterialEvent>(_onCreateMaterial);
+    on<UpdateMaterialEvent>(_onUpdateMaterial);
     on<DeleteMaterialEvent>(_onDeleteMaterial);
   }
 
@@ -99,6 +103,27 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
         emit(MaterialsError(failure.message));
       case Success():
         emit(MaterialCreated());
+        add(const LoadMaterials());
+    }
+  }
+
+  Future<void> _onUpdateMaterial(
+    UpdateMaterialEvent event,
+    Emitter<MaterialsState> emit,
+  ) async {
+    final result = await updateMaterial(
+      id: event.id,
+      name: event.name,
+      packSize: event.packSize,
+      packPrice: event.packPrice,
+      alertLevel: event.alertLevel,
+      supplier: event.supplier,
+    );
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success():
+        emit(MaterialUpdated());
         add(const LoadMaterials());
     }
   }

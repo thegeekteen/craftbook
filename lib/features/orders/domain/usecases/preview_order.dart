@@ -5,6 +5,9 @@ import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order_item.dart';
+import '../entities/order_material.dart';
+import '../entities/order_product.dart';
+import '../repositories/order_repository.dart';
 import 'calculate_order_profit.dart';
 
 /// One thing an order will reserve: a material (BOM products) or a
@@ -63,16 +66,38 @@ class PreviewOrder {
   final MaterialRepository materialRepository;
   final CalculateOrderProfit calculateOrderProfit;
 
+  /// Only needed to preview an edit (see `excludeOrderId`).
+  final OrderRepository? orderRepository;
+
   PreviewOrder({
     required this.productRepository,
     required this.materialRepository,
     required this.calculateOrderProfit,
+    this.orderRepository,
   });
 
+  /// With [excludeOrderId] (an order being edited) that order's own
+  /// reservations count as free, since saving releases them first.
   Future<Result<OrderPreview>> call({
     required List<OrderItemInput> items,
     required int channelId,
+    int? excludeOrderId,
   }) async {
+    final ownMaterials = <int, int>{};
+    final ownProducts = <int, int>{};
+    if (excludeOrderId != null && orderRepository != null) {
+      final mats = await orderRepository!.getOrderMaterials(excludeOrderId);
+      if (mats case Error(:final failure)) return Error(failure);
+      for (final m in (mats as Success<List<OrderMaterial>>).value) {
+        ownMaterials[m.materialId] = (ownMaterials[m.materialId] ?? 0) + m.plannedQuantity;
+      }
+      final prods = await orderRepository!.getOrderProducts(excludeOrderId);
+      if (prods case Error(:final failure)) return Error(failure);
+      for (final p in (prods as Success<List<OrderProduct>>).value) {
+        ownProducts[p.productId] = (ownProducts[p.productId] ?? 0) + p.quantity;
+      }
+    }
+
     final sales = items.fold<double>(0, (sum, i) => sum + i.subtotal);
     var materialCost = 0.0;
     final productLines = <ReservationLine>[];
@@ -89,7 +114,7 @@ class PreviewOrder {
         productLines.add(ReservationLine(
           name: product.name,
           quantity: item.quantity,
-          available: product.quantityFree,
+          available: product.quantityFree + (ownProducts[product.id] ?? 0),
           isProduct: true,
         ));
         continue;
@@ -118,7 +143,7 @@ class PreviewOrder {
       materialLines.add(ReservationLine(
         name: name,
         quantity: needed,
-        available: material?.quantityFree ?? 0,
+        available: (material?.quantityFree ?? 0) + (ownMaterials[entry.key] ?? 0),
       ));
     }
 

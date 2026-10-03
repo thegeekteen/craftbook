@@ -4,7 +4,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
+import 'package:craftbook/features/orders/domain/usecases/update_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/preview_order.dart';
@@ -14,6 +17,10 @@ import 'package:craftbook/features/orders/presentation/bloc/new_order_state.dart
 
 class MockCreateOrder extends Mock implements CreateOrder {}
 
+class MockUpdateOrder extends Mock implements UpdateOrder {}
+
+class MockOrderRepository extends Mock implements OrderRepository {}
+
 class MockCalculateOrderProfit extends Mock implements CalculateOrderProfit {}
 
 class MockPreviewOrder extends Mock implements PreviewOrder {}
@@ -22,6 +29,8 @@ void main() {
   late MockCreateOrder createOrder;
   late MockCalculateOrderProfit calculateOrderProfit;
   late MockPreviewOrder previewOrder;
+  late MockUpdateOrder updateOrder;
+  late MockOrderRepository orderRepository;
 
   final orderDate = DateTime(2026, 9, 1);
   final shipBy = DateTime(2026, 9, 3);
@@ -55,10 +64,14 @@ void main() {
     createOrder = MockCreateOrder();
     calculateOrderProfit = MockCalculateOrderProfit();
     previewOrder = MockPreviewOrder();
+    updateOrder = MockUpdateOrder();
+    orderRepository = MockOrderRepository();
   });
 
   NewOrderBloc build() => NewOrderBloc(
         createOrder: createOrder,
+        updateOrder: updateOrder,
+        orderRepository: orderRepository,
         calculateOrderProfit: calculateOrderProfit,
         previewOrder: previewOrder,
       );
@@ -204,6 +217,7 @@ void main() {
       setUp: () => when(() => previewOrder(
             items: any(named: 'items'),
             channelId: any(named: 'channelId'),
+            excludeOrderId: any(named: 'excludeOrderId'),
           )).thenAnswer((_) async => const Success(preview)),
       build: build,
       act: (bloc) => bloc
@@ -215,7 +229,7 @@ void main() {
         filled(items: const [tulipInput], isPreviewing: true),
         filled(items: const [tulipInput], preview: preview),
       ],
-      verify: (_) => verify(() => previewOrder(items: [tulipInput], channelId: 2)).called(1),
+      verify: (_) => verify(() => previewOrder(items: [tulipInput], channelId: 2, excludeOrderId: null)).called(1),
     );
 
     blocTest<NewOrderBloc, NewOrderState>(
@@ -223,6 +237,7 @@ void main() {
       setUp: () => when(() => previewOrder(
             items: any(named: 'items'),
             channelId: any(named: 'channelId'),
+            excludeOrderId: any(named: 'excludeOrderId'),
           )).thenAnswer((_) async => const Error(NotFoundFailure('Channel not found'))),
       build: build,
       act: (bloc) => bloc
@@ -245,6 +260,7 @@ void main() {
         when(() => previewOrder(
               items: any(named: 'items'),
               channelId: any(named: 'channelId'),
+              excludeOrderId: any(named: 'excludeOrderId'),
             )).thenAnswer((_) async => const Success(preview));
         stubCreate(const Error(DatabaseFailure('disk full')));
       },
@@ -271,6 +287,7 @@ void main() {
       setUp: () => when(() => previewOrder(
             items: any(named: 'items'),
             channelId: any(named: 'channelId'),
+            excludeOrderId: any(named: 'excludeOrderId'),
           )).thenAnswer((_) async => const Success(preview)),
       build: build,
       act: (bloc) async {
@@ -396,4 +413,173 @@ void main() {
           .having((s) => s.items, 'items', const [strapInput]),
     ],
   );
+  group('editing an existing order', () {
+    final existing = Order(
+      id: 7,
+      customerName: 'Jessa Ramos',
+      customerAddress: 'Cebu City',
+      note: 'Gift wrap',
+      orderDate: orderDate,
+      shipByDate: shipBy,
+      status: OrderStatus.pending,
+      channelId: 2,
+      totalSales: 1080,
+      totalMaterialCost: 200,
+      channelFees: 100,
+      shippingCost: 40,
+      profit: 740,
+      createdAt: orderDate,
+      updatedAt: orderDate,
+    );
+    final lines = [
+      const OrderItem(
+        orderId: 7,
+        productId: 10,
+        productName: 'Tulip',
+        quantity: 2,
+        unitPrice: 450,
+        subtotal: 900,
+      ),
+    ];
+
+    void stubLoad({Order? order, Result<List<OrderItem>>? items}) {
+      when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => Success(order ?? existing));
+      when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => items ?? Success(lines));
+    }
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'LoadExistingOrder fills the form from the order and its items',
+      setUp: stubLoad,
+      build: build,
+      act: (bloc) => bloc.add(const LoadExistingOrder(7)),
+      expect: () => [
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.editingOrderId, 'editingOrderId', 7)
+            .having((s) => s.editingStatus, 'editingStatus', OrderStatus.pending)
+            .having((s) => s.customerName, 'customerName', 'Jessa Ramos')
+            .having((s) => s.channelId, 'channelId', 2)
+            .having((s) => s.note, 'note', 'Gift wrap')
+            .having((s) => s.items, 'items', const [
+              OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450),
+            ])
+            .having((s) => s.totalSales, 'totalSales', 900),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'LoadExistingOrder emits an error when the order is missing',
+      setUp: () {
+        when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => const Success(null));
+        when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => const Success([]));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadExistingOrder(7)),
+      expect: () => [const NewOrderError('Order not found')],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'SaveOrder while editing calls UpdateOrder, not CreateOrder',
+      setUp: () {
+        stubLoad();
+        when(() => updateOrder(
+              orderId: any(named: 'orderId'),
+              customerName: any(named: 'customerName'),
+              customerAddress: any(named: 'customerAddress'),
+              note: any(named: 'note'),
+              orderDate: any(named: 'orderDate'),
+              shipByDate: any(named: 'shipByDate'),
+              channelId: any(named: 'channelId'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => const Success(null));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(7));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(SaveOrder());
+      },
+      skip: 2,
+      expect: () => [const NewOrderSaved(7)],
+      verify: (_) {
+        verify(() => updateOrder(
+              orderId: 7,
+              customerName: 'Jessa Ramos',
+              customerAddress: 'Cebu City',
+              note: 'Gift wrap',
+              orderDate: orderDate,
+              shipByDate: shipBy,
+              channelId: 2,
+              items: const [
+                OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450),
+              ],
+            )).called(1);
+        verifyNever(() => createOrder(
+              customerName: any(named: 'customerName'),
+              customerAddress: any(named: 'customerAddress'),
+              note: any(named: 'note'),
+              orderDate: any(named: 'orderDate'),
+              shipByDate: any(named: 'shipByDate'),
+              channelId: any(named: 'channelId'),
+              totalSales: any(named: 'totalSales'),
+              channelFees: any(named: 'channelFees'),
+              shippingCost: any(named: 'shippingCost'),
+              items: any(named: 'items'),
+            ));
+      },
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'a failed update returns to the form still in edit mode',
+      setUp: () {
+        stubLoad();
+        when(() => updateOrder(
+              orderId: any(named: 'orderId'),
+              customerName: any(named: 'customerName'),
+              customerAddress: any(named: 'customerAddress'),
+              note: any(named: 'note'),
+              orderDate: any(named: 'orderDate'),
+              shipByDate: any(named: 'shipByDate'),
+              channelId: any(named: 'channelId'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => const Error(ValidationFailure('Customer name is required')));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(7));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(SaveOrder());
+      },
+      skip: 1,
+      expect: () => [
+        isA<NewOrderDetailsFilled>().having((s) => s.isSaving, 'isSaving', true),
+        const NewOrderError('Customer name is required'),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.isSaving, 'isSaving', false)
+            .having((s) => s.editingOrderId, 'editingOrderId', 7),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'preview while editing excludes the order\'s own reservation',
+      setUp: () {
+        stubLoad();
+        when(() => previewOrder(
+              items: any(named: 'items'),
+              channelId: any(named: 'channelId'),
+              excludeOrderId: any(named: 'excludeOrderId'),
+            )).thenAnswer((_) async => const Success(preview));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(7));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(RequestPreview());
+      },
+      verify: (_) => verify(() => previewOrder(
+            items: any(named: 'items'),
+            channelId: 2,
+            excludeOrderId: 7,
+          )).called(1),
+    );
+  });
 }

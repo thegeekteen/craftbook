@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
@@ -116,24 +117,36 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           ],
         ),
         actions: [
-          if (order.status != OrderStatus.shipped)
+          if (order.status != OrderStatus.cancelled)
             PopupMenuButton<String>(
               tooltip: 'More',
               icon: const Icon(Icons.more_vert_rounded),
               onSelected: (value) {
+                if (value == 'edit') _edit(order);
                 if (value == 'delete') _confirmDelete(order);
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
-                  value: 'delete',
+                  value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                      const Icon(Icons.edit_outlined, size: 20),
                       const SizedBox(width: 10),
-                      Text('Delete order', style: TextStyle(color: c.alert)),
+                      Text(order.status == OrderStatus.shipped ? 'Edit note' : 'Edit order'),
                     ],
                   ),
                 ),
+                if (order.status != OrderStatus.shipped)
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                        const SizedBox(width: 10),
+                        Text('Delete order', style: TextStyle(color: c.alert)),
+                      ],
+                    ),
+                  ),
               ],
             ),
         ],
@@ -273,6 +286,14 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         ],
       ),
     );
+  }
+
+  Future<void> _edit(Order order) async {
+    final changed = await context.push<bool>(RouteNames.editOrderPath(order.id!));
+    if (changed == true && mounted) {
+      _changed = true;
+      _bloc.add(LoadOrderDetail(widget.orderId));
+    }
   }
 
   Widget? _buildActions(OrderDetailLoaded state) {

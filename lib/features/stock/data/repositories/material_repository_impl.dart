@@ -87,6 +87,43 @@ class MaterialRepositoryImpl implements MaterialRepository {
   }
 
   @override
+  Future<Result<void>> updateMaterial({
+    required int id,
+    required String name,
+    required int packSize,
+    required double packPrice,
+    required int alertLevel,
+    String? supplier,
+  }) async {
+    try {
+      final current = await dao.getMaterialById(id);
+      if (current == null) {
+        return const Error(NotFoundFailure('Material not found'));
+      }
+      // Keep the weighted-average cost unless the user changed how it's bought.
+      final repriced =
+          packPrice != current.packPrice || packSize != current.packSize;
+      await dao.updateMaterial(db.Material(
+        id: current.id,
+        name: name,
+        packSize: packSize,
+        packPrice: packPrice,
+        unitCost: repriced ? packPrice / packSize : current.unitCost,
+        quantityOnHand: current.quantityOnHand,
+        quantityPromised: current.quantityPromised,
+        alertLevel: alertLevel,
+        supplier: supplier,
+        lastReceivedAt: current.lastReceivedAt,
+        createdAt: current.createdAt,
+        updatedAt: DateTime.now(),
+      ));
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> receiveStock({
     required int materialId,
     required int packsReceived,

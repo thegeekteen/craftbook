@@ -1,19 +1,25 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/result.dart';
+import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
+import '../../domain/repositories/order_repository.dart';
 import '../../domain/usecases/calculate_order_profit.dart';
 import '../../domain/usecases/create_order.dart';
 import '../../domain/usecases/preview_order.dart';
+import '../../domain/usecases/update_order.dart';
 import 'new_order_event.dart';
 import 'new_order_state.dart';
 
 /// BLoC for the multi-step new order creation flow.
 ///
 /// Tracks customer details, items list, and computed totals.
-/// On [SaveOrder], calls [CreateOrder] with all accumulated data.
+/// On [SaveOrder], calls [CreateOrder] with all accumulated data, or
+/// [UpdateOrder] after [LoadExistingOrder].
 class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   final CreateOrder createOrder;
+  final UpdateOrder updateOrder;
+  final OrderRepository orderRepository;
   final CalculateOrderProfit calculateOrderProfit;
   final PreviewOrder previewOrder;
 
@@ -25,12 +31,17 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   DateTime _shipByDate = DateTime.now();
   String? _note;
   List<OrderItemInput> _items = [];
+  int? _editingOrderId;
+  OrderStatus? _editingStatus;
 
   NewOrderBloc({
     required this.createOrder,
+    required this.updateOrder,
+    required this.orderRepository,
     required this.calculateOrderProfit,
     required this.previewOrder,
   }) : super(NewOrderInitial()) {
+    on<LoadExistingOrder>(_onLoadExistingOrder);
     on<SetCustomerDetails>(_onSetCustomerDetails);
     on<AddItem>(_onAddItem);
     on<RemoveItem>(_onRemoveItem);
@@ -38,6 +49,45 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     on<RequestPreview>(_onRequestPreview);
     on<SaveOrder>(_onSaveOrder);
     on<ResetOrder>(_onResetOrder);
+  }
+
+  Future<void> _onLoadExistingOrder(
+    LoadExistingOrder event,
+    Emitter<NewOrderState> emit,
+  ) async {
+    final orderResult = await orderRepository.getOrderById(event.orderId);
+    final itemsResult = await orderRepository.getOrderItems(event.orderId);
+    if (orderResult case Error(:final failure)) {
+      emit(NewOrderError(failure.message));
+      return;
+    }
+    if (itemsResult case Error(:final failure)) {
+      emit(NewOrderError(failure.message));
+      return;
+    }
+    final order = (orderResult as Success<Order?>).value;
+    if (order == null) {
+      emit(const NewOrderError('Order not found'));
+      return;
+    }
+    _editingOrderId = event.orderId;
+    _editingStatus = order.status;
+    _customerName = order.customerName;
+    _customerAddress = order.customerAddress;
+    _channelId = order.channelId ?? 0;
+    _orderDate = order.orderDate;
+    _shipByDate = order.shipByDate;
+    _note = order.note;
+    _items = [
+      for (final i in (itemsResult as Success<List<OrderItem>>).value)
+        OrderItemInput(
+          productId: i.productId,
+          productName: i.productName,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+        ),
+    ];
+    _emitDetailsFilled(emit);
   }
 
   void _onSetCustomerDetails(
@@ -105,7 +155,11 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   ) async {
     final current = _detailsState();
     emit(current.copyWith(isPreviewing: true, clearPreview: true));
-    final result = await previewOrder(items: _items, channelId: _channelId);
+    final result = await previewOrder(
+      items: _items,
+      channelId: _channelId,
+      excludeOrderId: _editingOrderId,
+    );
     switch (result) {
       case Error(:final failure):
         emit(current.copyWith(isPreviewing: false, previewError: failure.message));
@@ -126,6 +180,27 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     void fail(String message) {
       emit(NewOrderError(message));
       emit(before.copyWith(isSaving: false, preview: before.preview));
+    }
+
+    final editingId = _editingOrderId;
+    if (editingId != null) {
+      final updated = await updateOrder(
+        orderId: editingId,
+        customerName: _customerName,
+        customerAddress: _customerAddress,
+        note: _note,
+        orderDate: _orderDate,
+        shipByDate: _shipByDate,
+        channelId: _channelId,
+        items: _items,
+      );
+      switch (updated) {
+        case Error(:final failure):
+          fail(failure.message);
+        case Success():
+          emit(NewOrderSaved(editingId));
+      }
+      return;
     }
 
     final totalSales = _items.fold(0.0, (sum, item) => sum + item.subtotal);
@@ -183,6 +258,8 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     _shipByDate = DateTime.now();
     _note = null;
     _items = [];
+    _editingOrderId = null;
+    _editingStatus = null;
     emit(NewOrderInitial());
   }
 
@@ -201,6 +278,8 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       note: _note,
       items: List.unmodifiable(_items),
       totalSales: totalSales,
+      editingOrderId: _editingOrderId,
+      editingStatus: _editingStatus,
     );
   }
 }

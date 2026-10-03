@@ -97,6 +97,14 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     }
   }
 
+  Future<void> _edit() async {
+    final changed = await context.push<bool>(RouteNames.editMaterialPath(widget.materialId));
+    if (changed == true && mounted) {
+      _changed = true;
+      _load();
+    }
+  }
+
   Future<void> _count(Material m) async {
     var counted = m.quantityOnHand;
     final save = await showAppSheet<bool>(
@@ -206,9 +214,18 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (v) {
+              if (v == 'edit') _edit();
               if (v == 'delete') _delete(m);
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(children: [
+                  Icon(Icons.edit_outlined, size: 20),
+                  SizedBox(width: 10),
+                  Text('Edit material'),
+                ]),
+              ),
               PopupMenuItem(
                 value: 'delete',
                 child: Row(children: [

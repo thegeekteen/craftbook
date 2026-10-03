@@ -79,6 +79,16 @@ class UpdateItemQuantity extends NewOrderEvent {
   List<Object?> get props => [productId, quantity];
 }
 
+/// Start editing an existing order: loads its details and items.
+class LoadExistingOrder extends NewOrderEvent {
+  final int orderId;
+
+  const LoadExistingOrder(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
 /// Work out profit and reservations for the review step.
 class RequestPreview extends NewOrderEvent {}
 

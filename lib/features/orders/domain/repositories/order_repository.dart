@@ -35,6 +35,26 @@ abstract class OrderRepository {
     required List<OrderMaterialInput> materials,
     List<OrderProductInput> products,
   });
+  /// Rewrites the order's own fields. When [items] is given the item,
+  /// material and product lines are replaced with the given lists in the same
+  /// transaction; stock reservations are the caller's job.
+  Future<Result<void>> updateOrder({
+    required int id,
+    required String customerName,
+    required String customerAddress,
+    String? note,
+    required DateTime orderDate,
+    required DateTime shipByDate,
+    required int channelId,
+    required double totalSales,
+    required double totalMaterialCost,
+    required double channelFees,
+    required double shippingCost,
+    required double profit,
+    List<OrderItemInput>? items,
+    List<OrderMaterialInput>? materials,
+    List<OrderProductInput>? products,
+  });
   Future<Result<void>> packOrder(int orderId);
   Future<Result<void>> shipOrder(int orderId);
   Future<Result<void>> adjustMaterialsUsed(int orderId, List<OrderMaterialInput> materials);

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/usecases/preview_order.dart';
 
@@ -31,6 +32,10 @@ class NewOrderDetailsFilled extends NewOrderState {
   final String? previewError;
   final bool isSaving;
 
+  /// Set when editing an existing order; null for a new one.
+  final int? editingOrderId;
+  final OrderStatus? editingStatus;
+
   const NewOrderDetailsFilled({
     required this.customerName,
     required this.customerAddress,
@@ -44,7 +49,11 @@ class NewOrderDetailsFilled extends NewOrderState {
     this.isPreviewing = false,
     this.previewError,
     this.isSaving = false,
+    this.editingOrderId,
+    this.editingStatus,
   });
+
+  bool get isEditing => editingOrderId != null;
 
   double get totalItemCount =>
       items.fold(0, (sum, item) => sum + item.quantity);
@@ -63,6 +72,8 @@ class NewOrderDetailsFilled extends NewOrderState {
         isPreviewing,
         previewError,
         isSaving,
+        editingOrderId,
+        editingStatus,
       ];
 
   NewOrderDetailsFilled copyWith({
@@ -94,6 +105,8 @@ class NewOrderDetailsFilled extends NewOrderState {
       isPreviewing: isPreviewing ?? this.isPreviewing,
       previewError: previewError,
       isSaving: isSaving ?? this.isSaving,
+      editingOrderId: editingOrderId,
+      editingStatus: editingStatus,
     );
   }
 }

@@ -17,11 +17,14 @@ abstract class ProductRepository {
     int initialQuantity,
     double initialUnitCost,
   });
+  /// Null leaves a field as is. An empty [description] clears it. [unitCost]
+  /// only matters for resell products (handmade cost comes from the BOM).
   Future<Result<void>> updateProduct({
     required int id,
     String? name,
     String? description,
     double? sellPrice,
+    double? unitCost,
     bool? isActive,
     bool? isStandalone,
     int? alertLevel,

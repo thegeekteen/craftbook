@@ -62,6 +62,29 @@ class CreateMaterialEvent extends MaterialsEvent {
       [name, packSize, packPrice, alertLevel, supplier, initialQuantity];
 }
 
+/// Edit a material's name, pack, supplier and reorder level
+class UpdateMaterialEvent extends MaterialsEvent {
+  final int id;
+  final String name;
+  final int packSize;
+  final double packPrice;
+  final int alertLevel;
+  final String? supplier;
+
+  const UpdateMaterialEvent({
+    required this.id,
+    required this.name,
+    required this.packSize,
+    required this.packPrice,
+    required this.alertLevel,
+    this.supplier,
+  });
+
+  @override
+  List<Object?> get props =>
+      [id, name, packSize, packPrice, alertLevel, supplier];
+}
+
 /// Delete a material
 class DeleteMaterialEvent extends MaterialsEvent {
   final int materialId;

@@ -1,12 +1,10 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order_item.dart';
-import '../entities/order_material.dart';
-import '../entities/order_product.dart';
 import '../repositories/order_repository.dart';
+import 'expand_order_items.dart';
 
 class CreateOrder {
   final OrderRepository orderRepository;
@@ -38,74 +36,12 @@ class CreateOrder {
       return const Error<int>(ValidationFailure('At least one item is required'));
     }
 
-    final expandedMaterials = <OrderMaterialInput>[];
-    final expandedProducts = <OrderProductInput>[];
-    final materialTotals = <int, double>{};
+    final expanded = await expandOrderItems(productRepository, items);
+    final expandedMaterials = expanded.materials;
+    final expandedProducts = expanded.products;
 
-    for (final item in items) {
-      // Check if product is standalone
-      final productResult =
-          await productRepository.getProductById(item.productId);
-      final product = switch (productResult) {
-        Success(:final value) => value,
-        Error() => null,
-      };
-
-      if (product != null && product.isStandalone) {
-        // Standalone product: no BOM expansion, use product's own stock
-        expandedProducts.add(OrderProductInput(
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitCost: product.unitCost,
-        ));
-      } else {
-        // BOM product: expand into materials
-        final bomResult = await productRepository.getBomItems(item.productId);
-        final bomItems = switch (bomResult) {
-          Success(:final value) => value,
-          Error() => <BomItem>[],
-        };
-
-        for (final bom in bomItems) {
-          final needed = bom.quantityRequired * item.quantity;
-          materialTotals[bom.materialId] =
-              (materialTotals[bom.materialId] ?? 0) + needed;
-
-          final existingIndex = expandedMaterials.indexWhere(
-            (m) => m.materialId == bom.materialId,
-          );
-
-          if (existingIndex >= 0) {
-            final existing = expandedMaterials[existingIndex];
-            expandedMaterials[existingIndex] = OrderMaterialInput(
-              materialId: existing.materialId,
-              materialName: existing.materialName,
-              plannedQuantity: existing.plannedQuantity + needed,
-              actualQuantity: existing.actualQuantity + needed,
-              unitCost: existing.unitCost,
-            );
-          } else {
-            expandedMaterials.add(OrderMaterialInput(
-              materialId: bom.materialId,
-              materialName: bom.materialName,
-              plannedQuantity: needed,
-              actualQuantity: needed,
-              unitCost: bom.materialUnitCost,
-            ));
-          }
-        }
-      }
-    }
-
-    // Calculate total cost: materials + standalone products
-    double totalMaterialCost = 0;
-    for (final mat in expandedMaterials) {
-      totalMaterialCost += mat.plannedQuantity * mat.unitCost;
-    }
-    for (final prod in expandedProducts) {
-      totalMaterialCost += prod.totalCost;
-    }
+    // Planned cost: materials + standalone products
+    final totalMaterialCost = expanded.totalCost;
 
     final profit = totalSales - totalMaterialCost - channelFees - shippingCost;
 

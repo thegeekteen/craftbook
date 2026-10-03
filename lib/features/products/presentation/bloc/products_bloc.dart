@@ -88,7 +88,10 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       name: event.name,
       description: event.description,
       sellPrice: event.sellPrice,
+      unitCost: event.unitCost,
       isActive: event.isActive,
+      isStandalone: event.isStandalone,
+      alertLevel: event.alertLevel,
     );
     switch (result) {
       case Error(:final failure):

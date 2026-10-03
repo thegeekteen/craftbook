@@ -27,6 +27,7 @@ import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/adjust_product_stock.dart';
 import '../../domain/usecases/delete_product.dart';
+import '../../domain/usecases/update_product.dart';
 
 /// Create or edit a product. Handmade products list the materials one piece
 /// uses; resell products track their own stock.
@@ -42,6 +43,7 @@ class ProductEditorPage extends StatefulWidget {
 class _ProductEditorPageState extends State<ProductEditorPage> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _description = TextEditingController();
   final _price = TextEditingController();
   final _unitCost = TextEditingController();
   final _alertLevel = TextEditingController();
@@ -57,6 +59,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   bool _changed = false;
   String? _error;
 
+  /// Why the Handmade/Resell switch is locked, or null when it's free.
+  /// Flipping the type would orphan the BOM, stock or order history.
+  String? _typeLockReason;
+
   bool get _isNew => widget.productId == null;
 
   @override
@@ -70,7 +76,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   @override
   void dispose() {
-    for (final ctrl in [_name, _price, _unitCost, _alertLevel, _initialQty]) {
+    for (final ctrl in [_name, _description, _price, _unitCost, _alertLevel, _initialQty]) {
       ctrl.dispose();
     }
     super.dispose();
@@ -98,6 +104,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final repo = getIt<ProductRepository>();
     final productResult = await repo.getProductById(widget.productId!);
     final bomResult = await repo.getBomItems(widget.productId!);
+    final inOrders = await repo.hasOrdersUsingProduct(widget.productId!);
     if (!mounted) return;
     setState(() {
       _materials = materials;
@@ -111,6 +118,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           final p = value!;
           _product = p;
           _name.text = p.name;
+          _description.text = p.description ?? '';
           _price.text = _money(p.sellPrice);
           _isStandalone = p.isStandalone;
           _isActive = p.isActive;
@@ -128,6 +136,14 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               ],
             Error() => [],
           };
+          _typeLockReason = switch (inOrders) {
+            Success(value: true) => 'Used in orders, so its type is fixed.',
+            _ when p.quantityOnHand > 0 || p.quantityPromised > 0 =>
+              'It has stock on hand or reserved, so its type is fixed.',
+            _ when !p.isStandalone && _bom.isNotEmpty =>
+              'Remove its materials first to switch it to Resell.',
+            _ => null,
+          };
       }
     });
   }
@@ -135,7 +151,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   double get _sellPrice => double.tryParse(_price.text) ?? 0;
 
   double get _cost => _isStandalone
-      ? (_isNew ? double.tryParse(_unitCost.text) ?? 0 : _product?.unitCost ?? 0)
+      ? double.tryParse(_unitCost.text) ?? 0
       : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
 
   Future<void> _addMaterial() async {
@@ -267,6 +283,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         sellPrice: _sellPrice,
         isStandalone: _isStandalone,
         initialQuantity: _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
+        description: _description.text.trim().isEmpty ? null : _description.text.trim(),
         initialUnitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : 0,
       );
       switch (created) {
@@ -282,10 +299,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               : await repo.saveBomItems(id, bomInputs);
       }
     } else {
-      final updated = await repo.updateProduct(
+      final updated = await getIt<UpdateProduct>()(
         id: widget.productId!,
         name: name,
+        description: _description.text,
         sellPrice: _sellPrice,
+        unitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : null,
         isStandalone: _isStandalone,
         isActive: _isActive,
         alertLevel: _isStandalone ? alertLevel : 0,
@@ -383,6 +402,13 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                controller: _description,
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Description (optional)'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
                 controller: _price,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
@@ -399,15 +425,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     ButtonSegment(value: true, label: Text('Resell'), icon: Icon(Icons.inventory_2_outlined, size: 18)),
                   ],
                   selected: {_isStandalone},
-                  onSelectionChanged: (s) => setState(() => _isStandalone = s.first),
+                  onSelectionChanged:
+                      _typeLockReason != null ? null : (s) => setState(() => _isStandalone = s.first),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
                 child: Text(
-                  _isStandalone
-                      ? 'Bought ready-made. Tracks its own stock.'
-                      : 'Made from materials. Stock comes from what you can build.',
+                  _typeLockReason ??
+                      (_isStandalone
+                          ? 'Bought ready-made. Tracks its own stock.'
+                          : 'Made from materials. Stock comes from what you can build.'),
                   style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                 ),
               ),
@@ -541,6 +569,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             ),
           ),
         ]),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _unitCost,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: money,
+          decoration: const InputDecoration(
+            labelText: 'Cost per piece',
+            prefixText: '₱ ',
+            helperText: 'Receiving stock recalculates this as an average.',
+          ),
+        ),
         const SizedBox(height: 12),
       ] else ...[
         Row(

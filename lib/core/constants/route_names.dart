@@ -10,12 +10,14 @@ class RouteNames {
   // Orders
   static const String orders = '/orders';
   static const String newOrder = '/orders/new';
+  static const String editOrder = '/orders/:id/edit';
   static const String orderDetail = '/orders/:id';
 
   // Stock / Materials
   static const String materials = '/materials';
   static const String newMaterial = '/materials/new';
   static const String materialDetail = '/materials/:id';
+  static const String editMaterial = '/materials/:id/edit';
   static const String receiveStock = '/materials/:id/receive';
   static const String buyList = '/stock/buy-list';
 
@@ -32,7 +34,9 @@ class RouteNames {
 
   /// Concrete paths for parameterised routes.
   static String orderPath(int id) => '/orders/$id';
+  static String editOrderPath(int id) => '/orders/$id/edit';
   static String materialPath(int id) => '/materials/$id';
+  static String editMaterialPath(int id) => '/materials/$id/edit';
   static String receiveStockPath(int id) => '/materials/$id/receive';
   static String productEditorPath(int id) => '/products/$id/edit';
   static String receiveProductStockPath(int id) => '/products/$id/receive';
