@@ -181,7 +181,6 @@ class _EarningsViewState extends State<_EarningsView> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
 
               // Content
               Expanded(
