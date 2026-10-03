@@ -6,6 +6,8 @@ import 'core/di/injection.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/route_names.dart';
 import 'core/widgets/app_shell.dart';
+import 'core/theme/palettes.dart';
+import 'features/settings/domain/entities/theme_settings.dart';
 import 'features/settings/presentation/bloc/theme_cubit.dart';
 import 'features/stock/presentation/bloc/materials_bloc.dart';
 
@@ -28,33 +30,44 @@ import 'features/earnings/presentation/pages/product_earnings_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
 class CraftbookApp extends StatelessWidget {
-  /// [initialLocation] and [themeMode] are overridable for screenshots and
-  /// tests; the app itself starts on Today and uses the saved theme choice.
+  /// [initialLocation], [themeMode] and [palette] are overridable for
+  /// screenshots and tests; the app itself starts on Today and uses the
+  /// saved appearance.
   CraftbookApp({
     super.key,
     String initialLocation = RouteNames.today,
     this.themeMode,
+    this.palette,
   }) : _router = _buildRouter(initialLocation);
 
   final ThemeMode? themeMode;
+  final AppPalette? palette;
   final GoRouter _router;
 
   @override
   Widget build(BuildContext context) {
-    Widget app(ThemeMode mode) => MaterialApp.router(
+    Widget app(ThemeSettings look) => MaterialApp.router(
       title: 'Craftbook',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: mode,
+      theme: AppTheme.light(look.palette),
+      darkTheme: AppTheme.dark(look.palette),
+      themeMode: look.mode,
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
     );
 
-    final fixed = themeMode;
-    if (fixed != null) return app(fixed);
-    return BlocBuilder<ThemeCubit, ThemeMode>(
+    final fixedMode = themeMode;
+    final fixedPalette = palette;
+    if (fixedMode != null && fixedPalette != null) {
+      return app(ThemeSettings(mode: fixedMode, palette: fixedPalette));
+    }
+    return BlocBuilder<ThemeCubit, ThemeSettings>(
       bloc: getIt<ThemeCubit>(),
-      builder: (context, mode) => app(mode),
+      builder: (context, saved) => app(
+        ThemeSettings(
+          mode: fixedMode ?? saved.mode,
+          palette: fixedPalette ?? saved.palette,
+        ),
+      ),
     );
   }
 

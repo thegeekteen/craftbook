@@ -3,15 +3,21 @@ import 'package:flutter/services.dart';
 
 import 'colors.dart';
 import 'dimens.dart';
+import 'palettes.dart';
 import 'text_styles.dart';
 
-/// Builds the light and dark themes from the same [CraftColors] tokens so
-/// both stay in step.
+/// Builds the light and dark themes of each [AppPalette] from the same
+/// [CraftColors] tokens so both stay in step.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme => _build(CraftColors.light, Brightness.light);
-  static ThemeData get darkTheme => _build(CraftColors.dark, Brightness.dark);
+  static ThemeData get lightTheme => light(AppPalette.forest);
+  static ThemeData get darkTheme => dark(AppPalette.forest);
+
+  static ThemeData light(AppPalette palette) =>
+      _build(palette.light, Brightness.light);
+  static ThemeData dark(AppPalette palette) =>
+      _build(palette.dark, Brightness.dark);
 
   static ThemeData _build(CraftColors c, Brightness brightness) {
     final isDark = brightness == Brightness.dark;

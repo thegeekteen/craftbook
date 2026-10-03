@@ -1,4 +1,5 @@
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:drift/native.dart';
@@ -41,5 +42,32 @@ void main() {
           SettingsCompanion.insert(key: SettingsRepositoryImpl.themeModeKey, value: 'sepia'),
         );
     expect(await repo.getThemeMode(), ThemeMode.system);
+  });
+
+  test('palette defaults to Forest', () async {
+    expect(await repo.getPalette(), AppPalette.forest);
+  });
+
+  for (final palette in AppPalette.values) {
+    test('round-trips palette ${palette.name}', () async {
+      expect(await repo.setPalette(palette), isA<Success<void>>());
+      expect(await repo.getPalette(), palette);
+    });
+  }
+
+  test('an unknown stored palette falls back to Forest', () async {
+    await db.into(db.settings).insert(
+          SettingsCompanion.insert(key: SettingsRepositoryImpl.paletteKey, value: 'neon'),
+        );
+    expect(await repo.getPalette(), AppPalette.forest);
+  });
+
+  test('mode and palette are stored independently', () async {
+    await repo.setThemeMode(ThemeMode.dark);
+    await repo.setPalette(AppPalette.berry);
+    await repo.setPalette(AppPalette.ocean);
+    expect(await db.select(db.settings).get(), hasLength(2));
+    expect(await repo.getThemeMode(), ThemeMode.dark);
+    expect(await repo.getPalette(), AppPalette.ocean);
   });
 }

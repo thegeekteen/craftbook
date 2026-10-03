@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:craftbook/app.dart';
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
+import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,25 @@ void main() {
     }
   }
 
+  // The other colour schemes, on the screens that show the most colour.
+  for (final palette in AppPalette.values.where((p) => p != AppPalette.forest)) {
+    for (final (name, route) in [
+      ('today', RouteNames.today),
+      ('orders', RouteNames.orders),
+      ('money', RouteNames.earnings),
+      ('more', RouteNames.settings),
+    ]) {
+      for (final dark in [false, true]) {
+        final file = '${name}_${palette.name}_${dark ? 'dark' : 'light'}';
+        testWidgets(file, (tester) async {
+          await _boot(tester, route, dark, palette);
+          await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/$file.png'));
+          await _teardown(tester);
+        });
+      }
+    }
+  }
+
   testWidgets('pack sheet', (tester) async {
     await _boot(tester, RouteNames.orderPath(8), false);
     await tester.tap(find.text('Pack order'));
@@ -92,7 +112,12 @@ void main() {
   });
 }
 
-Future<void> _boot(WidgetTester tester, String route, bool dark) async {
+Future<void> _boot(
+  WidgetTester tester,
+  String route,
+  bool dark, [
+  AppPalette palette = AppPalette.forest,
+]) async {
   tester.view.physicalSize = const Size(1080, 2340);
   tester.view.devicePixelRatio = 2.75;
   addTearDown(tester.view.reset);
@@ -106,6 +131,7 @@ Future<void> _boot(WidgetTester tester, String route, bool dark) async {
   await tester.pumpWidget(CraftbookApp(
     initialLocation: route,
     themeMode: dark ? ThemeMode.dark : ThemeMode.light,
+    palette: palette,
   ));
   await _settle(tester);
 }
