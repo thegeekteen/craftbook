@@ -27,6 +27,7 @@ import 'features/products/presentation/pages/receive_product_stock_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
+import 'features/settings/presentation/pages/about_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
 class CraftbookApp extends StatelessWidget {
@@ -96,6 +97,10 @@ class CraftbookApp extends StatelessWidget {
           GoRoute(
             path: RouteNames.settings,
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: RouteNames.about,
+            builder: (context, state) => const AboutPage(),
           ),
           // Catalogue pages keep the bottom nav (they belong to More/Stock).
           GoRoute(
