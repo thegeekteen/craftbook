@@ -78,6 +78,18 @@ Future<void> seedSampleShop() async {
     initialUnitCost: 28,
   ));
   await products.updateProduct(id: box, alertLevel: 3);
+  _ok(await products.receiveProductStock(productId: box, quantity: 4, pricePerUnit: 26));
+  _ok(await products.adjustProductStock(productId: box, newQuantityOnHand: 8));
+  // Movements are stamped with the real clock; spread them out so the
+  // product history reads like a shop that's been running a while.
+  final boxMoves = await (db.select(db.productStockMovements)
+        ..where((t) => t.productId.equals(box))
+        ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+      .get();
+  for (final (i, daysAgo) in [30, 15, 8].indexed) {
+    await (db.update(db.productStockMovements)..where((t) => t.id.equals(boxMoves[i].id)))
+        .write(ProductStockMovementsCompanion(createdAt: Value(today.subtract(Duration(days: daysAgo)))));
+  }
 
   final createOrder = getIt<CreateOrder>();
   final pack = getIt<PackOrder>();

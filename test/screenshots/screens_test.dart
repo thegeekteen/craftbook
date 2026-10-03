@@ -94,6 +94,23 @@ void main() {
     }
   }
 
+  // The history sits below the form, so scroll down to it.
+  for (final (name, id) in [('product_history', 1), ('product_resell_history', 4)]) {
+    for (final dark in [false, true]) {
+      testWidgets('$name ${dark ? 'dark' : 'light'}', (tester) async {
+        await _boot(tester, RouteNames.productEditorPath(id), dark);
+        await tester.scrollUntilVisible(find.text('HISTORY'), 300, scrollable: find.byType(Scrollable).first);
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+        await _settle(tester);
+        await expectLater(
+          find.byType(CraftbookApp),
+          matchesGoldenFile('goldens/${name}_${dark ? 'dark' : 'light'}.png'),
+        );
+        await _teardown(tester);
+      });
+    }
+  }
+
   testWidgets('pack sheet', (tester) async {
     await _boot(tester, RouteNames.orderPath(8), false);
     await tester.tap(find.text('Pack order'));

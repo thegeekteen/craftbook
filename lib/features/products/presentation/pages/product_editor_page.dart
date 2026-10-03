@@ -24,10 +24,13 @@ import '../../../stock/domain/entities/material.dart';
 import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/entities/product_history_entry.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/adjust_product_stock.dart';
 import '../../domain/usecases/delete_product.dart';
+import '../../domain/usecases/get_product_history.dart';
 import '../../domain/usecases/update_product.dart';
+import '../widgets/product_history_row.dart';
 
 /// Create or edit a product. Handmade products list the materials one piece
 /// uses; resell products track their own stock.
@@ -52,6 +55,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   List<_EditableBomItem> _bom = [];
   List<Material> _materials = [];
   Product? _product;
+  List<ProductHistoryEntry> _history = [];
+  String? _historyError;
   bool _isStandalone = false;
   bool _isActive = true;
   bool _loading = true;
@@ -105,6 +110,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final productResult = await repo.getProductById(widget.productId!);
     final bomResult = await repo.getBomItems(widget.productId!);
     final inOrders = await repo.hasOrdersUsingProduct(widget.productId!);
+    await _loadHistory();
     if (!mounted) return;
     setState(() {
       _materials = materials;
@@ -146,6 +152,26 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           };
       }
     });
+  }
+
+  /// Refreshes only the history, so form edits in progress survive.
+  Future<void> _loadHistory() async {
+    final result = await getIt<GetProductHistory>()(widget.productId!);
+    if (!mounted) return;
+    setState(() {
+      switch (result) {
+        case Success(:final value):
+          _history = value;
+          _historyError = null;
+        case Error(:final failure):
+          _historyError = failure.message;
+      }
+    });
+  }
+
+  Future<void> _openOrder(int orderId) async {
+    final changed = await context.push<bool>(RouteNames.orderPath(orderId));
+    if (changed == true && mounted) _loadHistory();
   }
 
   double get _sellPrice => double.tryParse(_price.text) ?? 0;
@@ -454,6 +480,19 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     subtitle: const Text('Turn off to retire a product without deleting it.'),
                   ),
                 ),
+                const SectionLabel('History', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
+                const SizedBox(height: 8),
+                if (_historyError != null)
+                  _quiet("Couldn't load history: $_historyError")
+                else if (_history.isEmpty)
+                  _quiet('No sales or stock changes yet.')
+                else
+                  AppCard.flush(
+                    child: CardList(children: [
+                      for (final e in _history.take(30))
+                        ProductHistoryRow(entry: e, onOrderTap: _openOrder),
+                    ]),
+                  ),
               ],
             ],
           ),
@@ -469,6 +508,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       ),
     );
   }
+
+  Widget _quiet(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
+        child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
+      );
 
   List<Widget> _buildHandmade() {
     final c = context.colors;

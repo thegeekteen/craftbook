@@ -7,6 +7,7 @@ import 'package:craftbook/database/daos/product_dao.dart';
 import 'package:craftbook/features/earnings/data/repositories/earnings_repository_impl.dart';
 import 'package:craftbook/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/entities/order.dart' show OrderStatus;
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/products/data/repositories/product_repository_impl.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
@@ -273,6 +274,49 @@ void main() {
       expect(lines.single.profit, closeTo(840, 0.001));
 
       expect(ok(await earnings.getCompletedOrderProfits(DateTime(2026, 11), DateTime(2026, 11, 30))), isEmpty);
+    });
+  });
+
+  group('product history', () {
+    test('getProductSales lists the product in every order, dated by its stage', () async {
+      final products = ProductRepositoryImpl(ProductDao(db));
+      final id = await productId();
+      final pending = await order(product: id, shipBy: DateTime(2026, 3, 10));
+      final packed = await order(product: id, shipBy: DateTime(2026, 3, 5), qty: 2);
+      ok(await orders.packOrder(packed));
+      await order(product: await productId(), shipBy: DateTime(2026, 3, 1));
+
+      final sales = ok(await products.getProductSales(id));
+
+      expect(sales.map((s) => s.orderId), unorderedEquals([pending, packed]));
+      final p = sales.firstWhere((s) => s.orderId == pending);
+      expect(p.status, OrderStatus.pending);
+      expect(p.date, DateTime(2026, 3, 8), reason: 'pending orders use the order date');
+      expect(p.customerName, 'Maria');
+      final k = sales.firstWhere((s) => s.orderId == packed);
+      expect(k.status, OrderStatus.packed);
+      expect(k.quantity, 2);
+      expect(k.subtotal, 900);
+      expect(k.date.isAfter(DateTime(2026, 3, 3)), isTrue, reason: 'packed orders use packedAt');
+    });
+
+    test('adjustProductStock keeps the sign of a count that lowers stock', () async {
+      final products = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await products.createProduct(
+        name: 'Gift box',
+        sellPrice: 60,
+        isStandalone: true,
+        initialQuantity: 6,
+        initialUnitCost: 28,
+      ));
+
+      ok(await products.adjustProductStock(productId: id, newQuantityOnHand: 4));
+      ok(await products.adjustProductStock(productId: id, newQuantityOnHand: 7));
+
+      final counts = ok(await products.getProductStockMovements(id))
+          .where((m) => m.reference?.startsWith('Adjusted') == true)
+          .map((m) => m.quantity);
+      expect(counts, unorderedEquals([-2, 3]));
     });
   });
 }

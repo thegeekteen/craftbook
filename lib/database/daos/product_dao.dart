@@ -6,11 +6,13 @@ import '../tables/bom_items_table.dart';
 import '../tables/materials_table.dart';
 import '../tables/product_stock_movements_table.dart';
 import '../tables/order_products_table.dart';
+import '../tables/orders_table.dart';
+import '../tables/order_items_table.dart';
 
 part 'product_dao.g.dart';
 
 /// Data Access Object for products
-@DriftAccessor(tables: [Products, BomItems, Materials, ProductStockMovements, OrderProducts])
+@DriftAccessor(tables: [Products, BomItems, Materials, ProductStockMovements, OrderProducts, Orders, OrderItems])
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
@@ -145,6 +147,18 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
           ..where((t) => t.productId.equals(productId))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
+  }
+
+  /// Every order line for [productId] with its order, any status, newest
+  /// order first.
+  Future<List<(OrderItem, Order)>> getOrderLinesForProduct(int productId) async {
+    final query = select(orderItems).join([
+      innerJoin(orders, orders.id.equalsExp(orderItems.orderId)),
+    ])
+      ..where(orderItems.productId.equals(productId))
+      ..orderBy([OrderingTerm.desc(orders.orderDate), OrderingTerm.desc(orders.id)]);
+    final rows = await query.get();
+    return [for (final r in rows) (r.readTable(orderItems), r.readTable(orders))];
   }
 
   /// Add a product stock movement

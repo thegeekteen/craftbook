@@ -6,7 +6,9 @@ import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/product_dao.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/entities/product_sale.dart';
 import '../../domain/entities/product_stock_movement.dart';
+import '../../../orders/domain/entities/order.dart';
 import '../../domain/repositories/product_repository.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
@@ -309,7 +311,7 @@ class ProductRepositoryImpl implements ProductRepository {
         db.ProductStockMovementsCompanion(
           productId: Value(productId),
           type: const Value('adjusted'),
-          quantity: Value(diff.abs()),
+          quantity: Value(diff),
           unitCost: Value(product.unitCost),
           reference: Value(diff >= 0
               ? 'Adjusted +$diff units'
@@ -441,6 +443,31 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<Result<List<ProductSale>>> getProductSales(int productId) async {
+    try {
+      final rows = await dao.getOrderLinesForProduct(productId);
+      return Success([
+        for (final (item, order) in rows)
+          ProductSale(
+            orderId: order.id,
+            customerName: order.customerName,
+            status: _orderStatus(order.status),
+            date: switch (order.status) {
+              'shipped' => order.shippedAt ?? order.orderDate,
+              'packed' => order.packedAt ?? order.orderDate,
+              _ => order.orderDate,
+            },
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+          ),
+      ]);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<List<Product>>> getLowStockProducts() async {
     try {
       final rows = await dao.getLowStockProducts();
@@ -479,6 +506,11 @@ class ProductRepositoryImpl implements ProductRepository {
         materialUnitCost: material?.unitCost ?? 0,
         quantityRequired: row.quantityRequired,
         createdAt: row.createdAt,
+      );
+
+  static OrderStatus _orderStatus(String status) => OrderStatus.values.firstWhere(
+        (s) => s.name == status,
+        orElse: () => OrderStatus.pending,
       );
 
   static ProductStockMovement _toStockMovementEntity(
