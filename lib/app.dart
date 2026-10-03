@@ -6,6 +6,8 @@ import 'core/constants/route_names.dart';
 import 'core/widgets/app_shell.dart';
 
 import 'features/today/presentation/pages/today_page.dart';
+import 'features/today/presentation/pages/calendar_week_page.dart';
+import 'features/today/presentation/pages/calendar_month_page.dart';
 import 'features/orders/presentation/pages/orders_list_page.dart';
 import 'features/orders/presentation/pages/new_order_page.dart';
 import 'features/orders/presentation/pages/order_details_page.dart';
@@ -60,6 +62,14 @@ class CraftbookApp extends StatelessWidget {
             builder: (context, state) => const SettingsPage(),
           ),
         ],
+      ),
+      GoRoute(
+        path: RouteNames.calendarWeek,
+        builder: (context, state) => const CalendarWeekPage(),
+      ),
+      GoRoute(
+        path: RouteNames.calendarMonth,
+        builder: (context, state) => const CalendarMonthPage(),
       ),
       GoRoute(
         path: RouteNames.newOrder,

@@ -36,3 +36,26 @@ class ReceiveStockEvent extends MaterialsEvent {
   @override
   List<Object?> get props => [materialId, packsReceived, pricePerPack];
 }
+
+/// Create a new material
+class CreateMaterialEvent extends MaterialsEvent {
+  final String name;
+  final int packSize;
+  final double packPrice;
+  final int alertLevel;
+  final String? supplier;
+  final int initialQuantity;
+
+  const CreateMaterialEvent({
+    required this.name,
+    required this.packSize,
+    required this.packPrice,
+    required this.alertLevel,
+    this.supplier,
+    this.initialQuantity = 0,
+  });
+
+  @override
+  List<Object?> get props =>
+      [name, packSize, packPrice, alertLevel, supplier, initialQuantity];
+}

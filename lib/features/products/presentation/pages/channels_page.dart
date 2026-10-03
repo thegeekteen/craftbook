@@ -36,10 +36,19 @@ class _ChannelsView extends StatelessWidget {
           style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateDialog(context),
+        backgroundColor: AppColors.success,
+        child: const Icon(Icons.add, color: AppColors.paperHigh),
+      ),
       body: BlocConsumer<ChannelsBloc, ChannelsState>(
         listener: (context, state) {
           if (state is ChannelsError) {
             context.showSnackBar(state.message, isError: true);
+          }
+          if (state is ChannelCreated) {
+            context.showSnackBar('Channel created');
+            context.read<ChannelsBloc>().add(const LoadChannels());
           }
         },
         builder: (context, state) {
@@ -60,6 +69,12 @@ class _ChannelsView extends StatelessWidget {
                       'No channels yet',
                       style: AppTextStyles.bodyLarge
                           .copyWith(color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () => _showCreateDialog(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add'),
                     ),
                   ],
                 ),
@@ -94,6 +109,95 @@ class _ChannelsView extends StatelessWidget {
 
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  void _showCreateDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final commissionController = TextEditingController(text: '0');
+    final transactionController = TextEditingController(text: '0');
+    final flatFeeController = TextEditingController(text: '0');
+    final shippingController = TextEditingController(text: '0');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.paperHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('New Channel',
+            style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: commissionController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration:
+                    const InputDecoration(labelText: 'Commission %'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: transactionController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration:
+                    const InputDecoration(labelText: 'Transaction fee %'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: flatFeeController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Flat fee',
+                  prefixText: '₱ ',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: shippingController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Shipping (paid by us)',
+                  prefixText: '₱ ',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(ctx);
+              context.read<ChannelsBloc>().add(CreateChannelEvent(
+                    name: name,
+                    commissionRate:
+                        double.tryParse(commissionController.text) ?? 0,
+                    transactionFeeRate:
+                        double.tryParse(transactionController.text) ?? 0,
+                    flatFee: double.tryParse(flatFeeController.text) ?? 0,
+                    shippingPaidByUs:
+                        double.tryParse(shippingController.text) ?? 0,
+                  ));
+            },
+            child: const Text('Create'),
+          ),
+        ],
       ),
     );
   }

@@ -59,6 +59,8 @@ class _MaterialsListView extends StatelessWidget {
           listener: (context, state) {
             if (state is MaterialsError) {
               context.showSnackBar(state.message, isError: true);
+            } else if (state is MaterialCreated) {
+              context.showSnackBar('Material added');
             }
           },
           builder: (context, state) {
@@ -72,12 +74,130 @@ class _MaterialsListView extends StatelessWidget {
           },
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            context.showSnackBar('Add material — coming soon');
-          },
+          onPressed: () => _showAddMaterialDialog(context),
           backgroundColor: AppColors.success,
           child: const Icon(Icons.add, color: Colors.white),
         ),
+      ),
+    );
+  }
+
+  void _showAddMaterialDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final packSizeController = TextEditingController();
+    final packPriceController = TextEditingController();
+    final alertLevelController = TextEditingController(text: '5');
+    final supplierController = TextEditingController();
+    final initialQtyController = TextEditingController(text: '0');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.paperHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('New material',
+            style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Material name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: packSizeController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Pack size (pcs)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: packPriceController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Pack price',
+                  prefixText: '₱ ',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: alertLevelController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Alert level (pcs)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: supplierController,
+                decoration: const InputDecoration(
+                  labelText: 'Supplier (optional)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: initialQtyController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Initial quantity (pcs)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              final packSize =
+                  int.tryParse(packSizeController.text) ?? 0;
+              final packPrice =
+                  double.tryParse(packPriceController.text) ?? 0;
+              final alertLevel =
+                  int.tryParse(alertLevelController.text) ?? 5;
+              final supplier = supplierController.text.trim();
+              final initialQty =
+                  int.tryParse(initialQtyController.text) ?? 0;
+
+              if (name.isEmpty) {
+                context.showSnackBar('Name is required',
+                    isError: true);
+                return;
+              }
+              if (packSize <= 0) {
+                context.showSnackBar('Pack size must be > 0',
+                    isError: true);
+                return;
+              }
+              if (packPrice <= 0) {
+                context.showSnackBar('Pack price must be > 0',
+                    isError: true);
+                return;
+              }
+
+              Navigator.pop(ctx);
+              context.read<MaterialsBloc>().add(CreateMaterialEvent(
+                    name: name,
+                    packSize: packSize,
+                    packPrice: packPrice,
+                    alertLevel: alertLevel,
+                    supplier:
+                        supplier.isEmpty ? null : supplier,
+                    initialQuantity: initialQty,
+                  ));
+            },
+            child: const Text('Create'),
+          ),
+        ],
       ),
     );
   }

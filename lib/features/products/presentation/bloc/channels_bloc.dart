@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/repositories/channel_repository.dart';
 import '../../domain/usecases/get_channels.dart';
 import '../../domain/usecases/update_channel.dart';
 import 'channels_event.dart';
@@ -9,12 +10,15 @@ import 'channels_state.dart';
 class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
   final GetChannels getChannels;
   final UpdateChannel updateChannel;
+  final ChannelRepository channelRepository;
 
   ChannelsBloc({
     required this.getChannels,
     required this.updateChannel,
+    required this.channelRepository,
   }) : super(ChannelsInitial()) {
     on<LoadChannels>(_onLoadChannels);
+    on<CreateChannelEvent>(_onCreateChannel);
     on<UpdateChannelEvent>(_onUpdateChannel);
   }
 
@@ -27,6 +31,23 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
     result.fold(
       (failure) => emit(ChannelsError(failure.message)),
       (channels) => emit(ChannelsLoaded(channels)),
+    );
+  }
+
+  Future<void> _onCreateChannel(
+    CreateChannelEvent event,
+    Emitter<ChannelsState> emit,
+  ) async {
+    final result = await channelRepository.createChannel(
+      name: event.name,
+      commissionRate: event.commissionRate,
+      transactionFeeRate: event.transactionFeeRate,
+      flatFee: event.flatFee,
+      shippingPaidByUs: event.shippingPaidByUs,
+    );
+    result.fold(
+      (failure) => emit(ChannelsError(failure.message)),
+      (_) => emit(ChannelCreated()),
     );
   }
 

@@ -26,6 +26,9 @@ class ChannelsLoaded extends ChannelsState {
   List<Object?> get props => [channels];
 }
 
+/// A new channel was created successfully
+class ChannelCreated extends ChannelsState {}
+
 /// Error occurred while loading/managing channels
 class ChannelsError extends ChannelsState {
   final String message;

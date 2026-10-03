@@ -139,11 +139,13 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => ChannelsBloc(
     getChannels: getIt(),
     updateChannel: getIt(),
+    channelRepository: getIt(),
   ));
   getIt.registerFactory(() => MaterialsBloc(
     getMaterials: getIt(),
     getBuyList: getIt(),
     receiveStock: getIt(),
+    materialRepository: getIt(),
   ));
   getIt.registerFactory(() => OrdersListBloc(
     getOrders: getIt(),

@@ -40,6 +40,9 @@ class BuyListLoaded extends MaterialsState {
 /// Stock was received successfully
 class StockReceived extends MaterialsState {}
 
+/// Material was created successfully
+class MaterialCreated extends MaterialsState {}
+
 /// Error occurred while loading/managing materials
 class MaterialsError extends MaterialsState {
   final String message;

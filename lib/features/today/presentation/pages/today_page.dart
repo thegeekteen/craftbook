@@ -46,7 +46,7 @@ class _TodayView extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today_outlined, size: 20),
-            onPressed: () {},
+            onPressed: () => context.push(RouteNames.calendarWeek),
           ),
         ],
       ),
