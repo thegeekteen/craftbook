@@ -29,8 +29,10 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
   Material? _material;
   bool _isLoading = true;
   int _packsReceived = 1;
+  int _packSize = 0;
   final _priceController = TextEditingController();
   final _supplierController = TextEditingController();
+  final _packSizeController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
   void dispose() {
     _priceController.dispose();
     _supplierController.dispose();
+    _packSizeController.dispose();
     super.dispose();
   }
 
@@ -60,6 +63,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
         if (mounted) {
           setState(() {
             _material = detail.material;
+            _packSize = detail.material.packSize;
+            _packSizeController.text = detail.material.packSize.toString();
             _isLoading = false;
           });
         }
@@ -72,8 +77,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
   }
 
   int get _totalPcs {
-    if (_material == null) return 0;
-    return _packsReceived * _material!.packSize;
+    return _packsReceived * _packSize;
   }
 
   double get _newUnitCost {
@@ -81,8 +85,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
     final oldQty = _material!.quantityOnHand;
     final oldCost = _material!.unitCost;
     final newQty = _totalPcs;
-    final newPrice =
-        _material!.packSize > 0 ? _pricePerPack / _material!.packSize : 0.0;
+    final newPrice = _packSize > 0 ? _pricePerPack / _packSize : 0.0;
 
     if (oldQty + newQty == 0) return newPrice;
     return (oldQty * oldCost + newQty * newPrice) / (oldQty + newQty);
@@ -177,6 +180,18 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
               ),
               const SizedBox(height: 20),
 
+              // Quantity per pack
+              Text('QUANTITY PER PACK', style: AppTextStyles.monoSection),
+              const SizedBox(height: 8),
+              StepperInput(
+                value: _packSize,
+                min: 1,
+                max: 9999,
+                onChanged: (val) =>
+                    setState(() => _packSize = val.toInt()),
+              ),
+              const SizedBox(height: 20),
+
               // Packs received
               Text('PACKS RECEIVED', style: AppTextStyles.monoSection),
               const SizedBox(height: 8),
@@ -210,6 +225,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                   labelText: 'Price',
                   prefixText: '₱ ',
                 ),
+                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 20),
 
