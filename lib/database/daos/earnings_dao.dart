@@ -34,11 +34,14 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
   Future<Map<String, dynamic>> getEarningsSummary(DateTime startDate, DateTime endDate) async {
     final completedOrders = await _getCompletedOrders(startDate, endDate);
 
-    final totalSales = completedOrders.fold<double>(0, (sum, order) => sum + order.totalSales);
-    final totalMaterialCost = completedOrders.fold<double>(0, (sum, order) => sum + order.totalMaterialCost);
-    final totalChannelFees = completedOrders.fold<double>(0, (sum, order) => sum + order.channelFees);
-    final totalShippingCost = completedOrders.fold<double>(0, (sum, order) => sum + order.shippingCost);
-    final totalProfit = completedOrders.fold<double>(0, (sum, order) => sum + order.profit);
+    final totalSales = completedOrders.fold<double>(0, (sum, o) => sum + o.totalSales);
+    final totalMaterialCost = completedOrders.fold<double>(0, (sum, o) => sum + o.totalMaterialCost);
+    final totalChannelFees = completedOrders.fold<double>(0, (sum, o) => sum + o.channelFees);
+    final totalShippingCost = completedOrders.fold<double>(0, (sum, o) => sum + o.shippingCost);
+
+    // Recalculate profit from components — don't trust stored order.profit
+    // which may be stale if materials were adjusted after creation.
+    final totalProfit = totalSales - totalMaterialCost - totalChannelFees - totalShippingCost;
 
     return {
       'totalSales': totalSales,
@@ -58,7 +61,14 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
 
     for (final order in completedOrders) {
       final items = await (select(orderItems)..where((t) => t.orderId.equals(order.id))).get();
-      
+      if (items.isEmpty) continue;
+
+      // Recalculate this order's profit from components
+      final orderProfit = order.totalSales -
+          order.totalMaterialCost -
+          order.channelFees -
+          order.shippingCost;
+
       for (final item in items) {
         if (!productEarnings.containsKey(item.productId)) {
           final product = await (select(products)
@@ -73,14 +83,18 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
           };
         }
 
-        final profitPerItem = order.profit / items.length;
-        
-        productEarnings[item.productId]!['quantity'] = 
+        // Allocate profit proportional to this item's share of order sales
+        final salesShare = order.totalSales > 0
+            ? item.subtotal / order.totalSales
+            : 0.0;
+        final itemProfit = orderProfit * salesShare;
+
+        productEarnings[item.productId]!['quantity'] =
             (productEarnings[item.productId]!['quantity'] as int) + item.quantity;
-        productEarnings[item.productId]!['sales'] = 
+        productEarnings[item.productId]!['sales'] =
             (productEarnings[item.productId]!['sales'] as double) + item.subtotal;
-        productEarnings[item.productId]!['profit'] = 
-            (productEarnings[item.productId]!['profit'] as double) + profitPerItem;
+        productEarnings[item.productId]!['profit'] =
+            (productEarnings[item.productId]!['profit'] as double) + itemProfit;
       }
     }
 
