@@ -4,6 +4,7 @@ import '../../../products/domain/entities/channel.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_material.dart';
+import '../../domain/entities/order_product.dart';
 
 /// Base class for order detail states
 abstract class OrderDetailState extends Equatable {
@@ -24,17 +25,19 @@ class OrderDetailLoaded extends OrderDetailState {
   final Order order;
   final List<OrderItem> items;
   final List<OrderMaterial> materials;
+  final List<OrderProduct> products;
   final Channel? channel;
 
   const OrderDetailLoaded({
     required this.order,
     required this.items,
     required this.materials,
+    this.products = const [],
     this.channel,
   });
 
   @override
-  List<Object?> get props => [order, items, materials, channel];
+  List<Object?> get props => [order, items, materials, products, channel];
 }
 
 /// Error occurred while loading order detail

@@ -6,6 +6,7 @@ import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order_item.dart';
 import '../entities/order_material.dart';
+import '../entities/order_product.dart';
 import '../repositories/order_repository.dart';
 
 class CreateOrder {
@@ -39,47 +40,72 @@ class CreateOrder {
     }
 
     final expandedMaterials = <OrderMaterialInput>[];
+    final expandedProducts = <OrderProductInput>[];
     final materialTotals = <int, double>{};
 
     for (final item in items) {
-      final bomResult = await productRepository.getBomItems(item.productId);
-      final bomItems = bomResult.fold(
-        (_) => <BomItem>[],
-        (items) => items,
+      // Check if product is standalone
+      final productResult =
+          await productRepository.getProductById(item.productId);
+      final product = productResult.fold<dynamic>(
+        (_) => null,
+        (p) => p,
       );
 
-      for (final bom in bomItems) {
-        final needed = bom.quantityRequired * item.quantity;
-        materialTotals[bom.materialId] = (materialTotals[bom.materialId] ?? 0) + needed;
-
-        final existingIndex = expandedMaterials.indexWhere(
-          (m) => m.materialId == bom.materialId,
+      if (product != null && product.isStandalone) {
+        // Standalone product: no BOM expansion, use product's own stock
+        expandedProducts.add(OrderProductInput(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitCost: product.unitCost,
+        ));
+      } else {
+        // BOM product: expand into materials
+        final bomResult = await productRepository.getBomItems(item.productId);
+        final bomItems = bomResult.fold(
+          (_) => <BomItem>[],
+          (items) => items,
         );
 
-        if (existingIndex >= 0) {
-          final existing = expandedMaterials[existingIndex];
-          expandedMaterials[existingIndex] = OrderMaterialInput(
-            materialId: existing.materialId,
-            materialName: existing.materialName,
-            plannedQuantity: existing.plannedQuantity + needed,
-            actualQuantity: existing.actualQuantity + needed,
-            unitCost: existing.unitCost,
+        for (final bom in bomItems) {
+          final needed = bom.quantityRequired * item.quantity;
+          materialTotals[bom.materialId] =
+              (materialTotals[bom.materialId] ?? 0) + needed;
+
+          final existingIndex = expandedMaterials.indexWhere(
+            (m) => m.materialId == bom.materialId,
           );
-        } else {
-          expandedMaterials.add(OrderMaterialInput(
-            materialId: bom.materialId,
-            materialName: bom.materialName,
-            plannedQuantity: needed,
-            actualQuantity: needed,
-            unitCost: bom.materialUnitCost,
-          ));
+
+          if (existingIndex >= 0) {
+            final existing = expandedMaterials[existingIndex];
+            expandedMaterials[existingIndex] = OrderMaterialInput(
+              materialId: existing.materialId,
+              materialName: existing.materialName,
+              plannedQuantity: existing.plannedQuantity + needed,
+              actualQuantity: existing.actualQuantity + needed,
+              unitCost: existing.unitCost,
+            );
+          } else {
+            expandedMaterials.add(OrderMaterialInput(
+              materialId: bom.materialId,
+              materialName: bom.materialName,
+              plannedQuantity: needed,
+              actualQuantity: needed,
+              unitCost: bom.materialUnitCost,
+            ));
+          }
         }
       }
     }
 
+    // Calculate total cost: materials + standalone products
     double totalMaterialCost = 0;
     for (final mat in expandedMaterials) {
       totalMaterialCost += mat.plannedQuantity * mat.unitCost;
+    }
+    for (final prod in expandedProducts) {
+      totalMaterialCost += prod.totalCost;
     }
 
     final profit = totalSales - totalMaterialCost - channelFees - shippingCost;
@@ -98,13 +124,21 @@ class CreateOrder {
       profit: profit,
       items: items,
       materials: expandedMaterials,
+      products: expandedProducts,
     );
 
     return result.fold(
       (failure) => Left(failure),
       (orderId) async {
+        // Reserve material stock for BOM products
         for (final mat in expandedMaterials) {
-          await materialRepository.reserveMaterials(mat.materialId, mat.plannedQuantity);
+          await materialRepository.reserveMaterials(
+              mat.materialId, mat.plannedQuantity);
+        }
+        // Reserve product stock for standalone products
+        for (final prod in expandedProducts) {
+          await productRepository.reserveProductStock(
+              prod.productId, prod.quantity);
         }
         return Right(orderId);
       },

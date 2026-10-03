@@ -79,12 +79,19 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     final materials = materialsResult.fold<List<dynamic>>(
         (_) => [], (list) => list);
 
+    // Load standalone products for this order
+    final productsResult =
+        await orderRepository.getOrderProducts(event.orderId);
+    final products = productsResult.fold<List<dynamic>>(
+        (_) => [], (list) => list);
+
     if (emit.isDone) return;
 
     emit(OrderDetailLoaded(
       order: order,
       items: items.cast(),
       materials: materials.cast(),
+      products: products.cast(),
       channel: channel,
     ));
   }

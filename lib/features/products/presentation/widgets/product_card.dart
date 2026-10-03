@@ -128,22 +128,47 @@ class ProductCard extends StatelessWidget {
                 ),
               ],
 
-              // Buildable quantity
+              // Buildable / stock quantity
               if (buildableQuantity != null) ...[
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.inventory_2_outlined,
-                        size: 12, color: AppColors.muted),
+                    Icon(
+                      product.isStandalone
+                          ? Icons.inventory_outlined
+                          : Icons.inventory_2_outlined,
+                      size: 12,
+                      color: AppColors.muted,
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      'Can build: ${buildableQuantity}',
+                      product.isStandalone
+                          ? 'In stock: $buildableQuantity'
+                          : 'Can build: $buildableQuantity',
                       style: AppTextStyles.bodySmall.copyWith(
                         color: buildableQuantity! == 0
                             ? AppColors.alert
                             : AppColors.muted,
                       ),
                     ),
+                    if (product.isStandalone && product.isLowStock) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.alert.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'LOW',
+                          style: AppTextStyles.monoLabel.copyWith(
+                            color: AppColors.alert,
+                            fontSize: 8,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],

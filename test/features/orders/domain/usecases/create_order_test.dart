@@ -4,8 +4,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/products/domain/entities/bom_item.dart';
+import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
@@ -20,6 +22,26 @@ void main() {
   late MockProductRepository mockProductRepo;
   late MockMaterialRepository mockMaterialRepo;
 
+  final bomProduct1 = Product(
+    id: 1,
+    name: 'Custom Magnets',
+    sellPrice: 249.0,
+    isActive: true,
+    isStandalone: false,
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 1),
+  );
+
+  final bomProduct2 = Product(
+    id: 2,
+    name: 'Keychain',
+    sellPrice: 249.0,
+    isActive: true,
+    isStandalone: false,
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 1),
+  );
+
   setUp(() {
     mockOrderRepo = MockOrderRepository();
     mockProductRepo = MockProductRepository();
@@ -29,6 +51,14 @@ void main() {
       productRepository: mockProductRepo,
       materialRepository: mockMaterialRepo,
     );
+
+    // Default: all products are BOM-based (not standalone)
+    when(() => mockProductRepo.getProductById(1))
+        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct1));
+    when(() => mockProductRepo.getProductById(2))
+        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct2));
+    when(() => mockProductRepo.reserveProductStock(any(), any()))
+        .thenAnswer((_) async => const Right<Failure, void>(null));
   });
 
   final testItems = [
@@ -80,6 +110,7 @@ void main() {
             profit: any(named: 'profit'),
             items: any(named: 'items'),
             materials: any(named: 'materials'),
+            products: any(named: 'products'),
           )).thenAnswer((_) async => const Right<Failure, int>(1));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))
@@ -184,6 +215,7 @@ void main() {
             profit: any(named: 'profit'),
             items: any(named: 'items'),
             materials: any(named: 'materials'),
+            products: any(named: 'products'),
           )).thenAnswer((_) async => const Right<Failure, int>(2));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))

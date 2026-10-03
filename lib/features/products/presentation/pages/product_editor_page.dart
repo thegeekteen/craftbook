@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
@@ -8,15 +9,13 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/currency_text.dart';
 import '../../../../core/widgets/stepper_input.dart';
+import '../../domain/usecases/adjust_product_stock.dart';
 import '../../../stock/domain/entities/material.dart';
 import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
-import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/delete_product.dart';
-import '../widgets/bom_editor_list.dart';
 
-/// Product editor page — BOM editor for creating/editing products
 class ProductEditorPage extends StatefulWidget {
   final int? productId;
 
@@ -29,10 +28,18 @@ class ProductEditorPage extends StatefulWidget {
 class _ProductEditorPageState extends State<ProductEditorPage> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
+  final _unitCostController = TextEditingController();
+  final _alertLevelController = TextEditingController();
+  final _initialQtyController = TextEditingController(text: '0');
   List<_EditableBomItem> _bomItems = [];
   List<Material> _availableMaterials = [];
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isStandalone = false;
+
+  // Existing product state (loaded from DB)
+  int _existingQuantityOnHand = 0;
+  double _existingUnitCost = 0;
 
   bool get _isNew => widget.productId == null;
 
@@ -46,22 +53,22 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   void dispose() {
     _nameController.dispose();
     _priceController.dispose();
+    _unitCostController.dispose();
+    _alertLevelController.dispose();
+    _initialQtyController.dispose();
     super.dispose();
   }
 
   Future<void> _loadData() async {
-    // Load available materials
     final getMaterials = getIt<GetMaterials>();
     final matResult = await getMaterials();
     final materials = matResult.fold((_) => <Material>[], (m) => m);
 
     if (widget.productId != null) {
-      // Load existing product
       final productRepo = getIt<ProductRepository>();
       final productResult =
           await productRepo.getProductById(widget.productId!);
-      final bomResult =
-          await productRepo.getBomItems(widget.productId!);
+      final bomResult = await productRepo.getBomItems(widget.productId!);
 
       productResult.fold(
         (failure) {
@@ -74,15 +81,19 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           }
         },
         (product) {
-          final bomItems = bomResult.fold(
-            (_) => <BomItem>[],
-            (b) => b,
-          );
+          final bomItems = bomResult.fold((_) => <BomItem>[], (b) => b);
 
           if (mounted) {
             setState(() {
               _nameController.text = product!.name;
-              _priceController.text = product!.sellPrice.toString();
+              _priceController.text = product.sellPrice.toString();
+              _isStandalone = product.isStandalone;
+              _existingQuantityOnHand = product.quantityOnHand;
+              _existingUnitCost = product.unitCost;
+              _unitCostController.text =
+                  product.unitCost > 0 ? product.unitCost.toStringAsFixed(2) : '';
+              _alertLevelController.text =
+                  product.alertLevel > 0 ? product.alertLevel.toString() : '';
               _availableMaterials = materials;
               _bomItems = bomItems
                   .map((b) => _EditableBomItem(
@@ -108,6 +119,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   }
 
   double get _totalMaterialCost {
+    if (_isStandalone) {
+      return double.tryParse(_unitCostController.text) ?? 0;
+    }
     return _bomItems.fold(
         0.0, (sum, item) => sum + item.quantityRequired * item.materialUnitCost);
   }
@@ -162,33 +176,100 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                         .copyWith(color: AppColors.muted)),
               )
             else
-              FlexibleChildListView(
-                shrinkWrap: true,
-                children: available
-                    .map((m) => ListTile(
-                          title: Text(m.name,
-                              style: AppTextStyles.bodyMedium
-                                  .copyWith(color: AppColors.ink)),
-                          subtitle: CurrencyText(
-                            amount: m.unitCost,
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: AppColors.muted),
-                          ),
-                          onTap: () {
-                            setState(() {
-                              _bomItems.add(_EditableBomItem(
-                                materialId: m.id!,
-                                materialName: m.name,
-                                materialUnitCost: m.unitCost,
-                                quantityRequired: 1,
-                              ));
-                            });
-                            Navigator.pop(ctx);
-                          },
-                        ))
-                    .toList(),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: available
+                      .map((m) => ListTile(
+                            title: Text(m.name,
+                                style: AppTextStyles.bodyMedium
+                                    .copyWith(color: AppColors.ink)),
+                            subtitle: CurrencyText(
+                              amount: m.unitCost,
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: AppColors.muted),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _bomItems.add(_EditableBomItem(
+                                  materialId: m.id!,
+                                  materialName: m.name,
+                                  materialUnitCost: m.unitCost,
+                                  quantityRequired: 1,
+                                ));
+                              });
+                              Navigator.pop(ctx);
+                            },
+                          ))
+                      .toList(),
+                ),
               ),
             const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAdjustDialog() {
+    int adjustedQty = _existingQuantityOnHand;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.paperHigh,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Adjust stock',
+              style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Current: $_existingQuantityOnHand units',
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
+              ),
+              const SizedBox(height: 16),
+              StepperInput(
+                value: adjustedQty,
+                min: 0,
+                max: 99999,
+                onChanged: (val) =>
+                    setDialogState(() => adjustedQty = val.toInt()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child:
+                  Text('Cancel', style: TextStyle(color: AppColors.muted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final adjustStock = getIt<AdjustProductStock>();
+                final result = await adjustStock(
+                  productId: widget.productId!,
+                  newQuantityOnHand: adjustedQty,
+                );
+                result.fold(
+                  (failure) {
+                    if (mounted) {
+                      context.showSnackBar(failure.message, isError: true);
+                    }
+                  },
+                  (_) {
+                    if (mounted) {
+                      context.showSnackBar('Stock adjusted');
+                      _loadData();
+                    }
+                  },
+                );
+              },
+              child: const Text('Adjust'),
+            ),
           ],
         ),
       ),
@@ -213,9 +294,15 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final productRepo = getIt<ProductRepository>();
 
     if (_isNew) {
+      final initialQty = int.tryParse(_initialQtyController.text) ?? 0;
+      final initialCost = double.tryParse(_unitCostController.text) ?? 0.0;
+
       final result = await productRepo.createProduct(
         name: name,
         sellPrice: sellPrice,
+        isStandalone: _isStandalone,
+        initialQuantity: _isStandalone ? initialQty : 0,
+        initialUnitCost: _isStandalone ? initialCost : 0,
       );
 
       await result.fold(
@@ -226,8 +313,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           }
         },
         (productId) async {
-          // Save BOM items
-          if (_bomItems.isNotEmpty) {
+          if (!_isStandalone && _bomItems.isNotEmpty) {
             await productRepo.saveBomItems(
               productId,
               _bomItems
@@ -247,10 +333,14 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         },
       );
     } else {
+      final alertLevel = int.tryParse(_alertLevelController.text) ?? 0;
+
       final result = await productRepo.updateProduct(
         id: widget.productId!,
         name: name,
         sellPrice: sellPrice,
+        isStandalone: _isStandalone,
+        alertLevel: _isStandalone ? alertLevel : 0,
       );
 
       await result.fold(
@@ -261,16 +351,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           }
         },
         (_) async {
-          // Save BOM items
-          await productRepo.saveBomItems(
-            widget.productId!,
-            _bomItems
-                .map((b) => BomItemInput(
-                      materialId: b.materialId,
-                      quantityRequired: b.quantityRequired,
-                    ))
-                .toList(),
-          );
+          if (!_isStandalone) {
+            await productRepo.saveBomItems(
+              widget.productId!,
+              _bomItems
+                  .map((b) => BomItemInput(
+                        materialId: b.materialId,
+                        quantityRequired: b.quantityRequired,
+                      ))
+                  .toList(),
+            );
+          }
 
           if (mounted) {
             setState(() => _isSaving = false);
@@ -306,7 +397,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     context,
                     title: 'Delete product?',
                     message:
-                        'This will permanently remove this product and its BOM. This cannot be undone.',
+                        'This will permanently remove this product. This cannot be undone.',
                     confirmText: 'Delete',
                     isDestructive: true,
                   );
@@ -370,28 +461,49 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // BOM items
-          Row(
-            children: [
-              Text('MATERIALS', style: AppTextStyles.monoSection),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: _showAddMaterialSheet,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
-              ),
-            ],
+          // Product type toggle
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.paperHigh,
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: AppColors.hair),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isStandalone ? 'Standalone product' : 'BOM product',
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.ink),
+                      ),
+                      Text(
+                        _isStandalone
+                            ? 'Buy & resell as-is, track own stock'
+                            : 'Built from materials using BOM',
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.muted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _isStandalone,
+                  onChanged: (val) => setState(() => _isStandalone = val),
+                  activeColor: AppColors.coin,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _EditableBomList(
-            items: _bomItems,
-            onChanged: () => setState(() {}),
-            onRemoved: (index) {
-              setState(() => _bomItems.removeAt(index));
-            },
-          ),
+          const SizedBox(height: 20),
+
+          if (_isStandalone) ..._buildStandaloneSection(),
+          if (!_isStandalone) ..._buildBomSection(),
           const SizedBox(height: 24),
 
           // Cost/profit card
@@ -405,7 +517,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             child: Column(
               children: [
                 _CostRow(
-                    label: 'Material cost',
+                    label: _isStandalone ? 'Unit cost' : 'Material cost',
                     amount: _totalMaterialCost,
                     color: AppColors.alert),
                 _CostRow(
@@ -457,6 +569,161 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           ),
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildStandaloneSection() {
+    return [
+      if (!_isNew) ...[
+        // Stock overview for existing standalone product
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.paperHigh,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: AppColors.hair),
+          ),
+          child: Row(
+            children: [
+              _StockStat(
+                label: 'On hand',
+                value: _existingQuantityOnHand.toString(),
+                color: AppColors.ink,
+              ),
+              const SizedBox(width: 24),
+              _StockStat(
+                label: 'Unit cost',
+                value: '₱${_existingUnitCost.toStringAsFixed(2)}',
+                color: AppColors.coin,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Receive & Adjust buttons
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final route = RouteNames.receiveProductStock
+                      .replaceFirst(':id', '${widget.productId!}');
+                  final result = await context.push<bool>(route);
+                  if (result == true && mounted) {
+                    _loadData();
+                  }
+                },
+                icon: const Icon(Icons.add_box_outlined, size: 18),
+                label: const Text('Receive'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.success,
+                  side: const BorderSide(color: AppColors.success),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showAdjustDialog(),
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text('Adjust'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.coin,
+                  side: const BorderSide(color: AppColors.coin),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // Unit cost (for new products)
+      if (_isNew) ...[
+        TextField(
+          controller: _unitCostController,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Unit cost',
+            prefixText: '₱ ',
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _initialQtyController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Initial stock quantity',
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // Alert level
+      TextField(
+        controller: _alertLevelController,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          labelText: 'Low stock alert level',
+          hintText: 'e.g. 5',
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildBomSection() {
+    return [
+      Row(
+        children: [
+          Text('MATERIALS', style: AppTextStyles.monoSection),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: _showAddMaterialSheet,
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      _EditableBomList(
+        items: _bomItems,
+        onChanged: () => setState(() {}),
+        onRemoved: (index) {
+          setState(() => _bomItems.removeAt(index));
+        },
+      ),
+    ];
+  }
+}
+
+class _StockStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StockStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted)),
+        const SizedBox(height: 2),
+        Text(value,
+            style: AppTextStyles.displaySmall.copyWith(color: color)),
+      ],
     );
   }
 }
@@ -619,28 +886,6 @@ class _CostRow extends StatelessWidget {
                 .copyWith(color: color),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A simple widget that acts like ListView.builder with shrinkWrap
-class FlexibleChildListView extends StatelessWidget {
-  final bool shrinkWrap;
-  final List<Widget> children;
-
-  const FlexibleChildListView({
-    super.key,
-    this.shrinkWrap = true,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: ListView(
-        shrinkWrap: shrinkWrap,
-        children: children,
       ),
     );
   }

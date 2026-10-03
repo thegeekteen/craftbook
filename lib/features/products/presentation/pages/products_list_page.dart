@@ -167,61 +167,104 @@ class _ProductsListViewState extends State<_ProductsListView> {
   void _showAddProductDialog(BuildContext context) {
     final nameController = TextEditingController();
     final priceController = TextEditingController();
+    final unitCostController = TextEditingController();
+    bool isStandalone = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.paperHigh,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('New product',
-            style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Product name'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.paperHigh,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('New product',
+              style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration:
+                      const InputDecoration(labelText: 'Product name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Sell price',
+                    prefixText: '₱ ',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Standalone (no BOM)',
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.muted),
+                      ),
+                    ),
+                    Switch(
+                      value: isStandalone,
+                      onChanged: (val) =>
+                          setDialogState(() => isStandalone = val),
+                      activeColor: AppColors.coin,
+                    ),
+                  ],
+                ),
+                if (isStandalone) ...[
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: unitCostController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Unit cost',
+                      prefixText: '₱ ',
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: priceController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Sell price',
-                prefixText: '₱ ',
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child:
+                  Text('Cancel', style: TextStyle(color: AppColors.muted)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                final price = double.tryParse(priceController.text) ?? 0;
+                final unitCost =
+                    double.tryParse(unitCostController.text) ?? 0;
+
+                if (name.isEmpty) {
+                  context.showSnackBar('Name is required', isError: true);
+                  return;
+                }
+                if (price <= 0) {
+                  context.showSnackBar('Price must be > 0', isError: true);
+                  return;
+                }
+
+                Navigator.pop(ctx);
+                context.read<ProductsBloc>().add(CreateProductEvent(
+                      name: name,
+                      sellPrice: price,
+                      isStandalone: isStandalone,
+                      initialUnitCost: isStandalone ? unitCost : 0,
+                    ));
+              },
+              child: const Text('Create'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: AppColors.muted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              final price = double.tryParse(priceController.text) ?? 0;
-
-              if (name.isEmpty) {
-                context.showSnackBar('Name is required', isError: true);
-                return;
-              }
-              if (price <= 0) {
-                context.showSnackBar('Price must be > 0', isError: true);
-                return;
-              }
-
-              Navigator.pop(ctx);
-              context.read<ProductsBloc>().add(CreateProductEvent(
-                    name: name,
-                    sellPrice: price,
-                  ));
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
     );
   }

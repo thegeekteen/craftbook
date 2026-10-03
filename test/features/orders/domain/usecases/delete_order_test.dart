@@ -5,13 +5,17 @@ import 'package:mocktail/mocktail.dart';
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
+import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
+import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 
 class MockOrderRepository extends Mock implements OrderRepository {}
 
 class MockMaterialRepository extends Mock implements MaterialRepository {}
+
+class MockProductRepository extends Mock implements ProductRepository {}
 
 void main() {
   late DeleteOrder deleteOrder;
@@ -72,13 +76,20 @@ void main() {
     ),
   ];
 
+  late MockProductRepository mockProductRepo;
+
   setUp(() {
     mockOrderRepo = MockOrderRepository();
     mockMaterialRepo = MockMaterialRepository();
+    mockProductRepo = MockProductRepository();
     deleteOrder = DeleteOrder(
       orderRepository: mockOrderRepo,
       materialRepository: mockMaterialRepo,
+      productRepository: mockProductRepo,
     );
+
+    when(() => mockOrderRepo.getOrderProducts(any()))
+        .thenAnswer((_) async => Right<Failure, List<OrderProduct>>(const []));
   });
 
   group('DeleteOrder', () {

@@ -9,18 +9,41 @@ class DeleteProduct {
   DeleteProduct({required this.productRepository});
 
   Future<Either<Failure, void>> call(int productId) async {
-    final bomResult = await productRepository.getBomItems(productId);
+    // Check if product exists and get its type
+    final productResult = await productRepository.getProductById(productId);
 
-    return bomResult.fold(
+    return productResult.fold(
       (failure) => Left(failure),
-      (bomItems) async {
-        if (bomItems.isNotEmpty) {
+      (product) async {
+        if (product == null) {
+          return Left(NotFoundFailure('Product not found'));
+        }
+
+        // For BOM products: check BOM items
+        if (!product.isStandalone) {
+          final bomResult = await productRepository.getBomItems(productId);
+          final bomBlocked = bomResult.fold<bool>(
+            (_) => false,
+            (bomItems) => bomItems.isNotEmpty,
+          );
+          if (bomBlocked) {
+            final bomItems = bomResult.fold((_) => <dynamic>[], (items) => items);
+            return Left(ValidationFailure(
+              'Cannot delete product: has ${bomItems.length} BOM item(s). '
+              'Remove the BOM first.',
+            ));
+          }
+        }
+
+        // For standalone products: check stock on hand
+        if (product.isStandalone && product.quantityOnHand > 0) {
           return Left(ValidationFailure(
-            'Cannot delete product: has ${bomItems.length} BOM item(s). '
-            'Remove the BOM first.',
+            'Cannot delete product: has ${product.quantityOnHand} unit(s) in stock. '
+            'Adjust stock to 0 first.',
           ));
         }
 
+        // Check if referenced by orders
         final hasOrdersResult =
             await productRepository.hasOrdersUsingProduct(productId);
 

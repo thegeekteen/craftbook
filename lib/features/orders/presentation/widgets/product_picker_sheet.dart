@@ -190,7 +190,9 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Buildable: $buildable',
+                                product.isStandalone
+                                    ? 'In stock: $buildable'
+                                    : 'Buildable: $buildable',
                                 style: AppTextStyles.bodySmall,
                               ),
                             ],

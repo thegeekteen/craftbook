@@ -14,6 +14,8 @@ class UpdateProduct {
     String? description,
     double? sellPrice,
     bool? isActive,
+    bool? isStandalone,
+    int? alertLevel,
   }) {
     return repository.updateProduct(
       id: id,
@@ -21,6 +23,8 @@ class UpdateProduct {
       description: description,
       sellPrice: sellPrice,
       isActive: isActive,
+      isStandalone: isStandalone,
+      alertLevel: alertLevel,
     );
   }
 }

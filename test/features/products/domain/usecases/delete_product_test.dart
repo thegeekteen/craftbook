@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/features/products/domain/entities/bom_item.dart';
+import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/products/domain/usecases/delete_product.dart';
 
@@ -12,6 +13,16 @@ class MockProductRepository extends Mock implements ProductRepository {}
 void main() {
   late DeleteProduct deleteProduct;
   late MockProductRepository mockRepo;
+
+  final bomProduct = Product(
+    id: 1,
+    name: 'Test Product',
+    sellPrice: 100.0,
+    isActive: true,
+    isStandalone: false,
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 1),
+  );
 
   final testBomItem = BomItem(
     id: 1,
@@ -26,6 +37,10 @@ void main() {
   setUp(() {
     mockRepo = MockProductRepository();
     deleteProduct = DeleteProduct(productRepository: mockRepo);
+
+    // Default: return a non-standalone product
+    when(() => mockRepo.getProductById(1))
+        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct));
   });
 
   group('DeleteProduct', () {

@@ -46,6 +46,9 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       name: event.name,
       description: event.description,
       sellPrice: event.sellPrice,
+      isStandalone: event.isStandalone,
+      initialQuantity: event.initialQuantity,
+      initialUnitCost: event.initialUnitCost,
     );
     result.fold(
       (failure) => emit(ProductsError(failure.message)),

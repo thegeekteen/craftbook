@@ -4,13 +4,15 @@ import '../app_database.dart';
 import '../tables/orders_table.dart';
 import '../tables/order_items_table.dart';
 import '../tables/order_materials_table.dart';
+import '../tables/order_products_table.dart';
 import '../tables/products_table.dart';
 import '../tables/materials_table.dart';
+import '../tables/product_stock_movements_table.dart';
 
 part 'order_dao.g.dart';
 
 /// Data Access Object for orders
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
+@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, OrderProducts, Products, Materials, ProductStockMovements])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   OrderDao(AppDatabase db) : super(db);
 
@@ -98,6 +100,29 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
       'DELETE FROM stock_movements WHERE order_id = ?',
       variables: [Variable.withInt(orderId)],
     );
+  }
+
+  /// Delete product stock movements referencing a given order
+  Future<int> deleteProductStockMovementsByOrderId(int orderId) {
+    return (delete(productStockMovements)
+          ..where((t) => t.orderId.equals(orderId)))
+        .go();
+  }
+
+  /// Get order products (standalone products) for a given order
+  Future<List<OrderProduct>> getOrderProducts(int orderId) {
+    return (select(orderProducts)..where((t) => t.orderId.equals(orderId)))
+        .get();
+  }
+
+  /// Add an order product entry
+  Future<int> addOrderProduct(OrderProductsCompanion product) {
+    return into(orderProducts).insert(product);
+  }
+
+  /// Delete all order products for a given order
+  Future<int> deleteOrderProductsByOrderId(int orderId) {
+    return (delete(orderProducts)..where((t) => t.orderId.equals(orderId))).go();
   }
 
   /// Get order items

@@ -8,10 +8,12 @@ import 'package:path/path.dart' as p;
 import 'tables/orders_table.dart';
 import 'tables/order_items_table.dart';
 import 'tables/order_materials_table.dart';
+import 'tables/order_products_table.dart';
 import 'tables/materials_table.dart';
 import 'tables/products_table.dart';
 import 'tables/bom_items_table.dart';
 import 'tables/stock_movements_table.dart';
+import 'tables/product_stock_movements_table.dart';
 import 'tables/settings_table.dart';
 import 'migrations/migrations.dart';
 
@@ -23,11 +25,13 @@ part 'app_database.g.dart';
     Orders,
     OrderItems,
     OrderMaterials,
+    OrderProducts,
     Materials,
     Products,
     BomItems,
     Channels,
     StockMovements,
+    ProductStockMovements,
     Settings,
   ],
 )
@@ -38,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -47,7 +51,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        await runMigrations(m, from, to);
+        await runMigrations(this, m, from, to);
       },
       beforeOpen: (details) async {
         // Enable foreign keys

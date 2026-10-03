@@ -7,8 +7,16 @@ class Product extends Equatable {
   final String? description;
   final double sellPrice;
   final bool isActive;
+  final bool isStandalone;
+  final int quantityOnHand;
+  final int quantityPromised;
+  final double unitCost;
+  final int alertLevel;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  int get quantityFree => quantityOnHand - quantityPromised;
+  bool get isLowStock => isStandalone && alertLevel > 0 && quantityOnHand <= alertLevel;
 
   const Product({
     this.id,
@@ -16,6 +24,11 @@ class Product extends Equatable {
     this.description,
     required this.sellPrice,
     required this.isActive,
+    this.isStandalone = false,
+    this.quantityOnHand = 0,
+    this.quantityPromised = 0,
+    this.unitCost = 0,
+    this.alertLevel = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -27,6 +40,11 @@ class Product extends Equatable {
         description,
         sellPrice,
         isActive,
+        isStandalone,
+        quantityOnHand,
+        quantityPromised,
+        unitCost,
+        alertLevel,
         createdAt,
         updatedAt,
       ];
@@ -37,6 +55,11 @@ class Product extends Equatable {
     String? description,
     double? sellPrice,
     bool? isActive,
+    bool? isStandalone,
+    int? quantityOnHand,
+    int? quantityPromised,
+    double? unitCost,
+    int? alertLevel,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -46,6 +69,11 @@ class Product extends Equatable {
       description: description ?? this.description,
       sellPrice: sellPrice ?? this.sellPrice,
       isActive: isActive ?? this.isActive,
+      isStandalone: isStandalone ?? this.isStandalone,
+      quantityOnHand: quantityOnHand ?? this.quantityOnHand,
+      quantityPromised: quantityPromised ?? this.quantityPromised,
+      unitCost: unitCost ?? this.unitCost,
+      alertLevel: alertLevel ?? this.alertLevel,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

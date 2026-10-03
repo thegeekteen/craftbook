@@ -37,6 +37,9 @@ void main() {
             name: any(named: 'name'),
             description: any(named: 'description'),
             sellPrice: any(named: 'sellPrice'),
+            isStandalone: any(named: 'isStandalone'),
+            initialQuantity: any(named: 'initialQuantity'),
+            initialUnitCost: any(named: 'initialUnitCost'),
           )).thenAnswer((_) async => const Right<Failure, int>(1));
       when(() => mockRepository.getProductById(1))
           .thenAnswer((_) async => Right<Failure, Product?>(testProduct));

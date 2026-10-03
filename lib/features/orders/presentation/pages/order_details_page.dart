@@ -15,6 +15,7 @@ import '../../../products/domain/entities/channel.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_material.dart';
+import '../../domain/entities/order_product.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
@@ -257,26 +258,32 @@ class _OrderDetailView extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Materials
-          SectionCard(
-            label: 'Materials',
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: state.materials.isEmpty
-                  ? [
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Text('No materials',
-                              style: AppTextStyles.bodySmall),
-                        ),
-                      ),
-                    ]
-                  : state.materials
-                      .map((mat) => _MaterialRow(material: mat))
-                      .toList(),
+          if (state.materials.isNotEmpty) ...[
+            SectionCard(
+              label: 'Materials',
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: state.materials
+                    .map((mat) => _MaterialRow(material: mat))
+                    .toList(),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
+
+          // Standalone products
+          if (state.products.isNotEmpty) ...[
+            SectionCard(
+              label: 'Products',
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: state.products
+                    .map((prod) => _ProductRow(product: prod))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Financial summary
           SectionCard(
@@ -643,6 +650,45 @@ class _MaterialRow extends StatelessWidget {
           ),
           CurrencyText(
             amount: material.totalCost,
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.muted, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductRow extends StatelessWidget {
+  final OrderProduct product;
+  const _ProductRow({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hair)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(product.productName,
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: AppColors.ink)),
+                const SizedBox(height: 2),
+                Text(
+                  '${product.quantity} × ₱${product.unitCost.toStringAsFixed(2)}',
+                  style: AppTextStyles.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          CurrencyText(
+            amount: product.totalCost,
             style: AppTextStyles.bodySmall
                 .copyWith(color: AppColors.muted, fontWeight: FontWeight.w600),
           ),

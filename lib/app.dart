@@ -20,6 +20,7 @@ import 'features/stock/presentation/pages/receive_stock_page.dart';
 import 'features/stock/presentation/pages/buy_list_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/products/presentation/pages/product_editor_page.dart';
+import 'features/products/presentation/pages/receive_product_stock_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
@@ -119,6 +120,13 @@ class CraftbookApp extends StatelessWidget {
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
           return ProductEditorPage(productId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.receiveProductStock,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return ReceiveProductStockPage(productId: id);
         },
       ),
       GoRoute(

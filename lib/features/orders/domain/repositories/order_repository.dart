@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../entities/order.dart';
 import '../entities/order_item.dart';
 import '../entities/order_material.dart';
+import '../entities/order_product.dart';
 
 abstract class OrderRepository {
   Future<Either<Failure, List<Order>>> getAllOrders();
@@ -13,6 +14,7 @@ abstract class OrderRepository {
   Future<Either<Failure, List<Order>>> getOrdersForDateRange(DateTime start, DateTime end);
   Future<Either<Failure, List<OrderItem>>> getOrderItems(int orderId);
   Future<Either<Failure, List<OrderMaterial>>> getOrderMaterials(int orderId);
+  Future<Either<Failure, List<OrderProduct>>> getOrderProducts(int orderId);
   Future<Either<Failure, int>> createOrder({
     required String customerName,
     required String customerAddress,
@@ -27,6 +29,7 @@ abstract class OrderRepository {
     required double profit,
     required List<OrderItemInput> items,
     required List<OrderMaterialInput> materials,
+    List<OrderProductInput> products,
   });
   Future<Either<Failure, void>> packOrder(int orderId);
   Future<Either<Failure, void>> shipOrder(int orderId);

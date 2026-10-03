@@ -23,15 +23,21 @@ class CreateProductEvent extends ProductsEvent {
   final String name;
   final String? description;
   final double sellPrice;
+  final bool isStandalone;
+  final int initialQuantity;
+  final double initialUnitCost;
 
   const CreateProductEvent({
     required this.name,
     this.description,
     required this.sellPrice,
+    this.isStandalone = false,
+    this.initialQuantity = 0,
+    this.initialUnitCost = 0,
   });
 
   @override
-  List<Object?> get props => [name, description, sellPrice];
+  List<Object?> get props => [name, description, sellPrice, isStandalone, initialQuantity, initialUnitCost];
 }
 
 /// Update an existing product

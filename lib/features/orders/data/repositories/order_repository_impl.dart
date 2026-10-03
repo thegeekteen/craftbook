@@ -7,6 +7,7 @@ import '../../../../database/daos/order_dao.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_material.dart';
+import '../../domain/entities/order_product.dart';
 import '../../domain/repositories/order_repository.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
@@ -100,6 +101,22 @@ class OrderRepositoryImpl implements OrderRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<OrderProduct>>> getOrderProducts(
+      int orderId) async {
+    try {
+      final rows = await dao.getOrderProducts(orderId);
+      final products = <OrderProduct>[];
+      for (final row in rows) {
+        final productName = await dao.getProductName(row.productId);
+        products.add(_productToEntity(row, productName));
+      }
+      return Right(products);
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
   // ── Commands ─────────────────────────────────────────────────────────
 
   @override
@@ -117,6 +134,7 @@ class OrderRepositoryImpl implements OrderRepository {
     required double profit,
     required List<OrderItemInput> items,
     required List<OrderMaterialInput> materials,
+    List<OrderProductInput> products = const [],
   }) async {
     try {
       final orderId = await dao.createOrder(db.OrdersCompanion(
@@ -145,7 +163,7 @@ class OrderRepositoryImpl implements OrderRepository {
         ));
       }
 
-      // Insert order materials
+      // Insert order materials (BOM products)
       for (final material in materials) {
         await dao.addOrderMaterial(db.OrderMaterialsCompanion(
           orderId: Value(orderId),
@@ -155,6 +173,16 @@ class OrderRepositoryImpl implements OrderRepository {
           wasteQuantity: Value(material.wasteQuantity),
           wasteReason: Value(material.wasteReason),
           unitCost: Value(material.unitCost),
+        ));
+      }
+
+      // Insert order products (standalone products)
+      for (final product in products) {
+        await dao.addOrderProduct(db.OrderProductsCompanion(
+          orderId: Value(orderId),
+          productId: Value(product.productId),
+          quantity: Value(product.quantity),
+          unitCost: Value(product.unitCost),
         ));
       }
 
@@ -237,10 +265,14 @@ class OrderRepositoryImpl implements OrderRepository {
         }
       }
 
-      // Recalculate total material cost and profit for the order
+      // Recalculate total material cost (materials + standalone products) and profit
       final updatedMaterials = await dao.getOrderMaterials(orderId);
-      final totalCost = updatedMaterials
+      final materialCost = updatedMaterials
           .fold<double>(0.0, (sum, m) => sum + m.actualQuantity * m.unitCost);
+      final orderProducts = await dao.getOrderProducts(orderId);
+      final productCost = orderProducts
+          .fold<double>(0.0, (sum, p) => sum + p.quantity * p.unitCost);
+      final totalCost = materialCost + productCost;
 
       final order = await dao.getOrderById(orderId);
       final newProfit = order != null
@@ -266,7 +298,9 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       await dao.deleteOrderItemsByOrderId(id);
       await dao.deleteOrderMaterialsByOrderId(id);
+      await dao.deleteOrderProductsByOrderId(id);
       await dao.deleteStockMovementsByOrderId(id);
+      await dao.deleteProductStockMovementsByOrderId(id);
       await dao.deleteOrder(id);
       return const Right(null);
     } catch (e) {
@@ -319,6 +353,16 @@ class OrderRepositoryImpl implements OrderRepository {
         wasteReason: row.wasteReason,
         unitCost: row.unitCost,
         createdAt: row.createdAt,
+      );
+
+  OrderProduct _productToEntity(db.OrderProduct row, String productName) =>
+      OrderProduct(
+        id: row.id,
+        orderId: row.orderId,
+        productId: row.productId,
+        productName: productName,
+        quantity: row.quantity,
+        unitCost: row.unitCost,
       );
 
   // ── Status mapping ───────────────────────────────────────────────────
