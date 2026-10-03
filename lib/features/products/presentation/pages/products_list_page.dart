@@ -113,7 +113,7 @@ class _ProductsListViewState extends State<_ProductsListView> {
             product: p,
             unitCost: state.unitCosts[p.id],
             available: state.available[p.id],
-            onTap: () => _open(RouteNames.productEditorPath(p.id!)),
+            onTap: () => _open(RouteNames.productPath(p.id!)),
           );
         },
       ),

@@ -105,6 +105,14 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     }
   }
 
+  Future<void> _openProduct(int productId) async {
+    final changed = await context.push<bool>(RouteNames.productPath(productId));
+    if (changed == true && mounted) {
+      _changed = true;
+      _load();
+    }
+  }
+
   Future<void> _count(Material m) async {
     var counted = m.quantityOnHand;
     final save = await showAppSheet<bool>(
@@ -327,7 +335,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                         '$perPiece per piece',
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       ),
-                      onTap: () => context.push(RouteNames.productEditorPath(p.id!)),
+                      onTap: () => _openProduct(p.id!),
                     ),
                 ]),
               ),

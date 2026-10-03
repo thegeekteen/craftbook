@@ -1,9 +1,12 @@
 import 'package:craftbook/core/theme/app_theme.dart';
+import 'package:craftbook/core/theme/colors.dart';
+import 'package:craftbook/core/utils/currency_formatter.dart';
 import 'package:craftbook/core/widgets/money_breakdown.dart';
 import 'package:craftbook/features/products/domain/entities/channel.dart';
 import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/presentation/widgets/channel_card.dart';
 import 'package:craftbook/features/products/presentation/widgets/product_card.dart';
+import 'package:craftbook/features/products/presentation/widgets/product_profit_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -207,6 +210,30 @@ void main() {
       await tester.pumpWidget(_wrap(ChannelCard(channel: _channel(), onTap: () => taps++)));
       await tester.tap(find.text('Shopee'));
       expect(taps, 1);
+    });
+  });
+
+  group('ProductProfitCard', () {
+    testWidgets('shows profit per piece, cost and margin', (tester) async {
+      await tester.pumpWidget(_wrap(const ProductProfitCard(sellPrice: 400, cost: 100, isStandalone: false)));
+
+      final c = tester.element(find.byType(ProductProfitCard)).colors;
+      expect(find.text('PROFIT PER PIECE'), findsOneWidget);
+      final profit = find.text(CurrencyFormatter.formatShort(300));
+      expect(profit, findsOneWidget);
+      expect(tester.widget<Text>(profit).style?.color, c.go);
+      expect(find.textContaining('materials · 75% margin'), findsOneWidget);
+      expect(find.byType(MoneyBreakdownBar), findsOneWidget);
+    });
+
+    testWidgets('shows a loss in alert colour and says cost for resell', (tester) async {
+      await tester.pumpWidget(_wrap(const ProductProfitCard(sellPrice: 100, cost: 150, isStandalone: true)));
+
+      final c = tester.element(find.byType(ProductProfitCard)).colors;
+      final loss = find.text(CurrencyFormatter.formatShort(-50));
+      expect(loss, findsOneWidget);
+      expect(tester.widget<Text>(loss).style?.color, c.alert);
+      expect(find.textContaining('cost ·'), findsOneWidget);
     });
   });
 }

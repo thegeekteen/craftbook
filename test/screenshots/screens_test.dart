@@ -48,6 +48,8 @@ void main() {
     ('edit_material', RouteNames.editMaterialPath(1)),
     ('buy_list', RouteNames.buyList),
     ('products', RouteNames.products),
+    ('product_detail', RouteNames.productPath(1)),
+    ('product_detail_resell', RouteNames.productPath(4)),
     ('product_editor', RouteNames.productEditorPath(1)),
     ('product_resell', RouteNames.productEditorPath(4)),
     ('channels', RouteNames.channels),
@@ -94,11 +96,11 @@ void main() {
     }
   }
 
-  // The history sits below the form, so scroll down to it.
+  // The history sits at the bottom of the product page, so scroll down to it.
   for (final (name, id) in [('product_history', 1), ('product_resell_history', 4)]) {
     for (final dark in [false, true]) {
       testWidgets('$name ${dark ? 'dark' : 'light'}', (tester) async {
-        await _boot(tester, RouteNames.productEditorPath(id), dark);
+        await _boot(tester, RouteNames.productPath(id), dark);
         await tester.scrollUntilVisible(find.text('HISTORY'), 300, scrollable: find.byType(Scrollable).first);
         await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
         await _settle(tester);

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
@@ -14,26 +13,20 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/section_label.dart';
-import '../../../../core/widgets/stat_tile.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../stock/domain/entities/material.dart';
 import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
-import '../../domain/entities/product_history_entry.dart';
 import '../../domain/repositories/product_repository.dart';
-import '../../domain/usecases/adjust_product_stock.dart';
-import '../../domain/usecases/delete_product.dart';
-import '../../domain/usecases/get_product_history.dart';
 import '../../domain/usecases/update_product.dart';
-import '../widgets/product_history_row.dart';
+import '../widgets/product_profit_card.dart';
 
 /// Create or edit a product. Handmade products list the materials one piece
-/// uses; resell products track their own stock.
+/// uses; resell products track their own stock. Viewing an existing product
+/// happens on ProductDetailPage.
 class ProductEditorPage extends StatefulWidget {
   final int? productId;
 
@@ -55,13 +48,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   List<_EditableBomItem> _bom = [];
   List<Material> _materials = [];
   Product? _product;
-  List<ProductHistoryEntry> _history = [];
-  String? _historyError;
   bool _isStandalone = false;
   bool _isActive = true;
   bool _loading = true;
   bool _saving = false;
-  bool _changed = false;
   String? _error;
 
   /// Why the Handmade/Resell switch is locked, or null when it's free.
@@ -87,8 +77,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     super.dispose();
   }
 
-  static String _money(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+  static String _money(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
   Future<void> _load() async {
     final matResult = await getIt<GetMaterials>()();
@@ -110,7 +99,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final productResult = await repo.getProductById(widget.productId!);
     final bomResult = await repo.getBomItems(widget.productId!);
     final inOrders = await repo.hasOrdersUsingProduct(widget.productId!);
-    await _loadHistory();
     if (!mounted) return;
     setState(() {
       _materials = materials;
@@ -146,39 +134,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             Success(value: true) => 'Used in orders, so its type is fixed.',
             _ when p.quantityOnHand > 0 || p.quantityPromised > 0 =>
               'It has stock on hand or reserved, so its type is fixed.',
-            _ when !p.isStandalone && _bom.isNotEmpty =>
-              'Remove its materials first to switch it to Resell.',
+            _ when !p.isStandalone && _bom.isNotEmpty => 'Remove its materials first to switch it to Resell.',
             _ => null,
           };
       }
     });
   }
 
-  /// Refreshes only the history, so form edits in progress survive.
-  Future<void> _loadHistory() async {
-    final result = await getIt<GetProductHistory>()(widget.productId!);
-    if (!mounted) return;
-    setState(() {
-      switch (result) {
-        case Success(:final value):
-          _history = value;
-          _historyError = null;
-        case Error(:final failure):
-          _historyError = failure.message;
-      }
-    });
-  }
-
-  Future<void> _openOrder(int orderId) async {
-    final changed = await context.push<bool>(RouteNames.orderPath(orderId));
-    if (changed == true && mounted) _loadHistory();
-  }
-
   double get _sellPrice => double.tryParse(_price.text) ?? 0;
 
-  double get _cost => _isStandalone
-      ? double.tryParse(_unitCost.text) ?? 0
-      : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
+  double get _cost =>
+      _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
 
   Future<void> _addMaterial() async {
     final taken = _bom.map((b) => b.materialId).toSet();
@@ -243,55 +209,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         )));
   }
 
-  Future<void> _count() async {
-    final p = _product!;
-    var counted = p.quantityOnHand;
-    final save = await showAppSheet<bool>(
-      context: context,
-      title: 'Count stock',
-      subtitle: 'Set how many are actually on the shelf.',
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheet) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: StepperInput(
-                value: counted,
-                min: 0,
-                max: 99999,
-                onChanged: (v) => setSheet(() => counted = v.toInt()),
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: counted == p.quantityOnHand ? null : () => Navigator.pop(sheetContext, true),
-              child: const Text('Save count'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (save != true || !mounted) return;
-    final result = await getIt<AdjustProductStock>()(productId: p.id!, newQuantityOnHand: counted);
-    if (!mounted) return;
-    switch (result) {
-      case Error(:final failure):
-        context.showSnackBar(failure.message, isError: true);
-      case Success():
-        context.showSnackBar('Stock set to $counted');
-        _changed = true;
-        _load();
-    }
-  }
-
-  Future<void> _receive() async {
-    final changed = await context.push<bool>(RouteNames.receiveProductStockPath(widget.productId!));
-    if (changed == true && mounted) {
-      _changed = true;
-      _load();
-    }
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -320,9 +237,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           if (_isStandalone && alertLevel > 0) {
             await repo.updateProduct(id: id, alertLevel: alertLevel);
           }
-          outcome = _isStandalone || bomInputs.isEmpty
-              ? const Success(null)
-              : await repo.saveBomItems(id, bomInputs);
+          outcome = _isStandalone || bomInputs.isEmpty ? const Success(null) : await repo.saveBomItems(id, bomInputs);
       }
     } else {
       final updated = await getIt<UpdateProduct>()(
@@ -352,29 +267,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     }
   }
 
-  Future<void> _delete() async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Delete ${_name.text.trim()}?',
-      message: "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-    if (!confirmed || !mounted) return;
-    final result = await getIt<DeleteProduct>()(widget.productId!);
-    if (!mounted) return;
-    switch (result) {
-      case Error(:final failure):
-        context.showSnackBar(failure.message, isError: true);
-      case Success():
-        context.showSnackBar('Product deleted');
-        context.pop(true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final back = BackButton(onPressed: () => context.pop(_changed));
+    const back = BackButton();
     if (_loading) {
       return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
     }
@@ -385,134 +280,90 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final money = [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))];
     final digits = [FilteringTextInputFormatter.digitsOnly];
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.pop(_changed);
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: back,
-          title: Text(_isNew ? 'New product' : 'Edit product'),
-          actions: [
-            if (!_isNew)
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (v) {
-                  if (v == 'delete') _delete();
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(children: [
-                      Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
-                      const SizedBox(width: 10),
-                      Text('Delete product', style: TextStyle(color: c.alert)),
-                    ]),
-                  ),
+    return Scaffold(
+      appBar: AppBar(
+        leading: back,
+        title: Text(_isNew ? 'New product' : 'Edit product'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: AppSpacing.page.copyWith(top: 8),
+          children: [
+            TextFormField(
+              controller: _name,
+              autofocus: _isNew,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Name'),
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _description,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 2,
+              decoration: const InputDecoration(labelText: 'Description (optional)'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _price,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: money,
+              decoration: const InputDecoration(labelText: 'Sell price', prefixText: '₱ '),
+              validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter a price above 0' : null,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Handmade'), icon: Icon(Icons.content_cut_rounded, size: 18)),
+                  ButtonSegment(value: true, label: Text('Resell'), icon: Icon(Icons.inventory_2_outlined, size: 18)),
                 ],
+                selected: {_isStandalone},
+                onSelectionChanged: _typeLockReason != null ? null : (s) => setState(() => _isStandalone = s.first),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+              child: Text(
+                _typeLockReason ??
+                    (_isStandalone
+                        ? 'Bought ready-made. Tracks its own stock.'
+                        : 'Made from materials. Stock comes from what you can build.'),
+                style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+              ),
+            ),
+            if (_isStandalone) ..._buildResell(money, digits) else ..._buildHandmade(),
+            const SizedBox(height: 12),
+            ProductProfitCard(sellPrice: _sellPrice, cost: _cost, isStandalone: _isStandalone),
+            if (!_isNew) ...[
+              const SizedBox(height: 12),
+              AppCard(
+                padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _isActive,
+                  onChanged: (v) => setState(() => _isActive = v),
+                  title: const Text('Show in new orders'),
+                  subtitle: const Text('Turn off to retire a product without deleting it.'),
+                ),
+              ),
+            ],
           ],
         ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: AppSpacing.page.copyWith(top: 8),
-            children: [
-              TextFormField(
-                controller: _name,
-                autofocus: _isNew,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _description,
-                textCapitalization: TextCapitalization.sentences,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Description (optional)'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _price,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: money,
-                decoration: const InputDecoration(labelText: 'Sell price', prefixText: '₱ '),
-                validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter a price above 0' : null,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<bool>(
-                  showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('Handmade'), icon: Icon(Icons.content_cut_rounded, size: 18)),
-                    ButtonSegment(value: true, label: Text('Resell'), icon: Icon(Icons.inventory_2_outlined, size: 18)),
-                  ],
-                  selected: {_isStandalone},
-                  onSelectionChanged:
-                      _typeLockReason != null ? null : (s) => setState(() => _isStandalone = s.first),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-                child: Text(
-                  _typeLockReason ??
-                      (_isStandalone
-                          ? 'Bought ready-made. Tracks its own stock.'
-                          : 'Made from materials. Stock comes from what you can build.'),
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
-                ),
-              ),
-              if (_isStandalone) ..._buildResell(money, digits) else ..._buildHandmade(),
-              const SizedBox(height: 12),
-              _ProfitCard(sellPrice: _sellPrice, cost: _cost, isStandalone: _isStandalone),
-              if (!_isNew) ...[
-                const SizedBox(height: 12),
-                AppCard(
-                  padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _isActive,
-                    onChanged: (v) => setState(() => _isActive = v),
-                    title: const Text('Show in new orders'),
-                    subtitle: const Text('Turn off to retire a product without deleting it.'),
-                  ),
-                ),
-                const SectionLabel('History', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
-                const SizedBox(height: 8),
-                if (_historyError != null)
-                  _quiet("Couldn't load history: $_historyError")
-                else if (_history.isEmpty)
-                  _quiet('No sales or stock changes yet.')
-                else
-                  AppCard.flush(
-                    child: CardList(children: [
-                      for (final e in _history.take(30))
-                        ProductHistoryRow(entry: e, onOrderTap: _openOrder),
-                    ]),
-                  ),
-              ],
-            ],
+      ),
+      bottomNavigationBar: BottomActionBar(children: [
+        Expanded(
+          child: FilledButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? 'Saving…' : (_isNew ? 'Add product' : 'Save changes')),
           ),
         ),
-        bottomNavigationBar: BottomActionBar(children: [
-          Expanded(
-            child: FilledButton(
-              onPressed: _saving ? null : _save,
-              child: Text(_saving ? 'Saving…' : (_isNew ? 'Add product' : 'Save changes')),
-            ),
-          ),
-        ]),
-      ),
+      ]),
     );
   }
-
-  Widget _quiet(String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
-        child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
-      );
 
   List<Widget> _buildHandmade() {
     final c = context.colors;
@@ -578,42 +429,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   }
 
   List<Widget> _buildResell(List<TextInputFormatter> money, List<TextInputFormatter> digits) {
-    final c = context.colors;
     final p = _product;
     return [
       const SectionLabel('Stock', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
       const SizedBox(height: 8),
       if (!_isNew && p != null) ...[
-        AppCard(
-          child: StatRow(children: [
-            StatTile(
-              label: 'On hand',
-              value: '${p.quantityOnHand}',
-              valueColor: p.isLowStock ? c.alert : null,
-            ),
-            StatTile(label: 'Free', value: '${p.quantityFree < 0 ? 0 : p.quantityFree}', valueColor: c.go),
-            StatTile(label: 'Unit cost', value: CurrencyFormatter.format(p.unitCost)),
-          ]),
-        ),
-        const SizedBox(height: 8),
-        Row(children: [
-          Expanded(
-            child: FilledButton.icon(
-              onPressed: _receive,
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Receive'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _count,
-              icon: const Icon(Icons.fact_check_outlined, size: 18),
-              label: const Text('Count'),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 12),
         TextFormField(
           controller: _unitCost,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -660,49 +480,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         ),
       ),
     ];
-  }
-}
-
-class _ProfitCard extends StatelessWidget {
-  final double sellPrice;
-  final double cost;
-  final bool isStandalone;
-
-  const _ProfitCard({required this.sellPrice, required this.cost, required this.isStandalone});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final parts = MoneyParts(sales: sellPrice, materials: cost, fees: 0, shipping: 0);
-    final positive = parts.profit >= 0;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Expanded(
-                child: Text('PROFIT PER PIECE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
-              ),
-              Text(
-                CurrencyFormatter.formatShort(parts.profit),
-                style: AppTextStyles.displayMedium.copyWith(fontSize: 26, color: positive ? c.go : c.alert),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          MoneyBreakdownBar(parts: parts),
-          const SizedBox(height: 8),
-          Text(
-            '${CurrencyFormatter.format(cost)} ${isStandalone ? 'cost' : 'materials'} · '
-            '${(parts.margin * 100).round()}% margin · before channel fees',
-            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
-          ),
-        ],
-      ),
-    );
   }
 }
 
