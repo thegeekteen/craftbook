@@ -4,6 +4,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../database/daos/earnings_dao.dart';
 import '../../domain/entities/earnings_summary.dart';
 import '../../domain/entities/product_earnings.dart';
+// WasteItem is exported from earnings_summary.dart
 import '../../domain/repositories/earnings_repository.dart';
 
 class EarningsRepositoryImpl implements EarningsRepository {
@@ -59,9 +60,19 @@ class EarningsRepositoryImpl implements EarningsRepository {
   ) async {
     try {
       final result = await dao.getWasteSummary(startDate, endDate);
+      final rawItems = result['items'] as List<dynamic>? ?? [];
+      final wasteItems = rawItems
+          .map((m) => WasteItem(
+                materialName: m['materialName'] as String? ?? '',
+                quantity: m['quantity'] as int,
+                cost: m['cost'] as double,
+              ))
+          .toList();
+
       return Right(WasteSummary(
         totalWasteQuantity: result['totalWasteQuantity'] as int,
         totalWasteCost: result['totalWasteCost'] as double,
+        items: wasteItems,
       ));
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));

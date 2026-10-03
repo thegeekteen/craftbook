@@ -227,31 +227,59 @@ class _EarningsViewState extends State<_EarningsView> {
             if (state.wasteSummary.totalWasteQuantity > 0) ...[
               SectionCard(
                 label: 'Waste',
-                backgroundColor: AppColors.alertSoft.withOpacity(0.3),
-                borderColor: AppColors.alert.withOpacity(0.3),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             '${state.wasteSummary.totalWasteQuantity} pcs wasted',
                             style: AppTextStyles.bodyMedium
                                 .copyWith(color: AppColors.alert),
                           ),
-                          Text(
-                            'Total waste cost',
-                            style: AppTextStyles.bodySmall,
+                        ),
+                        CurrencyText(
+                          amount: state.wasteSummary.totalWasteCost,
+                          style: AppTextStyles.bodyLarge
+                              .copyWith(color: AppColors.alert, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                    if (state.wasteSummary.items.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      ...state.wasteSummary.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.materialName,
+                                      style: AppTextStyles.bodyMedium
+                                          .copyWith(color: AppColors.ink),
+                                    ),
+                                    Text(
+                                      '${item.quantity} pcs',
+                                      style: AppTextStyles.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              CurrencyText(
+                                amount: item.cost,
+                                style: AppTextStyles.bodySmall
+                                    .copyWith(color: AppColors.alert, fontWeight: FontWeight.w600),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    CurrencyText(
-                      amount: state.wasteSummary.totalWasteCost,
-                      style: AppTextStyles.bodyLarge
-                          .copyWith(color: AppColors.alert),
-                    ),
+                    ],
                   ],
                 ),
               ),

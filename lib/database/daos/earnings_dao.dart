@@ -5,11 +5,12 @@ import '../tables/orders_table.dart';
 import '../tables/order_items_table.dart';
 import '../tables/order_materials_table.dart';
 import '../tables/products_table.dart';
+import '../tables/materials_table.dart';
 
 part 'earnings_dao.g.dart';
 
 /// Data Access Object for earnings calculations
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products])
+@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
 class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin {
   EarningsDao(AppDatabase db) : super(db);
 
@@ -80,24 +81,51 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
     return productEarnings.values.toList();
   }
 
-  /// Get waste summary for date range
+  /// Get waste summary for date range, with per-material breakdown
   Future<Map<String, dynamic>> getWasteSummary(DateTime startDate, DateTime endDate) async {
     final allOrderMaterials = await (select(orderMaterials)
           ..where((t) => t.createdAt.isBiggerOrEqualValue(startDate) &
                   t.createdAt.isSmallerOrEqualValue(endDate)))
         .get();
 
-    final totalWaste = allOrderMaterials.fold<int>(0, (sum, material) {
-      return sum + material.wasteQuantity;
-    });
+    final totalWaste = allOrderMaterials.fold<int>(0, (sum, m) => sum + m.wasteQuantity);
+    final wasteCost = allOrderMaterials.fold<double>(0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
 
-    final wasteCost = allOrderMaterials.fold<double>(0, (sum, material) {
-      return sum + (material.wasteQuantity * material.unitCost);
-    });
+    // Group waste by materialId
+    final Map<int, Map<String, dynamic>> byMaterial = {};
+    for (final m in allOrderMaterials) {
+      if (m.wasteQuantity <= 0) continue;
+      byMaterial.putIfAbsent(m.materialId, () => {
+        'materialId': m.materialId,
+        'quantity': 0,
+        'cost': 0.0,
+      });
+      byMaterial[m.materialId]!['quantity'] =
+          (byMaterial[m.materialId]!['quantity'] as int) + m.wasteQuantity;
+      byMaterial[m.materialId]!['cost'] =
+          (byMaterial[m.materialId]!['cost'] as double) + (m.wasteQuantity * m.unitCost);
+    }
+
+    // Resolve material names
+    final wasteItems = <Map<String, dynamic>>[];
+    for (final entry in byMaterial.values) {
+      final matId = entry['materialId'] as int;
+      final mat = await (select(materials)..where((t) => t.id.equals(matId)))
+          .getSingleOrNull();
+      wasteItems.add({
+        'materialName': mat?.name ?? 'Unknown',
+        'quantity': entry['quantity'] as int,
+        'cost': entry['cost'] as double,
+      });
+    }
+
+    // Sort by cost descending
+    wasteItems.sort((a, b) => (b['cost'] as double).compareTo(a['cost'] as double));
 
     return {
       'totalWasteQuantity': totalWaste,
       'totalWasteCost': wasteCost,
+      'items': wasteItems,
     };
   }
 }

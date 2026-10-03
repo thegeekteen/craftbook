@@ -8,6 +8,7 @@ mixin _$EarningsDaoMixin on DatabaseAccessor<AppDatabase> {
   $OrderItemsTable get orderItems => attachedDatabase.orderItems;
   $OrderMaterialsTable get orderMaterials => attachedDatabase.orderMaterials;
   $ProductsTable get products => attachedDatabase.products;
+  $MaterialsTable get materials => attachedDatabase.materials;
   EarningsDaoManager get managers => EarningsDaoManager(this);
 }
 
@@ -23,4 +24,6 @@ class EarningsDaoManager {
           _db.attachedDatabase, _db.orderMaterials);
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db.attachedDatabase, _db.products);
+  $$MaterialsTableTableManager get materials =>
+      $$MaterialsTableTableManager(_db.attachedDatabase, _db.materials);
 }
