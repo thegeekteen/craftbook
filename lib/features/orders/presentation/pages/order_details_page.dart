@@ -488,7 +488,7 @@ class _StatusStepper extends StatelessWidget {
         children.add(
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 26),
+              padding: const EdgeInsets.only(top: 17),
               child: Container(
                 height: 2,
                 color: i < currentIndex
