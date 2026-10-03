@@ -12,7 +12,6 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_logo.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
@@ -31,6 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _productsHint;
   String? _channelsHint;
   String? _buyListHint;
+  bool _canUndoRestore = false;
 
   @override
   void initState() {
@@ -43,8 +43,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final products = await getIt<ProductRepository>().getAllProducts();
     final channels = await getIt<ChannelRepository>().getAllChannels();
     final buyList = await getIt<MaterialRepository>().getBuyList();
+    final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
     setState(() {
+      _canUndoRestore = canUndoRestore;
       if (products case Success(:final value)) {
         final low = value.where((p) => p.isLowStock).length;
         _productsHint = '${value.length} ${value.length == 1 ? 'product' : 'products'}'
@@ -67,18 +69,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _open(String location) async {
     await context.push(location);
     if (mounted) _loadHints();
-  }
-
-  Future<void> _import() async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Restore from backup?',
-      message: 'Everything on this phone is replaced by the backup. '
-          'Restart the app afterwards.',
-      confirmText: 'Restore',
-      isDestructive: true,
-    );
-    if (confirmed && mounted) await BackupService.importDatabase(context);
   }
 
   @override
@@ -131,8 +121,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 iconColor: c.alert,
                 title: 'Restore from backup',
                 subtitle: 'Replaces everything on this phone',
-                onTap: _import,
+                onTap: () => BackupService.importDatabase(context),
               ),
+              if (_canUndoRestore)
+                _MoreRow(
+                  icon: Icons.undo_rounded,
+                  title: 'Undo last restore',
+                  subtitle: 'Go back to the data from before it',
+                  onTap: () => BackupService.undoRestore(context),
+                ),
             ]),
           ),
           const SectionLabel('About', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),

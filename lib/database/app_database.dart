@@ -19,6 +19,10 @@ import 'migrations/migrations.dart';
 
 part 'app_database.g.dart';
 
+/// Stamped into the SQLite header (`PRAGMA application_id`, 'CRFT') so a
+/// backup can be told apart from another app's database.
+const craftbookAppId = 0x43524654;
+
 /// Main Drift database class
 @DriftDatabase(
   tables: [
@@ -41,8 +45,15 @@ class AppDatabase extends _$AppDatabase {
   // For testing
   AppDatabase.forTesting(super.e);
 
+  /// Opens [file] on the calling isolate. Used to trial-migrate a backup.
+  AppDatabase.file(File file) : super(NativeDatabase(file));
+
+  /// Readable without opening a database, so a backup's version can be
+  /// checked before anything touches it.
+  static const currentSchemaVersion = 3;
+
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => currentSchemaVersion;
 
   @override
   MigrationStrategy get migration {
@@ -56,6 +67,7 @@ class AppDatabase extends _$AppDatabase {
       beforeOpen: (details) async {
         // Enable foreign keys
         await customStatement('PRAGMA foreign_keys = ON');
+        await customStatement('PRAGMA application_id = $craftbookAppId');
       },
     );
   }

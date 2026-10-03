@@ -44,10 +44,14 @@ class CraftbookApp extends StatelessWidget {
     String initialLocation = RouteNames.today,
     this.themeMode,
     this.palette,
+    this.scaffoldMessengerKey,
   }) : _router = _buildRouter(initialLocation);
 
   final ThemeMode? themeMode;
   final AppPalette? palette;
+
+  /// Lets the app restarter show a message in a freshly rebuilt app.
+  final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
   final GoRouter _router;
 
   @override
@@ -58,6 +62,7 @@ class CraftbookApp extends StatelessWidget {
       darkTheme: AppTheme.dark(look.palette),
       themeMode: look.mode,
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       // Quill looks its toolbar strings up through these; without them the
       // note editor throws while building.
       localizationsDelegates: const [
