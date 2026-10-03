@@ -49,9 +49,13 @@ dev_dependencies:
   bloc_test: ^9.1.7
   mocktail: ^1.0.4
   sqlite3: ^2.9.4
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/icon/icon_legacy.png
 
   # Bundled rather than fetched at runtime: the app is offline-first.
   fonts:
@@ -79,3 +83,11 @@ flutter:
           weight: 500
         - asset: assets/fonts/IBMPlexMono-SemiBold.ttf
           weight: 600
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon/icon_legacy.png
+  adaptive_icon_background: "#F4F5F1"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+  adaptive_icon_monochrome: assets/icon/icon_monochrome.png

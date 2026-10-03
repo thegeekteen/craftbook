@@ -11,6 +11,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
@@ -138,6 +139,8 @@ class _SettingsPageState extends State<SettingsPage> {
           Center(
             child: Column(
               children: [
+                const AppLogo(size: 64),
+                const SizedBox(height: 10),
                 Text(
                   AppConstants.appName,
                   style: AppTextStyles.displaySmall.copyWith(color: c.ink, fontSize: 17),
