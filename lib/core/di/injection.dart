@@ -7,6 +7,9 @@ import '../../database/daos/material_dao.dart';
 import '../../database/daos/order_dao.dart';
 import '../../database/daos/product_dao.dart';
 
+import '../../features/settings/data/repositories/settings_repository_impl.dart';
+import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/settings/presentation/bloc/theme_cubit.dart';
 import '../../features/products/data/repositories/channel_repository_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
 import '../../features/products/domain/repositories/channel_repository.dart';
@@ -98,6 +101,10 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   );
   getIt.registerLazySingleton<EarningsRepository>(
     () => EarningsRepositoryImpl(getIt<EarningsDao>()),
+  );
+
+  getIt.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(getIt<AppDatabase>()),
   );
 
   // Use Cases - Products
@@ -226,6 +233,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     shipOrder: getIt(),
     deleteOrder: getIt(),
   ));
+  // App-wide: lives above the router, so a singleton.
+  getIt.registerSingleton(ThemeCubit(getIt()));
   getIt.registerFactory(() => TodayBloc(getTodayDashboard: getIt()));
   getIt.registerFactory(() => EarningsBloc(
     getEarningsSummary: getIt(),

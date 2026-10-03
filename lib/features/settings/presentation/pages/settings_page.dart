@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -11,11 +12,13 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
+import '../bloc/theme_cubit.dart';
 
 /// More: the catalogue (products, channels, buy list) and your data.
 class SettingsPage extends StatefulWidget {
@@ -111,6 +114,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
+          const SectionLabel('Appearance', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SizedBox(height: 8),
+          const AppearanceCard(),
           const SectionLabel('Your data', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
@@ -147,6 +153,45 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Dark mode: Auto follows the phone, On/Off force it.
+class AppearanceCard extends StatelessWidget {
+  const AppearanceCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final cubit = getIt<ThemeCubit>();
+    return AppCard(
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        bloc: cubit,
+        builder: (context, mode) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Dark mode', style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+            const SizedBox(height: 2),
+            Text(
+              mode == ThemeMode.system
+                  ? 'Auto follows your phone'
+                  : 'Overrides your phone setting',
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+            ),
+            const SizedBox(height: 12),
+            ChoiceChipRow<ThemeMode>.single(
+              options: const [
+                ChipOption(ThemeMode.system, 'Auto'),
+                ChipOption(ThemeMode.dark, 'On'),
+                ChipOption(ThemeMode.light, 'Off'),
+              ],
+              selected: mode,
+              onSelected: cubit.setMode,
+            ),
+          ],
+        ),
       ),
     );
   }
