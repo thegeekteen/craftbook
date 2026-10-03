@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+// Narrow import: the full barrel exports Document/Node/Attribute and friends,
+// which would collide with the names this file already uses.
+import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:go_router/go_router.dart';
 
 import 'core/di/injection.dart';
@@ -53,6 +57,14 @@ class CraftbookApp extends StatelessWidget {
       darkTheme: AppTheme.dark(look.palette),
       themeMode: look.mode,
       debugShowCheckedModeBanner: false,
+      // Quill looks its toolbar strings up through these; without them the
+      // note editor throws while building.
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
       routerConfig: _router,
     );
 

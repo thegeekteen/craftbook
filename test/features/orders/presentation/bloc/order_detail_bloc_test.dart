@@ -13,6 +13,7 @@ import 'package:craftbook/features/orders/domain/usecases/adjust_materials_used.
 import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/update_order_note.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_bloc.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_event.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_state.dart';
@@ -39,6 +40,8 @@ class MockShipOrder extends Mock implements ShipOrder {}
 
 class MockDeleteOrder extends Mock implements DeleteOrder {}
 
+class MockUpdateOrderNote extends Mock implements UpdateOrderNote {}
+
 void main() {
   late MockOrderRepository orderRepository;
   late MockChannelRepository channelRepository;
@@ -48,14 +51,16 @@ void main() {
   late MockPackOrder packOrder;
   late MockShipOrder shipOrder;
   late MockDeleteOrder deleteOrder;
+  late MockUpdateOrderNote updateOrderNote;
 
   const orderId = 7;
   final now = DateTime(2026, 9, 1);
 
-  Order order({OrderStatus status = OrderStatus.pending}) => Order(
+  Order order({OrderStatus status = OrderStatus.pending, String? note}) => Order(
         id: orderId,
         customerName: 'Jessa Ramos',
         customerAddress: 'Cebu City',
+        note: note,
         orderDate: now,
         shipByDate: now.add(const Duration(days: 2)),
         status: status,
@@ -153,9 +158,13 @@ void main() {
     updatedAt: now,
   );
 
-  OrderDetailLoaded loaded({OrderStatus status = OrderStatus.pending, bool isBusy = false}) =>
+  OrderDetailLoaded loaded({
+    OrderStatus status = OrderStatus.pending,
+    bool isBusy = false,
+    String? note,
+  }) =>
       OrderDetailLoaded(
-        order: order(status: status),
+        order: order(status: status, note: note),
         items: items,
         materials: materials,
         products: products,
@@ -178,6 +187,7 @@ void main() {
     packOrder = MockPackOrder();
     shipOrder = MockShipOrder();
     deleteOrder = MockDeleteOrder();
+    updateOrderNote = MockUpdateOrderNote();
   });
 
   OrderDetailBloc build() => OrderDetailBloc(
@@ -189,13 +199,14 @@ void main() {
         packOrder: packOrder,
         shipOrder: shipOrder,
         deleteOrder: deleteOrder,
+        updateOrderNote: updateOrderNote,
       );
 
   /// Stubs a full successful load. Material 101 has no row, so it must be
   /// left out of materialStock without failing the load.
-  void stubLoad({OrderStatus status = OrderStatus.pending}) {
+  void stubLoad({OrderStatus status = OrderStatus.pending, String? note}) {
     when(() => orderRepository.getOrderById(orderId))
-        .thenAnswer((_) async => Success(order(status: status)));
+        .thenAnswer((_) async => Success(order(status: status, note: note)));
     when(() => channelRepository.getChannelById(1))
         .thenAnswer((_) async => Success(channel));
     when(() => orderRepository.getOrderItems(orderId))
@@ -411,6 +422,41 @@ void main() {
             .having((m) => m.message, 'message', 'Not packed yet')
             .having((m) => m.isError, 'isError', true),
         loaded(),
+      ],
+    );
+  });
+
+  group('SaveOrderNote', () {
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'success: saves quietly, then shows the stored note',
+      setUp: () {
+        stubLoad(status: OrderStatus.shipped, note: 'Ring twice');
+        when(() => updateOrderNote(orderId, 'Ring twice'))
+            .thenAnswer((_) async => const Success(null));
+      },
+      build: build,
+      seed: () => loaded(status: OrderStatus.shipped),
+      act: (bloc) => bloc.add(const SaveOrderNote(orderId: orderId, note: 'Ring twice')),
+      // No busy flag and no snackbar: ticking a to-do should feel instant.
+      expect: () => [loaded(status: OrderStatus.shipped, note: 'Ring twice')],
+      verify: (_) => verify(() => updateOrderNote(orderId, 'Ring twice')).called(1),
+    );
+
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'failure: error message, then the note as it was stored',
+      setUp: () {
+        stubLoad(note: 'Ring twice');
+        when(() => updateOrderNote(orderId, any()))
+            .thenAnswer((_) async => const Error(DatabaseFailure('disk full')));
+      },
+      build: build,
+      seed: () => loaded(note: 'Ring twice'),
+      act: (bloc) => bloc.add(const SaveOrderNote(orderId: orderId, note: 'Changed')),
+      expect: () => [
+        isA<OrderDetailMessage>()
+            .having((m) => m.message, 'message', 'disk full')
+            .having((m) => m.isError, 'isError', true),
+        loaded(note: 'Ring twice'),
       ],
     );
   });

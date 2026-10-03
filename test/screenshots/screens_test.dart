@@ -8,6 +8,7 @@ import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
 import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
+import 'package:craftbook/features/orders/presentation/widgets/note_field.dart';
 import 'package:craftbook/features/settings/presentation/pages/about_page.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -134,6 +135,22 @@ void main() {
     await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/new_order_review_light.png'));
     await _teardown(tester);
   });
+
+  // The rich-text note editor, opened from the order form on Ana's checklist
+  // note. Both themes, since the toolbar and the editor content are themed
+  // separately.
+  for (final dark in [false, true]) {
+    testWidgets('note editor ${dark ? 'dark' : 'light'}', (tester) async {
+      await _boot(tester, RouteNames.editOrderPath(10), dark);
+      await tester.tap(find.byType(NoteField));
+      await _settle(tester);
+      await expectLater(
+        find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/note_editor_${dark ? 'dark' : 'light'}.png'),
+      );
+      await _teardown(tester);
+    });
+  }
 }
 
 Future<void> _boot(

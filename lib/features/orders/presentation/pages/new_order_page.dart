@@ -30,6 +30,7 @@ import '../../domain/usecases/preview_order.dart';
 import '../bloc/new_order_bloc.dart';
 import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
+import '../widgets/note_field.dart';
 import '../widgets/product_picker_sheet.dart';
 
 /// New order: Customer → Items → Review. With [orderId] it edits that order
@@ -66,7 +67,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
-  final _noteController = TextEditingController();
+
+  /// Stored note (Quill Delta JSON, or legacy plain text); edited on its own
+  /// page, so it needs no controller here.
+  String? _note;
   DateTime _orderDate = DateUtils.dateOnly(DateTime.now());
   DateTime _shipByDate = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 2));
   int? _channelId;
@@ -104,7 +108,6 @@ class _NewOrderViewState extends State<_NewOrderView> {
     _pageController.dispose();
     _nameController.dispose();
     _addressController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -148,7 +151,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
           channelId: _channelId!,
           orderDate: _orderDate,
           shipByDate: _shipByDate,
-          note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+          note: _note,
         ));
     _goTo(1);
   }
@@ -158,7 +161,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     _editingStatus = d.editingStatus;
     _nameController.text = d.customerName;
     _addressController.text = d.customerAddress;
-    _noteController.text = d.note ?? '';
+    _note = d.note;
     _orderDate = DateUtils.dateOnly(d.orderDate);
     _shipByDate = DateUtils.dateOnly(d.shipByDate);
     _channelId = d.channelId == 0 ? _channelId : d.channelId;
@@ -179,13 +182,16 @@ class _NewOrderViewState extends State<_NewOrderView> {
       channelId: _channelId!,
       orderDate: _orderDate,
       shipByDate: _shipByDate,
-      note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+      note: _note,
     ));
     bloc.add(SaveOrder());
   }
 
   Future<bool> _confirmDiscard(List<OrderItemInput> items) async {
-    final dirty = _isEditing || _nameController.text.trim().isNotEmpty || items.isNotEmpty;
+    final dirty = _isEditing ||
+        _nameController.text.trim().isNotEmpty ||
+        _note != null ||
+        items.isNotEmpty;
     if (!dirty) return true;
     return ConfirmDialog.show(
       context,
@@ -275,90 +281,98 @@ class _NewOrderViewState extends State<_NewOrderView> {
   // ── Step 1 ───────────────────────────────────────────────────────────
 
   Widget _buildCustomerStep() {
-    final c = context.colors;
     return Form(
       key: _formKey,
-      child: ListView(
-        padding: AppSpacing.page.copyWith(top: 12),
-        children: [
-          TextFormField(
-            controller: _nameController,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            enabled: !_noteOnly,
-            decoration: const InputDecoration(labelText: 'Customer name'),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: AppSpacing.page.copyWith(top: 12, bottom: 0),
+            sliver: SliverList.list(
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  enabled: !_noteOnly,
+                  decoration: const InputDecoration(labelText: 'Customer name'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _addressController,
+                  textCapitalization: TextCapitalization.sentences,
+                  minLines: 1,
+                  maxLines: 3,
+                  enabled: !_noteOnly,
+                  decoration: const InputDecoration(labelText: 'Address (optional)'),
+                ),
+                const SizedBox(height: 8),
+                const SectionLabel('Channel'),
+                const SizedBox(height: 8),
+                if (!_channelsLoaded)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: LinearProgressIndicator(),
+                  )
+                else if (_visibleChannels.isEmpty)
+                  InlineBanner(
+                    icon: Icons.storefront_outlined,
+                    tone: BannerTone.warn,
+                    title: 'No sales channels yet.',
+                    message: 'Add one to work out fees.',
+                    actionLabel: 'Add',
+                    onTap: () async {
+                      await context.push(RouteNames.channels);
+                      if (mounted) _loadChannels();
+                    },
+                  )
+                else
+                  _locked(ChoiceChipRow<int?>.single(
+                    wrap: true,
+                    selected: _channelId,
+                    onSelected: (id) => setState(() => _channelId = id),
+                    options: [for (final ch in _visibleChannels) ChipOption(ch.id, ch.name)],
+                  )),
+                const SizedBox(height: 16),
+                _locked(Row(
+                  children: [
+                    Expanded(
+                      child: DateField(
+                        label: 'Order date',
+                        value: _orderDate,
+                        onChanged: (d) => setState(() {
+                          _orderDate = d;
+                          if (_shipByDate.isBefore(d)) _shipByDate = d;
+                        }),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DateField(
+                        label: 'Ship by',
+                        value: _shipByDate,
+                        firstDate: _orderDate,
+                        onChanged: (d) => setState(() => _shipByDate = d),
+                      ),
+                    ),
+                  ],
+                )),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _addressController,
-            textCapitalization: TextCapitalization.sentences,
-            minLines: 1,
-            maxLines: 3,
-            enabled: !_noteOnly,
-            decoration: const InputDecoration(labelText: 'Address (optional)'),
-          ),
-          const SizedBox(height: 8),
-          const SectionLabel('Channel'),
-          const SizedBox(height: 8),
-          if (!_channelsLoaded)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(),
-            )
-          else if (_visibleChannels.isEmpty)
-            InlineBanner(
-              icon: Icons.storefront_outlined,
-              tone: BannerTone.warn,
-              title: 'No sales channels yet.',
-              message: 'Add one to work out fees.',
-              actionLabel: 'Add',
-              onTap: () async {
-                await context.push(RouteNames.channels);
-                if (mounted) _loadChannels();
-              },
-            )
-          else
-            _locked(ChoiceChipRow<int?>.single(
-              wrap: true,
-              selected: _channelId,
-              onSelected: (id) => setState(() => _channelId = id),
-              options: [for (final ch in _visibleChannels) ChipOption(ch.id, ch.name)],
-            )),
-          const SizedBox(height: 16),
-          _locked(Row(
-            children: [
-              Expanded(
-                child: DateField(
-                  label: 'Order date',
-                  value: _orderDate,
-                  onChanged: (d) => setState(() {
-                    _orderDate = d;
-                    if (_shipByDate.isBefore(d)) _shipByDate = d;
-                  }),
+          // The note takes whatever height the fields above leave, so a long
+          // checklist reads in full and a short form isn't half empty.
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: AppSpacing.page.copyWith(top: 12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 140),
+                child: NoteField(
+                  note: _note,
+                  onChanged: (value) => setState(() => _note = value),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DateField(
-                  label: 'Ship by',
-                  value: _shipByDate,
-                  firstDate: _orderDate,
-                  onChanged: (d) => setState(() => _shipByDate = d),
-                ),
-              ),
-            ],
-          )),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _noteController,
-            textCapitalization: TextCapitalization.sentences,
-            minLines: 1,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Note (optional)',
-              hintText: 'Gift wrap, colour requests…',
-              hintStyle: AppTextStyles.bodyMedium.copyWith(color: c.muted),
             ),
           ),
         ],

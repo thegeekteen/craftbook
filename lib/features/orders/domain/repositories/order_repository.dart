@@ -55,6 +55,9 @@ abstract class OrderRepository {
     List<OrderMaterialInput>? materials,
     List<OrderProductInput>? products,
   });
+  /// Rewrites only the note, so it can change at any status — ticking a
+  /// to-do on a shipped order must not go through the full order update.
+  Future<Result<void>> updateOrderNote(int orderId, String? note);
   Future<Result<void>> packOrder(int orderId);
   Future<Result<void>> shipOrder(int orderId);
   Future<Result<void>> adjustMaterialsUsed(int orderId, List<OrderMaterialInput> materials);

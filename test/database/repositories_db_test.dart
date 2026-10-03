@@ -1,3 +1,4 @@
+import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/database/daos/earnings_dao.dart';
@@ -229,6 +230,28 @@ void main() {
       expect(lines[a]!.single.quantity, 2);
       expect(lines[a]!.single.productName, 'Tulip');
       expect(lines[b]!.single.quantity, 1);
+    });
+
+    test('updateOrderNote changes only the note, even on a shipped order', () async {
+      final p = await productId();
+      final id = await order(product: p, shipBy: DateTime(2026, 10, 4));
+      await orders.packOrder(id);
+      await orders.shipOrder(id);
+
+      expect(await orders.updateOrderNote(id, 'Ring twice'), const Success<void>(null));
+      final saved = ok(await orders.getOrderById(id))!;
+      expect(saved.note, 'Ring twice');
+      expect(saved.status, OrderStatus.shipped);
+      expect(saved.customerName, 'Maria');
+
+      await orders.updateOrderNote(id, null);
+      expect(ok(await orders.getOrderById(id))!.note, isNull);
+    });
+
+    test('updateOrderNote reports a missing order', () async {
+      final result = await orders.updateOrderNote(999, 'Ring twice');
+      expect(result, isA<Error<void>>());
+      expect((result as Error<void>).failure, isA<NotFoundFailure>());
     });
   });
 

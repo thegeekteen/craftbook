@@ -1,5 +1,6 @@
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/core/utils/note_codec.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
@@ -10,6 +11,7 @@ import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
 import 'package:craftbook/features/products/domain/repositories/channel_repository.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:drift/drift.dart' hide isNull;
 
 T _ok<T>(Result<T> r) => switch (r) {
@@ -172,8 +174,16 @@ Future<void> seedSampleShop() async {
       note: 'Gift wrap please, birthday on the 5th', fees: 98.5, shipping: 40);
   await order('Jun Reyes', tiktok, [item(strap, 'Beaded phone strap', 3, 180)],
       placedDaysAgo: 2, shipInDays: 0, address: '9 Kalayaan St, Makati', fees: 43.2, shipping: 30);
+  // A formatted note. Maria's above is still plain text, so the screenshots
+  // cover both a rich note and one written before rich notes existed.
+  final anaNote = NoteCodec.encode(Delta()
+    ..insert('Hand-delivered — ')
+    ..insert('do not ship', {'bold': true})
+    ..insert('\n')
+    ..insert('Include the care card\n', {'list': 'unchecked'})
+    ..insert('Ring the bell twice\n', {'list': 'checked'}))!;
   final ana = await order('Ana Cruz', walkIn, [item(keychain, 'Resin keychain', 1, 120)],
-      placedDaysAgo: 4, shipInDays: 0);
+      placedDaysAgo: 4, shipInDays: 0, note: anaNote);
   await completedOn(ana, today, shipped: false);
   await order('Lea Bautista', shopee, [item(keychain, 'Resin keychain', 1, 120), item(tulip, 'Crochet tulip bouquet', 1, 450)],
       placedDaysAgo: 0, shipInDays: 3, address: '41 Aguinaldo Hwy, Imus', fees: 62, shipping: 40);
