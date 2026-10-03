@@ -2,160 +2,85 @@ import 'package:flutter/material.dart' hide Material;
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/pip_strip.dart';
 import '../../domain/entities/material.dart';
 
-/// Material card widget for list displays
+/// Material in the stock list: name, on-hand count, pips and a one-line
+/// summary (free · promised · reorder level · unit cost).
 class MaterialCard extends StatelessWidget {
   final Material material;
   final VoidCallback? onTap;
 
-  const MaterialCard({
-    super.key,
-    required this.material,
-    this.onTap,
-  });
+  const MaterialCard({super.key, required this.material, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final isLow = material.isLowStock;
+    final c = context.colors;
+    final m = material;
+    final low = m.isLowStock;
+    final short = m.quantityFree < 0 ? -m.quantityFree : 0;
+    final summary = [
+      '${m.quantityFree < 0 ? 0 : m.quantityFree} free',
+      if (m.quantityPromised > 0) '${m.quantityPromised} promised',
+      'reorder at ${m.alertLevel}',
+      '${CurrencyFormatter.format(m.unitCost)}/pc',
+    ].join(' · ');
 
-    return GestureDetector(
+    return AppCard(
       onTap: onTap,
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(13),
-          side: BorderSide(
-            color: isLow ? AppColors.alert.withOpacity(0.4) : AppColors.hair,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
+      borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top row: name + alert pill
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      material.name,
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: isLow ? AppColors.alert : AppColors.ink,
-                      ),
+              Expanded(
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      m.name,
+                      style: AppTextStyles.bodyLarge.copyWith(color: low ? c.alert : c.ink),
                     ),
-                  ),
-                  if (isLow)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.alertSoft,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'LOW',
-                        style: AppTextStyles.monoLabel
-                            .copyWith(color: AppColors.alert, fontSize: 8),
-                      ),
-                    ),
-                ],
+                    if (low) const AppTag.low(),
+                  ],
+                ),
               ),
-              const SizedBox(height: 4),
-
-              // Pack info + unit cost
-              Row(
-                children: [
-                  Text(
-                    'Pack of ${material.packSize}',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                  const SizedBox(width: 8),
-                  CurrencyText(
-                    amount: material.unitCost,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.muted),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Alert: ${material.alertLevel}',
-                    style: AppTextStyles.monoLabel
-                        .copyWith(color: AppColors.muted),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Pip strip
-              PipStrip(
-                total: material.quantityOnHand.clamp(0, 50),
-                free: material.quantityFree.clamp(0, 50),
-                promised: material.quantityPromised.clamp(0, 50),
-                isLow: isLow,
-              ),
-              const SizedBox(height: 8),
-
-              // Quantity display
-              Row(
-                children: [
-                  _QuantityLabel(
-                    label: 'On hand',
-                    value: material.quantityOnHand,
-                    color: AppColors.ink,
-                  ),
-                  const SizedBox(width: 12),
-                  _QuantityLabel(
-                    label: 'Free',
-                    value: material.quantityFree,
-                    color: AppColors.success,
-                  ),
-                  const SizedBox(width: 12),
-                  _QuantityLabel(
-                    label: 'Promised',
-                    value: material.quantityPromised,
-                    color: AppColors.alert,
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Text(
+                '${m.quantityOnHand}',
+                style: AppTextStyles.amount.copyWith(color: low ? c.alert : c.ink, fontSize: 19),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuantityLabel extends StatelessWidget {
-  final String label;
-  final int value;
-  final Color color;
-
-  const _QuantityLabel({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: AppTextStyles.monoLabel.copyWith(
-            color: AppColors.muted,
-            fontSize: 8,
+          const SizedBox(height: 10),
+          PipStrip(
+            total: m.quantityOnHand,
+            free: m.quantityFree,
+            promised: m.quantityPromised,
+            alertLevel: m.alertLevel,
+            isLow: low,
           ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          '$value',
-          style: AppTextStyles.bodyMedium.copyWith(color: color),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text.rich(
+            TextSpan(children: [
+              TextSpan(text: summary),
+              if (short > 0)
+                TextSpan(
+                  text: ' · $short short',
+                  style: TextStyle(color: c.alert, fontWeight: FontWeight.w600),
+                ),
+            ]),
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+        ],
+      ),
     );
   }
 }

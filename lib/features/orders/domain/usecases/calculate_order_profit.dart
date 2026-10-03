@@ -1,6 +1,5 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 
 class CalculateOrderProfit {

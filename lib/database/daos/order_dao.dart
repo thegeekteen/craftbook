@@ -53,6 +53,37 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
         .get();
   }
 
+  /// Pending or packed orders whose ship-by date is before [end].
+  /// Covers both today's shipments and overdue ones.
+  Future<List<Order>> getOpenOrdersDueBefore(DateTime end) {
+    return (select(orders)
+          ..where((t) =>
+              (t.status.equals('pending') | t.status.equals('packed')) &
+              t.shipByDate.isSmallerThanValue(end))
+          ..orderBy([(t) => OrderingTerm.asc(t.shipByDate)]))
+        .get();
+  }
+
+  /// Product lines for many orders in one query, as
+  /// (orderId, productName, quantity).
+  Future<List<(int, String, int)>> getOrderLines(List<int> orderIds) async {
+    if (orderIds.isEmpty) return const [];
+    final query = select(orderItems).join([
+      innerJoin(products, products.id.equalsExp(orderItems.productId)),
+    ])
+      ..where(orderItems.orderId.isIn(orderIds))
+      ..orderBy([OrderingTerm.asc(orderItems.id)]);
+    final rows = await query.get();
+    return [
+      for (final r in rows)
+        (
+          r.readTable(orderItems).orderId,
+          r.readTable(products).name,
+          r.readTable(orderItems).quantity,
+        ),
+    ];
+  }
+
   /// Get orders due for shipping
   Future<List<Order>> getOrdersDueForShipping(DateTime date) {
     return (select(orders)

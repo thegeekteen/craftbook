@@ -103,9 +103,10 @@ The app is built around 6 main user flows:
 - **Database**: 9 tables, 5 DAOs, Drift ORM with code generation
 - **DI**: get_it with manual registration for all repos, use cases, BLoCs
 - **Navigation**: go_router with ShellRoute bottom nav + push detail pages + auto-refresh on return
-- **Theme**: Complete design system (colors, typography, text theme, dialog/chip/FAB themes)
-- **Reusable widgets**: PipStrip, StepperInput (with text entry + focus management), StatusPill, CurrencyText, ConfirmDialog, SectionCard, StatusFilterChips
-- **Test suite**: 71 tests — entities, use cases, widgets, utilities
+- **Theme**: Light and dark themes built from one token set (`CraftColors`), bundled fonts, three radii; follows the system setting
+- **Reusable widgets**: AppCard/CardList/CardRow, SectionLabel, AppTag, StatusPill + OrderStatusPill, MoneyBreakdown(Bar), SummaryBoard, StatTile, EmptyState/ErrorState, BottomActionBar, ChoiceChipRow, StatusFilterChips, PipStrip v2, StepperInput, DateField, AppSearchField, InlineBanner, showAppSheet
+- **Test suite**: use cases, BLoCs, widgets, utilities, and repository tests against in-memory SQLite
+- **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen (light + dark) against a seeded sample shop into `test/screenshots/goldens/`
 
 ---
 
@@ -126,8 +127,14 @@ Required for clear (X) button to work — clearing just the state variable doesn
 ### Auto-refresh after operations
 Child pages pop with `true` after successful create/edit/delete. Parent pages await the result and reload.
 
-### Navigation uses pushReplacement for peer views
-Calendar week ↔ month use `pushReplacement` to avoid infinite back-stack loops.
+### One calendar page
+Week and month are one screen with a toggle and prev/next navigation, so there is no back-stack juggling between them.
+
+### Catalogue pages keep the bottom nav
+Products, Channels and the Buy list live inside the ShellRoute. Editors and receive pages are full-screen with their own bottom action bar.
+
+### Overcommitted stock is shown, not hidden
+When promised exceeds on hand, pips only draw pieces that exist and the shortfall is stated ("8 short").
 
 ---
 
@@ -150,10 +157,11 @@ Calendar week ↔ month use `pushReplacement` to avoid infinite back-stack loops
 ## Design System
 
 The app uses a custom design system in `lib/core/theme/`:
-- **Colors**: Earthy, muted palette with status colors (success green, alert red, warning amber, coin purple)
-- **Typography**: Space Grotesk (display), IBM Plex Sans (body), IBM Plex Mono (labels)
-- **Signature component**: Pip strip — small rectangles representing stock levels (filled = free, hatched = promised)
+- **Colors**: `CraftColors` ThemeExtension (light + dark). Fixed meanings: green = profit/free/primary, red = cost/low/destructive, amber = fees/to pack, indigo = money totals/shipped. Read via `context.colors`.
+- **Typography**: Bricolage Grotesque (numbers, titles), IBM Plex Sans (body), IBM Plex Mono (labels, 10px minimum). Bundled in `assets/fonts/`.
+- **Shape**: radii 4 (tags), 10 (controls), 16 (cards), pills for chips and status.
+- **Signature components**: Pip strip (free, hatched promised, empty up to the reorder tick, outlined incoming/removed) and the money breakdown bar (materials / fees / shipping / profit).
 
 ---
 
-*Last updated: 2026-10-03*
+*Last updated: 2026-10-04*

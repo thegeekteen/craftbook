@@ -20,10 +20,20 @@ class ProductsLoading extends ProductsState {}
 class ProductsLoaded extends ProductsState {
   final List<Product> products;
 
-  const ProductsLoaded(this.products);
+  /// Cost to make (BOM) or buy (standalone) one piece, by product id.
+  final Map<int, double> unitCosts;
+
+  /// Pieces that can be built now (BOM) or are free in stock (standalone).
+  final Map<int, int> available;
+
+  const ProductsLoaded(
+    this.products, {
+    this.unitCosts = const {},
+    this.available = const {},
+  });
 
   @override
-  List<Object?> get props => [products];
+  List<Object?> get props => [products, unitCosts, available];
 }
 
 /// Product was deleted successfully

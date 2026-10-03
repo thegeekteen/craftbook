@@ -1,0 +1,399 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
+import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/preview_order.dart';
+import 'package:craftbook/features/orders/presentation/bloc/new_order_bloc.dart';
+import 'package:craftbook/features/orders/presentation/bloc/new_order_event.dart';
+import 'package:craftbook/features/orders/presentation/bloc/new_order_state.dart';
+
+class MockCreateOrder extends Mock implements CreateOrder {}
+
+class MockCalculateOrderProfit extends Mock implements CalculateOrderProfit {}
+
+class MockPreviewOrder extends Mock implements PreviewOrder {}
+
+void main() {
+  late MockCreateOrder createOrder;
+  late MockCalculateOrderProfit calculateOrderProfit;
+  late MockPreviewOrder previewOrder;
+
+  final orderDate = DateTime(2026, 9, 1);
+  final shipBy = DateTime(2026, 9, 3);
+
+  final details = SetCustomerDetails(
+    customerName: 'Jessa Ramos',
+    customerAddress: 'Cebu City',
+    channelId: 2,
+    orderDate: orderDate,
+    shipByDate: shipBy,
+    note: 'Gift wrap',
+  );
+
+  const tulip = AddItem(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
+  const strap = AddItem(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
+
+  const preview = OrderPreview(
+    sales: 1080,
+    materialCost: 200,
+    channelFees: 100,
+    shippingCost: 40,
+    reservations: [ReservationLine(name: 'Yarn', quantity: 6, available: 40)],
+  );
+
+  setUpAll(() {
+    registerFallbackValue(DateTime(2000));
+    registerFallbackValue(<OrderItemInput>[]);
+  });
+
+  setUp(() {
+    createOrder = MockCreateOrder();
+    calculateOrderProfit = MockCalculateOrderProfit();
+    previewOrder = MockPreviewOrder();
+  });
+
+  NewOrderBloc build() => NewOrderBloc(
+        createOrder: createOrder,
+        calculateOrderProfit: calculateOrderProfit,
+        previewOrder: previewOrder,
+      );
+
+  NewOrderDetailsFilled filled({
+    List<OrderItemInput> items = const [],
+    OrderPreview? preview,
+    bool isPreviewing = false,
+    String? previewError,
+    bool isSaving = false,
+  }) =>
+      NewOrderDetailsFilled(
+        customerName: 'Jessa Ramos',
+        customerAddress: 'Cebu City',
+        channelId: 2,
+        orderDate: orderDate,
+        shipByDate: shipBy,
+        note: 'Gift wrap',
+        items: items,
+        totalSales: items.fold(0.0, (s, i) => s + i.subtotal),
+        preview: preview,
+        isPreviewing: isPreviewing,
+        previewError: previewError,
+        isSaving: isSaving,
+      );
+
+  const tulipInput = OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
+  const strapInput = OrderItemInput(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
+
+  void stubCreate(Result<int> result) {
+    when(() => calculateOrderProfit(
+          totalSales: any(named: 'totalSales'),
+          totalMaterialCost: any(named: 'totalMaterialCost'),
+          channelId: any(named: 'channelId'),
+          shippingCost: any(named: 'shippingCost'),
+        )).thenAnswer((_) async => const Success(OrderProfitBreakdown(
+          totalSales: 1080,
+          totalMaterialCost: 0,
+          channelFees: 100,
+          shippingCost: 40,
+          profit: 940,
+        )));
+    when(() => createOrder(
+          customerName: any(named: 'customerName'),
+          customerAddress: any(named: 'customerAddress'),
+          note: any(named: 'note'),
+          orderDate: any(named: 'orderDate'),
+          shipByDate: any(named: 'shipByDate'),
+          channelId: any(named: 'channelId'),
+          totalSales: any(named: 'totalSales'),
+          channelFees: any(named: 'channelFees'),
+          shippingCost: any(named: 'shippingCost'),
+          items: any(named: 'items'),
+        )).thenAnswer((_) async => result);
+  }
+
+  test('initial state is NewOrderInitial', () {
+    expect(build().state, isA<NewOrderInitial>());
+  });
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'SetCustomerDetails emits DetailsFilled with the details',
+    build: build,
+    act: (bloc) => bloc.add(details),
+    expect: () => [filled()],
+  );
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'AddItem adds a new line and updates totalSales',
+    build: build,
+    act: (bloc) => bloc
+      ..add(details)
+      ..add(tulip)
+      ..add(strap),
+    skip: 1,
+    expect: () => [
+      filled(items: const [tulipInput]),
+      filled(items: const [tulipInput, strapInput]),
+    ],
+    verify: (bloc) {
+      expect((bloc.state as NewOrderDetailsFilled).totalSales, 1080);
+      expect((bloc.state as NewOrderDetailsFilled).totalItemCount, 3);
+    },
+  );
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'AddItem for an existing product merges quantity',
+    build: build,
+    act: (bloc) => bloc
+      ..add(details)
+      ..add(tulip)
+      ..add(const AddItem(productId: 10, productName: 'Tulip', quantity: 3, unitPrice: 999)),
+    skip: 2,
+    expect: () => [
+      filled(items: const [
+        OrderItemInput(productId: 10, productName: 'Tulip', quantity: 5, unitPrice: 450),
+      ]),
+    ],
+  );
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'UpdateItemQuantity replaces the quantity',
+    build: build,
+    act: (bloc) => bloc
+      ..add(details)
+      ..add(tulip)
+      ..add(const UpdateItemQuantity(productId: 10, quantity: 4)),
+    skip: 2,
+    expect: () => [
+      filled(items: const [
+        OrderItemInput(productId: 10, productName: 'Tulip', quantity: 4, unitPrice: 450),
+      ]),
+    ],
+  );
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'UpdateItemQuantity for an unknown product leaves items unchanged',
+    build: build,
+    act: (bloc) => bloc
+      ..add(details)
+      ..add(tulip)
+      ..add(const UpdateItemQuantity(productId: 99, quantity: 4)),
+    skip: 1,
+    // Same state re-emitted is de-duplicated, so only one emission shows.
+    expect: () => [filled(items: const [tulipInput])],
+  );
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'RemoveItem removes the line',
+    build: build,
+    act: (bloc) => bloc
+      ..add(details)
+      ..add(tulip)
+      ..add(strap)
+      ..add(const RemoveItem(10)),
+    skip: 3,
+    expect: () => [filled(items: const [strapInput])],
+  );
+
+  group('RequestPreview', () {
+    blocTest<NewOrderBloc, NewOrderState>(
+      'success emits previewing then state carrying the preview',
+      setUp: () => when(() => previewOrder(
+            items: any(named: 'items'),
+            channelId: any(named: 'channelId'),
+          )).thenAnswer((_) async => const Success(preview)),
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(tulip)
+        ..add(RequestPreview()),
+      skip: 2,
+      expect: () => [
+        filled(items: const [tulipInput], isPreviewing: true),
+        filled(items: const [tulipInput], preview: preview),
+      ],
+      verify: (_) => verify(() => previewOrder(items: [tulipInput], channelId: 2)).called(1),
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'failure sets previewError and no preview',
+      setUp: () => when(() => previewOrder(
+            items: any(named: 'items'),
+            channelId: any(named: 'channelId'),
+          )).thenAnswer((_) async => const Error(NotFoundFailure('Channel not found'))),
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(tulip)
+        ..add(RequestPreview()),
+      skip: 2,
+      expect: () => [
+        filled(items: const [tulipInput], isPreviewing: true),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.isPreviewing, 'isPreviewing', false)
+            .having((s) => s.preview, 'preview', isNull)
+            .having((s) => s.previewError, 'previewError', 'Channel not found'),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'a failed save keeps the preview on the review step',
+      setUp: () {
+        when(() => previewOrder(
+              items: any(named: 'items'),
+              channelId: any(named: 'channelId'),
+            )).thenAnswer((_) async => const Success(preview));
+        stubCreate(const Error(DatabaseFailure('disk full')));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc
+          ..add(details)
+          ..add(tulip)
+          ..add(RequestPreview());
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        bloc.add(SaveOrder());
+      },
+      skip: 5,
+      expect: () => [
+        const NewOrderError('disk full'),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.preview, 'preview', preview)
+            .having((s) => s.isSaving, 'isSaving', false),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'changing items after a preview clears it',
+      setUp: () => when(() => previewOrder(
+            items: any(named: 'items'),
+            channelId: any(named: 'channelId'),
+          )).thenAnswer((_) async => const Success(preview)),
+      build: build,
+      act: (bloc) async {
+        bloc
+          ..add(details)
+          ..add(tulip)
+          ..add(RequestPreview());
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        bloc.add(strap);
+      },
+      skip: 4,
+      expect: () => [filled(items: const [tulipInput, strapInput])],
+    );
+  });
+
+  group('SaveOrder', () {
+    blocTest<NewOrderBloc, NewOrderState>(
+      'success emits saving then NewOrderSaved with the new id',
+      setUp: () => stubCreate(const Success(42)),
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(tulip)
+        ..add(strap)
+        ..add(SaveOrder()),
+      skip: 3,
+      expect: () => [
+        filled(items: const [tulipInput, strapInput], isSaving: true),
+        const NewOrderSaved(42),
+      ],
+      verify: (_) {
+        verify(() => calculateOrderProfit(
+              totalSales: 1080,
+              totalMaterialCost: 0,
+              channelId: 2,
+              shippingCost: 0,
+            )).called(1);
+        verify(() => createOrder(
+              customerName: 'Jessa Ramos',
+              customerAddress: 'Cebu City',
+              note: 'Gift wrap',
+              orderDate: orderDate,
+              shipByDate: shipBy,
+              channelId: 2,
+              totalSales: 1080,
+              channelFees: 100,
+              shippingCost: 40,
+              items: [tulipInput, strapInput],
+            )).called(1);
+      },
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'failure emits NewOrderError then returns to DetailsFilled',
+      setUp: () => stubCreate(const Error(ValidationFailure('At least one item is required'))),
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(SaveOrder()),
+      skip: 1,
+      expect: () => [
+        filled(isSaving: true),
+        const NewOrderError('At least one item is required'),
+        filled(),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'profit lookup failure stops the save and shows the error',
+      setUp: () {
+        stubCreate(const Success(5));
+        when(() => calculateOrderProfit(
+              totalSales: any(named: 'totalSales'),
+              totalMaterialCost: any(named: 'totalMaterialCost'),
+              channelId: any(named: 'channelId'),
+              shippingCost: any(named: 'shippingCost'),
+            )).thenAnswer((_) async => const Error(NotFoundFailure('Channel not found')));
+      },
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(tulip)
+        ..add(SaveOrder()),
+      skip: 3,
+      expect: () => [
+        const NewOrderError('Channel not found'),
+        isA<NewOrderDetailsFilled>().having((s) => s.isSaving, 'isSaving', false),
+      ],
+      verify: (_) => verifyNever(() => createOrder(
+            customerName: any(named: 'customerName'),
+            customerAddress: any(named: 'customerAddress'),
+            note: any(named: 'note'),
+            orderDate: any(named: 'orderDate'),
+            shipByDate: any(named: 'shipByDate'),
+            channelId: any(named: 'channelId'),
+            totalSales: any(named: 'totalSales'),
+            channelFees: any(named: 'channelFees'),
+            shippingCost: any(named: 'shippingCost'),
+            items: any(named: 'items'),
+          )),
+    );
+  });
+
+  blocTest<NewOrderBloc, NewOrderState>(
+    'ResetOrder clears everything back to NewOrderInitial',
+    build: build,
+    act: (bloc) async {
+      bloc
+        ..add(details)
+        ..add(tulip)
+        ..add(ResetOrder());
+      await Future<void>.delayed(Duration.zero);
+      // After reset, the next change starts from empty details.
+      bloc.add(strap);
+    },
+    skip: 2,
+    expect: () => [
+      isA<NewOrderInitial>(),
+      isA<NewOrderDetailsFilled>()
+          .having((s) => s.customerName, 'customerName', '')
+          .having((s) => s.channelId, 'channelId', 0)
+          .having((s) => s.note, 'note', isNull)
+          .having((s) => s.items, 'items', const [strapInput]),
+    ],
+  );
+}

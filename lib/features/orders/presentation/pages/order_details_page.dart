@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_tag.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
-import '../../../../core/widgets/currency_text.dart';
-import '../../../../core/widgets/section_card.dart';
-import '../../../../core/widgets/status_pill.dart';
-import '../../../products/domain/entities/channel.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/section_label.dart';
 import '../../domain/entities/order.dart';
-import '../../domain/entities/order_item.dart';
-import '../../domain/entities/order_material.dart';
-import '../../domain/entities/order_product.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
-import '../widgets/pack_confirm_dialog.dart';
+import '../widgets/order_status_ui.dart';
+import '../widgets/pack_confirm_sheet.dart';
 import 'adjust_materials_page.dart';
 
+/// One order: progress, customer, items, and where the money went.
 class OrderDetailsPage extends StatelessWidget {
   final int orderId;
 
@@ -30,111 +34,103 @@ class OrderDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          getIt<OrderDetailBloc>()..add(LoadOrderDetail(orderId)),
-      child: const _OrderDetailView(),
+      create: (_) => getIt<OrderDetailBloc>()..add(LoadOrderDetail(orderId)),
+      child: _OrderDetailView(orderId: orderId),
     );
   }
 }
 
-class _OrderDetailView extends StatelessWidget {
-  const _OrderDetailView();
+class _OrderDetailView extends StatefulWidget {
+  final int orderId;
+
+  const _OrderDetailView({required this.orderId});
+
+  @override
+  State<_OrderDetailView> createState() => _OrderDetailViewState();
+}
+
+class _OrderDetailViewState extends State<_OrderDetailView> {
+  /// Tells the previous screen to reload when we go back.
+  bool _changed = false;
+  bool _showMaterials = false;
+
+  OrderDetailBloc get _bloc => context.read<OrderDetailBloc>();
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<OrderDetailBloc, OrderDetailState>(
-      listener: (context, state) {
-        if (state is OrderDetailActionSuccess) {
-          context.showSnackBar(state.message);
-        }
-        if (state is OrderDetailError) {
-          context.showSnackBar(state.message, isError: true);
-        }
-        if (state is OrderDeleted) {
-          context.showSnackBar('Order deleted');
-          context.pop(true);
-        }
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.pop(_changed);
       },
-      builder: (context, state) {
-        if (state is OrderDetailLoading || state is OrderDetailInitial) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Order')),
-            body: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (state is OrderDetailError) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Order')),
-            body: Center(
-              child: Text(state.message,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.alert)),
-            ),
-          );
-        }
-
-        if (state is OrderDetailLoaded) {
-          return _buildLoaded(context, state);
-        }
-
-        return Scaffold(
-          appBar: AppBar(title: const Text('Order')),
-          body: const SizedBox.shrink(),
-        );
-      },
+      child: BlocConsumer<OrderDetailBloc, OrderDetailState>(
+        listener: (context, state) {
+          if (state is OrderDetailMessage) {
+            if (!state.isError) _changed = true;
+            context.showSnackBar(state.message, isError: state.isError);
+          }
+          if (state is OrderDeleted) {
+            context.showSnackBar('Order deleted');
+            context.pop(true);
+          }
+        },
+        buildWhen: (_, s) => s is! OrderDetailMessage && s is! OrderDeleted,
+        builder: (context, state) {
+          return switch (state) {
+            OrderDetailLoaded() => _buildLoaded(state),
+            OrderDetailError(:final message) => Scaffold(
+                appBar: AppBar(leading: BackButton(onPressed: () => context.pop(_changed))),
+                body: Center(
+                  child: ErrorState(
+                    message: message,
+                    onRetry: () => _bloc.add(LoadOrderDetail(widget.orderId)),
+                  ),
+                ),
+              ),
+            _ => Scaffold(
+                appBar: AppBar(),
+                body: const Center(child: CircularProgressIndicator()),
+              ),
+          };
+        },
+      ),
     );
   }
 
-  Widget _buildLoaded(BuildContext context, OrderDetailLoaded state) {
+  Widget _buildLoaded(OrderDetailLoaded state) {
+    final c = context.colors;
     final order = state.order;
-    final dateFmt = DateFormat('MMM d, y');
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Order #${order.id}',
-          style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
+        leading: BackButton(onPressed: () => context.pop(_changed)),
+        toolbarHeight: 64,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'ORDER #${order.id}',
+              style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+            ),
+            Text(order.customerName, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: StatusPill(
-                text: order.status.displayName,
-                type: _statusPillType(order.status),
-              ),
-            ),
-          ),
           if (order.status != OrderStatus.shipped)
             PopupMenuButton<String>(
-              onSelected: (value) async {
-                if (value == 'delete') {
-                  final confirmed = await ConfirmDialog.show(
-                    context,
-                    title: 'Delete order?',
-                    message:
-                        'This will permanently remove the order and reverse any stock changes.',
-                    confirmText: 'Delete',
-                    isDestructive: true,
-                  );
-                  if (confirmed && context.mounted) {
-                    context
-                        .read<OrderDetailBloc>()
-                        .add(DeleteOrderEvent(order.id!));
-                  }
-                }
+              tooltip: 'More',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) {
+                if (value == 'delete') _confirmDelete(order);
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline,
-                          color: AppColors.alert, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete',
-                          style: TextStyle(color: AppColors.alert)),
+                      Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                      const SizedBox(width: 10),
+                      Text('Delete order', style: TextStyle(color: c.alert)),
                     ],
                   ),
                 ),
@@ -142,595 +138,472 @@ class _OrderDetailView extends StatelessWidget {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Stack(
         children: [
-          // Status stepper
-          _StatusStepper(status: order.status),
-          const SizedBox(height: 24),
-
-          // Dates
-          SectionCard(
-            label: 'Dates',
-            child: Column(
-              children: [
-                _DateRow(
-                    icon: Icons.calendar_today,
-                    label: 'Ordered',
-                    value: dateFmt.format(order.orderDate)),
-                _DateRow(
-                    icon: Icons.local_shipping_outlined,
-                    label: 'Ship by',
-                    value: dateFmt.format(order.shipByDate)),
-                if (order.packedAt != null)
-                  _DateRow(
-                      icon: Icons.inventory_2_outlined,
-                      label: 'Packed',
-                      value: dateFmt.format(order.packedAt!)),
-                if (order.shippedAt != null)
-                  _DateRow(
-                      icon: Icons.check_circle_outline,
-                      label: 'Shipped',
-                      value: dateFmt.format(order.shippedAt!)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Customer
-          SectionCard(
-            label: 'Customer',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(order.customerName,
-                    style: AppTextStyles.bodyLarge
-                        .copyWith(color: AppColors.ink)),
-                if (order.customerAddress.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
+          ListView(
+            padding: AppSpacing.page.copyWith(top: 8),
+            children: [
+              _StatusTrack(order: order),
+              const SizedBox(height: 12),
+              _CustomerCard(order: order, channelName: state.channel?.name),
+              const SizedBox(height: 12),
+              if (state.items.isNotEmpty) ...[
+                AppCard.flush(
+                  child: CardList(
                     children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 14, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(order.customerAddress,
-                            style: AppTextStyles.bodySmall),
-                      ),
-                    ],
-                  ),
-                ],
-                if (order.note != null && order.note!.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.note_outlined,
-                          size: 14, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(order.note!,
-                            style: AppTextStyles.bodySmall),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Channel
-          if (state.channel != null) ...[
-            SectionCard(
-              label: 'Channel',
-              child: Row(
-                children: [
-                  Icon(Icons.store_outlined,
-                      size: 18, color: AppColors.coin),
-                  const SizedBox(width: 8),
-                  Text(state.channel!.name,
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.ink)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Items
-          SectionCard(
-            label: 'Items',
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: state.items.isEmpty
-                  ? [
                       Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Text('No items',
-                              style: AppTextStyles.bodySmall),
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+                        child: Text(
+                          'ITEMS',
+                          style: AppTextStyles.monoLabel.copyWith(color: c.muted),
                         ),
                       ),
-                    ]
-                  : state.items.map((item) => _ItemRow(item: item)).toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Materials
-          if (state.materials.isNotEmpty) ...[
-            SectionCard(
-              label: 'Materials',
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: state.materials
-                    .map((mat) => _MaterialRow(material: mat))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Standalone products
-          if (state.products.isNotEmpty) ...[
-            SectionCard(
-              label: 'Products',
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: state.products
-                    .map((prod) => _ProductRow(product: prod))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // Financial summary
-          SectionCard(
-            label: 'Summary',
-            child: Column(
-              children: [
-                _SummaryRow(
-                    label: 'Sales',
-                    amount: order.totalSales,
-                    color: AppColors.success),
-                _SummaryRow(
-                    label: 'Materials',
-                    amount: order.totalMaterialCost,
-                    color: AppColors.alert),
-                _SummaryRow(
-                    label: 'Channel fees',
-                    amount: order.channelFees,
-                    color: AppColors.warning),
-                _SummaryRow(
-                    label: 'Shipping',
-                    amount: order.shippingCost,
-                    color: AppColors.muted),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Divider(color: AppColors.hair, height: 1),
-                ),
-                _SummaryRow(
-                    label: 'Profit',
-                    amount: order.totalSales -
-                        order.totalMaterialCost -
-                        order.channelFees -
-                        order.shippingCost,
-                    color: (order.totalSales -
-                                order.totalMaterialCost -
-                                order.channelFees -
-                                order.shippingCost) >=
-                            0
-                        ? AppColors.success
-                        : AppColors.alert,
-                    isBold: true),
-              ],
-            ),
-          ),
-          const SizedBox(height: 80),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomActions(context, state),
-    );
-  }
-
-  Widget? _buildBottomActions(
-      BuildContext context, OrderDetailLoaded state) {
-    final order = state.order;
-
-    if (order.status == OrderStatus.shipped ||
-        order.status == OrderStatus.cancelled) {
-      return null;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            if (order.status == OrderStatus.pending) ...[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider.value(
-                          value: context.read<OrderDetailBloc>(),
-                          child: AdjustMaterialsPage(
-                            orderId: order.id!,
-                            materials: state.materials,
+                      for (final item in state.items)
+                        CardRow(
+                          title: Text(item.productName),
+                          subtitle: Text(
+                            '${item.quantity} × ${CurrencyFormatter.formatShort(item.unitPrice)}',
+                          ),
+                          trailing: Text(
+                            CurrencyFormatter.format(item.subtotal),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: c.ink,
+                              fontWeight: FontWeight.w600,
+                              fontFeatures: AppTextStyles.tabular.fontFeatures,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                    if (result == true && context.mounted) {
-                      context
-                          .read<OrderDetailBloc>()
-                          .add(LoadOrderDetail(order.id!));
-                    }
-                  },
-                  child: const Text('Adjust'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    final confirmed = await PackConfirmDialog.show(
-                      context,
-                      orderMaterials: state.materials,
-                      currentMaterials: [],
-                    );
-                    if (confirmed && context.mounted) {
-                      context
-                          .read<OrderDetailBloc>()
-                          .add(PackOrderDetail(order.id!));
-                    }
-                  },
-                  icon: const Icon(Icons.inventory_2, size: 18),
-                  label: const Text('Pack this order'),
-                ),
-              ),
-            ],
-            if (order.status == OrderStatus.packed)
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    context
-                        .read<OrderDetailBloc>()
-                        .add(ShipOrderDetail(order.id!));
-                  },
-                  icon: const Icon(Icons.local_shipping, size: 18),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.coin,
-                    foregroundColor: Colors.white,
-                  ),
-                  label: const Text('Mark shipped'),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  StatusPillType _statusPillType(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return StatusPillType.warning;
-      case OrderStatus.packed:
-        return StatusPillType.success;
-      case OrderStatus.shipped:
-        return StatusPillType.coin;
-      case OrderStatus.cancelled:
-        return StatusPillType.neutral;
-    }
-  }
-}
-
-// ── Sub-widgets ──────────────────────────────────────────────
-
-class _StatusStepper extends StatelessWidget {
-  final OrderStatus status;
-
-  const _StatusStepper({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    const stepLabels = ['Placed', 'Packed', 'Shipped'];
-    const stepIcons = [
-      Icons.receipt_long,
-      Icons.inventory_2,
-      Icons.local_shipping,
-    ];
-    final currentIndex = status == OrderStatus.pending
-        ? 0
-        : status == OrderStatus.packed
-            ? 1
-            : status == OrderStatus.shipped
-                ? 2
-                : -1;
-
-    // Build: [Step0] [Line] [Step1] [Line] [Step2]
-    final children = <Widget>[];
-    for (var i = 0; i < stepLabels.length; i++) {
-      final isDone = i <= currentIndex;
-      final isCurrent = i == currentIndex;
-
-      children.add(
-        Expanded(
-          child: Column(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isDone ? AppColors.success : AppColors.paper,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDone ? AppColors.success : AppColors.hair,
-                    width: isCurrent ? 2.5 : 1.5,
+                    ],
                   ),
                 ),
-                child: Icon(
-                  stepIcons[i],
-                  size: 18,
-                  color: isDone ? Colors.white : AppColors.muted,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                stepLabels[i],
-                style: AppTextStyles.monoLabel.copyWith(
-                  color: isDone ? AppColors.success : AppColors.muted,
-                  fontWeight:
-                      isDone ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (i < stepLabels.length - 1) {
-        children.add(
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 17),
-              child: Container(
-                height: 2,
-                color: i < currentIndex
-                    ? AppColors.success
-                    : AppColors.hair,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.hair),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DateRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppColors.muted),
-          const SizedBox(width: 8),
-          Text(label,
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: AppColors.muted)),
-          const Spacer(),
-          Text(value,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.ink)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ItemRow extends StatelessWidget {
-  final OrderItem item;
-  const _ItemRow({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hair)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.productName,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.ink)),
-                const SizedBox(height: 2),
-                Text('${item.quantity} × ${item.unitPrice.currency}',
-                    style: AppTextStyles.bodySmall),
+                const SizedBox(height: 12),
               ],
-            ),
+              _buildProfitCard(state),
+            ],
           ),
-          CurrencyText(
-            amount: item.subtotal,
-            style: AppTextStyles.bodyMedium
-                .copyWith(color: AppColors.ink, fontWeight: FontWeight.w600),
-          ),
+          if (state.isBusy)
+            const Positioned(left: 0, right: 0, top: 0, child: LinearProgressIndicator()),
         ],
       ),
+      bottomNavigationBar: _buildActions(state),
     );
   }
-}
 
-class _MaterialRow extends StatelessWidget {
-  final OrderMaterial material;
-  const _MaterialRow({required this.material});
+  Widget _buildProfitCard(OrderDetailLoaded state) {
+    final c = context.colors;
+    final order = state.order;
+    final parts = MoneyParts(
+      sales: order.totalSales,
+      materials: order.totalMaterialCost,
+      fees: order.channelFees,
+      shipping: order.shippingCost,
+    );
+    final lineCount = state.materials.length + state.products.length;
+    final hasWaste = state.materials.any((m) => m.wasteQuantity > 0);
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hair)),
-      ),
-      child: Row(
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(material.materialName,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.ink)),
-                const SizedBox(height: 2),
-                Text(
-                  'Planned: ${material.plannedQuantity} · Actual: ${material.actualQuantity}',
-                  style: AppTextStyles.bodySmall,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Expanded(
+                child: Text('PROFIT', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+              ),
+              Text(
+                CurrencyFormatter.format(parts.profit),
+                style: AppTextStyles.displayMedium.copyWith(
+                  fontSize: 26,
+                  color: parts.profit >= 0 ? c.go : c.alert,
                 ),
-                if (material.wasteQuantity > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      'Waste: ${material.wasteQuantity}${material.wasteReason != null ? ' (${material.wasteReason})' : ''}',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.alert),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          MoneyBreakdown(
+            parts: parts,
+            materialsLabel: lineCount == 0
+                ? 'Materials'
+                : 'Materials · $lineCount ${lineCount == 1 ? 'line' : 'lines'}'
+                    '${hasWaste ? ' · waste' : ''}',
+            feesLabel: state.channel == null ? 'Channel fees' : '${state.channel!.name} fees',
+            onMaterialsTap: lineCount == 0
+                ? null
+                : () => setState(() => _showMaterials = !_showMaterials),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: !_showMaterials
+                ? const SizedBox(width: double.infinity)
+                : Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: c.paper,
+                      borderRadius: AppRadii.controlAll,
+                    ),
+                    child: Column(
+                      children: [
+                        for (final m in state.materials)
+                          _LineDetail(
+                            name: m.materialName,
+                            detail: m.actualQuantity == m.plannedQuantity
+                                ? '${m.actualQuantity} × ${CurrencyFormatter.format(m.unitCost)}'
+                                : 'Planned ${m.plannedQuantity} · used ${m.actualQuantity}',
+                            waste: m.wasteQuantity > 0
+                                ? '+${m.wasteQuantity} waste'
+                                    '${m.wasteReason != null ? ' (${m.wasteReason!.toLowerCase()})' : ''}'
+                                : null,
+                            amount: m.totalCost,
+                          ),
+                        for (final p in state.products)
+                          _LineDetail(
+                            name: p.productName,
+                            detail: '${p.quantity} × ${CurrencyFormatter.format(p.unitCost)} · from stock',
+                            amount: p.totalCost,
+                          ),
+                      ],
                     ),
                   ),
-              ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildActions(OrderDetailLoaded state) {
+    final c = context.colors;
+    final order = state.order;
+    final busy = state.isBusy;
+    switch (order.status) {
+      case OrderStatus.pending:
+        return BottomActionBar(children: [
+          if (state.materials.isNotEmpty)
+            OutlinedButton(
+              onPressed: busy ? null : () => _openAdjust(state),
+              child: const Text('Adjust'),
+            ),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: busy ? null : () => _pack(state),
+              icon: const Icon(Icons.inventory_2_rounded, size: 18),
+              label: const Text('Pack order'),
             ),
           ),
-          CurrencyText(
-            amount: material.totalCost,
-            style: AppTextStyles.bodySmall
-                .copyWith(color: AppColors.muted, fontWeight: FontWeight.w600),
+        ]);
+      case OrderStatus.packed:
+        return BottomActionBar(children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: busy ? null : () => _bloc.add(ShipOrderDetail(order.id!)),
+              style: FilledButton.styleFrom(backgroundColor: c.coin),
+              icon: const Icon(Icons.local_shipping_rounded, size: 18),
+              label: const Text('Mark shipped'),
+            ),
           ),
+        ]);
+      case OrderStatus.shipped:
+      case OrderStatus.cancelled:
+        return null;
+    }
+  }
+
+  Future<void> _pack(OrderDetailLoaded state) async {
+    final confirmed = await PackConfirmSheet.show(
+      context,
+      materials: state.materials,
+      products: state.products,
+      materialStock: state.materialStock,
+      productStock: state.productStock,
+    );
+    if (confirmed && mounted) _bloc.add(PackOrderDetail(state.order.id!));
+  }
+
+  Future<void> _openAdjust(OrderDetailLoaded state) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: _bloc,
+          child: AdjustMaterialsPage(orderId: state.order.id!, materials: state.materials),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(Order order) async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete order #${order.id}?',
+      message: order.status == OrderStatus.packed
+          ? 'The order is removed and its materials go back on the shelf.'
+          : 'The order is removed and its reserved stock is released.',
+      confirmText: 'Delete',
+      isDestructive: true,
+    );
+    if (confirmed && mounted) _bloc.add(DeleteOrderEvent(order.id!));
+  }
+}
+
+/// Placed → Packed → Shipped with the date under each step.
+class _StatusTrack extends StatelessWidget {
+  final Order order;
+
+  const _StatusTrack({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final fmt = DateFormat('MMM d');
+    if (order.status == OrderStatus.cancelled) {
+      return AppCard(
+        child: Row(
+          children: [
+            const OrderStatusPill(status: OrderStatus.cancelled),
+            const SizedBox(width: 10),
+            Text(
+              'Placed ${fmt.format(order.orderDate)}',
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final reached = switch (order.status) {
+      OrderStatus.pending => 0,
+      OrderStatus.packed => 1,
+      _ => 2,
+    };
+    final overdue = order.isOverdue;
+    final steps = [
+      ('Placed', fmt.format(order.orderDate), false),
+      (
+        'Packed',
+        order.packedAt != null
+            ? fmt.format(order.packedAt!)
+            : 'due ${fmt.format(order.shipByDate)}',
+        overdue,
+      ),
+      (
+        'Shipped',
+        order.shippedAt != null ? fmt.format(order.shippedAt!) : '',
+        false,
+      ),
+    ];
+
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < steps.length; i++)
+            Expanded(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 28,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: i == 0
+                              ? const SizedBox()
+                              : Container(height: 2, color: i <= reached ? c.go : c.hair),
+                        ),
+                        _TrackDot(index: i, reached: reached, alert: steps[i].$3),
+                        Expanded(
+                          child: i == steps.length - 1
+                              ? const SizedBox()
+                              : Container(height: 2, color: i < reached ? c.go : c.hair),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    steps[i].$1,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: i <= reached + 1 ? c.ink : c.muted,
+                      fontWeight: i <= reached + 1 ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                  if (steps[i].$2.isNotEmpty)
+                    Text(
+                      steps[i].$2,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 11.5,
+                        color: steps[i].$3 ? c.alert : c.muted,
+                        fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-class _ProductRow extends StatelessWidget {
-  final OrderProduct product;
-  const _ProductRow({required this.product});
+class _TrackDot extends StatelessWidget {
+  final int index;
+  final int reached;
+  final bool alert;
+
+  const _TrackDot({required this.index, required this.reached, required this.alert});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
+    final done = index <= reached;
+    final current = index == reached + 1;
+    final ring = alert ? c.alert : c.go;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hair)),
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: done ? c.go : c.surface,
+        border: Border.all(color: done || current ? ring : c.hair, width: 2),
       ),
+      child: Center(
+        child: done
+            ? Icon(Icons.check_rounded, size: 16, color: c.onAccent)
+            : Text(
+                '${index + 1}',
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: current ? ring : c.muted,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _CustomerCard extends StatelessWidget {
+  final Order order;
+  final String? channelName;
+
+  const _CustomerCard({required this.order, this.channelName});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final muted = AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: SectionLabel('Customer', padding: EdgeInsets.zero)),
+              if (channelName != null) AppTag(channelName!, type: AppTagType.outline),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(order.customerName, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+          if (order.customerAddress.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            InkWell(
+              borderRadius: BorderRadius.circular(6),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: order.customerAddress));
+                context.showSnackBar('Address copied');
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: Text(order.customerAddress, style: muted)),
+                    const SizedBox(width: 8),
+                    Icon(Icons.copy_rounded, size: 15, color: c.muted),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (order.note != null && order.note!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              decoration: BoxDecoration(
+                color: c.warnSoft,
+                borderRadius: AppRadii.controlAll,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.sticky_note_2_outlined, size: 16, color: c.warn),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      order.note!,
+                      style: AppTextStyles.bodySmall.copyWith(color: c.ink, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LineDetail extends StatelessWidget {
+  final String name;
+  final String detail;
+  final String? waste;
+  final double amount;
+
+  const _LineDetail({
+    required this.name,
+    required this.detail,
+    this.waste,
+    required this.amount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product.productName,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.ink)),
-                const SizedBox(height: 2),
                 Text(
-                  '${product.quantity} × ₱${product.unitCost.toStringAsFixed(2)}',
-                  style: AppTextStyles.bodySmall,
+                  name,
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: c.ink, fontWeight: FontWeight.w600, fontSize: 13),
                 ),
+                Text(detail, style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 12)),
+                if (waste != null)
+                  Text(
+                    waste!,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: c.alert, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
               ],
             ),
           ),
-          CurrencyText(
-            amount: product.totalCost,
-            style: AppTextStyles.bodySmall
-                .copyWith(color: AppColors.muted, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  final bool isBold;
-
-  const _SummaryRow({
-    required this.label,
-    required this.amount,
-    required this.color,
-    this.isBold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
           Text(
-            label,
-            style: isBold
-                ? AppTextStyles.bodyLarge.copyWith(color: AppColors.ink)
-                : AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.muted),
-          ),
-          CurrencyText(
-            amount: amount,
-            style: (isBold
-                    ? AppTextStyles.displaySmall
-                    : AppTextStyles.bodyMedium)
-                .copyWith(color: color),
+            CurrencyFormatter.format(amount),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: c.ink,
+              fontSize: 13,
+              fontFeatures: AppTextStyles.tabular.fontFeatures,
+            ),
           ),
         ],
       ),

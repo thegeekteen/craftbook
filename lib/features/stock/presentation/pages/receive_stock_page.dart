@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/pip_strip.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../domain/entities/material.dart';
@@ -16,7 +21,8 @@ import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
 import '../bloc/materials_state.dart';
 
-/// Receive stock page — add new stock to a material
+/// Receive packs of a material, with a live preview of the new count and
+/// weighted-average unit cost.
 class ReceiveStockPage extends StatefulWidget {
   final int materialId;
 
@@ -28,318 +34,236 @@ class ReceiveStockPage extends StatefulWidget {
 
 class _ReceiveStockPageState extends State<ReceiveStockPage> {
   Material? _material;
-  bool _isLoading = true;
-  int _packsReceived = 1;
-  int _packSize = 0;
-  final _priceController = TextEditingController();
-  final _supplierController = TextEditingController();
-  final _packSizeController = TextEditingController();
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+  int _packs = 1;
+  final _price = TextEditingController();
+  final _supplier = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadMaterial();
+    _price.addListener(() => setState(() {}));
+    _load();
   }
 
   @override
   void dispose() {
-    _priceController.dispose();
-    _supplierController.dispose();
-    _packSizeController.dispose();
+    _price.dispose();
+    _supplier.dispose();
     super.dispose();
   }
 
-  Future<void> _loadMaterial() async {
-    final getDetail = getIt<GetMaterialDetail>();
-    final result = await getDetail(widget.materialId);
-
-    switch (result) {
-      case Error(:final failure):
-        if (mounted) {
-          setState(() => _isLoading = false);
-          context.showSnackBar(failure.message, isError: true);
-        }
-      case Success(value: final detail):
-        if (mounted) {
-          setState(() {
-            _material = detail.material;
-            _packSize = detail.material.packSize;
-            _packSizeController.text = detail.material.packSize.toString();
-            _isLoading = false;
-          });
-        }
-    }
+  Future<void> _load() async {
+    final result = await getIt<GetMaterialDetail>()(widget.materialId);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      switch (result) {
+        case Error(:final failure):
+          _error = failure.message;
+        case Success(value: final detail):
+          _material = detail.material;
+          // Last price paid is the usual starting point.
+          if (detail.material.packPrice > 0) {
+            _price.text = detail.material.packPrice.toStringAsFixed(2);
+          }
+          _supplier.text = detail.material.supplier ?? '';
+      }
+    });
   }
 
-  double get _pricePerPack {
-    return double.tryParse(_priceController.text) ?? 0;
-  }
+  double get _pricePerPack => double.tryParse(_price.text) ?? 0;
+  int get _pieces => _packs * (_material?.packSize ?? 0);
 
-  int get _totalPcs {
-    return _packsReceived * _packSize;
-  }
-
+  /// new = (oldQty × oldCost + newQty × newPrice) / (oldQty + newQty)
   double get _newUnitCost {
-    if (_material == null) return 0;
-    final oldQty = _material!.quantityOnHand;
-    final oldCost = _material!.unitCost;
-    final newQty = _totalPcs;
-    final newPrice = _packSize > 0 ? _pricePerPack / _packSize : 0.0;
-
-    if (oldQty + newQty == 0) return newPrice;
-    return (oldQty * oldCost + newQty * newPrice) / (oldQty + newQty);
+    final m = _material!;
+    final newPrice = m.packSize > 0 ? _pricePerPack / m.packSize : 0.0;
+    final total = m.quantityOnHand + _pieces;
+    if (total == 0) return newPrice;
+    return (m.quantityOnHand * m.unitCost + _pieces * newPrice) / total;
   }
 
   void _submit() {
     if (_pricePerPack <= 0) {
-      context.showSnackBar('Enter a valid price', isError: true);
+      context.showSnackBar('Enter what you paid per pack', isError: true);
       return;
     }
-
+    setState(() => _saving = true);
     context.read<MaterialsBloc>().add(ReceiveStockEvent(
           materialId: widget.materialId,
-          packsReceived: _packsReceived,
+          packsReceived: _packs,
           pricePerPack: _pricePerPack,
+          supplier: _supplier.text.trim().isEmpty ? null : _supplier.text.trim(),
         ));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Receive stock')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+    if (_loading) {
+      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
     }
-
     if (_material == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Receive stock')),
-        body: const Center(child: Text('Material not found')),
+        appBar: AppBar(),
+        body: Center(child: ErrorState(message: _error ?? 'Material not found', onRetry: _load)),
       );
     }
 
-    final mat = _material!;
+    final c = context.colors;
+    final m = _material!;
+    final costUp = _newUnitCost > m.unitCost + 0.005;
 
-    return BlocConsumer<MaterialsBloc, MaterialsState>(
+    return BlocListener<MaterialsBloc, MaterialsState>(
       listener: (context, state) {
         if (state is StockReceived) {
-          context.showSnackBar('Stock received!');
+          context.showSnackBar('Added $_pieces pcs of ${m.name}');
           context.pop(true);
         }
         if (state is MaterialsError) {
+          setState(() => _saving = false);
           context.showSnackBar(state.message, isError: true);
         }
       },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Receive — ${mat.name}',
-                style: AppTextStyles.displaySmall
-                    .copyWith(color: AppColors.ink)),
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 64,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Before display
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.paperHigh,
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: AppColors.hair),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('BEFORE', style: AppTextStyles.monoSection),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          '${mat.quantityOnHand}',
-                          style: AppTextStyles.displayMedium
-                              .copyWith(color: AppColors.muted),
-                        ),
-                        const SizedBox(width: 12),
-                        PipStrip(
-                          total: mat.quantityOnHand.clamp(0, 40),
-                          free: mat.quantityFree.clamp(0, 40),
-                          promised: mat.quantityPromised.clamp(0, 40),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Unit cost: ${mat.unitCost.currency}',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Quantity per pack (read-only)
-              Text('QUANTITY PER PACK', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.paperHigh,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.hair),
-                ),
-                child: Text(
-                  '$_packSize pcs per pack',
-                  style: AppTextStyles.bodyLarge
-                      .copyWith(color: AppColors.ink),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Packs received
-              Text('PACKS RECEIVED', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              Row(
+              Text('RECEIVE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+              Text(m.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+        body: ListView(
+          padding: AppSpacing.page.copyWith(top: 8),
+          children: [
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  StepperInput(
-                    value: _packsReceived,
-                    min: 1,
-                    max: 999,
-                    onChanged: (val) =>
-                        setState(() => _packsReceived = val.toInt()),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('PACKS RECEIVED', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                            const SizedBox(height: 2),
+                            Text.rich(
+                              TextSpan(children: [
+                                TextSpan(text: '${m.packSize} pcs per pack · '),
+                                TextSpan(
+                                  text: '+$_pieces pcs',
+                                  style: TextStyle(color: c.go, fontWeight: FontWeight.w600),
+                                ),
+                              ]),
+                              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      StepperInput(
+                        value: _packs,
+                        min: 1,
+                        max: 999,
+                        onChanged: (v) => setState(() => _packs = v.toInt()),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Text(
-                    '= $_totalPcs pcs',
-                    style: AppTextStyles.bodyLarge
-                        .copyWith(color: AppColors.success),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _price,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                    decoration: const InputDecoration(labelText: 'Price per pack', prefixText: '₱ '),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _supplier,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(labelText: 'Supplier (optional)'),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-
-              // Price per pack
-              Text('PRICE PER PACK', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _priceController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  prefixText: '₱ ',
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-
-              // Supplier
-              Text('SUPPLIER (optional)', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _supplierController,
-                decoration: const InputDecoration(labelText: 'Supplier'),
-              ),
-              const SizedBox(height: 24),
-
-              // Weighted average cost preview
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.coinSoft.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(13),
-                  border:
-                      Border.all(color: AppColors.coin.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('NEW UNIT COST (weighted avg)',
-                        style: AppTextStyles.monoSection
-                            .copyWith(color: AppColors.coin)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          mat.unitCost.currency,
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.muted),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Icon(Icons.arrow_forward,
-                              size: 14, color: AppColors.muted),
-                        ),
-                        CurrencyText(
-                          amount: _newUnitCost,
-                          style: AppTextStyles.displaySmall
-                              .copyWith(color: AppColors.coin),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // After preview
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.successSoft.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(
-                      color: AppColors.success.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('AFTER',
-                        style: AppTextStyles.monoSection.copyWith(
-                            color: AppColors.success)),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${mat.quantityOnHand + _totalPcs}',
-                      style: AppTextStyles.displayMedium
-                          .copyWith(color: AppColors.success),
-                    ),
-                    const SizedBox(height: 4),
-                    PipStrip(
-                      total: (mat.quantityOnHand + _totalPcs).clamp(0, 50),
-                      free: (mat.quantityFree + _totalPcs).clamp(0, 50),
-                      promised: mat.quantityPromised.clamp(0, 50),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 80),
-            ],
-          ),
-          bottomNavigationBar: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.paperHigh,
-              border: Border(top: BorderSide(color: AppColors.hair)),
             ),
-            child: SafeArea(
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+            const SizedBox(height: 12),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('AFTER RECEIVING', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text('${m.quantityOnHand}', style: AppTextStyles.amount.copyWith(color: c.muted, fontSize: 20)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(Icons.arrow_forward_rounded, size: 18, color: c.muted),
+                      ),
+                      Text(
+                        '${m.quantityOnHand + _pieces}',
+                        style: AppTextStyles.displayMedium.copyWith(color: c.go, fontSize: 32),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('PCS', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                    ],
                   ),
-                  child: const Text('Add to stock'),
-                ),
+                  const SizedBox(height: 10),
+                  PipStrip(
+                    total: m.quantityOnHand + _pieces,
+                    free: m.quantityFree,
+                    promised: m.quantityPromised,
+                    incoming: _pieces,
+                    alertLevel: m.alertLevel,
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(color: c.hair),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text('Unit cost (weighted)', style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+                      ),
+                      Text(
+                        '${CurrencyFormatter.format(m.unitCost)} → ',
+                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
+                      ),
+                      Text(
+                        CurrencyFormatter.format(_newUnitCost),
+                        style: AppTextStyles.amount.copyWith(color: costUp ? c.alert : c.coin, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  if (costUp)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Products using this will cost a bit more to make.',
+                        style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                      ),
+                    ),
+                ],
               ),
             ),
+          ],
+        ),
+        bottomNavigationBar: BottomActionBar(children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _saving ? null : _submit,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: Text('Add $_pieces pcs to stock'),
+            ),
           ),
-        );
-      },
+        ]),
+      ),
     );
   }
 }

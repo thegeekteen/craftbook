@@ -1,6 +1,7 @@
 import '../../../../core/error/result.dart';
 import '../entities/order.dart';
 import '../entities/order_item.dart';
+import '../entities/order_list_entry.dart';
 import '../entities/order_material.dart';
 import '../entities/order_product.dart';
 
@@ -10,7 +11,12 @@ abstract class OrderRepository {
   Future<Result<List<Order>>> getOrdersByStatus(OrderStatus status);
   Future<Result<List<Order>>> getOrdersForDate(DateTime date);
   Future<Result<List<Order>>> getOrdersForDateRange(DateTime start, DateTime end);
+  /// Pending or packed orders with a ship-by date before [end].
+  Future<Result<List<Order>>> getOpenOrdersDueBefore(DateTime end);
   Future<Result<List<OrderItem>>> getOrderItems(int orderId);
+
+  /// Product lines for each order id, in one round trip.
+  Future<Result<Map<int, List<OrderLine>>>> getOrderLines(List<int> orderIds);
   Future<Result<List<OrderMaterial>>> getOrderMaterials(int orderId);
   Future<Result<List<OrderProduct>>> getOrderProducts(int orderId);
   Future<Result<int>> createOrder({

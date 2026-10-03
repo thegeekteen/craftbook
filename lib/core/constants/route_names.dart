@@ -14,6 +14,7 @@ class RouteNames {
 
   // Stock / Materials
   static const String materials = '/materials';
+  static const String newMaterial = '/materials/new';
   static const String materialDetail = '/materials/:id';
   static const String receiveStock = '/materials/:id/receive';
   static const String buyList = '/stock/buy-list';
@@ -28,6 +29,16 @@ class RouteNames {
   // Earnings
   static const String earnings = '/earnings';
   static const String productEarnings = '/earnings/:productId';
+
+  /// Concrete paths for parameterised routes.
+  static String orderPath(int id) => '/orders/$id';
+  static String materialPath(int id) => '/materials/$id';
+  static String receiveStockPath(int id) => '/materials/$id/receive';
+  static String productEditorPath(int id) => '/products/$id/edit';
+  static String receiveProductStockPath(int id) => '/products/$id/receive';
+  static String productEarningsPath(int id, DateTime start, DateTime end) =>
+      '/earnings/$id?start=${start.millisecondsSinceEpoch}'
+      '&end=${end.millisecondsSinceEpoch}';
 
   // Settings
   static const String settings = '/settings';

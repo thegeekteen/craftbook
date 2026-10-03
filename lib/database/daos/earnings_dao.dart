@@ -107,15 +107,13 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
     final completedOrders = await _getCompletedOrders(startDate, endDate);
     final completedOrderIds = completedOrders.map((o) => o.id).toSet();
 
-    final allOrderMaterials = await (select(orderMaterials)
-          ..where((t) => t.createdAt.isBiggerOrEqualValue(startDate) &
-                  t.createdAt.isSmallerOrEqualValue(endDate)))
-        .get();
-
-    // Only count waste from completed (packed/shipped) orders
-    final filtered = allOrderMaterials
-        .where((m) => completedOrderIds.contains(m.orderId))
-        .toList();
+    // Waste belongs to the period the order was completed in, like its
+    // sales and profit; when the material row was created doesn't matter.
+    final filtered = completedOrderIds.isEmpty
+        ? <OrderMaterial>[]
+        : await (select(orderMaterials)
+              ..where((t) => t.orderId.isIn(completedOrderIds)))
+            .get();
 
     final totalWaste = filtered.fold<int>(0, (sum, m) => sum + m.wasteQuantity);
     final wasteCost = filtered.fold<double>(0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
@@ -156,5 +154,52 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
       'totalWasteCost': wasteCost,
       'items': wasteItems,
     };
+  }
+
+  /// Completion date and recomputed profit of every packed/shipped order
+  /// completed in the range, for trend charts.
+  Future<List<(DateTime, double)>> getCompletedOrderProfits(
+      DateTime startDate, DateTime endDate) async {
+    final completed = await _getCompletedOrders(startDate, endDate);
+    return [
+      for (final o in completed)
+        (
+          (o.status == 'packed' ? o.packedAt : o.shippedAt)!,
+          o.totalSales - o.totalMaterialCost - o.channelFees - o.shippingCost,
+        ),
+    ];
+  }
+
+  /// Completed orders in the range that include [productId], with the
+  /// quantity of that product and its share of the order's profit
+  /// (allocated by sales, matching [getEarningsByProduct]).
+  Future<List<Map<String, dynamic>>> getProductOrderLines(
+      int productId, DateTime startDate, DateTime endDate) async {
+    final completed = await _getCompletedOrders(startDate, endDate);
+    if (completed.isEmpty) return const [];
+    final byId = {for (final o in completed) o.id: o};
+    final items = await (select(orderItems)
+          ..where((t) =>
+              t.productId.equals(productId) & t.orderId.isIn(byId.keys)))
+        .get();
+
+    final lines = <Map<String, dynamic>>[];
+    for (final item in items) {
+      final o = byId[item.orderId]!;
+      final orderProfit =
+          o.totalSales - o.totalMaterialCost - o.channelFees - o.shippingCost;
+      final share = o.totalSales > 0 ? item.subtotal / o.totalSales : 0.0;
+      lines.add({
+        'orderId': o.id,
+        'customerName': o.customerName,
+        'quantity': item.quantity,
+        'sales': item.subtotal,
+        'profit': orderProfit * share,
+        'completedAt': o.status == 'packed' ? o.packedAt : o.shippedAt,
+      });
+    }
+    lines.sort((a, b) =>
+        (b['completedAt'] as DateTime).compareTo(a['completedAt'] as DateTime));
+    return lines;
   }
 }

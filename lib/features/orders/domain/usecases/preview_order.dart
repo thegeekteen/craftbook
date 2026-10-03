@@ -1,0 +1,142 @@
+import 'package:equatable/equatable.dart';
+
+import '../../../../core/error/result.dart';
+import '../../../products/domain/entities/bom_item.dart';
+import '../../../products/domain/repositories/product_repository.dart';
+import '../../../stock/domain/repositories/material_repository.dart';
+import '../entities/order_item.dart';
+import 'calculate_order_profit.dart';
+
+/// One thing an order will reserve: a material (BOM products) or a
+/// standalone product's own stock.
+class ReservationLine extends Equatable {
+  final String name;
+  final int quantity;
+
+  /// Free pieces before this order reserves anything.
+  final int available;
+  final bool isProduct;
+
+  const ReservationLine({
+    required this.name,
+    required this.quantity,
+    required this.available,
+    this.isProduct = false,
+  });
+
+  int get remaining => available - quantity;
+  bool get isShort => quantity > available;
+  bool get usesLast => !isShort && remaining == 0;
+
+  @override
+  List<Object?> get props => [name, quantity, available, isProduct];
+}
+
+/// What saving an order will do: the money split and the stock it takes.
+class OrderPreview extends Equatable {
+  final double sales;
+  final double materialCost;
+  final double channelFees;
+  final double shippingCost;
+  final List<ReservationLine> reservations;
+
+  const OrderPreview({
+    required this.sales,
+    required this.materialCost,
+    required this.channelFees,
+    required this.shippingCost,
+    required this.reservations,
+  });
+
+  double get profit => sales - materialCost - channelFees - shippingCost;
+
+  @override
+  List<Object?> get props =>
+      [sales, materialCost, channelFees, shippingCost, reservations];
+}
+
+/// Computes an [OrderPreview] the same way [CreateOrder] will: BOM products
+/// expand into materials at their current unit cost, standalone products
+/// use their own unit cost, fees and shipping come from the channel.
+class PreviewOrder {
+  final ProductRepository productRepository;
+  final MaterialRepository materialRepository;
+  final CalculateOrderProfit calculateOrderProfit;
+
+  PreviewOrder({
+    required this.productRepository,
+    required this.materialRepository,
+    required this.calculateOrderProfit,
+  });
+
+  Future<Result<OrderPreview>> call({
+    required List<OrderItemInput> items,
+    required int channelId,
+  }) async {
+    final sales = items.fold<double>(0, (sum, i) => sum + i.subtotal);
+    var materialCost = 0.0;
+    final productLines = <ReservationLine>[];
+    // materialId -> (name, needed, unitCost)
+    final materialNeeds = <int, (String, int, double)>{};
+
+    for (final item in items) {
+      final productResult = await productRepository.getProductById(item.productId);
+      if (productResult case Error(:final failure)) return Error(failure);
+      final product = (productResult as Success).value;
+
+      if (product != null && product.isStandalone) {
+        materialCost += product.unitCost * item.quantity;
+        productLines.add(ReservationLine(
+          name: product.name,
+          quantity: item.quantity,
+          available: product.quantityFree,
+          isProduct: true,
+        ));
+        continue;
+      }
+
+      final bomResult = await productRepository.getBomItems(item.productId);
+      if (bomResult case Error(:final failure)) return Error(failure);
+      for (final BomItem bom in (bomResult as Success<List<BomItem>>).value) {
+        final needed = bom.quantityRequired * item.quantity;
+        final prev = materialNeeds[bom.materialId];
+        materialNeeds[bom.materialId] = (
+          bom.materialName,
+          (prev?.$2 ?? 0) + needed,
+          bom.materialUnitCost,
+        );
+        materialCost += needed * bom.materialUnitCost;
+      }
+    }
+
+    final materialLines = <ReservationLine>[];
+    for (final entry in materialNeeds.entries) {
+      final (name, needed, _) = entry.value;
+      final materialResult = await materialRepository.getMaterialById(entry.key);
+      if (materialResult case Error(:final failure)) return Error(failure);
+      final material = (materialResult as Success).value;
+      materialLines.add(ReservationLine(
+        name: name,
+        quantity: needed,
+        available: material?.quantityFree ?? 0,
+      ));
+    }
+
+    final profitResult = await calculateOrderProfit(
+      totalSales: sales,
+      totalMaterialCost: materialCost,
+      channelId: channelId,
+      shippingCost: 0,
+    );
+    if (profitResult case Error(:final failure)) return Error(failure);
+    final breakdown = (profitResult as Success<OrderProfitBreakdown>).value;
+
+    return Success(OrderPreview(
+      sales: sales,
+      materialCost: materialCost,
+      channelFees: breakdown.channelFees,
+      shippingCost: breakdown.shippingCost,
+      reservations: [...materialLines, ...productLines],
+    ));
+  }
+}

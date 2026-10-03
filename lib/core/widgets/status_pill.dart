@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
 
-/// Status pill badge widget
+import '../theme/colors.dart';
+import '../theme/dimens.dart';
+import '../theme/text_styles.dart';
+
+/// Rounded status badge with a leading dot.
 class StatusPill extends StatelessWidget {
   final String text;
   final StatusPillType type;
@@ -14,57 +17,34 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
+    final (Color bg, Color fg) = switch (type) {
+      StatusPillType.success => (c.goSoft, c.go),
+      StatusPillType.alert => (c.alertSoft, c.alert),
+      StatusPillType.warning => (c.warnSoft, c.warn),
+      StatusPillType.coin => (c.coinSoft, c.coin),
+      StatusPillType.ink => (c.ink, c.paper),
+      StatusPillType.neutral => (c.hair, c.muted),
+    };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: _backgroundColor,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'IBMPlexMono',
-          letterSpacing: 0.06,
-          color: _textColor,
-        ),
+      padding: const EdgeInsets.fromLTRB(7, 3.5, 9, 3.5),
+      decoration: BoxDecoration(color: bg, borderRadius: AppRadii.pillAll),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            text.toUpperCase(),
+            style: AppTextStyles.monoTag.copyWith(color: fg, fontSize: 10.5),
+          ),
+        ],
       ),
     );
-  }
-
-  Color get _backgroundColor {
-    switch (type) {
-      case StatusPillType.success:
-        return AppColors.successSoft;
-      case StatusPillType.alert:
-        return AppColors.alertSoft;
-      case StatusPillType.warning:
-        return AppColors.warningSoft;
-      case StatusPillType.coin:
-        return AppColors.coinSoft;
-      case StatusPillType.ink:
-        return AppColors.ink;
-      case StatusPillType.neutral:
-        return AppColors.hair;
-    }
-  }
-
-  Color get _textColor {
-    switch (type) {
-      case StatusPillType.success:
-        return AppColors.success;
-      case StatusPillType.alert:
-        return AppColors.alert;
-      case StatusPillType.warning:
-        return AppColors.warning;
-      case StatusPillType.coin:
-        return AppColors.coin;
-      case StatusPillType.ink:
-        return Colors.white;
-      case StatusPillType.neutral:
-        return AppColors.ink;
-    }
   }
 }
 

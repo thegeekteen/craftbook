@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import 'currency_formatter.dart';
 
 /// Extension methods for common operations
 extension StringExtension on String {
@@ -28,10 +29,11 @@ extension DateTimeExtension on DateTime {
 }
 
 extension DoubleExtension on double {
-  /// Format as currency
-  String get currency {
-    return '₱${toStringAsFixed(2)}';
-  }
+  /// Format as currency with thousands separators (₱1,234.50).
+  String get currency => CurrencyFormatter.format(this);
+
+  /// Currency without trailing ".00" on whole amounts (₱1,234).
+  String get currencyShort => CurrencyFormatter.formatShort(this);
 
   /// Format as percentage
   String percentage({int decimals = 1}) {
@@ -67,12 +69,24 @@ extension BuildContextExtension on BuildContext {
 
   /// Show snackbar
   void showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.alert : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final c = colors;
+    ScaffoldMessenger.of(this)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+                size: 18,
+                color: isError ? c.alert : c.goSoft,
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 }

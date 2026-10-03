@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+
+import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../domain/entities/order.dart';
+import '../../domain/entities/order_list_entry.dart';
+import 'order_status_ui.dart';
+
+/// Compact order row for calendars: name, "#id · 3 items · ₱412", pill.
+class OrderMiniRow extends StatelessWidget {
+  final OrderListEntry entry;
+  final VoidCallback? onTap;
+
+  const OrderMiniRow({super.key, required this.entry, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final o = entry.order;
+    final pieces = entry.pieceCount;
+    final parts = [
+      '#${o.id ?? '–'}',
+      if (pieces > 0) '$pieces ${pieces == 1 ? 'item' : 'items'}',
+      if (o.status != OrderStatus.cancelled)
+        '${CurrencyFormatter.formatShort(o.liveProfit)} profit',
+    ];
+    return Material(
+      color: c.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: c.hair),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      o.customerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: c.ink, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      parts.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              OrderStatusPill.of(o),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

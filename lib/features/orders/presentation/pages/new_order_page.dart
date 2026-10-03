@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_tag.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/choice_chip_row.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/date_field.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/inline_banner.dart';
+import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/usecases/get_channels.dart';
 import '../../domain/entities/order_item.dart';
+import '../../domain/usecases/preview_order.dart';
 import '../bloc/new_order_bloc.dart';
 import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
 import '../widgets/product_picker_sheet.dart';
 
-/// New order page — 3-step wizard
+/// New order: Customer → Items → Review.
 class NewOrderPage extends StatelessWidget {
   const NewOrderPage({super.key});
 
@@ -38,17 +52,20 @@ class _NewOrderView extends StatefulWidget {
 }
 
 class _NewOrderViewState extends State<_NewOrderView> {
-  final _pageController = PageController();
-  int _currentStep = 0;
+  static const _stepNames = ['Customer', 'Items', 'Review'];
 
-  // Step 1 form controllers
+  final _pageController = PageController();
+  final _formKey = GlobalKey<FormState>();
+  int _step = 0;
+
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _noteController = TextEditingController();
-  DateTime _orderDate = DateTime.now();
-  DateTime _shipByDate = DateTime.now().add(const Duration(days: 1));
-  int? _selectedChannelId;
+  DateTime _orderDate = DateUtils.dateOnly(DateTime.now());
+  DateTime _shipByDate = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 2));
+  int? _channelId;
   List<Channel> _channels = [];
+  bool _channelsLoaded = false;
 
   @override
   void initState() {
@@ -67,51 +84,68 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
   Future<void> _loadChannels() async {
     final result = await getIt<GetChannels>()(activeOnly: true);
-    switch (result) {
-      case Success(:final value):
-        if (mounted) {
-          setState(() {
-            _channels = value;
-            if (value.isNotEmpty) {
-              _selectedChannelId = value.first.id;
-            }
-          });
-        }
-      case Error():
-        break;
+    if (!mounted) return;
+    setState(() {
+      _channelsLoaded = true;
+      if (result case Success(:final value)) {
+        _channels = value;
+        if (_channelId == null && value.isNotEmpty) _channelId = value.first.id;
+      }
+    });
+    if (result case Error(:final failure)) {
+      context.showSnackBar(failure.message, isError: true);
     }
   }
 
-  void _goToStep(int step) {
-    setState(() => _currentStep = step);
+  Channel? get _channel => _channels.where((c) => c.id == _channelId).firstOrNull;
+
+  void _goTo(int step) {
+    FocusScope.of(context).unfocus();
+    setState(() => _step = step);
     _pageController.animateToPage(
       step,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     );
+    if (step == 2) context.read<NewOrderBloc>().add(RequestPreview());
   }
 
   void _submitDetails() {
-    if (_nameController.text.trim().isEmpty) {
-      context.showSnackBar('Customer name is required', isError: true);
+    if (!_formKey.currentState!.validate()) return;
+    if (_channelId == null) {
+      context.showSnackBar('Pick a sales channel', isError: true);
       return;
     }
-    if (_selectedChannelId == null) {
-      context.showSnackBar('Select a channel', isError: true);
-      return;
-    }
-
     context.read<NewOrderBloc>().add(SetCustomerDetails(
           customerName: _nameController.text.trim(),
           customerAddress: _addressController.text.trim(),
-          channelId: _selectedChannelId!,
+          channelId: _channelId!,
           orderDate: _orderDate,
           shipByDate: _shipByDate,
-          note: _noteController.text.trim().isEmpty
-              ? null
-              : _noteController.text.trim(),
+          note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
         ));
-    _goToStep(1);
+    _goTo(1);
+  }
+
+  Future<bool> _confirmDiscard(List<OrderItemInput> items) async {
+    final dirty = _nameController.text.trim().isNotEmpty || items.isNotEmpty;
+    if (!dirty) return true;
+    return ConfirmDialog.show(
+      context,
+      title: 'Discard this order?',
+      message: "What you've entered so far will be lost.",
+      confirmText: 'Discard',
+      cancelText: 'Keep editing',
+      isDestructive: true,
+    );
+  }
+
+  Future<void> _handleBack(List<OrderItemInput> items) async {
+    if (_step > 0) {
+      _goTo(_step - 1);
+      return;
+    }
+    if (await _confirmDiscard(items) && mounted) context.pop();
   }
 
   @override
@@ -119,453 +153,480 @@ class _NewOrderViewState extends State<_NewOrderView> {
     return BlocConsumer<NewOrderBloc, NewOrderState>(
       listener: (context, state) {
         if (state is NewOrderSaved) {
-          context.showSnackBar('Order created!');
+          context.showSnackBar('Order #${state.orderId} saved');
           context.pop(true);
         }
         if (state is NewOrderError) {
           context.showSnackBar(state.message, isError: true);
         }
       },
+      buildWhen: (_, s) => s is! NewOrderError,
       builder: (context, state) {
-        final items = state is NewOrderDetailsFilled ? state.items : <OrderItemInput>[];
-        final totalSales = state is NewOrderDetailsFilled ? state.totalSales : 0.0;
+        final details = state is NewOrderDetailsFilled ? state : null;
+        final items = details?.items ?? const <OrderItemInput>[];
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('New order'),
-            leading: IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => context.pop(),
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) _handleBack(items);
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                tooltip: _step == 0 ? 'Close' : 'Back',
+                icon: Icon(_step == 0 ? Icons.close_rounded : Icons.arrow_back_rounded),
+                onPressed: () => _handleBack(items),
+              ),
+              title: const Text('New order'),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: _StepHeader(names: _stepNames, current: _step),
+              ),
             ),
+            body: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildCustomerStep(),
+                _buildItemsStep(items),
+                _buildReviewStep(details),
+              ],
+            ),
+            bottomNavigationBar: _buildBottomBar(details, items),
           ),
-          body: Column(
-            children: [
-              // Step indicator
-              _StepIndicator(currentStep: _currentStep, totalSteps: 3),
+        );
+      },
+    );
+  }
 
-              // Pages
+  // ── Step 1 ───────────────────────────────────────────────────────────
+
+  Widget _buildCustomerStep() {
+    final c = context.colors;
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: AppSpacing.page.copyWith(top: 12),
+        children: [
+          TextFormField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            decoration: const InputDecoration(labelText: 'Customer name'),
+            validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _addressController,
+            textCapitalization: TextCapitalization.sentences,
+            minLines: 1,
+            maxLines: 3,
+            decoration: const InputDecoration(labelText: 'Address (optional)'),
+          ),
+          const SizedBox(height: 8),
+          const SectionLabel('Channel'),
+          const SizedBox(height: 8),
+          if (!_channelsLoaded)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(),
+            )
+          else if (_channels.isEmpty)
+            InlineBanner(
+              icon: Icons.storefront_outlined,
+              tone: BannerTone.warn,
+              title: 'No sales channels yet.',
+              message: 'Add one to work out fees.',
+              actionLabel: 'Add',
+              onTap: () async {
+                await context.push(RouteNames.channels);
+                if (mounted) _loadChannels();
+              },
+            )
+          else
+            ChoiceChipRow<int?>.single(
+              wrap: true,
+              selected: _channelId,
+              onSelected: (id) => setState(() => _channelId = id),
+              options: [for (final ch in _channels) ChipOption(ch.id, ch.name)],
+            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
               Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildDetailsStep(),
-                    _buildItemsStep(items, totalSales),
-                    _ReviewStep(onBack: () => _goToStep(1)),
-                  ],
+                child: DateField(
+                  label: 'Order date',
+                  value: _orderDate,
+                  onChanged: (d) => setState(() {
+                    _orderDate = d;
+                    if (_shipByDate.isBefore(d)) _shipByDate = d;
+                  }),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DateField(
+                  label: 'Ship by',
+                  value: _shipByDate,
+                  firstDate: _orderDate,
+                  onChanged: (d) => setState(() => _shipByDate = d),
                 ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _noteController,
+            textCapitalization: TextCapitalization.sentences,
+            minLines: 1,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Note (optional)',
+              hintText: 'Gift wrap, colour requests…',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(color: c.muted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildDetailsStep() {
+  // ── Step 2 ───────────────────────────────────────────────────────────
+
+  void _openPicker(List<OrderItemInput> items) {
+    final bloc = context.read<NewOrderBloc>();
+    ProductPickerSheet.show(
+      context,
+      addedProductIds: [for (final i in items) i.productId],
+      onSelected: (item) => bloc.add(AddItem(
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      )),
+    );
+  }
+
+  Widget _buildItemsStep(List<OrderItemInput> items) {
+    final c = context.colors;
+    if (items.isEmpty) {
+      return Center(
+        child: EmptyState(
+          icon: Icons.add_shopping_cart_rounded,
+          title: 'No items yet',
+          message: 'Add the products this customer ordered.',
+          actionLabel: 'Add product',
+          onAction: () => _openPicker(items),
+        ),
+      );
+    }
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.page.copyWith(top: 12),
       children: [
-        Text('DETAILS', style: AppTextStyles.monoSection),
-        const SizedBox(height: 12),
-
-        // Customer name
-        TextField(
-          controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Customer name'),
-        ),
-        const SizedBox(height: 12),
-
-        // Address
-        TextField(
-          controller: _addressController,
-          decoration: const InputDecoration(labelText: 'Address'),
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-
-        // Channel chips
-        Text('CHANNEL', style: AppTextStyles.monoSection),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: _channels.map((ch) {
-            final isSelected = ch.id == _selectedChannelId;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedChannelId = ch.id),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.success : AppColors.paperHigh,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? AppColors.success : AppColors.hair,
+        AppCard.flush(
+          child: CardList(
+            children: [
+              for (final item in items)
+                CardRow(
+                  title: Text(item.productName),
+                  subtitle: Text(
+                    '${CurrencyFormatter.formatShort(item.unitPrice)} each · '
+                    '${CurrencyFormatter.formatShort(item.subtotal)}',
+                  ),
+                  trailing: StepperInput(
+                    value: item.quantity,
+                    min: 0,
+                    onChanged: (v) {
+                      final bloc = context.read<NewOrderBloc>();
+                      if (v.toInt() == 0) {
+                        bloc.add(RemoveItem(item.productId));
+                      } else {
+                        bloc.add(UpdateItemQuantity(
+                          productId: item.productId,
+                          quantity: v.toInt(),
+                        ));
+                      }
+                    },
                   ),
                 ),
-                child: Text(
-                  ch.name.toUpperCase(),
-                  style: AppTextStyles.monoLabel.copyWith(
-                    color: isSelected ? Colors.white : AppColors.ink,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 16),
-
-        // Date pickers
-        Row(
-          children: [
-            Expanded(
-              child: _DatePicker(
-                label: 'Order date',
-                date: _orderDate,
-                onPicked: (d) => setState(() => _orderDate = d),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _DatePicker(
-                label: 'Ship by',
-                date: _shipByDate,
-                onPicked: (d) => setState(() => _shipByDate = d),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Note
-        TextField(
-          controller: _noteController,
-          decoration: const InputDecoration(labelText: 'Note (optional)'),
-          maxLines: 2,
-        ),
-        const SizedBox(height: 24),
-
-        // Next button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _submitDetails,
-            child: const Text('Next'),
+            ],
           ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () => _openPicker(items),
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text('Add product'),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Set a quantity to 0 to remove it.',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodySmall.copyWith(color: c.muted),
         ),
       ],
     );
   }
 
-  Widget _buildItemsStep(List<OrderItemInput> items, double totalSales) {
-    return Column(
-      children: [
-        Expanded(
-          child: items.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.inventory_2_outlined,
-                          color: AppColors.muted, size: 40),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No items added yet',
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(color: AppColors.muted),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.paperHigh,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.hair),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.productName,
-                                  style: AppTextStyles.bodyLarge
-                                      .copyWith(color: AppColors.ink),
-                                ),
-                                const SizedBox(height: 4),
-                                CurrencyText(
-                                  amount: item.unitPrice,
-                                  style: AppTextStyles.bodySmall
-                                      .copyWith(color: AppColors.muted),
-                                ),
-                              ],
-                            ),
-                          ),
-                          StepperInput(
-                            value: item.quantity,
-                            min: 0,
-                            max: 999,
-                            onChanged: (qty) {
-                              final q = qty.toInt();
-                              if (q == 0) {
-                                context
-                                    .read<NewOrderBloc>()
-                                    .add(RemoveItem(item.productId));
-                              } else {
-                                context.read<NewOrderBloc>().add(
-                                    UpdateItemQuantity(
-                                        productId: item.productId,
-                                        quantity: q));
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ),
+  // ── Step 3 ───────────────────────────────────────────────────────────
 
-        // Bottom bar: back + total + add button + review
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: AppColors.paperHigh,
-            border: Border(top: BorderSide(color: AppColors.hair)),
-          ),
-          child: SafeArea(
-            child: Row(
-              children: [
-                TextButton(
-                  onPressed: () => _goToStep(0),
-                  child: const Text('Back'),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('TOTAL', style: AppTextStyles.monoSection),
-                      const SizedBox(height: 2),
-                      CurrencyText(
-                        amount: totalSales,
-                        style: AppTextStyles.displaySmall
-                            .copyWith(color: AppColors.ink),
-                      ),
-                    ],
+  Widget _buildReviewStep(NewOrderDetailsFilled? d) {
+    final c = context.colors;
+    if (d == null) return const SizedBox.shrink();
+    final pieces = d.items.fold<int>(0, (s, i) => s + i.quantity);
+    final preview = d.preview;
+
+    return ListView(
+      padding: AppSpacing.page.copyWith(top: 12),
+      children: [
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      d.customerName,
+                      style: AppTextStyles.bodyLarge.copyWith(color: c.ink, fontSize: 16),
+                    ),
                   ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final bloc = context.read<NewOrderBloc>();
-                    final currentItems = bloc.state is NewOrderDetailsFilled
-                        ? (bloc.state as NewOrderDetailsFilled).items
-                        : <OrderItemInput>[];
-                    ProductPickerSheet.show(
-                      context,
-                      addedProductIds:
-                          currentItems.map((i) => i.productId).toList(),
-                      onSelected: (item) => bloc.add(AddItem(
-                        productId: item.productId,
-                        productName: item.productName,
-                        quantity: item.quantity,
-                        unitPrice: item.unitPrice,
-                      )),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: items.isEmpty ? null : () => _goToStep(2),
-                  child: const Text('Review'),
+                  if (_channel != null) AppTag(_channel!.name, type: AppTagType.outline),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Ships by ${DateFormat('EEE, MMM d').format(d.shipByDate)} · '
+                '$pieces ${pieces == 1 ? 'item' : 'items'}',
+                style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+              ),
+              if (d.customerAddress.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  d.customerAddress,
+                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                 ),
               ],
-            ),
+            ],
           ),
         ),
+        const SizedBox(height: 12),
+        if (d.isPreviewing || (preview == null && d.previewError == null))
+          const AppCard(
+            child: SizedBox(
+              height: 120,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        else if (d.previewError != null)
+          ErrorState(
+            message: d.previewError!,
+            onRetry: () => context.read<NewOrderBloc>().add(RequestPreview()),
+          )
+        else ...[
+          _ProfitPreviewCard(preview: preview!, channelName: _channel?.name),
+          const SizedBox(height: 12),
+          if (preview.reservations.any((r) => r.isShort)) ...[
+            const InlineBanner(
+              icon: Icons.warning_amber_rounded,
+              title: 'Not enough stock for some pieces.',
+              message: 'You can still save; the buy list will show what to get.',
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (preview.reservations.isNotEmpty) _ReservationsCard(lines: preview.reservations),
+        ],
       ],
     );
+  }
+
+  // ── Bottom bar ───────────────────────────────────────────────────────
+
+  Widget _buildBottomBar(NewOrderDetailsFilled? d, List<OrderItemInput> items) {
+    final total = CurrencyFormatter.formatShort(d?.totalSales ?? 0);
+    switch (_step) {
+      case 0:
+        return BottomActionBar(children: [
+          Expanded(
+            child: FilledButton(
+              onPressed: _submitDetails,
+              child: const Text('Next: add items'),
+            ),
+          ),
+        ]);
+      case 1:
+        return BottomActionBar(children: [
+          BarTotal(label: 'Total', value: total),
+          FilledButton(
+            onPressed: items.isEmpty ? null : () => _goTo(2),
+            child: const Text('Review'),
+          ),
+        ]);
+      default:
+        final saving = d?.isSaving ?? false;
+        return BottomActionBar(children: [
+          BarTotal(label: 'Total', value: total),
+          FilledButton.icon(
+            onPressed: saving || d?.preview == null
+                ? null
+                : () => context.read<NewOrderBloc>().add(SaveOrder()),
+            icon: saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_rounded, size: 20),
+            label: const Text('Save order'),
+          ),
+        ]);
+    }
   }
 }
 
-class _ReviewStep extends StatelessWidget {
-  final VoidCallback onBack;
+/// Labelled progress bars under the app bar.
+class _StepHeader extends StatelessWidget {
+  final List<String> names;
+  final int current;
 
-  const _ReviewStep({required this.onBack});
+  const _StepHeader({required this.names, required this.current});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NewOrderBloc, NewOrderState>(
-      builder: (context, state) {
-        if (state is! NewOrderDetailsFilled) {
-          return const Center(child: Text('No order data'));
-        }
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text('REVIEW', style: AppTextStyles.monoSection),
-            const SizedBox(height: 12),
-
-            // Order summary
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.paperHigh,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: AppColors.hair),
-              ),
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Row(
+        children: [
+          for (var i = 0; i < names.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    state.customerName,
-                    style: AppTextStyles.bodyLarge
-                        .copyWith(color: AppColors.ink),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: i <= current ? c.go : c.hair,
+                      borderRadius: AppRadii.pillAll,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Text(
-                    '${state.items.length} items · ${state.totalItemCount.toInt()} pcs',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        'Total: ',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                      CurrencyText(
-                        amount: state.totalSales,
-                        style: AppTextStyles.bodyLarge
-                            .copyWith(color: AppColors.success),
-                      ),
-                    ],
+                    '${i + 1}  ${names[i]}',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 12,
+                      color: i == current ? c.ink : c.muted,
+                      fontWeight: i == current ? FontWeight.w600 : FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Back + Save buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onBack,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('Back'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.read<NewOrderBloc>().add(SaveOrder());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('Save order'),
-                  ),
-                ),
-              ],
-            ),
           ],
-        );
-      },
-    );
-  }
-}
-
-class _StepIndicator extends StatelessWidget {
-  final int currentStep;
-  final int totalSteps;
-
-  const _StepIndicator({
-    required this.currentStep,
-    required this.totalSteps,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Row(
-        children: List.generate(totalSteps, (index) {
-          final isActive = index <= currentStep;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: EdgeInsets.only(right: index < totalSteps - 1 ? 4 : 0),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.success : AppColors.hair,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }),
+        ],
       ),
     );
   }
 }
 
-class _DatePicker extends StatelessWidget {
-  final String label;
-  final DateTime date;
-  final ValueChanged<DateTime> onPicked;
+class _ProfitPreviewCard extends StatelessWidget {
+  final OrderPreview preview;
+  final String? channelName;
 
-  const _DatePicker({
-    required this.label,
-    required this.date,
-    required this.onPicked,
-  });
+  const _ProfitPreviewCard({required this.preview, this.channelName});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: date,
-          firstDate: DateTime.now().subtract(const Duration(days: 30)),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        );
-        if (picked != null) onPicked(picked);
-      },
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.hair),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label.toUpperCase(),
-                style: AppTextStyles.monoSection),
-            const SizedBox(height: 4),
-            Text(
-              '${date.month}/${date.day}/${date.year}',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.ink),
+    final c = context.colors;
+    final parts = MoneyParts(
+      sales: preview.sales,
+      materials: preview.materialCost,
+      fees: preview.channelFees,
+      shipping: preview.shippingCost,
+    );
+    final positive = parts.profit >= 0;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'PROFIT PREVIEW',
+            style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                CurrencyFormatter.formatShort(parts.profit),
+                style: AppTextStyles.displayMedium.copyWith(color: positive ? c.go : c.alert),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(parts.margin * 100).round()}% margin',
+                style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          MoneyBreakdown(
+            parts: parts,
+            feesLabel: channelName == null ? 'Channel fees' : '$channelName fees',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReservationsCard extends StatelessWidget {
+  final List<ReservationLine> lines;
+
+  const _ReservationsCard({required this.lines});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'RESERVES FROM STOCK',
+            style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: 6),
+          for (final r in lines)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      r.name,
+                      style: AppTextStyles.bodyMedium.copyWith(color: c.ink),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    r.isShort
+                        ? '${r.quantity} · only ${r.available < 0 ? 0 : r.available} free'
+                        : r.usesLast
+                            ? '${r.quantity} · last ${r.quantity == 1 ? 'one' : 'ones'}'
+                            : '${r.quantity} pcs',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: r.isShort || r.usesLast ? c.alert : c.ink,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: AppTextStyles.tabular.fontFeatures,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

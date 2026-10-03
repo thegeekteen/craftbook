@@ -4,7 +4,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
-import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/products/domain/entities/bom_item.dart';
 import 'package:craftbook/features/products/domain/entities/product.dart';

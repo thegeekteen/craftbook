@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_search_field.dart';
+import '../../../../core/widgets/app_sheet.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/section_label.dart';
+import '../../../../core/widgets/stat_tile.dart';
 import '../../../../core/widgets/stepper_input.dart';
-import '../../domain/usecases/adjust_product_stock.dart';
 import '../../../stock/domain/entities/material.dart';
 import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
+import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../../domain/usecases/adjust_product_stock.dart';
 import '../../domain/usecases/delete_product.dart';
 
+/// Create or edit a product. Handmade products list the materials one piece
+/// uses; resell products track their own stock.
 class ProductEditorPage extends StatefulWidget {
   final int? productId;
 
@@ -27,865 +40,599 @@ class ProductEditorPage extends StatefulWidget {
 }
 
 class _ProductEditorPageState extends State<ProductEditorPage> {
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _unitCostController = TextEditingController();
-  final _alertLevelController = TextEditingController();
-  final _initialQtyController = TextEditingController(text: '0');
-  List<_EditableBomItem> _bomItems = [];
-  List<Material> _availableMaterials = [];
-  bool _isLoading = true;
-  bool _isSaving = false;
-  bool _isStandalone = false;
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _price = TextEditingController();
+  final _unitCost = TextEditingController();
+  final _alertLevel = TextEditingController();
+  final _initialQty = TextEditingController(text: '0');
 
-  // Existing product state (loaded from DB)
-  int _existingQuantityOnHand = 0;
-  double _existingUnitCost = 0;
+  List<_EditableBomItem> _bom = [];
+  List<Material> _materials = [];
+  Product? _product;
+  bool _isStandalone = false;
+  bool _isActive = true;
+  bool _loading = true;
+  bool _saving = false;
+  bool _changed = false;
+  String? _error;
 
   bool get _isNew => widget.productId == null;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    for (final ctrl in [_price, _unitCost]) {
+      ctrl.addListener(() => setState(() {}));
+    }
+    _load();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _unitCostController.dispose();
-    _alertLevelController.dispose();
-    _initialQtyController.dispose();
+    for (final ctrl in [_name, _price, _unitCost, _alertLevel, _initialQty]) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    final getMaterials = getIt<GetMaterials>();
-    final matResult = await getMaterials();
+  static String _money(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  Future<void> _load() async {
+    final matResult = await getIt<GetMaterials>()();
     final materials = switch (matResult) {
-      Error() => <Material>[],
       Success(:final value) => value,
+      Error() => <Material>[],
     };
 
-    if (widget.productId != null) {
-      final productRepo = getIt<ProductRepository>();
-      final productResult =
-          await productRepo.getProductById(widget.productId!);
-      final bomResult = await productRepo.getBomItems(widget.productId!);
+    if (_isNew) {
+      if (!mounted) return;
+      setState(() {
+        _materials = materials;
+        _loading = false;
+      });
+      return;
+    }
 
+    final repo = getIt<ProductRepository>();
+    final productResult = await repo.getProductById(widget.productId!);
+    final bomResult = await repo.getBomItems(widget.productId!);
+    if (!mounted) return;
+    setState(() {
+      _materials = materials;
+      _loading = false;
       switch (productResult) {
         case Error(:final failure):
-          if (mounted) {
-            setState(() {
-              _availableMaterials = materials;
-              _isLoading = false;
-            });
-            context.showSnackBar(failure.message, isError: true);
-          }
+          _error = failure.message;
+        case Success(:final value) when value == null:
+          _error = 'Product not found';
         case Success(:final value):
-          final product = value;
-          final bomItems = switch (bomResult) {
-            Error() => <BomItem>[],
-            Success(:final value) => value,
+          final p = value!;
+          _product = p;
+          _name.text = p.name;
+          _price.text = _money(p.sellPrice);
+          _isStandalone = p.isStandalone;
+          _isActive = p.isActive;
+          _unitCost.text = p.unitCost > 0 ? _money(p.unitCost) : '';
+          _alertLevel.text = p.alertLevel > 0 ? '${p.alertLevel}' : '';
+          _bom = switch (bomResult) {
+            Success(:final value) => [
+                for (final BomItem b in value)
+                  _EditableBomItem(
+                    materialId: b.materialId,
+                    materialName: b.materialName,
+                    unitCost: b.materialUnitCost,
+                    quantity: b.quantityRequired,
+                  ),
+              ],
+            Error() => [],
           };
-
-          if (mounted) {
-            setState(() {
-              _nameController.text = product!.name;
-              _priceController.text = product.sellPrice.toString();
-              _isStandalone = product.isStandalone;
-              _existingQuantityOnHand = product.quantityOnHand;
-              _existingUnitCost = product.unitCost;
-              _unitCostController.text =
-                  product.unitCost > 0 ? product.unitCost.toStringAsFixed(2) : '';
-              _alertLevelController.text =
-                  product.alertLevel > 0 ? product.alertLevel.toString() : '';
-              _availableMaterials = materials;
-              _bomItems = bomItems
-                  .map((b) => _EditableBomItem(
-                        materialId: b.materialId,
-                        materialName: b.materialName,
-                        materialUnitCost: b.materialUnitCost,
-                        quantityRequired: b.quantityRequired,
-                      ))
-                  .toList();
-              _isLoading = false;
-            });
-          }
       }
-    } else {
-      if (mounted) {
-        setState(() {
-          _availableMaterials = materials;
-          _isLoading = false;
-        });
-      }
-    }
+    });
   }
 
-  double get _totalMaterialCost {
-    if (_isStandalone) {
-      return double.tryParse(_unitCostController.text) ?? 0;
-    }
-    return _bomItems.fold(
-        0.0, (sum, item) => sum + item.quantityRequired * item.materialUnitCost);
-  }
+  double get _sellPrice => double.tryParse(_price.text) ?? 0;
 
-  double get _sellPrice {
-    return double.tryParse(_priceController.text) ?? 0;
-  }
+  double get _cost => _isStandalone
+      ? (_isNew ? double.tryParse(_unitCost.text) ?? 0 : _product?.unitCost ?? 0)
+      : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
 
-  double get _profit => _sellPrice - _totalMaterialCost;
-
-  void _showAddMaterialSheet() {
-    final existingIds = _bomItems.map((b) => b.materialId).toSet();
-    final available =
-        _availableMaterials.where((m) => !existingIds.contains(m.id!)).toList();
-
-    showModalBottomSheet(
+  Future<void> _addMaterial() async {
+    final taken = _bom.map((b) => b.materialId).toSet();
+    final options = _materials.where((m) => !taken.contains(m.id)).toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    var query = '';
+    final picked = await showAppSheet<Material>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.paperHigh,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      title: 'Add material',
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheet) {
+          final c = sheetContext.colors;
+          final visible = options.where((m) => m.name.toLowerCase().contains(query)).toList();
+          if (options.isEmpty) {
+            return EmptyState(
+              icon: Icons.inventory_2_outlined,
+              title: _materials.isEmpty ? 'No materials yet' : 'All materials added',
+              message: _materials.isEmpty ? 'Add materials under Stock first.' : null,
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (options.length > 6) ...[
+                AppSearchField(
+                  hint: 'Search materials',
+                  onChanged: (v) => setSheet(() => query = v.trim().toLowerCase()),
+                ),
+                const SizedBox(height: 8),
+              ],
+              for (final m in visible)
+                InkWell(
+                  onTap: () => Navigator.pop(sheetContext, m),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(m.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                        ),
+                        Text(
+                          '${CurrencyFormatter.format(m.unitCost)}/pc',
+                          style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(Icons.add_circle_outline_rounded, color: c.go, size: 22),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+    if (picked == null) return;
+    setState(() => _bom.add(_EditableBomItem(
+          materialId: picked.id!,
+          materialName: picked.name,
+          unitCost: picked.unitCost,
+          quantity: 1,
+        )));
+  }
+
+  Future<void> _count() async {
+    final p = _product!;
+    var counted = p.quantityOnHand;
+    final save = await showAppSheet<bool>(
+      context: context,
+      title: 'Count stock',
+      subtitle: 'Set how many are actually on the shelf.',
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheet) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.hair,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Add material',
-                  style: AppTextStyles.displaySmall
-                      .copyWith(color: AppColors.ink)),
-            ),
-            if (available.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('All materials already added',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.muted)),
-              )
-            else
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: available
-                      .map((m) => ListTile(
-                            title: Text(m.name,
-                                style: AppTextStyles.bodyMedium
-                                    .copyWith(color: AppColors.ink)),
-                            subtitle: CurrencyText(
-                              amount: m.unitCost,
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(color: AppColors.muted),
-                            ),
-                            onTap: () {
-                              setState(() {
-                                _bomItems.add(_EditableBomItem(
-                                  materialId: m.id!,
-                                  materialName: m.name,
-                                  materialUnitCost: m.unitCost,
-                                  quantityRequired: 1,
-                                ));
-                              });
-                              Navigator.pop(ctx);
-                            },
-                          ))
-                      .toList(),
-                ),
-              ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAdjustDialog() {
-    int adjustedQty = _existingQuantityOnHand;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.paperHigh,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Adjust stock',
-              style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Current: $_existingQuantityOnHand units',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
-              ),
-              const SizedBox(height: 16),
-              StepperInput(
-                value: adjustedQty,
+              child: StepperInput(
+                value: counted,
                 min: 0,
                 max: 99999,
-                onChanged: (val) =>
-                    setDialogState(() => adjustedQty = val.toInt()),
+                onChanged: (v) => setSheet(() => counted = v.toInt()),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  Text('Cancel', style: TextStyle(color: AppColors.muted)),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                final adjustStock = getIt<AdjustProductStock>();
-                final result = await adjustStock(
-                  productId: widget.productId!,
-                  newQuantityOnHand: adjustedQty,
-                );
-                switch (result) {
-                  case Error(:final failure):
-                    if (mounted) {
-                      context.showSnackBar(failure.message, isError: true);
-                    }
-                  case Success():
-                    if (mounted) {
-                      context.showSnackBar('Stock adjusted');
-                      _loadData();
-                    }
-                }
-              },
-              child: const Text('Adjust'),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: counted == p.quantityOnHand ? null : () => Navigator.pop(sheetContext, true),
+              child: const Text('Save count'),
             ),
           ],
         ),
       ),
     );
+    if (save != true || !mounted) return;
+    final result = await getIt<AdjustProductStock>()(productId: p.id!, newQuantityOnHand: counted);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        context.showSnackBar('Stock set to $counted');
+        _changed = true;
+        _load();
+    }
+  }
+
+  Future<void> _receive() async {
+    final changed = await context.push<bool>(RouteNames.receiveProductStockPath(widget.productId!));
+    if (changed == true && mounted) {
+      _changed = true;
+      _load();
+    }
   }
 
   Future<void> _save() async {
-    final name = _nameController.text.trim();
-    final sellPrice = _sellPrice;
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final repo = getIt<ProductRepository>();
+    final name = _name.text.trim();
+    final alertLevel = int.tryParse(_alertLevel.text) ?? 0;
+    final bomInputs = [
+      for (final b in _bom) BomItemInput(materialId: b.materialId, quantityRequired: b.quantity),
+    ];
 
-    if (name.isEmpty) {
-      context.showSnackBar('Product name is required', isError: true);
-      return;
-    }
-    if (sellPrice <= 0) {
-      context.showSnackBar('Sell price must be > 0', isError: true);
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    final productRepo = getIt<ProductRepository>();
-
+    Result<void> outcome;
     if (_isNew) {
-      final initialQty = int.tryParse(_initialQtyController.text) ?? 0;
-      final initialCost = double.tryParse(_unitCostController.text) ?? 0.0;
-
-      final result = await productRepo.createProduct(
+      final created = await repo.createProduct(
         name: name,
-        sellPrice: sellPrice,
+        sellPrice: _sellPrice,
         isStandalone: _isStandalone,
-        initialQuantity: _isStandalone ? initialQty : 0,
-        initialUnitCost: _isStandalone ? initialCost : 0,
+        initialQuantity: _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
+        initialUnitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : 0,
       );
-
-      switch (result) {
+      switch (created) {
         case Error(:final failure):
-          if (mounted) {
-            setState(() => _isSaving = false);
-            context.showSnackBar(failure.message, isError: true);
+          outcome = Error(failure);
+        case Success(value: final id):
+          // createProduct has no alert level; set it right after.
+          if (_isStandalone && alertLevel > 0) {
+            await repo.updateProduct(id: id, alertLevel: alertLevel);
           }
-        case Success(:final value):
-          final productId = value;
-          if (!_isStandalone && _bomItems.isNotEmpty) {
-            await productRepo.saveBomItems(
-              productId,
-              _bomItems
-                  .map((b) => BomItemInput(
-                        materialId: b.materialId,
-                        quantityRequired: b.quantityRequired,
-                      ))
-                  .toList(),
-            );
-          }
-
-          if (mounted) {
-            setState(() => _isSaving = false);
-            context.showSnackBar('Product created!');
-            Navigator.of(context).pop(true);
-          }
+          outcome = _isStandalone || bomInputs.isEmpty
+              ? const Success(null)
+              : await repo.saveBomItems(id, bomInputs);
       }
     } else {
-      final alertLevel = int.tryParse(_alertLevelController.text) ?? 0;
-
-      final result = await productRepo.updateProduct(
+      final updated = await repo.updateProduct(
         id: widget.productId!,
         name: name,
-        sellPrice: sellPrice,
+        sellPrice: _sellPrice,
         isStandalone: _isStandalone,
+        isActive: _isActive,
         alertLevel: _isStandalone ? alertLevel : 0,
       );
+      outcome = switch (updated) {
+        Error() => updated,
+        Success() => _isStandalone ? updated : await repo.saveBomItems(widget.productId!, bomInputs),
+      };
+    }
 
-      switch (result) {
-        case Error(:final failure):
-          if (mounted) {
-            setState(() => _isSaving = false);
-            context.showSnackBar(failure.message, isError: true);
-          }
-        case Success():
-          if (!_isStandalone) {
-            await productRepo.saveBomItems(
-              widget.productId!,
-              _bomItems
-                  .map((b) => BomItemInput(
-                        materialId: b.materialId,
-                        quantityRequired: b.quantityRequired,
-                      ))
-                  .toList(),
-            );
-          }
+    if (!mounted) return;
+    switch (outcome) {
+      case Error(:final failure):
+        setState(() => _saving = false);
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        context.showSnackBar(_isNew ? '$name added' : 'Changes saved');
+        context.pop(true);
+    }
+  }
 
-          if (mounted) {
-            setState(() => _isSaving = false);
-            context.showSnackBar('Product updated!');
-            Navigator.of(context).pop(true);
-          }
-      }
+  Future<void> _delete() async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete ${_name.text.trim()}?',
+      message: "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
+      confirmText: 'Delete',
+      isDestructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    final result = await getIt<DeleteProduct>()(widget.productId!);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        context.showSnackBar('Product deleted');
+        context.pop(true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Product')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+    final back = BackButton(onPressed: () => context.pop(_changed));
+    if (_loading) {
+      return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
     }
+    if (_error != null) {
+      return Scaffold(appBar: AppBar(leading: back), body: Center(child: ErrorState(message: _error!, onRetry: _load)));
+    }
+    final c = context.colors;
+    final money = [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))];
+    final digits = [FilteringTextInputFormatter.digitsOnly];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isNew ? 'New product' : 'Edit product',
-          style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
-        ),
-        actions: [
-          if (!_isNew)
-            PopupMenuButton<String>(
-              onSelected: (value) async {
-                if (value == 'delete') {
-                  final confirmed = await ConfirmDialog.show(
-                    context,
-                    title: 'Delete product?',
-                    message:
-                        'This will permanently remove this product. This cannot be undone.',
-                    confirmText: 'Delete',
-                    isDestructive: true,
-                  );
-                  if (confirmed && mounted) {
-                    final deleteProduct = getIt<DeleteProduct>();
-                    final result =
-                        await deleteProduct(widget.productId!);
-                    switch (result) {
-                      case Error(:final failure):
-                        if (mounted) {
-                          context.showSnackBar(failure.message,
-                              isError: true);
-                        }
-                      case Success():
-                        if (mounted) {
-                          context.showSnackBar('Product deleted');
-                          context.pop(true);
-                        }
-                    }
-                  }
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline,
-                          color: AppColors.alert, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete',
-                          style: TextStyle(color: AppColors.alert)),
-                    ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.pop(_changed);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: back,
+          title: Text(_isNew ? 'New product' : 'Edit product'),
+          actions: [
+            if (!_isNew)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (v) {
+                  if (v == 'delete') _delete();
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(children: [
+                      Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                      const SizedBox(width: 10),
+                      Text('Delete product', style: TextStyle(color: c.alert)),
+                    ]),
                   ),
-                ),
-              ],
-            ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Product name
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Product name'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-
-          // Sell price
-          TextField(
-            controller: _priceController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Sell price',
-              prefixText: '₱ ',
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 20),
-
-          // Product type toggle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.paperHigh,
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.hair),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isStandalone ? 'Standalone product' : 'BOM product',
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(color: AppColors.ink),
-                      ),
-                      Text(
-                        _isStandalone
-                            ? 'Buy & resell as-is, track own stock'
-                            : 'Built from materials using BOM',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.muted),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: _isStandalone,
-                  onChanged: (val) => setState(() => _isStandalone = val),
-                  activeColor: AppColors.coin,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          if (_isStandalone) ..._buildStandaloneSection(),
-          if (!_isStandalone) ..._buildBomSection(),
-          const SizedBox(height: 24),
-
-          // Cost/profit card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.coinSoft.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.coin.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                _CostRow(
-                    label: _isStandalone ? 'Unit cost' : 'Material cost',
-                    amount: _totalMaterialCost,
-                    color: AppColors.alert),
-                _CostRow(
-                    label: 'Sell price',
-                    amount: _sellPrice,
-                    color: AppColors.success),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Divider(color: AppColors.hair),
-                ),
-                _CostRow(
-                    label: 'Profit',
-                    amount: _profit,
-                    color: _profit >= 0
-                        ? AppColors.success
-                        : AppColors.alert,
-                    isBold: true),
-              ],
-            ),
-          ),
-          const SizedBox(height: 80),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: AppColors.paperHigh,
-          border: Border(top: BorderSide(color: AppColors.hair)),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                ],
               ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(_isNew ? 'Create product' : 'Save changes'),
-            ),
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: AppSpacing.page.copyWith(top: 8),
+            children: [
+              TextFormField(
+                controller: _name,
+                autofocus: _isNew,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(labelText: 'Name'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _price,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: money,
+                decoration: const InputDecoration(labelText: 'Sell price', prefixText: '₱ '),
+                validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter a price above 0' : null,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: false, label: Text('Handmade'), icon: Icon(Icons.content_cut_rounded, size: 18)),
+                    ButtonSegment(value: true, label: Text('Resell'), icon: Icon(Icons.inventory_2_outlined, size: 18)),
+                  ],
+                  selected: {_isStandalone},
+                  onSelectionChanged: (s) => setState(() => _isStandalone = s.first),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+                child: Text(
+                  _isStandalone
+                      ? 'Bought ready-made. Tracks its own stock.'
+                      : 'Made from materials. Stock comes from what you can build.',
+                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                ),
+              ),
+              if (_isStandalone) ..._buildResell(money, digits) else ..._buildHandmade(),
+              const SizedBox(height: 12),
+              _ProfitCard(sellPrice: _sellPrice, cost: _cost, isStandalone: _isStandalone),
+              if (!_isNew) ...[
+                const SizedBox(height: 12),
+                AppCard(
+                  padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isActive,
+                    onChanged: (v) => setState(() => _isActive = v),
+                    title: const Text('Show in new orders'),
+                    subtitle: const Text('Turn off to retire a product without deleting it.'),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
+        bottomNavigationBar: BottomActionBar(children: [
+          Expanded(
+            child: FilledButton(
+              onPressed: _saving ? null : _save,
+              child: Text(_saving ? 'Saving…' : (_isNew ? 'Add product' : 'Save changes')),
+            ),
+          ),
+        ]),
       ),
     );
   }
 
-  List<Widget> _buildStandaloneSection() {
+  List<Widget> _buildHandmade() {
+    final c = context.colors;
     return [
-      if (!_isNew) ...[
-        // Stock overview for existing standalone product
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.paperHigh,
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: AppColors.hair),
-          ),
+      SectionLabel(
+        'Materials per piece',
+        padding: const EdgeInsets.fromLTRB(2, 16, 0, 0),
+        trailing: SectionAction(label: 'Add', icon: Icons.add_rounded, onTap: _addMaterial),
+      ),
+      const SizedBox(height: 8),
+      if (_bom.isEmpty)
+        AppCard(
+          onTap: _addMaterial,
           child: Row(
             children: [
-              _StockStat(
-                label: 'On hand',
-                value: _existingQuantityOnHand.toString(),
-                color: AppColors.ink,
-              ),
-              const SizedBox(width: 24),
-              _StockStat(
-                label: 'Unit cost',
-                value: '₱${_existingUnitCost.toStringAsFixed(2)}',
-                color: AppColors.coin,
+              Icon(Icons.add_circle_outline_rounded, color: c.go),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Add the materials one piece uses so the app can work out cost and reserve stock.',
+                  style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
+                ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // Receive & Adjust buttons
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final route = RouteNames.receiveProductStock
-                      .replaceFirst(':id', '${widget.productId!}');
-                  final result = await context.push<bool>(route);
-                  if (result == true && mounted) {
-                    _loadData();
-                  }
-                },
-                icon: const Icon(Icons.add_box_outlined, size: 18),
-                label: const Text('Receive'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.success,
-                  side: const BorderSide(color: AppColors.success),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+        )
+      else ...[
+        AppCard.flush(
+          child: CardList(children: [
+            for (final b in _bom)
+              CardRow(
+                title: Text(b.materialName),
+                subtitle: Text.rich(TextSpan(children: [
+                  TextSpan(text: '${CurrencyFormatter.format(b.unitCost)} each · '),
+                  TextSpan(
+                    text: CurrencyFormatter.format(b.quantity * b.unitCost),
+                    style: TextStyle(color: c.coin, fontWeight: FontWeight.w600),
+                  ),
+                ])),
+                trailing: StepperInput(
+                  value: b.quantity,
+                  min: 0,
+                  onChanged: (v) => setState(() {
+                    if (v.toInt() == 0) {
+                      _bom.remove(b);
+                    } else {
+                      b.quantity = v.toInt();
+                    }
+                  }),
                 ),
               ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+          child: Text(
+            'Set a quantity to 0 to remove a material.',
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+        ),
+      ],
+    ];
+  }
+
+  List<Widget> _buildResell(List<TextInputFormatter> money, List<TextInputFormatter> digits) {
+    final c = context.colors;
+    final p = _product;
+    return [
+      const SectionLabel('Stock', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
+      const SizedBox(height: 8),
+      if (!_isNew && p != null) ...[
+        AppCard(
+          child: StatRow(children: [
+            StatTile(
+              label: 'On hand',
+              value: '${p.quantityOnHand}',
+              valueColor: p.isLowStock ? c.alert : null,
             ),
-            const SizedBox(width: 12),
+            StatTile(label: 'Free', value: '${p.quantityFree < 0 ? 0 : p.quantityFree}', valueColor: c.go),
+            StatTile(label: 'Unit cost', value: CurrencyFormatter.format(p.unitCost)),
+          ]),
+        ),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _receive,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('Receive'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _count,
+              icon: const Icon(Icons.fact_check_outlined, size: 18),
+              label: const Text('Count'),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
+      ] else ...[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _showAdjustDialog(),
-                icon: const Icon(Icons.tune, size: 18),
-                label: const Text('Adjust'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.coin,
-                  side: const BorderSide(color: AppColors.coin),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+              child: TextFormField(
+                controller: _unitCost,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: money,
+                decoration: const InputDecoration(labelText: 'Cost per piece', prefixText: '₱ '),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _initialQty,
+                keyboardType: TextInputType.number,
+                inputFormatters: digits,
+                decoration: const InputDecoration(labelText: 'On hand now'),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
       ],
-
-      // Unit cost (for new products)
-      if (_isNew) ...[
-        TextField(
-          controller: _unitCostController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Unit cost',
-            prefixText: '₱ ',
-          ),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _initialQtyController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Initial stock quantity',
-          ),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-      ],
-
-      // Alert level
-      TextField(
-        controller: _alertLevelController,
+      TextFormField(
+        controller: _alertLevel,
         keyboardType: TextInputType.number,
+        inputFormatters: digits,
         decoration: const InputDecoration(
-          labelText: 'Low stock alert level',
-          hintText: 'e.g. 5',
+          labelText: 'Reorder at (optional)',
+          helperText: 'Shows a low-stock warning at this level.',
         ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildBomSection() {
-    return [
-      Row(
-        children: [
-          Text('MATERIALS', style: AppTextStyles.monoSection),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: _showAddMaterialSheet,
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
-      _EditableBomList(
-        items: _bomItems,
-        onChanged: () => setState(() {}),
-        onRemoved: (index) {
-          setState(() => _bomItems.removeAt(index));
-        },
       ),
     ];
   }
 }
 
-class _StockStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
+class _ProfitCard extends StatelessWidget {
+  final double sellPrice;
+  final double cost;
+  final bool isStandalone;
 
-  const _StockStat({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _ProfitCard({required this.sellPrice, required this.cost, required this.isStandalone});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted)),
-        const SizedBox(height: 2),
-        Text(value,
-            style: AppTextStyles.displaySmall.copyWith(color: color)),
-      ],
+    final c = context.colors;
+    final parts = MoneyParts(sales: sellPrice, materials: cost, fees: 0, shipping: 0);
+    final positive = parts.profit >= 0;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Expanded(
+                child: Text('PROFIT PER PIECE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+              ),
+              Text(
+                CurrencyFormatter.formatShort(parts.profit),
+                style: AppTextStyles.displayMedium.copyWith(fontSize: 26, color: positive ? c.go : c.alert),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          MoneyBreakdownBar(parts: parts),
+          const SizedBox(height: 8),
+          Text(
+            '${CurrencyFormatter.format(cost)} ${isStandalone ? 'cost' : 'materials'} · '
+            '${(parts.margin * 100).round()}% margin · before channel fees',
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _EditableBomItem {
-  int materialId;
-  String materialName;
-  double materialUnitCost;
-  int quantityRequired;
+  final int materialId;
+  final String materialName;
+  final double unitCost;
+  int quantity;
 
   _EditableBomItem({
     required this.materialId,
     required this.materialName,
-    required this.materialUnitCost,
-    required this.quantityRequired,
+    required this.unitCost,
+    required this.quantity,
   });
-
-  double get lineCost => quantityRequired * materialUnitCost;
-}
-
-class _EditableBomList extends StatelessWidget {
-  final List<_EditableBomItem> items;
-  final VoidCallback onChanged;
-  final ValueChanged<int> onRemoved;
-
-  const _EditableBomList({
-    required this.items,
-    required this.onChanged,
-    required this.onRemoved,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.paperHigh,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: AppColors.hair),
-        ),
-        child: Center(
-          child: Text(
-            'No materials added yet',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        ...items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.paperHigh,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.hair),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item.materialName,
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.ink)),
-                      CurrencyText(
-                        amount: item.materialUnitCost,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.muted),
-                      ),
-                    ],
-                  ),
-                ),
-                StepperInput(
-                  value: item.quantityRequired,
-                  min: 1,
-                  max: 999,
-                  onChanged: (val) {
-                    item.quantityRequired = val.toInt();
-                    onChanged();
-                  },
-                ),
-                const SizedBox(width: 8),
-                CurrencyText(
-                  amount: item.lineCost,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.coin),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () => onRemoved(index),
-                  icon: const Icon(Icons.close, size: 16,
-                      color: AppColors.muted),
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 28, minHeight: 28),
-                ),
-              ],
-            ),
-          );
-        }),
-
-        // Total
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('Total: ', style: AppTextStyles.bodySmall),
-              CurrencyText(
-                amount: items.fold(0.0, (sum, i) => sum + i.lineCost),
-                style: AppTextStyles.bodyLarge
-                    .copyWith(color: AppColors.coin),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CostRow extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  final bool isBold;
-
-  const _CostRow({
-    required this.label,
-    required this.amount,
-    required this.color,
-    this.isBold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: isBold
-                ? AppTextStyles.bodyLarge.copyWith(color: AppColors.ink)
-                : AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
-          ),
-          CurrencyText(
-            amount: amount,
-            style: (isBold ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
-                .copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
 }

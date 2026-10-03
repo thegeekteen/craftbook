@@ -1,315 +1,218 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/pip_strip.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/receive_product_stock.dart';
 
-/// Receive stock page for standalone products (individual units, no pack math)
+/// Receive units of a resell product, with a live preview of the new count
+/// and weighted-average unit cost.
 class ReceiveProductStockPage extends StatefulWidget {
   final int productId;
 
   const ReceiveProductStockPage({super.key, required this.productId});
 
   @override
-  State<ReceiveProductStockPage> createState() =>
-      _ReceiveProductStockPageState();
+  State<ReceiveProductStockPage> createState() => _ReceiveProductStockPageState();
 }
 
 class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
   Product? _product;
-  bool _isLoading = true;
-  bool _isSaving = false;
-  int _quantityReceived = 1;
-  final _priceController = TextEditingController();
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+  int _quantity = 1;
+  final _price = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadProduct();
+    _price.addListener(() => setState(() {}));
+    _load();
   }
 
   @override
   void dispose() {
-    _priceController.dispose();
+    _price.dispose();
     super.dispose();
   }
 
-  Future<void> _loadProduct() async {
-    final repo = getIt<ProductRepository>();
-    final result = await repo.getProductById(widget.productId);
-
-    switch (result) {
-      case Error(:final failure):
-        if (mounted) {
-          setState(() => _isLoading = false);
-          context.showSnackBar(failure.message, isError: true);
-        }
-      case Success(:final value):
-        final product = value;
-        if (mounted) {
-          setState(() {
-            _product = product;
-            _isLoading = false;
-          });
-        }
-    }
+  Future<void> _load() async {
+    final result = await getIt<ProductRepository>().getProductById(widget.productId);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      switch (result) {
+        case Error(:final failure):
+          _error = failure.message;
+        case Success(:final value):
+          _product = value;
+          if (value != null && value.unitCost > 0) {
+            _price.text = value.unitCost.toStringAsFixed(2);
+          }
+      }
+    });
   }
 
-  double get _pricePerUnit {
-    return double.tryParse(_priceController.text) ?? 0;
-  }
+  double get _pricePerUnit => double.tryParse(_price.text) ?? 0;
 
   double get _newUnitCost {
-    if (_product == null) return 0;
-    final oldQty = _product!.quantityOnHand;
-    final oldCost = _product!.unitCost;
-    final newQty = _quantityReceived;
-    final newPrice = _pricePerUnit;
-
-    if (oldQty + newQty == 0) return newPrice;
-    return (oldQty * oldCost + newQty * newPrice) / (oldQty + newQty);
+    final p = _product!;
+    final total = p.quantityOnHand + _quantity;
+    if (total == 0) return _pricePerUnit;
+    return (p.quantityOnHand * p.unitCost + _quantity * _pricePerUnit) / total;
   }
 
   Future<void> _submit() async {
-    if (_pricePerUnit < 0) {
-      context.showSnackBar('Price cannot be negative', isError: true);
-      return;
-    }
-
-    setState(() => _isSaving = true);
-
-    final receiveStock = getIt<ReceiveProductStock>();
-    final result = await receiveStock(
+    setState(() => _saving = true);
+    final result = await getIt<ReceiveProductStock>()(
       productId: widget.productId,
-      quantity: _quantityReceived,
+      quantity: _quantity,
       pricePerUnit: _pricePerUnit,
     );
-
+    if (!mounted) return;
     switch (result) {
       case Error(:final failure):
-        if (mounted) {
-          setState(() => _isSaving = false);
-          context.showSnackBar(failure.message, isError: true);
-        }
+        setState(() => _saving = false);
+        context.showSnackBar(failure.message, isError: true);
       case Success():
-        if (mounted) {
-          context.showSnackBar('Stock received!');
-          context.pop(true);
-        }
+        context.showSnackBar('Added $_quantity to ${_product!.name}');
+        context.pop(true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Receive stock')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+    if (_loading) {
+      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
     }
-
     if (_product == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Receive stock')),
-        body: const Center(child: Text('Product not found')),
+        appBar: AppBar(),
+        body: Center(child: ErrorState(message: _error ?? 'Product not found', onRetry: _load)),
       );
     }
-
-    final prod = _product!;
+    final c = context.colors;
+    final p = _product!;
+    final costUp = _newUnitCost > p.unitCost + 0.005;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Receive — ${prod.name}',
-            style:
-                AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+        toolbarHeight: 64,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('RECEIVE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+            Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.page.copyWith(top: 8),
         children: [
-          // Before display
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.paperHigh,
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.hair),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('QUANTITY RECEIVED', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                    ),
+                    StepperInput(
+                      value: _quantity,
+                      min: 1,
+                      max: 9999,
+                      onChanged: (v) => setState(() => _quantity = v.toInt()),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _price,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
+                  decoration: const InputDecoration(labelText: 'Price per piece', prefixText: '₱ '),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(height: 12),
+          AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('BEFORE', style: AppTextStyles.monoSection),
+                Text('AFTER RECEIVING', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('${p.quantityOnHand}', style: AppTextStyles.amount.copyWith(color: c.muted, fontSize: 20)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.arrow_forward_rounded, size: 18, color: c.muted),
+                    ),
+                    Text(
+                      '${p.quantityOnHand + _quantity}',
+                      style: AppTextStyles.displayMedium.copyWith(color: c.go, fontSize: 32),
+                    ),
+                    const SizedBox(width: 6),
+                    Text('PCS', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                PipStrip(
+                  total: p.quantityOnHand + _quantity,
+                  free: p.quantityFree,
+                  promised: p.quantityPromised,
+                  incoming: _quantity,
+                  alertLevel: p.alertLevel,
+                ),
+                const SizedBox(height: 12),
+                Divider(color: c.hair),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(
-                      '${prod.quantityOnHand}',
-                      style: AppTextStyles.displayMedium
-                          .copyWith(color: AppColors.muted),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: PipStrip(
-                        total: prod.quantityOnHand.clamp(0, 40),
-                        free: prod.quantityFree.clamp(0, 40),
-                        promised: prod.quantityPromised.clamp(0, 40),
-                      ),
+                      child: Text('Unit cost (weighted)', style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Unit cost: ${prod.unitCost.currency}',
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Quantity received
-          Text('QUANTITY RECEIVED', style: AppTextStyles.monoSection),
-          const SizedBox(height: 8),
-          StepperInput(
-            value: _quantityReceived,
-            min: 1,
-            max: 9999,
-            onChanged: (val) =>
-                setState(() => _quantityReceived = val.toInt()),
-          ),
-          const SizedBox(height: 20),
-
-          // Price per unit
-          Text('PRICE PER UNIT', style: AppTextStyles.monoSection),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _priceController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Price per unit',
-              prefixText: '₱ ',
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 24),
-
-          // Weighted average cost preview
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.coinSoft.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.coin.withOpacity(0.3)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('NEW UNIT COST (weighted avg)',
-                    style: AppTextStyles.monoSection
-                        .copyWith(color: AppColors.coin)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
+                    Text('${CurrencyFormatter.format(p.unitCost)} → ',
+                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted)),
                     Text(
-                      prod.unitCost.currency,
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(color: AppColors.muted),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.arrow_forward,
-                          size: 14, color: AppColors.muted),
-                    ),
-                    CurrencyText(
-                      amount: _newUnitCost,
-                      style: AppTextStyles.displaySmall
-                          .copyWith(color: AppColors.coin),
+                      CurrencyFormatter.format(_newUnitCost),
+                      style: AppTextStyles.amount.copyWith(color: costUp ? c.alert : c.coin, fontSize: 16),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-
-          // After preview
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.successSoft.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(13),
-              border:
-                  Border.all(color: AppColors.success.withOpacity(0.3)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('AFTER',
-                    style: AppTextStyles.monoSection
-                        .copyWith(color: AppColors.success)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      '${prod.quantityOnHand + _quantityReceived}',
-                      style: AppTextStyles.displayMedium
-                          .copyWith(color: AppColors.success),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: PipStrip(
-                        total: (prod.quantityOnHand + _quantityReceived)
-                            .clamp(0, 50),
-                        free: (prod.quantityFree + _quantityReceived)
-                            .clamp(0, 50),
-                        promised: prod.quantityPromised.clamp(0, 50),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 80),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: AppColors.paperHigh,
-          border: Border(top: BorderSide(color: AppColors.hair)),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Add to stock'),
-            ),
+      bottomNavigationBar: BottomActionBar(children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: _saving ? null : _submit,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: Text('Add $_quantity to stock'),
           ),
         ),
-      ),
+      ]),
     );
   }
 }

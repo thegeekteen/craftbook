@@ -1,28 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/inline_banner.dart';
+import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/status_filter_chips.dart';
+import '../../../../core/widgets/summary_board.dart';
 import '../../../orders/domain/entities/order.dart';
-import '../../domain/usecases/get_alert_summary.dart';
+import '../../../orders/domain/entities/order_list_entry.dart';
+import '../../../orders/presentation/widgets/order_card.dart';
+import '../../domain/usecases/get_today_dashboard.dart';
 import '../bloc/today_bloc.dart';
 import '../bloc/today_event.dart';
 import '../bloc/today_state.dart';
-import '../widgets/order_card.dart';
 
-/// Today page — main dashboard (Flow 1)
+/// Today: what to pack, what came in, and what's running out.
 class TodayPage extends StatelessWidget {
   const TodayPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<TodayBloc>()..add(LoadToday())..add(LoadAlerts()),
+      create: (_) => getIt<TodayBloc>()..add(LoadToday()),
       child: const _TodayView(),
     );
   }
@@ -38,348 +47,161 @@ class _TodayView extends StatefulWidget {
 class _TodayViewState extends State<_TodayView> {
   Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
 
+  void _reload() => context.read<TodayBloc>().add(LoadToday());
+
+  /// Pushes [location] and reloads when the child reports a change.
+  Future<void> _open(String location) async {
+    final changed = await context.push<bool>(location);
+    if (changed == true && mounted) _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final now = DateTime.now();
-    final dateStr = now
-        .toString()
-        .substring(0, 10); // fallback; use DateUtils in real display
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _formatHeader(now),
-          style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
+        toolbarHeight: 64,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              DateFormat('EEEE').format(now).toUpperCase(),
+              style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+            ),
+            Text(DateFormat('MMMM d').format(now)),
+          ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today_outlined, size: 20),
-            onPressed: () => context.push(RouteNames.calendarWeek),
+            tooltip: 'Calendar',
+            icon: const Icon(Icons.calendar_month_rounded),
+            onPressed: () => _open(RouteNames.calendarWeek),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: BlocConsumer<TodayBloc, TodayState>(
         listener: (context, state) {
           if (state is TodayError) {
-            context.showSnackBar(state.message, isError: true);
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
-          if (state is TodayLoading || state is TodayInitial) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is TodayError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.error_outline, color: AppColors.alert, size: 40),
-                  const SizedBox(height: 8),
-                  Text(state.message, style: AppTextStyles.bodyMedium),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => context
-                        .read<TodayBloc>()
-                        ..add(LoadToday())
-                        ..add(LoadAlerts()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is TodayLoaded) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<TodayBloc>()
-                  ..add(LoadToday())
-                  ..add(LoadAlerts());
-              },
-              child: Builder(
-                builder: (context) {
-                  final today = DateTime.now();
-                  final todayDate = DateTime(today.year, today.month, today.day);
-                  final shipTodayOrders = state.orders.where((o) =>
-                    _statusFilter.contains(o.status) &&
-                    o.status == OrderStatus.pending &&
-                    o.shipByDate.year == todayDate.year &&
-                    o.shipByDate.month == todayDate.month &&
-                    o.shipByDate.day == todayDate.day).toList();
-                  final newTodayOrders = state.orders.where((o) =>
-                    _statusFilter.contains(o.status) &&
-                    o.orderDate.year == todayDate.year &&
-                    o.orderDate.month == todayDate.month &&
-                    o.orderDate.day == todayDate.day).toList();
-
-                  return ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // Summary header
-                      _SummaryHeader(
-                        packCount: shipTodayOrders.length,
-                        newCount: newTodayOrders.length,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Alert banner
-                      if (state.alertSummary.hasAlerts) ...[
-                        _AlertBanner(
-                          lowStockCount: state.alertSummary.lowStockCount,
-                          materialNames: state.alertSummary.materialNames,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-
-                      // Status filter chips
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: StatusFilterChips(
-                          selected: _statusFilter,
-                          onChanged: (s) => setState(() => _statusFilter = s),
-                        ),
-                      ),
-
-                      // Ships today section
-                      if (shipTodayOrders.isNotEmpty) ...[
-                        _SectionHeader(title: 'Ships today'),
-                        const SizedBox(height: 8),
-                        ...shipTodayOrders.map(
-                          (order) => OrderCard(
-                            order: order,
-                            onTap: () async {
-                              final result = await context.push<bool>(
-                                RouteNames.orderDetail
-                                    .replaceFirst(':id', '${order.id}'),
-                              );
-                              if (result == true && context.mounted) {
-                                context.read<TodayBloc>()
-                                  ..add(LoadToday())
-                                  ..add(LoadAlerts());
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // New today section
-                      if (newTodayOrders.isNotEmpty) ...[
-                        _SectionHeader(title: 'New today'),
-                        const SizedBox(height: 8),
-                        ...newTodayOrders.map(
-                          (order) => OrderCard(
-                            order: order,
-                            onTap: () async {
-                              final result = await context.push<bool>(
-                                RouteNames.orderDetail
-                                    .replaceFirst(':id', '${order.id}'),
-                              );
-                              if (result == true && context.mounted) {
-                                context.read<TodayBloc>()
-                                  ..add(LoadToday())
-                                  ..add(LoadAlerts());
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Empty state
-                      if (shipTodayOrders.isEmpty &&
-                          newTodayOrders.isEmpty)
-                        _EmptyState(),
-                    ],
-                  );
-                },
-              ),
-            );
-          }
-
-          return const SizedBox.shrink();
+          return switch (state) {
+            TodayLoaded(:final dashboard) => _buildDashboard(dashboard),
+            TodayError(:final message) =>
+              Center(child: ErrorState(message: message, onRetry: _reload)),
+            _ => const Center(child: CircularProgressIndicator()),
+          };
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await context.push<bool>(RouteNames.newOrder);
-          if (result == true && context.mounted) {
-            context.read<TodayBloc>()
-              ..add(LoadToday())
-              ..add(LoadAlerts());
-          }
-        },
-        backgroundColor: AppColors.success,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _open(RouteNames.newOrder),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('New order'),
       ),
     );
   }
 
-  String _formatHeader(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    const weekdays = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-      'Friday', 'Saturday', 'Sunday',
-    ];
-    final weekday = weekdays[date.weekday - 1];
-    final month = months[date.month - 1];
-    return '$weekday, $month ${date.day}';
-  }
-}
+  Widget _buildDashboard(TodayDashboard d) {
+    final c = context.colors;
+    bool shown(OrderListEntry e) => _statusFilter.contains(e.order.status);
+    final due = d.due.where(shown).toList();
+    final placed = d.placedToday.where(shown).toList();
 
-class _SummaryHeader extends StatelessWidget {
-  final int packCount;
-  final int newCount;
+    final counts = <OrderStatus, int>{};
+    final seen = <int?>{};
+    for (final e in [...d.due, ...d.placedToday]) {
+      if (seen.add(e.order.id)) {
+        counts[e.order.status] = (counts[e.order.status] ?? 0) + 1;
+      }
+    }
 
-  const _SummaryHeader({required this.packCount, required this.newCount});
+    final alerts = d.alerts;
+    final names = alerts.materialNames.take(2).join(', ');
+    final more = alerts.materialNames.length > 2 ? '…' : '';
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.hair),
-      ),
-      child: Row(
+    return RefreshIndicator(
+      onRefresh: () {
+        final done = Completer<void>();
+        context.read<TodayBloc>().add(LoadToday(done: done));
+        return done.future;
+      },
+      child: ListView(
+        padding: AppSpacing.page.copyWith(bottom: AppSpacing.fabClearance),
         children: [
-          _SummaryItem(
-            count: packCount,
-            label: 'to pack',
-            color: AppColors.warning,
+          SummaryBoard(
+            label: 'To pack today',
+            value: '${d.toPackCount}',
+            stats: [
+              BoardStat(label: 'New today', value: '${d.placedToday.length}'),
+              BoardStat(
+                label: 'Overdue',
+                value: '${d.overdueCount}',
+                labelColor: d.overdueCount > 0 ? c.alert : null,
+              ),
+              BoardStat(
+                label: 'Week profit',
+                value: CurrencyFormatter.formatCompact(d.weekProfit),
+              ),
+            ],
+            onTap: () => context.go(RouteNames.orders),
           ),
-          Container(
-            width: 1,
-            height: 32,
-            color: AppColors.hair,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
+          if (alerts.hasAlerts) ...[
+            const SizedBox(height: 12),
+            InlineBanner(
+              icon: Icons.warning_amber_rounded,
+              title: '${alerts.lowStockCount} low:',
+              message: '$names$more',
+              actionLabel: 'Buy list',
+              onTap: () => _open(RouteNames.buyList),
+            ),
+          ],
+          const SizedBox(height: 16),
+          StatusFilterChips(
+            selected: _statusFilter,
+            counts: counts,
+            onChanged: (s) => setState(() => _statusFilter = s),
           ),
-          _SummaryItem(
-            count: newCount,
-            label: 'new today',
-            color: AppColors.success,
-          ),
+          if (due.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SectionLabel('Ships today · ${due.length}'),
+            const SizedBox(height: 8),
+            ..._cards(due),
+          ],
+          if (placed.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SectionLabel('New today · ${placed.length}'),
+            const SizedBox(height: 8),
+            ..._cards(placed),
+          ],
+          if (due.isEmpty && placed.isEmpty)
+            EmptyState(
+              icon: Icons.local_florist_outlined,
+              title: d.due.isEmpty && d.placedToday.isEmpty
+                  ? 'All clear for today'
+                  : 'Nothing matches this filter',
+              message: d.due.isEmpty && d.placedToday.isEmpty
+                  ? 'Orders shipping today and new orders show up here.'
+                  : 'Pick another status or tap All.',
+            ),
         ],
       ),
     );
   }
-}
 
-class _SummaryItem extends StatelessWidget {
-  final int count;
-  final String label;
-  final Color color;
-
-  const _SummaryItem({
-    required this.count,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$count',
-            style: AppTextStyles.displayMedium.copyWith(color: color),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label.toUpperCase(),
-            style: AppTextStyles.monoSection,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AlertBanner extends StatelessWidget {
-  final int lowStockCount;
-  final List<String> materialNames;
-
-  const _AlertBanner({
-    required this.lowStockCount,
-    required this.materialNames,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final names = materialNames.take(3).join(', ');
-    final extra = materialNames.length > 3
-        ? ' +${materialNames.length - 3} more'
-        : '';
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.alertSoft,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.alert.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: AppColors.alert, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '$lowStockCount low stock: $names$extra',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.alert,
-                fontWeight: FontWeight.w600,
-              ),
+  List<Widget> _cards(List<OrderListEntry> entries) => [
+        for (final e in entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: OrderCard(
+              entry: e,
+              onTap: () => _open(RouteNames.orderPath(e.order.id!)),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title.toUpperCase(),
-      style: AppTextStyles.monoSection,
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inbox_outlined, color: AppColors.muted, size: 48),
-          const SizedBox(height: 12),
-          Text(
-            'No orders today',
-            style: AppTextStyles.bodyLarge.copyWith(color: AppColors.muted),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Tap + to create a new order',
-            style: AppTextStyles.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
+      ];
 }

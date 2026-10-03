@@ -2,178 +2,104 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_tag.dart';
+import '../../../../core/widgets/money_breakdown.dart';
 import '../../domain/entities/product.dart';
 
-/// Product card widget for list displays
+/// Product in the catalogue: price, cost/profit bar, margin and how many
+/// you can make (or have) right now.
 class ProductCard extends StatelessWidget {
   final Product product;
-  final int? buildableQuantity;
-  final double? materialCost;
+  final double? unitCost;
+  final int? available;
   final VoidCallback? onTap;
 
   const ProductCard({
     super.key,
     required this.product,
-    this.buildableQuantity,
-    this.materialCost,
+    this.unitCost,
+    this.available,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final margin = materialCost != null && materialCost! > 0
-        ? ((product.sellPrice - materialCost!) / product.sellPrice * 100)
-            .clamp(0, 100)
-        : null;
+    final c = context.colors;
+    final p = product;
+    final cost = unitCost ?? 0;
+    final parts = MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0);
+    final margin = (parts.margin * 100).round();
+    final marginColor = margin >= 50 ? c.go : (margin >= 20 ? c.warn : c.alert);
+    final qty = available ?? 0;
+    final lowStock = p.isStandalone ? p.isLowStock : qty > 0 && qty < 5;
 
-    final marginColor = margin == null
-        ? AppColors.muted
-        : margin > 50
-            ? AppColors.success
-            : margin > 20
-                ? AppColors.warning
-                : AppColors.alert;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row: name + active indicator
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      product.name,
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color:
-                            product.isActive ? AppColors.ink : AppColors.muted,
-                      ),
-                    ),
-                  ),
-                  if (!product.isActive)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.hair,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'INACTIVE',
-                        style: AppTextStyles.monoLabel
-                            .copyWith(color: AppColors.muted, fontSize: 8),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // Prices
-              Row(
-                children: [
-                  if (materialCost != null) ...[
-                    Text(
-                      'Cost: ',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                    CurrencyText(
-                      amount: materialCost!,
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.alert),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Text(
-                    'Sell: ',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                  CurrencyText(
-                    amount: product.sellPrice,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.success),
-                  ),
-                ],
-              ),
-
-              // Margin bar
-              if (margin != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Margin ${margin.toStringAsFixed(0)}%',
-                      style: AppTextStyles.monoLabel.copyWith(
-                        color: marginColor,
-                        fontSize: 8,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: margin / 100,
-                    minHeight: 4,
-                    backgroundColor: AppColors.hair,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(marginColor),
-                  ),
-                ),
-              ],
-
-              // Buildable / stock quantity
-              if (buildableQuantity != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      product.isStandalone
-                          ? Icons.inventory_outlined
-                          : Icons.inventory_2_outlined,
-                      size: 12,
-                      color: AppColors.muted,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      product.isStandalone
-                          ? 'In stock: $buildableQuantity'
-                          : 'Can build: $buildableQuantity',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: buildableQuantity! == 0
-                            ? AppColors.alert
-                            : AppColors.muted,
-                      ),
-                    ),
-                    if (product.isStandalone && product.isLowStock) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.alert.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'LOW',
-                          style: AppTextStyles.monoLabel.copyWith(
-                            color: AppColors.alert,
-                            fontSize: 8,
-                          ),
-                        ),
-                      ),
+    return Opacity(
+      opacity: p.isActive ? 1 : 0.6,
+      child: AppCard(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(p.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                      if (p.isStandalone) const AppTag('Resell'),
+                      if (!p.isActive) const AppTag('Hidden'),
                     ],
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  CurrencyFormatter.formatShort(p.sellPrice),
+                  style: AppTextStyles.amount.copyWith(color: c.ink),
                 ),
               ],
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
+            MoneyBreakdownBar(parts: parts, height: 8),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: 'Cost ${CurrencyFormatter.formatShort(cost)} · '),
+                      TextSpan(
+                        text: '${margin < 0 ? '−${-margin}' : margin}% margin',
+                        style: TextStyle(color: marginColor, fontWeight: FontWeight.w600),
+                      ),
+                    ]),
+                    style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                  ),
+                ),
+                if (available != null) ...[
+                  Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: p.isStandalone ? 'In stock ' : 'Can build '),
+                      TextSpan(
+                        text: '$qty',
+                        style: TextStyle(
+                          color: qty == 0 || lowStock ? c.alert : c.ink,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ]),
+                    style: AppTextStyles.bodySmall.copyWith(color: qty == 0 ? c.alert : c.muted),
+                  ),
+                  if (lowStock) ...[const SizedBox(width: 6), const AppTag.low()],
+                ],
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -6,6 +6,7 @@ import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/order_dao.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
+import '../../domain/entities/order_list_entry.dart';
 import '../../domain/entities/order_material.dart';
 import '../../domain/entities/order_product.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -64,6 +65,33 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       final rows = await dao.getOrdersForDateRange(start, end);
       return Success(rows.map(_toEntity).toList());
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<Order>>> getOpenOrdersDueBefore(DateTime end) async {
+    try {
+      final rows = await dao.getOpenOrdersDueBefore(end);
+      return Success(rows.map(_toEntity).toList());
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<Map<int, List<OrderLine>>>> getOrderLines(
+      List<int> orderIds) async {
+    try {
+      final rows = await dao.getOrderLines(orderIds);
+      final byOrder = <int, List<OrderLine>>{};
+      for (final (orderId, name, qty) in rows) {
+        byOrder
+            .putIfAbsent(orderId, () => [])
+            .add(OrderLine(productName: name, quantity: qty));
+      }
+      return Success(byOrder);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }

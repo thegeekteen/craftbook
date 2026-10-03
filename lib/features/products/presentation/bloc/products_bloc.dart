@@ -2,6 +2,8 @@ import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/create_product.dart';
+import '../../domain/usecases/calculate_bom_cost.dart';
+import '../../domain/usecases/calculate_buildable_quantity.dart';
 import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/get_products.dart';
 import '../../domain/usecases/update_product.dart';
@@ -14,12 +16,16 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   final CreateProduct createProduct;
   final UpdateProduct updateProduct;
   final DeleteProduct deleteProduct;
+  final CalculateBomCost calculateBomCost;
+  final CalculateBuildableQuantity calculateBuildableQuantity;
 
   ProductsBloc({
     required this.getProducts,
     required this.createProduct,
     required this.updateProduct,
     required this.deleteProduct,
+    required this.calculateBomCost,
+    required this.calculateBuildableQuantity,
   }) : super(ProductsInitial()) {
     on<LoadProducts>(_onLoadProducts);
     on<CreateProductEvent>(_onCreateProduct);
@@ -31,13 +37,24 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     LoadProducts event,
     Emitter<ProductsState> emit,
   ) async {
-    emit(ProductsLoading());
+    if (state is! ProductsLoaded) emit(ProductsLoading());
     final result = await getProducts(activeOnly: event.activeOnly);
     switch (result) {
       case Error(:final failure):
         emit(ProductsError(failure.message));
       case Success(:final value):
-        emit(ProductsLoaded(value));
+        final costs = <int, double>{};
+        final available = <int, int>{};
+        for (final p in value) {
+          if (p.id == null) continue;
+          if (await calculateBomCost(p.id!) case Success(value: final cost)) {
+            costs[p.id!] = cost;
+          }
+          if (await calculateBuildableQuantity(p.id!) case Success(value: final n)) {
+            available[p.id!] = n < 0 ? 0 : n;
+          }
+        }
+        emit(ProductsLoaded(value, unitCosts: costs, available: available));
     }
   }
 

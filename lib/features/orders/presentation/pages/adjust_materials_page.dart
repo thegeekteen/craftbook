@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../domain/entities/order_material.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 
-/// Material adjustment page — adjust actual quantities used
+/// Record what was actually used. Anything over plan counts as waste.
 class AdjustMaterialsPage extends StatefulWidget {
   final int orderId;
   final List<OrderMaterial> materials;
@@ -26,222 +29,178 @@ class AdjustMaterialsPage extends StatefulWidget {
 }
 
 class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
-  static const _wasteReasonOptions = [
-    'Cutting',
-    'Defect',
-    'Miscount',
-    'Other',
-  ];
+  static const _wasteReasons = ['Cutting', 'Defect', 'Miscount', 'Other'];
 
-  late Map<int, int> _actualQuantities;
-  late Map<int, String?> _selectedReasons;
+  late final Map<int, int> _actual = {
+    for (final m in widget.materials) m.materialId: m.actualQuantity,
+  };
+  late final Map<int, String?> _reasons = {
+    for (final m in widget.materials) m.materialId: m.wasteReason,
+  };
 
-  @override
-  void initState() {
-    super.initState();
-    _actualQuantities = {
-      for (final m in widget.materials) m.materialId: m.actualQuantity,
-    };
-    _selectedReasons = {
-      for (final m in widget.materials) m.materialId: m.wasteReason,
-    };
-  }
+  double get _plannedCost =>
+      widget.materials.fold(0, (sum, m) => sum + m.plannedQuantity * m.unitCost);
 
-  double get _totalCost {
-    double total = 0;
-    for (final m in widget.materials) {
-      final actual = _actualQuantities[m.materialId] ?? m.actualQuantity;
-      total += actual * m.unitCost;
-    }
-    return total;
-  }
+  double get _actualCost => widget.materials
+      .fold(0, (sum, m) => sum + (_actual[m.materialId] ?? m.actualQuantity) * m.unitCost);
 
   void _save() {
-    final updatedMaterials = widget.materials.map((m) {
-      final actual = _actualQuantities[m.materialId] ?? m.actualQuantity;
-      final waste = actual - m.plannedQuantity;
-      return OrderMaterialInput(
-        materialId: m.materialId,
-        materialName: m.materialName,
-        plannedQuantity: m.plannedQuantity,
-        actualQuantity: actual,
-        wasteQuantity: waste > 0 ? waste : 0,
-        wasteReason: waste > 0 ? _selectedReasons[m.materialId] : null,
-        unitCost: m.unitCost,
-      );
-    }).toList();
-
+    final updated = [
+      for (final m in widget.materials)
+        () {
+          final actual = _actual[m.materialId] ?? m.actualQuantity;
+          final waste = actual - m.plannedQuantity;
+          return OrderMaterialInput(
+            materialId: m.materialId,
+            materialName: m.materialName,
+            plannedQuantity: m.plannedQuantity,
+            actualQuantity: actual,
+            wasteQuantity: waste > 0 ? waste : 0,
+            wasteReason: waste > 0 ? (_reasons[m.materialId] ?? 'Other') : null,
+            unitCost: m.unitCost,
+          );
+        }(),
+    ];
     context.read<OrderDetailBloc>().add(
-          AdjustMaterials(
-            orderId: widget.orderId,
-            materials: updatedMaterials,
-          ),
+          AdjustMaterials(orderId: widget.orderId, materials: updated),
         );
-    context.pop(true);
+    Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
+    final delta = _actualCost - _plannedCost;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Adjust materials'),
-      ),
-      body: Column(
+      appBar: AppBar(title: const Text('Materials used')),
+      body: ListView(
+        padding: AppSpacing.page.copyWith(top: 4),
         children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: widget.materials.length,
-              itemBuilder: (context, index) {
-                final mat = widget.materials[index];
-                final actual = _actualQuantities[mat.materialId]!;
-                final waste = actual - mat.plannedQuantity;
-                final selectedReason = _selectedReasons[mat.materialId];
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.paperHigh,
-                    borderRadius: BorderRadius.circular(13),
-                    border: Border.all(color: AppColors.hair),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  mat.materialName,
-                                  style: AppTextStyles.bodyLarge
-                                      .copyWith(color: AppColors.ink),
-                                ),
-                                Text(
-                                  'Planned: ${mat.plannedQuantity}',
-                                  style: AppTextStyles.bodySmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                          StepperInput(
-                            value: actual,
-                            min: 0,
-                            max: mat.plannedQuantity * 3,
-                            onChanged: (val) {
-                              setState(() {
-                                _actualQuantities[mat.materialId] = val.toInt();
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-
-                      if (waste > 0) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          'Waste: $waste pcs',
-                          style: AppTextStyles.bodySmall
-                              .copyWith(color: AppColors.alert),
-                        ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          children: _wasteReasonOptions.map((reason) {
-                            final isSelected = selectedReason == reason;
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedReasons[mat.materialId] =
-                                      isSelected ? null : reason;
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.alertSoft
-                                      : AppColors.paper,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.alert
-                                        : AppColors.hair,
-                                  ),
-                                ),
-                                child: Text(
-                                  reason,
-                                  style: AppTextStyles.monoLabel.copyWith(
-                                    color: isSelected
-                                        ? AppColors.alert
-                                        : AppColors.muted,
-                                    fontSize: 9,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text('Cost: ',
-                              style: AppTextStyles.bodySmall),
-                          CurrencyText(
-                            amount: actual * mat.unitCost,
-                            style: AppTextStyles.bodyMedium
-                                .copyWith(color: AppColors.ink),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Record what you actually used. Anything over plan counts as waste '
+              'and comes out of this order\'s profit.',
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
             ),
           ),
-
-          // Bottom bar with total and save
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.paperHigh,
-              border: Border(top: BorderSide(color: AppColors.hair)),
+          for (final m in widget.materials) ...[
+            _MaterialAdjustCard(
+              material: m,
+              actual: _actual[m.materialId] ?? m.actualQuantity,
+              reason: _reasons[m.materialId],
+              reasons: _wasteReasons,
+              onActualChanged: (v) => setState(() => _actual[m.materialId] = v),
+              onReasonChanged: (r) => setState(() => _reasons[m.materialId] = r),
             ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('TOTAL COST',
-                            style: AppTextStyles.monoSection),
-                        const SizedBox(height: 2),
-                        CurrencyText(
-                          amount: _totalCost,
-                          style: AppTextStyles.displaySmall
-                              .copyWith(color: AppColors.ink),
-                        ),
-                      ],
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+      bottomNavigationBar: BottomActionBar(children: [
+        BarTotal(
+          label: 'Materials',
+          value: CurrencyFormatter.format(_actualCost),
+          trailing: delta.abs() < 0.005
+              ? null
+              : Text(
+                  '${delta > 0 ? '+' : '−'}${CurrencyFormatter.format(delta.abs())}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: delta > 0 ? c.alert : c.go,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+        FilledButton(onPressed: _save, child: const Text('Save')),
+      ]),
+    );
+  }
+}
+
+class _MaterialAdjustCard extends StatelessWidget {
+  final OrderMaterial material;
+  final int actual;
+  final String? reason;
+  final List<String> reasons;
+  final ValueChanged<int> onActualChanged;
+  final ValueChanged<String> onReasonChanged;
+
+  const _MaterialAdjustCard({
+    required this.material,
+    required this.actual,
+    required this.reason,
+    required this.reasons,
+    required this.onActualChanged,
+    required this.onReasonChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final waste = actual - material.plannedQuantity;
+    final saved = -waste;
+    return AppCard(
+      borderColor: waste > 0 ? c.alert.withValues(alpha: 0.5) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      material.materialName,
+                      style: AppTextStyles.bodyLarge.copyWith(color: c.ink),
                     ),
-                  ),
-                  ElevatedButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      'Planned ${material.plannedQuantity} · '
+                      '${CurrencyFormatter.format(material.unitCost)} each',
+                      style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              StepperInput(
+                value: actual,
+                min: 0,
+                max: material.plannedQuantity * 3 + 10,
+                onChanged: (v) => onActualChanged(v.toInt()),
+              ),
+            ],
           ),
+          if (waste > 0) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(
+                  '+$waste waste · ${CurrencyFormatter.format(waste * material.unitCost)}',
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: c.alert, fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                const Spacer(),
+                Text('Why?', style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ChoiceChipRow<String>(
+              wrap: true,
+              options: [for (final r in reasons) ChipOption(r, r)],
+              isSelected: (r) => r == reason,
+              onTap: onReasonChanged,
+              selectedColor: c.alertSoft,
+              selectedForeground: c.alert,
+            ),
+          ] else if (saved > 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              '$saved fewer than planned',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: c.go, fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ],
         ],
       ),
     );

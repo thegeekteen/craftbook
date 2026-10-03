@@ -35,7 +35,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     LoadMaterials event,
     Emitter<MaterialsState> emit,
   ) async {
-    emit(MaterialsLoading());
+    if (state is! MaterialsLoaded) emit(MaterialsLoading());
     final result = await getMaterials(lowStockOnly: event.lowStockOnly);
     switch (result) {
       case Error(:final failure):
@@ -67,6 +67,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
       materialId: event.materialId,
       packsReceived: event.packsReceived,
       pricePerPack: event.pricePerPack,
+      supplier: event.supplier,
     );
     switch (result) {
       case Error(:final failure):

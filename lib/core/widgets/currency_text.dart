@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+
 import '../theme/colors.dart';
+import '../theme/text_styles.dart';
 import '../utils/currency_formatter.dart';
 
-/// Currency text widget for displaying formatted prices
+/// Formatted peso amount (₱1,234.56) in the display face with tabular
+/// figures.
 class CurrencyText extends StatelessWidget {
   final double amount;
   final TextStyle? style;
   final bool showSymbol;
   final bool compact;
+
+  /// Drop ".00" on whole amounts.
+  final bool short;
+
+  /// Prefix positive amounts with "+".
+  final bool signed;
 
   const CurrencyText({
     super.key,
@@ -15,69 +24,25 @@ class CurrencyText extends StatelessWidget {
     this.style,
     this.showSymbol = true,
     this.compact = false,
+    this.short = false,
+    this.signed = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final formatted = compact
-        ? CurrencyFormatter.formatCompact(amount)
-        : CurrencyFormatter.format(amount);
+    final abs = amount.abs();
+    var formatted = compact
+        ? CurrencyFormatter.formatCompact(abs)
+        : short
+            ? CurrencyFormatter.formatShort(abs)
+            : CurrencyFormatter.format(abs);
+    if (!showSymbol) formatted = formatted.replaceFirst('₱', '');
+    final sign = amount < 0 ? '−' : (signed && amount > 0 ? '+' : '');
 
     return Text(
-      showSymbol ? formatted : formatted.replaceFirst('₱', ''),
-      style: style ??
-          const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'SpaceGrotesk',
-            letterSpacing: -0.02,
-          ),
-    );
-  }
-}
-
-/// Large currency display for profit/total amounts
-class CurrencyDisplay extends StatelessWidget {
-  final double amount;
-  final String? label;
-  final Color? color;
-
-  const CurrencyDisplay({
-    super.key,
-    required this.amount,
-    this.label,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (label != null)
-          Text(
-            label!.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'IBMPlexMono',
-              letterSpacing: 0.1,
-              color: AppColors.muted,
-            ),
-          ),
-        const SizedBox(height: 4),
-        CurrencyText(
-          amount: amount,
-          style: TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'SpaceGrotesk',
-            letterSpacing: -0.02,
-            color: color ?? AppColors.ink,
-          ),
-        ),
-      ],
+      '$sign$formatted',
+      maxLines: 1,
+      style: style ?? AppTextStyles.amount.copyWith(color: context.colors.ink),
     );
   }
 }

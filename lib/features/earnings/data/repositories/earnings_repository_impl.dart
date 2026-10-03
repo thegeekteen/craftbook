@@ -4,6 +4,7 @@ import '../../../../database/daos/earnings_dao.dart';
 import '../../domain/entities/earnings_summary.dart';
 import '../../domain/entities/product_earnings.dart';
 // WasteItem is exported from earnings_summary.dart
+import '../../domain/entities/profit_trend.dart';
 import '../../domain/repositories/earnings_repository.dart';
 
 class EarningsRepositoryImpl implements EarningsRepository {
@@ -73,6 +74,45 @@ class EarningsRepositoryImpl implements EarningsRepository {
         totalWasteCost: result['totalWasteCost'] as double,
         items: wasteItems,
       ));
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<ProfitPoint>>> getCompletedOrderProfits(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      final rows = await dao.getCompletedOrderProfits(startDate, endDate);
+      return Success([
+        for (final (at, profit) in rows) ProfitPoint(completedAt: at, profit: profit),
+      ]);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<ProductOrderLine>>> getProductOrderLines(
+    int productId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    try {
+      final rows = await dao.getProductOrderLines(productId, startDate, endDate);
+      return Success([
+        for (final m in rows)
+          ProductOrderLine(
+            orderId: m['orderId'] as int,
+            customerName: m['customerName'] as String,
+            quantity: m['quantity'] as int,
+            sales: m['sales'] as double,
+            profit: m['profit'] as double,
+            completedAt: m['completedAt'] as DateTime,
+          ),
+      ]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }

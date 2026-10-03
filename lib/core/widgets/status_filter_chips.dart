@@ -1,113 +1,53 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
-import '../theme/text_styles.dart';
-import '../../features/orders/domain/entities/order.dart';
 
-/// Horizontal row of status filter chips with an "All" toggle.
+import '../../features/orders/domain/entities/order.dart';
+import '../../features/orders/presentation/widgets/order_status_ui.dart';
+import 'choice_chip_row.dart';
+
+/// Status filter for Today and the calendars.
+///
+/// "All" selects every status; tapping a status shows only that status
+/// (tap it again to go back to All). Counts are optional.
 class StatusFilterChips extends StatelessWidget {
   final Set<OrderStatus> selected;
   final ValueChanged<Set<OrderStatus>> onChanged;
+  final Map<OrderStatus, int>? counts;
+
+  /// Statuses offered as chips. Cancelled is hidden by default on day views.
+  final List<OrderStatus> statuses;
 
   const StatusFilterChips({
     super.key,
     required this.selected,
     required this.onChanged,
+    this.counts,
+    this.statuses = const [
+      OrderStatus.pending,
+      OrderStatus.packed,
+      OrderStatus.shipped,
+      OrderStatus.cancelled,
+    ],
   });
 
-  bool get _isAll => selected.length == OrderStatus.values.length;
-
-  void _toggle(OrderStatus status) {
-    final next = Set<OrderStatus>.from(selected);
-    if (next.contains(status)) {
-      if (next.length > 1) next.remove(status);
-    } else {
-      next.add(status);
-    }
-    onChanged(next);
-  }
-
-  void _toggleAll() {
-    if (_isAll) {
-      onChanged({OrderStatus.pending});
-    } else {
-      onChanged(Set<OrderStatus>.from(OrderStatus.values));
-    }
-  }
+  bool get _isAll => statuses.every(selected.contains);
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildChip(
-            label: 'All',
-            isSelected: _isAll,
-            onTap: _toggleAll,
-            color: AppColors.ink,
-          ),
-          const SizedBox(width: 8),
-          _buildChip(
-            label: 'Pending',
-            isSelected: selected.contains(OrderStatus.pending),
-            onTap: () => _toggle(OrderStatus.pending),
-            color: AppColors.warning,
-          ),
-          const SizedBox(width: 8),
-          _buildChip(
-            label: 'Packed',
-            isSelected: selected.contains(OrderStatus.packed),
-            onTap: () => _toggle(OrderStatus.packed),
-            color: AppColors.success,
-          ),
-          const SizedBox(width: 8),
-          _buildChip(
-            label: 'Shipped',
-            isSelected: selected.contains(OrderStatus.shipped),
-            onTap: () => _toggle(OrderStatus.shipped),
-            color: AppColors.coin,
-          ),
-          const SizedBox(width: 8),
-          _buildChip(
-            label: 'Cancelled',
-            isSelected: selected.contains(OrderStatus.cancelled),
-            onTap: () => _toggle(OrderStatus.cancelled),
-            color: AppColors.muted,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.12) : AppColors.paperHigh,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? color : AppColors.hair,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: isSelected ? color : AppColors.muted,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 13,
-          ),
-        ),
-      ),
+    final total = counts?.values.fold<int>(0, (a, b) => a + b);
+    return ChoiceChipRow<OrderStatus?>(
+      options: [
+        ChipOption<OrderStatus?>(null, 'All', count: total),
+        for (final s in statuses)
+          ChipOption<OrderStatus?>(s, s.label, count: counts?[s]),
+      ],
+      isSelected: (s) => s == null ? _isAll : (!_isAll && selected.contains(s)),
+      onTap: (s) {
+        if (s == null || (!_isAll && selected.length == 1 && selected.contains(s))) {
+          onChanged(Set<OrderStatus>.from(OrderStatus.values));
+        } else {
+          onChanged({s});
+        }
+      },
     );
   }
 }

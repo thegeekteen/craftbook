@@ -4,6 +4,7 @@ import '../../../../core/error/result.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/usecases/calculate_order_profit.dart';
 import '../../domain/usecases/create_order.dart';
+import '../../domain/usecases/preview_order.dart';
 import 'new_order_event.dart';
 import 'new_order_state.dart';
 
@@ -14,6 +15,7 @@ import 'new_order_state.dart';
 class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   final CreateOrder createOrder;
   final CalculateOrderProfit calculateOrderProfit;
+  final PreviewOrder previewOrder;
 
   // Internal mutable state for building the order
   String _customerName = '';
@@ -27,11 +29,13 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   NewOrderBloc({
     required this.createOrder,
     required this.calculateOrderProfit,
+    required this.previewOrder,
   }) : super(NewOrderInitial()) {
     on<SetCustomerDetails>(_onSetCustomerDetails);
     on<AddItem>(_onAddItem);
     on<RemoveItem>(_onRemoveItem);
     on<UpdateItemQuantity>(_onUpdateItemQuantity);
+    on<RequestPreview>(_onRequestPreview);
     on<SaveOrder>(_onSaveOrder);
     on<ResetOrder>(_onResetOrder);
   }
@@ -95,10 +99,35 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     _emitDetailsFilled(emit);
   }
 
+  Future<void> _onRequestPreview(
+    RequestPreview event,
+    Emitter<NewOrderState> emit,
+  ) async {
+    final current = _detailsState();
+    emit(current.copyWith(isPreviewing: true, clearPreview: true));
+    final result = await previewOrder(items: _items, channelId: _channelId);
+    switch (result) {
+      case Error(:final failure):
+        emit(current.copyWith(isPreviewing: false, previewError: failure.message));
+      case Success(:final value):
+        emit(current.copyWith(isPreviewing: false, preview: value));
+    }
+  }
+
   Future<void> _onSaveOrder(
     SaveOrder event,
     Emitter<NewOrderState> emit,
   ) async {
+    // Kept so a failed save returns to the same review screen, preview
+    // included.
+    final before = state is NewOrderDetailsFilled ? state as NewOrderDetailsFilled : _detailsState();
+    emit(before.copyWith(isSaving: true));
+
+    void fail(String message) {
+      emit(NewOrderError(message));
+      emit(before.copyWith(isSaving: false, preview: before.preview));
+    }
+
     final totalSales = _items.fold(0.0, (sum, item) => sum + item.subtotal);
 
     // Calculate profit breakdown
@@ -110,14 +139,17 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       shippingCost: 0.0,
     );
 
-    final channelFees = switch (profitResult) {
-      Success(:final value) => value.channelFees,
-      Error() => 0.0,
-    };
-    final shippingCost = switch (profitResult) {
-      Success(:final value) => value.shippingCost,
-      Error() => 0.0,
-    };
+    // Saving with zero fees would store a wrong profit, so stop instead.
+    final OrderProfitBreakdown breakdown;
+    switch (profitResult) {
+      case Error(:final failure):
+        fail(failure.message);
+        return;
+      case Success(:final value):
+        breakdown = value;
+    }
+    final channelFees = breakdown.channelFees;
+    final shippingCost = breakdown.shippingCost;
 
     final result = await createOrder(
       customerName: _customerName,
@@ -134,7 +166,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
 
     switch (result) {
       case Error(:final failure):
-        emit(NewOrderError(failure.message));
+        fail(failure.message);
       case Success(:final value):
         emit(NewOrderSaved(value));
     }
@@ -155,8 +187,12 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   }
 
   void _emitDetailsFilled(Emitter<NewOrderState> emit) {
+    emit(_detailsState());
+  }
+
+  NewOrderDetailsFilled _detailsState() {
     final totalSales = _items.fold(0.0, (sum, item) => sum + item.subtotal);
-    emit(NewOrderDetailsFilled(
+    return NewOrderDetailsFilled(
       customerName: _customerName,
       customerAddress: _customerAddress,
       channelId: _channelId,
@@ -165,6 +201,6 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       note: _note,
       items: List.unmodifiable(_items),
       totalSales: totalSales,
-    ));
+    );
   }
 }

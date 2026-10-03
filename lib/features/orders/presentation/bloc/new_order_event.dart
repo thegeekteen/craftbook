@@ -79,6 +79,9 @@ class UpdateItemQuantity extends NewOrderEvent {
   List<Object?> get props => [productId, quantity];
 }
 
+/// Work out profit and reservations for the review step.
+class RequestPreview extends NewOrderEvent {}
+
 /// Save the order to the database
 class SaveOrder extends NewOrderEvent {}
 

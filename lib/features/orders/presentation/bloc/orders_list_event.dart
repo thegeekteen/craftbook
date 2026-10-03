@@ -1,6 +1,6 @@
-import 'package:equatable/equatable.dart';
+import 'dart:async';
 
-import '../../domain/entities/order.dart';
+import 'package:equatable/equatable.dart';
 
 /// Base class for orders list events
 abstract class OrdersListEvent extends Equatable {
@@ -10,32 +10,10 @@ abstract class OrdersListEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load orders, optionally filtered by status
+/// Load (or reload) every order. Filtering happens in the view so chip
+/// counts stay accurate. [done] completes when loading finishes.
 class LoadOrders extends OrdersListEvent {
-  final OrderStatus? status;
+  final Completer<void>? done;
 
-  const LoadOrders({this.status});
-
-  @override
-  List<Object?> get props => [status];
-}
-
-/// Pack an order (deduct materials, update status)
-class PackOrderEvent extends OrdersListEvent {
-  final int orderId;
-
-  const PackOrderEvent(this.orderId);
-
-  @override
-  List<Object?> get props => [orderId];
-}
-
-/// Ship an order (update status to shipped)
-class ShipOrderEvent extends OrdersListEvent {
-  final int orderId;
-
-  const ShipOrderEvent(this.orderId);
-
-  @override
-  List<Object?> get props => [orderId];
+  const LoadOrders({this.done});
 }

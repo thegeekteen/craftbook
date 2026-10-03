@@ -9,13 +9,13 @@ import 'core/widgets/app_shell.dart';
 import 'features/stock/presentation/bloc/materials_bloc.dart';
 
 import 'features/today/presentation/pages/today_page.dart';
-import 'features/today/presentation/pages/calendar_week_page.dart';
-import 'features/today/presentation/pages/calendar_month_page.dart';
+import 'features/today/presentation/pages/calendar_page.dart';
 import 'features/orders/presentation/pages/orders_list_page.dart';
 import 'features/orders/presentation/pages/new_order_page.dart';
 import 'features/orders/presentation/pages/order_details_page.dart';
 import 'features/stock/presentation/pages/materials_list_page.dart';
 import 'features/stock/presentation/pages/material_detail_page.dart';
+import 'features/stock/presentation/pages/new_material_page.dart';
 import 'features/stock/presentation/pages/receive_stock_page.dart';
 import 'features/stock/presentation/pages/buy_list_page.dart';
 import 'features/products/presentation/pages/products_list_page.dart';
@@ -27,20 +27,31 @@ import 'features/earnings/presentation/pages/product_earnings_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
 class CraftbookApp extends StatelessWidget {
-  CraftbookApp({super.key});
+  /// [initialLocation] and [themeMode] are overridable for screenshots and
+  /// tests; the app itself starts on Today and follows the system theme.
+  CraftbookApp({
+    super.key,
+    String initialLocation = RouteNames.today,
+    this.themeMode = ThemeMode.system,
+  }) : _router = _buildRouter(initialLocation);
+
+  final ThemeMode themeMode;
+  final GoRouter _router;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Craftbook',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
     );
   }
 
-  final GoRouter _router = GoRouter(
-    initialLocation: RouteNames.today,
+  static GoRouter _buildRouter(String initialLocation) => GoRouter(
+    initialLocation: initialLocation,
     routes: [
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
@@ -65,15 +76,29 @@ class CraftbookApp extends StatelessWidget {
             path: RouteNames.settings,
             builder: (context, state) => const SettingsPage(),
           ),
+          // Catalogue pages keep the bottom nav (they belong to More/Stock).
+          GoRoute(
+            path: RouteNames.products,
+            builder: (context, state) => const ProductsListPage(),
+          ),
+          GoRoute(
+            path: RouteNames.channels,
+            builder: (context, state) => const ChannelsPage(),
+          ),
+          GoRoute(
+            path: RouteNames.buyList,
+            builder: (context, state) => const BuyListPage(),
+          ),
         ],
       ),
       GoRoute(
         path: RouteNames.calendarWeek,
-        builder: (context, state) => const CalendarWeekPage(),
+        builder: (context, state) => const CalendarPage(),
       ),
       GoRoute(
         path: RouteNames.calendarMonth,
-        builder: (context, state) => const CalendarMonthPage(),
+        builder: (context, state) =>
+            const CalendarPage(initialMode: CalendarMode.month),
       ),
       GoRoute(
         path: RouteNames.newOrder,
@@ -85,6 +110,10 @@ class CraftbookApp extends StatelessWidget {
           final id = int.parse(state.pathParameters['id']!);
           return OrderDetailsPage(orderId: id);
         },
+      ),
+      GoRoute(
+        path: RouteNames.newMaterial,
+        builder: (context, state) => const NewMaterialPage(),
       ),
       GoRoute(
         path: RouteNames.materialDetail,
@@ -102,14 +131,6 @@ class CraftbookApp extends StatelessWidget {
             child: ReceiveStockPage(materialId: id),
           );
         },
-      ),
-      GoRoute(
-        path: RouteNames.buyList,
-        builder: (context, state) => const BuyListPage(),
-      ),
-      GoRoute(
-        path: RouteNames.products,
-        builder: (context, state) => const ProductsListPage(),
       ),
       GoRoute(
         path: RouteNames.newProduct,
@@ -130,14 +151,19 @@ class CraftbookApp extends StatelessWidget {
         },
       ),
       GoRoute(
-        path: RouteNames.channels,
-        builder: (context, state) => const ChannelsPage(),
-      ),
-      GoRoute(
         path: RouteNames.productEarnings,
         builder: (context, state) {
           final id = int.parse(state.pathParameters['productId']!);
-          return ProductEarningsPage(productId: id);
+          DateTime? at(String key) {
+            final ms = int.tryParse(state.uri.queryParameters[key] ?? '');
+            return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+          }
+
+          return ProductEarningsPage(
+            productId: id,
+            startDate: at('start'),
+            endDate: at('end'),
+          );
         },
       ),
     ],

@@ -6,6 +6,17 @@ import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_material.dart';
 import '../../domain/entities/order_product.dart';
 
+/// Current shelf stock for something the order uses.
+class StockLevel extends Equatable {
+  final int onHand;
+  final int alertLevel;
+
+  const StockLevel({required this.onHand, required this.alertLevel});
+
+  @override
+  List<Object?> get props => [onHand, alertLevel];
+}
+
 /// Base class for order detail states
 abstract class OrderDetailState extends Equatable {
   const OrderDetailState();
@@ -17,7 +28,7 @@ abstract class OrderDetailState extends Equatable {
 /// Initial state before any load
 class OrderDetailInitial extends OrderDetailState {}
 
-/// Order detail is being loaded
+/// Order detail is being loaded for the first time
 class OrderDetailLoading extends OrderDetailState {}
 
 /// Order detail loaded successfully
@@ -28,19 +39,51 @@ class OrderDetailLoaded extends OrderDetailState {
   final List<OrderProduct> products;
   final Channel? channel;
 
+  /// Current stock keyed by material id, for the pack preview.
+  final Map<int, StockLevel> materialStock;
+
+  /// Current stock keyed by standalone product id.
+  final Map<int, StockLevel> productStock;
+
+  /// An action (pack, ship, adjust, delete) is running.
+  final bool isBusy;
+
   const OrderDetailLoaded({
     required this.order,
     required this.items,
     required this.materials,
     this.products = const [],
     this.channel,
+    this.materialStock = const {},
+    this.productStock = const {},
+    this.isBusy = false,
   });
 
+  OrderDetailLoaded copyWith({bool? isBusy}) => OrderDetailLoaded(
+        order: order,
+        items: items,
+        materials: materials,
+        products: products,
+        channel: channel,
+        materialStock: materialStock,
+        productStock: productStock,
+        isBusy: isBusy ?? this.isBusy,
+      );
+
   @override
-  List<Object?> get props => [order, items, materials, products, channel];
+  List<Object?> get props => [
+        order,
+        items,
+        materials,
+        products,
+        channel,
+        materialStock,
+        productStock,
+        isBusy,
+      ];
 }
 
-/// Error occurred while loading order detail
+/// The order couldn't be loaded
 class OrderDetailError extends OrderDetailState {
   final String message;
 
@@ -50,14 +93,19 @@ class OrderDetailError extends OrderDetailState {
   List<Object?> get props => [message];
 }
 
-/// An order action (pack/ship/adjust) completed successfully
-class OrderDetailActionSuccess extends OrderDetailState {
+/// One-shot result of an action, shown as a snackbar. The loaded state is
+/// re-emitted right after so the screen stays in place.
+class OrderDetailMessage extends OrderDetailState {
   final String message;
+  final bool isError;
 
-  const OrderDetailActionSuccess(this.message);
+  /// Guarantees two identical messages in a row are both delivered.
+  final int serial;
+
+  const OrderDetailMessage(this.message, {this.isError = false, this.serial = 0});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, isError, serial];
 }
 
 /// Order was deleted successfully

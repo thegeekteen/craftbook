@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/order_item.dart';
+import '../../domain/usecases/preview_order.dart';
 
 /// Base class for new order states
 abstract class NewOrderState extends Equatable {
@@ -24,6 +25,12 @@ class NewOrderDetailsFilled extends NewOrderState {
   final List<OrderItemInput> items;
   final double totalSales;
 
+  /// Filled on the review step; cleared whenever details or items change.
+  final OrderPreview? preview;
+  final bool isPreviewing;
+  final String? previewError;
+  final bool isSaving;
+
   const NewOrderDetailsFilled({
     required this.customerName,
     required this.customerAddress,
@@ -33,6 +40,10 @@ class NewOrderDetailsFilled extends NewOrderState {
     this.note,
     required this.items,
     required this.totalSales,
+    this.preview,
+    this.isPreviewing = false,
+    this.previewError,
+    this.isSaving = false,
   });
 
   double get totalItemCount =>
@@ -48,6 +59,10 @@ class NewOrderDetailsFilled extends NewOrderState {
         note,
         items,
         totalSales,
+        preview,
+        isPreviewing,
+        previewError,
+        isSaving,
       ];
 
   NewOrderDetailsFilled copyWith({
@@ -60,6 +75,11 @@ class NewOrderDetailsFilled extends NewOrderState {
     List<OrderItemInput>? items,
     double? totalSales,
     bool clearNote = false,
+    OrderPreview? preview,
+    bool clearPreview = false,
+    bool? isPreviewing,
+    String? previewError,
+    bool? isSaving,
   }) {
     return NewOrderDetailsFilled(
       customerName: customerName ?? this.customerName,
@@ -70,6 +90,10 @@ class NewOrderDetailsFilled extends NewOrderState {
       note: clearNote ? null : (note ?? this.note),
       items: items ?? this.items,
       totalSales: totalSales ?? this.totalSales,
+      preview: clearPreview ? null : (preview ?? this.preview),
+      isPreviewing: isPreviewing ?? this.isPreviewing,
+      previewError: previewError,
+      isSaving: isSaving ?? this.isSaving,
     );
   }
 }

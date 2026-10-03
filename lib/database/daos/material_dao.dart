@@ -25,7 +25,8 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
   /// Get materials below alert level
   Future<List<Material>> getLowStockMaterials() {
     return (select(materials)
-          ..where((t) => t.quantityOnHand.isSmallerThan(t.alertLevel)))
+          // Same rule as Material.isLowStock: at or below the reorder level.
+          ..where((t) => t.quantityOnHand.isSmallerOrEqual(t.alertLevel)))
         .get();
   }
 

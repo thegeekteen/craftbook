@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/profit_trend.dart';
+
 /// Base class for earnings events
 abstract class EarningsEvent extends Equatable {
   const EarningsEvent();
@@ -8,44 +10,18 @@ abstract class EarningsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load the overall earnings summary for a date range
+/// Load everything the Money screen shows for one period.
 class LoadEarnings extends EarningsEvent {
   final DateTime startDate;
   final DateTime endDate;
+  final TrendGranularity granularity;
 
   const LoadEarnings({
     required this.startDate,
     required this.endDate,
+    this.granularity = TrendGranularity.day,
   });
 
   @override
-  List<Object?> get props => [startDate, endDate];
-}
-
-/// Load per-product earnings for a date range
-class LoadProductEarnings extends EarningsEvent {
-  final DateTime startDate;
-  final DateTime endDate;
-
-  const LoadProductEarnings({
-    required this.startDate,
-    required this.endDate,
-  });
-
-  @override
-  List<Object?> get props => [startDate, endDate];
-}
-
-/// Load the waste summary for a date range
-class LoadWasteSummary extends EarningsEvent {
-  final DateTime startDate;
-  final DateTime endDate;
-
-  const LoadWasteSummary({
-    required this.startDate,
-    required this.endDate,
-  });
-
-  @override
-  List<Object?> get props => [startDate, endDate];
+  List<Object?> get props => [startDate, endDate, granularity];
 }

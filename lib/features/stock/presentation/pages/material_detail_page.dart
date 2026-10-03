@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/utils/date_utils.dart' as app_date;
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_sheet.dart';
+import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
-import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/pip_strip.dart';
+import '../../../../core/widgets/section_label.dart';
+import '../../../../core/widgets/stat_tile.dart';
 import '../../../../core/widgets/stepper_input.dart';
-import '../../domain/usecases/delete_material.dart';
-import '../../../orders/domain/entities/order.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../domain/entities/material.dart';
 import '../../domain/entities/stock_movement.dart';
 import '../../domain/usecases/adjust_stock.dart';
+import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_material_detail.dart';
 
-/// Material detail page — stock overview, movements, and actions
+/// One material: stock with pips, cost facts, where it's used, history.
 class MaterialDetailPage extends StatefulWidget {
   final int materialId;
 
@@ -34,404 +40,342 @@ class MaterialDetailPage extends StatefulWidget {
 class _MaterialDetailPageState extends State<MaterialDetailPage> {
   Material? _material;
   List<StockMovement> _movements = [];
-  List<Product> _usedInProducts = [];
-  bool _isLoading = true;
+
+  /// Products using this material and how many pieces each needs.
+  List<(Product, int)> _usedIn = [];
+  bool _loading = true;
   String? _error;
+  bool _changed = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _load();
   }
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    final getDetail = getIt<GetMaterialDetail>();
-    final result = await getDetail(widget.materialId);
-
+  Future<void> _load() async {
+    final result = await getIt<GetMaterialDetail>()(widget.materialId);
+    if (!mounted) return;
     switch (result) {
       case Error(:final failure):
-        if (mounted) {
-          setState(() {
-            _error = failure.message;
-            _isLoading = false;
-          });
-        }
+        setState(() {
+          _error = failure.message;
+          _loading = false;
+        });
       case Success(:final value):
-        // Load products using this material
-        final productRepo = getIt<ProductRepository>();
-        final productsResult =
-            await productRepo.getProductsUsingMaterial(widget.materialId);
-        final products = switch (productsResult) {
-          Error() => <Product>[],
-          Success(:final value) => value,
-        };
-
-        if (mounted) {
-          setState(() {
-            _material = value.material;
-            _movements = value.movements;
-            _usedInProducts = products;
-            _isLoading = false;
-          });
+        final repo = getIt<ProductRepository>();
+        final usedIn = <(Product, int)>[];
+        final productsResult = await repo.getProductsUsingMaterial(widget.materialId);
+        if (productsResult case Success(value: final products)) {
+          for (final p in products) {
+            final bom = await repo.getBomItems(p.id!);
+            final perPiece = switch (bom) {
+              Success(:final value) => value
+                  .where((b) => b.materialId == widget.materialId)
+                  .fold<int>(0, (s, b) => s + b.quantityRequired),
+              Error() => 0,
+            };
+            usedIn.add((p, perPiece));
+          }
         }
+        if (!mounted) return;
+        setState(() {
+          _material = value.material;
+          _movements = value.movements..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _usedIn = usedIn;
+          _loading = false;
+          _error = null;
+        });
     }
   }
 
-  void _showAdjustDialog() {
-    if (_material == null) return;
-    int newQty = _material!.quantityOnHand;
+  Future<void> _receive() async {
+    final changed = await context.push<bool>(RouteNames.receiveStockPath(widget.materialId));
+    if (changed == true && mounted) {
+      _changed = true;
+      _load();
+    }
+  }
 
-    showDialog(
+  Future<void> _count(Material m) async {
+    var counted = m.quantityOnHand;
+    final save = await showAppSheet<bool>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.paperHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Count / Adjust',
-              style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+      title: 'Count stock',
+      subtitle: 'Set how many pieces are actually on the shelf.',
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheet) {
+          final c = sheetContext.colors;
+          final diff = counted - m.quantityOnHand;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Current: ${_material!.quantityOnHand}',
-                  style: AppTextStyles.bodySmall),
-              const SizedBox(height: 12),
-              StepperInput(
-                value: newQty,
-                min: 0,
-                max: 99999,
-                onChanged: (val) => setDialogState(() => newQty = val.toInt()),
+              Center(
+                child: StepperInput(
+                  value: counted,
+                  min: 0,
+                  max: 99999,
+                  onChanged: (v) => setSheet(() => counted = v.toInt()),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                diff == 0
+                    ? 'Matches the app (${m.quantityOnHand})'
+                    : '${diff > 0 ? '+' : '−'}${diff.abs()} from ${m.quantityOnHand} in the app',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: diff == 0 ? c.muted : (diff > 0 ? c.go : c.alert),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: diff == 0 ? null : () => Navigator.pop(sheetContext, true),
+                child: const Text('Save count'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel',
-                  style: TextStyle(color: AppColors.muted)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                final adjustStock = getIt<AdjustStock>();
-                final result =
-                    await adjustStock(widget.materialId, newQty);
-                switch (result) {
-                  case Error(:final failure):
-                    if (mounted) {
-                      context.showSnackBar(failure.message, isError: true);
-                    }
-                  case Success():
-                    if (mounted) {
-                      context.showSnackBar('Stock adjusted');
-                      _loadData();
-                    }
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
+    if (save != true || !mounted) return;
+    final result = await getIt<AdjustStock>()(widget.materialId, counted);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        context.showSnackBar('Stock set to $counted');
+        _changed = true;
+        _load();
+    }
+  }
+
+  Future<void> _delete(Material m) async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Delete ${m.name}?',
+      message: "This can't be undone. Materials used in a product or with stock history can't be deleted.",
+      confirmText: 'Delete',
+      isDestructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    final result = await getIt<DeleteMaterial>()(widget.materialId);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        context.showSnackBar('${m.name} deleted');
+        context.pop(true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.pop(_changed);
+      },
+      child: _buildScaffold(),
+    );
+  }
+
+  Widget _buildScaffold() {
+    final back = BackButton(onPressed: () => context.pop(_changed));
+    if (_loading) {
+      return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null || _material == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Material')),
-        body: const Center(child: CircularProgressIndicator()),
+        appBar: AppBar(leading: back),
+        body: Center(child: ErrorState(message: _error ?? 'Material not found', onRetry: _load)),
       );
     }
-
-    if (_error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Material')),
-        body: Center(
-          child: Text(_error!,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.alert)),
-        ),
-      );
-    }
-
-    if (_material == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Material')),
-        body: const Center(child: Text('Material not found')),
-      );
-    }
-
-    final mat = _material!;
+    final c = context.colors;
+    final m = _material!;
+    final low = m.isLowStock;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(mat.name,
-            style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+        leading: back,
+        title: Text(m.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'delete') {
-                final confirmed = await ConfirmDialog.show(
-                  context,
-                  title: 'Delete material?',
-                  message:
-                      'This will permanently remove "${mat.name}". This cannot be undone.',
-                  confirmText: 'Delete',
-                  isDestructive: true,
-                );
-                if (confirmed && mounted) {
-                  final deleteMaterial = getIt<DeleteMaterial>();
-                  final result = await deleteMaterial(widget.materialId);
-                  switch (result) {
-                    case Error(:final failure):
-                      if (mounted) {
-                        context.showSnackBar(failure.message, isError: true);
-                      }
-                    case Success():
-                      if (mounted) {
-                        context.showSnackBar('Material deleted');
-                        context.pop(true);
-                      }
-                  }
-                }
-              }
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (v) {
+              if (v == 'delete') _delete(m);
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
+            itemBuilder: (_) => [
+              PopupMenuItem(
                 value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline,
-                        color: AppColors.alert, size: 20),
-                    SizedBox(width: 8),
-                    Text('Delete',
-                        style: TextStyle(color: AppColors.alert)),
-                  ],
-                ),
+                child: Row(children: [
+                  Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                  const SizedBox(width: 10),
+                  Text('Delete material', style: TextStyle(color: c.alert)),
+                ]),
               ),
             ],
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.page.copyWith(top: 8),
           children: [
-            // Stock overview card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: mat.isLowStock
-                    ? AppColors.alertSoft.withOpacity(0.3)
-                    : AppColors.paperHigh,
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: mat.isLowStock
-                      ? AppColors.alert.withOpacity(0.3)
-                      : AppColors.hair,
-                ),
-              ),
+            AppCard(
+              borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${mat.quantityOnHand}',
-                    style: AppTextStyles.displayLarge.copyWith(
-                      color: mat.isLowStock
-                          ? AppColors.alert
-                          : AppColors.ink,
-                    ),
-                  ),
-                  Text(
-                    'ON HAND',
-                    style: AppTextStyles.monoSection,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '${m.quantityOnHand}',
+                        style: AppTextStyles.displayLarge.copyWith(color: low ? c.alert : c.ink, fontSize: 44),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('PCS ON HAND', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                      const Spacer(),
+                      if (low) const AppTag.low(),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   PipStrip(
-                    total: mat.quantityOnHand.clamp(0, 50),
-                    free: mat.quantityFree.clamp(0, 50),
-                    promised: mat.quantityPromised.clamp(0, 50),
-                    isLow: mat.isLowStock,
+                    total: m.quantityOnHand,
+                    free: m.quantityFree,
+                    promised: m.quantityPromised,
+                    alertLevel: m.alertLevel,
+                    isLow: low,
+                    size: PipSize.large,
                   ),
+                  const SizedBox(height: 8),
+                  const PipLegend(),
+                  const SizedBox(height: 14),
+                  StatRow(children: [
+                    m.quantityFree < 0
+                        ? StatTile(label: 'Short', value: '${-m.quantityFree}', valueColor: c.alert)
+                        : StatTile(label: 'Free', value: '${m.quantityFree}', valueColor: c.go),
+                    StatTile(label: 'Promised', value: '${m.quantityPromised}', valueColor: m.quantityPromised > 0 ? c.alert : null),
+                    StatTile(label: 'Reorder at', value: '${m.alertLevel}'),
+                  ]),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _Stat(label: 'Free', value: mat.quantityFree),
-                      const SizedBox(width: 20),
-                      _Stat(
-                          label: 'Promised',
-                          value: mat.quantityPromised),
-                      const SizedBox(width: 20),
-                      _Stat(label: 'Alert', value: mat.alertLevel),
-                    ],
-                  ),
+                  Divider(color: c.hair),
+                  const SizedBox(height: 12),
+                  StatRow(children: [
+                    StatTile(label: 'Unit cost', value: CurrencyFormatter.format(m.unitCost), compact: true),
+                    StatTile(label: 'Pack', value: '${m.packSize} pcs', compact: true),
+                    StatTile(label: 'Supplier', value: m.supplier?.isNotEmpty == true ? m.supplier! : '—', compact: true),
+                  ]),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-
-            // Action buttons
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await context.push<bool>(
-                        RouteNames.receiveStock
-                            .replaceFirst(':id', '${mat.id}'),
-                      );
-                      if (result == true && mounted) {
-                        _loadData();
-                      }
-                    },
-                    icon: const Icon(Icons.add_box_outlined, size: 16),
+                  child: FilledButton.icon(
+                    onPressed: _receive,
+                    icon: const Icon(Icons.add_rounded, size: 20),
                     label: const Text('Receive'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _showAdjustDialog,
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Adjust'),
+                    onPressed: () => _count(m),
+                    icon: const Icon(Icons.fact_check_outlined, size: 18),
+                    label: const Text('Count'),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Used in products
-            if (_usedInProducts.isNotEmpty) ...[
-              Text('USED IN', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              ..._usedInProducts.map((p) => Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.paperHigh,
-                      border: Border(
-                          bottom: BorderSide(color: AppColors.hair)),
+            const SizedBox(height: 8),
+            SectionLabel('Used in · ${_usedIn.length}'),
+            const SizedBox(height: 8),
+            if (_usedIn.isEmpty)
+              _quiet('Not part of any product yet.')
+            else
+              AppCard.flush(
+                child: CardList(children: [
+                  for (final (p, perPiece) in _usedIn)
+                    CardRow(
+                      title: Text(p.name),
+                      trailing: Text(
+                        '$perPiece per piece',
+                        style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                      ),
+                      onTap: () => context.push(RouteNames.productEditorPath(p.id!)),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(p.name,
-                              style: AppTextStyles.bodyMedium
-                                  .copyWith(color: AppColors.ink)),
-                        ),
-                        CurrencyText(
-                          amount: p.sellPrice,
-                          style: AppTextStyles.bodySmall
-                              .copyWith(color: AppColors.muted),
-                        ),
-                      ],
-                    ),
-                  )),
-              const SizedBox(height: 24),
-            ],
-
-            // Movements
-            Text('MOVEMENTS', style: AppTextStyles.monoSection),
+                ]),
+              ),
+            const SizedBox(height: 8),
+            const SectionLabel('History'),
             const SizedBox(height: 8),
             if (_movements.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Text('No movements yet',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.muted)),
-                ),
-              )
+              _quiet('No stock changes yet.')
             else
-              ..._movements.map((m) => _MovementRow(movement: m)),
+              AppCard.flush(
+                child: CardList(children: [
+                  for (final mv in _movements.take(30)) _MovementRow(movement: mv),
+                ]),
+              ),
           ],
         ),
       ),
     );
   }
-}
 
-class _Stat extends StatelessWidget {
-  final String label;
-  final int value;
-  const _Stat({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(),
-            style: AppTextStyles.monoLabel
-                .copyWith(color: AppColors.muted, fontSize: 8)),
-        const SizedBox(height: 1),
-        Text('$value',
-            style:
-                AppTextStyles.bodyMedium.copyWith(color: AppColors.ink)),
-      ],
-    );
-  }
+  Widget _quiet(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
+        child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
+      );
 }
 
 class _MovementRow extends StatelessWidget {
   final StockMovement movement;
+
   const _MovementRow({required this.movement});
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = movement.type == StockMovementType.received;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
-        border: Border(bottom: BorderSide(color: AppColors.hair)),
+    final c = context.colors;
+    final mv = movement;
+    final adds = mv.type == StockMovementType.received ||
+        (mv.type == StockMovementType.adjusted && mv.quantity > 0);
+    final color = adds ? c.go : c.alert;
+    final qty = mv.quantity.abs();
+    final title = switch (mv.type) {
+      StockMovementType.received => mv.reference?.contains('Restored') == true ? 'Returned from deleted order' : 'Received',
+      StockMovementType.deducted => 'Used in an order',
+      StockMovementType.adjusted => 'Counted',
+      StockMovementType.waste => 'Waste',
+    };
+    final when = DateFormat('MMM d, y').format(mv.createdAt);
+    return CardRow(
+      leading: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: adds ? c.goSoft : c.alertSoft,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(adds ? Icons.south_west_rounded : Icons.north_east_rounded, size: 16, color: color),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isPositive ? AppColors.success : AppColors.alert,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  movement.type.displayName,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.ink),
-                ),
-                Text(
-                  app_date.DateUtils.formatDate(movement.createdAt),
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${isPositive ? '+' : '−'}${movement.quantity}',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: isPositive ? AppColors.success : AppColors.alert,
-            ),
-          ),
-        ],
+      title: Text(title),
+      subtitle: Text(
+        mv.type == StockMovementType.received && mv.unitCost > 0
+            ? '$when · ${CurrencyFormatter.format(mv.unitCost)}/pc'
+            : when,
+      ),
+      trailing: Text(
+        '${adds ? '+' : '−'}$qty',
+        style: AppTextStyles.amount.copyWith(color: color, fontSize: 15),
       ),
     );
   }

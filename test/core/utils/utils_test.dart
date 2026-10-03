@@ -20,6 +20,16 @@ void main() {
       expect(result, contains('1.5M'));
     });
 
+    test('formatShort drops .00 on whole amounts only', () {
+      expect(CurrencyFormatter.formatShort(412), '₱412');
+      expect(CurrencyFormatter.formatShort(1234), '₱1,234');
+      expect(CurrencyFormatter.formatShort(18.5), '₱18.50');
+    });
+
+    test('formatCompact keeps the sign of losses', () {
+      expect(CurrencyFormatter.formatCompact(-2500), '−₱2.5K');
+    });
+
     test('formatWithoutSymbol returns number only', () {
       final result = CurrencyFormatter.formatWithoutSymbol(99.5);
       expect(result, '99.50');

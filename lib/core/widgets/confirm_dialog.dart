@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../theme/colors.dart';
 
-/// Reusable confirmation dialog widget
+/// Confirmation dialog. Destructive actions get a red confirm button.
 class ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -22,65 +23,35 @@ class ConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return AlertDialog(
-      backgroundColor: AppColors.paperHigh,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'SpaceGrotesk',
-          letterSpacing: -0.02,
-        ),
-      ),
+      title: Text(title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            message,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.muted,
-              height: 1.4,
-            ),
-          ),
+          Text(message),
           if (content != null) ...[
             const SizedBox(height: 12),
             content!,
           ],
         ],
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(
-            cancelText ?? 'Cancel',
-            style: const TextStyle(
-              color: AppColors.muted,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          style: TextButton.styleFrom(foregroundColor: c.muted),
+          child: Text(cancelText ?? 'Cancel'),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isDestructive ? AppColors.alert : AppColors.success,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          style: FilledButton.styleFrom(
+            backgroundColor: isDestructive ? c.alert : c.go,
+            foregroundColor: c.onAccent,
+            minimumSize: const Size(0, 44),
           ),
-          child: Text(
-            confirmText ?? 'Confirm',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: Text(confirmText ?? 'Confirm'),
         ),
       ],
     );

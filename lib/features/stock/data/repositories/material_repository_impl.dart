@@ -226,8 +226,9 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> deductMaterials(
     int materialId,
-    int quantity,
-  ) async {
+    int quantity, {
+    int? reserved,
+  }) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
@@ -237,7 +238,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       await dao.updateMaterialStock(
         materialId,
         max(0, current.quantityOnHand - quantity),
-        max(0, current.quantityPromised - quantity),
+        max(0, current.quantityPromised - (reserved ?? quantity)),
       );
 
       // Record stock movement
@@ -297,8 +298,11 @@ class MaterialRepositoryImpl implements MaterialRepository {
         // Calculate packs needed to reach alert level + cover promised
         final targetQty = material.alertLevel + material.quantityPromised;
         final deficit = targetQty - material.quantityOnHand;
+        final packSize = material.packSize > 0 ? material.packSize : 1;
+        // Anything on this list needs at least one pack, even when it sits
+        // exactly at its reorder level.
         final packsToOrder =
-            deficit > 0 ? (deficit / material.packSize).ceil() : 0;
+            deficit > 0 ? (deficit / packSize).ceil() : 1;
 
         // Find products blocked by this material
         final blockedProducts = <BlockedProduct>[];

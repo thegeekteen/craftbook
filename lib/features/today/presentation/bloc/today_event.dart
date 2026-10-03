@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 
 /// Base class for today events
@@ -8,8 +10,10 @@ abstract class TodayEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load today's orders
-class LoadToday extends TodayEvent {}
+/// Load (or reload) the dashboard. [done] completes when loading finishes,
+/// so pull-to-refresh can stop its spinner.
+class LoadToday extends TodayEvent {
+  final Completer<void>? done;
 
-/// Load alert summary (low stock, blocked products/orders)
-class LoadAlerts extends TodayEvent {}
+  LoadToday({this.done});
+}

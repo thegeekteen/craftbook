@@ -31,7 +31,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
     LoadChannels event,
     Emitter<ChannelsState> emit,
   ) async {
-    emit(ChannelsLoading());
+    if (state is! ChannelsLoaded) emit(ChannelsLoading());
     final result = await getChannels(activeOnly: event.activeOnly);
     switch (result) {
       case Error(:final failure):

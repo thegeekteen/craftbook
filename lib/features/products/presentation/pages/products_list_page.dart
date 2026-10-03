@@ -4,18 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/theme/colors.dart';
-import '../../../../core/theme/text_styles.dart';
-import '../../../../core/utils/extensions.dart';
-import '../../domain/usecases/calculate_bom_cost.dart';
-import '../../domain/usecases/calculate_buildable_quantity.dart';
+import '../../../../core/theme/dimens.dart';
+import '../../../../core/widgets/app_search_field.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../bloc/products_bloc.dart';
 import '../bloc/products_event.dart';
 import '../bloc/products_state.dart';
 import '../widgets/product_card.dart';
 
-/// Products list page
+/// The product catalogue with cost, margin and availability.
 class ProductsListPage extends StatelessWidget {
   const ProductsListPage({super.key});
 
@@ -36,299 +33,90 @@ class _ProductsListView extends StatefulWidget {
 }
 
 class _ProductsListViewState extends State<_ProductsListView> {
-  final _searchController = TextEditingController();
+  String _query = '';
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _reload() => context.read<ProductsBloc>().add(const LoadProducts());
+
+  Future<void> _open(String location) async {
+    final changed = await context.push<bool>(location);
+    if (changed == true && mounted) _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Products',
-          style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_outlined, size: 20),
-            onPressed: () => context.push(RouteNames.channels),
+      appBar: AppBar(title: const Text('Products')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+            child: AppSearchField(
+              hint: 'Search products',
+              onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+            ),
+          ),
+          Expanded(
+            child: BlocBuilder<ProductsBloc, ProductsState>(
+              builder: (context, state) {
+                return switch (state) {
+                  ProductsLoaded() => _buildList(state),
+                  ProductsError(:final message) =>
+                    Center(child: ErrorState(message: message, onRetry: _reload)),
+                  _ => const Center(child: CircularProgressIndicator()),
+                };
+              },
+            ),
           ),
         ],
       ),
-      body: BlocConsumer<ProductsBloc, ProductsState>(
-        listener: (context, state) {
-          if (state is ProductsError) {
-            context.showSnackBar(state.message, isError: true);
-          }
-        },
-        builder: (context, state) {
-          if (state is ProductsLoading || state is ProductsInitial) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is ProductsLoaded) {
-            final query = _searchController.text.toLowerCase();
-            final filtered = query.isEmpty
-                ? state.products
-                : state.products.where((p) =>
-                    p.name.toLowerCase().contains(query)).toList();
-
-            if (state.products.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.inventory_2_outlined,
-                        color: AppColors.muted, size: 48),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No products yet',
-                      style: AppTextStyles.bodyLarge
-                          .copyWith(color: AppColors.muted),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Tap + to add your first product',
-                      style: AppTextStyles.bodySmall,
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<ProductsBloc>().add(const LoadProducts());
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search products...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                              },
-                            )
-                          : null,
-                      isDense: true,
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 12),
-                  if (filtered.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-                      child: Center(
-                        child: Text(
-                          'No products match "${_searchController.text}"',
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.muted),
-                        ),
-                      ),
-                    ),
-                  ...filtered.map(
-                    (product) =>
-                        _ProductCardWithAsyncData(product: product),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is ProductsError) {
-            return Center(
-              child: Text(state.message,
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.alert)),
-            );
-          }
-
-          return const SizedBox.shrink();
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddProductDialog(context),
-        backgroundColor: AppColors.success,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _open(RouteNames.newProduct),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Product'),
       ),
     );
   }
 
-  void _showAddProductDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final priceController = TextEditingController();
-    final unitCostController = TextEditingController();
-    bool isStandalone = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.paperHigh,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('New product',
-              style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration:
-                      const InputDecoration(labelText: 'Product name'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: priceController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Sell price',
-                    prefixText: '₱ ',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Standalone (no BOM)',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.muted),
-                      ),
-                    ),
-                    Switch(
-                      value: isStandalone,
-                      onChanged: (val) =>
-                          setDialogState(() => isStandalone = val),
-                      activeColor: AppColors.coin,
-                    ),
-                  ],
-                ),
-                if (isStandalone) ...[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: unitCostController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Unit cost',
-                      prefixText: '₱ ',
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  Text('Cancel', style: TextStyle(color: AppColors.muted)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                final price = double.tryParse(priceController.text) ?? 0;
-                final unitCost =
-                    double.tryParse(unitCostController.text) ?? 0;
-
-                if (name.isEmpty) {
-                  context.showSnackBar('Name is required', isError: true);
-                  return;
-                }
-                if (price <= 0) {
-                  context.showSnackBar('Price must be > 0', isError: true);
-                  return;
-                }
-
-                Navigator.pop(ctx);
-                context.read<ProductsBloc>().add(CreateProductEvent(
-                      name: name,
-                      sellPrice: price,
-                      isStandalone: isStandalone,
-                      initialUnitCost: isStandalone ? unitCost : 0,
-                    ));
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Wrapper that loads async data (buildable qty, material cost) per product
-class _ProductCardWithAsyncData extends StatefulWidget {
-  final dynamic product;
-
-  const _ProductCardWithAsyncData({required this.product});
-
-  @override
-  State<_ProductCardWithAsyncData> createState() =>
-      _ProductCardWithAsyncDataState();
-}
-
-class _ProductCardWithAsyncDataState extends State<_ProductCardWithAsyncData> {
-  int? _buildableQuantity;
-  double? _materialCost;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAsyncData();
-  }
-
-  Future<void> _loadAsyncData() async {
-    final productId = widget.product.id as int;
-    final calcBuildable = getIt<CalculateBuildableQuantity>();
-    final calcBomCost = getIt<CalculateBomCost>();
-
-    final bResult = await calcBuildable(productId);
-    final cResult = await calcBomCost(productId);
-
-    if (mounted) {
-      setState(() {
-        _buildableQuantity = switch (bResult) {
-          Error() => null,
-          Success(:final value) => value,
-        };
-        _materialCost = switch (cResult) {
-          Error() => null,
-          Success(:final value) => value,
-        };
+  Widget _buildList(ProductsLoaded state) {
+    final visible = state.products
+        .where((p) => _query.isEmpty || p.name.toLowerCase().contains(_query))
+        .toList()
+      // Active products first, then by name.
+      ..sort((a, b) {
+        if (a.isActive != b.isActive) return a.isActive ? -1 : 1;
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
-    }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return ProductCard(
-      product: widget.product,
-      buildableQuantity: _buildableQuantity,
-      materialCost: _materialCost,
-      onTap: () async {
-        final result = await context.push<bool>(
-          RouteNames.productEditor
-              .replaceFirst(':id', '${widget.product.id}'),
-        );
-        if (result == true && context.mounted) {
-          context.read<ProductsBloc>().add(const LoadProducts());
-        }
-      },
+    if (visible.isEmpty) {
+      return ListView(children: [
+        state.products.isEmpty
+            ? EmptyState(
+                icon: Icons.sell_outlined,
+                title: 'No products yet',
+                message: 'Add what you sell and the materials one piece uses.',
+                actionLabel: 'Add product',
+                onAction: () => _open(RouteNames.newProduct),
+              )
+            : EmptyState(icon: Icons.search_off_rounded, title: 'No matches', message: 'Nothing matches "$_query".'),
+      ]);
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async => _reload(),
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, AppSpacing.fabClearance),
+        itemCount: visible.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, i) {
+          final p = visible[i];
+          return ProductCard(
+            product: p,
+            unitCost: state.unitCosts[p.id],
+            available: state.available[p.id],
+            onTap: () => _open(RouteNames.productEditorPath(p.id!)),
+          );
+        },
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/colors.dart';
+import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
 
 /// Stepper input with +/- buttons and a text field for manual entry.
@@ -103,49 +104,54 @@ class _StepperInputState extends State<StepperInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _StepperButton(
-          icon: Icons.remove,
-          onPressed: widget.value > widget.min ? _decrement : null,
-        ),
-        SizedBox(
-          width: 48,
-          child: TextField(
-            controller: _controller,
-            focusNode: _focusNode,
-            textAlign: TextAlign.center,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(
-                RegExp(widget.decimals > 0 ? r'[\d.]' : r'\d'),
-              ),
-            ],
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-              isDense: true,
-            ),
-            onTap: () => setState(() => _isEditing = true),
-            onChanged: (_) => setState(() => _isEditing = true),
-            onSubmitted: _commitText,
-            onEditingComplete: () => _commitText(_controller.text),
+    final c = context.colors;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: AppRadii.pillAll,
+        border: Border.all(color: c.hair),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepperButton(
+            icon: Icons.remove,
+            onPressed: widget.value > widget.min ? _decrement : null,
           ),
-        ),
-        _StepperButton(
-          icon: Icons.add,
-          onPressed: widget.value < widget.max ? _increment : null,
-        ),
-      ],
+          SizedBox(
+            width: widget.decimals > 0 ? 52 : 40,
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              textAlign: TextAlign.center,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(widget.decimals > 0 ? r'[\d.]' : r'\d'),
+                ),
+              ],
+              style: AppTextStyles.amount.copyWith(color: c.ink, fontSize: 16),
+              decoration: const InputDecoration(
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                isDense: true,
+              ),
+              onTap: () => setState(() => _isEditing = true),
+              onChanged: (_) => setState(() => _isEditing = true),
+              onSubmitted: _commitText,
+              onEditingComplete: () => _commitText(_controller.text),
+            ),
+          ),
+          _StepperButton(
+            icon: Icons.add,
+            onPressed: widget.value < widget.max ? _increment : null,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -161,23 +167,20 @@ class _StepperButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Material(
       color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppColors.paper,
-            border: Border.all(color: AppColors.hair),
-            borderRadius: BorderRadius.circular(8),
-          ),
+        child: SizedBox(
+          width: 38,
+          height: 38,
           child: Icon(
             icon,
-            size: 16,
-            color: onPressed != null ? AppColors.ink : AppColors.muted,
+            size: 18,
+            color: onPressed != null ? c.ink : c.hair,
           ),
         ),
       ),

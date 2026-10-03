@@ -42,16 +42,19 @@ import '../../features/orders/domain/usecases/ship_order.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
 import '../../features/orders/domain/usecases/delete_order.dart';
+import '../../features/orders/domain/usecases/get_order_list_entries.dart';
+import '../../features/orders/domain/usecases/preview_order.dart';
 
 import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
 import '../../features/earnings/domain/repositories/earnings_repository.dart';
 import '../../features/earnings/domain/usecases/get_earnings_summary.dart';
 import '../../features/earnings/domain/usecases/get_product_earnings.dart';
 import '../../features/earnings/domain/usecases/get_waste_summary.dart';
+import '../../features/earnings/domain/usecases/get_profit_trend.dart';
+import '../../features/earnings/domain/usecases/get_product_order_lines.dart';
 
-import '../../features/today/domain/usecases/get_today_orders.dart';
-import '../../features/today/domain/usecases/get_week_orders.dart';
 import '../../features/today/domain/usecases/get_alert_summary.dart';
+import '../../features/today/domain/usecases/get_today_dashboard.dart';
 
 import '../../features/products/presentation/bloc/products_bloc.dart';
 import '../../features/products/presentation/bloc/channels_bloc.dart';
@@ -64,8 +67,9 @@ import '../../features/earnings/presentation/bloc/earnings_bloc.dart';
 
 final getIt = GetIt.instance;
 
-Future<void> configureDependencies() async {
-  final db = AppDatabase();
+/// Registers everything. Tests pass an in-memory [database].
+Future<void> configureDependencies({AppDatabase? database}) async {
+  final db = database ?? AppDatabase();
 
   // Database
   getIt.registerSingleton<AppDatabase>(db);
@@ -137,6 +141,15 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => ShipOrder(getIt()));
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
+  getIt.registerFactory(() => PreviewOrder(
+    productRepository: getIt(),
+    materialRepository: getIt(),
+    calculateOrderProfit: getIt(),
+  ));
+  getIt.registerFactory(() => GetOrderListEntries(
+    orderRepository: getIt(),
+    channelRepository: getIt(),
+  ));
   getIt.registerFactory(() => DeleteOrder(
     orderRepository: getIt(),
     materialRepository: getIt(),
@@ -147,11 +160,17 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => GetEarningsSummary(getIt()));
   getIt.registerFactory(() => GetProductEarnings(getIt()));
   getIt.registerFactory(() => GetWasteSummary(getIt()));
+  getIt.registerFactory(() => GetProfitTrend(getIt()));
+  getIt.registerFactory(() => GetProductOrderLines(getIt()));
 
   // Use Cases - Today
-  getIt.registerFactory(() => GetTodayOrders(getIt()));
-  getIt.registerFactory(() => GetWeekOrders(getIt()));
   getIt.registerFactory(() => GetAlertSummary(getIt()));
+  getIt.registerFactory(() => GetTodayDashboard(
+    orderRepository: getIt(),
+    earningsRepository: getIt(),
+    getAlertSummary: getIt(),
+    getOrderListEntries: getIt(),
+  ));
 
   // BLoCs
   getIt.registerFactory(() => ProductsBloc(
@@ -159,6 +178,8 @@ Future<void> configureDependencies() async {
     createProduct: getIt(),
     updateProduct: getIt(),
     deleteProduct: getIt(),
+    calculateBomCost: getIt(),
+    calculateBuildableQuantity: getIt(),
   ));
   getIt.registerFactory(() => ChannelsBloc(
     getChannels: getIt(),
@@ -175,28 +196,28 @@ Future<void> configureDependencies() async {
   ));
   getIt.registerFactory(() => OrdersListBloc(
     getOrders: getIt(),
-    packOrder: getIt(),
-    shipOrder: getIt(),
+    getOrderListEntries: getIt(),
   ));
   getIt.registerFactory(() => NewOrderBloc(
     createOrder: getIt(),
     calculateOrderProfit: getIt(),
+    previewOrder: getIt(),
   ));
   getIt.registerFactory(() => OrderDetailBloc(
     orderRepository: getIt(),
     channelRepository: getIt(),
+    materialRepository: getIt(),
+    productRepository: getIt(),
     adjustMaterialsUsed: getIt(),
     packOrder: getIt(),
     shipOrder: getIt(),
     deleteOrder: getIt(),
   ));
-  getIt.registerFactory(() => TodayBloc(
-    getTodayOrders: getIt(),
-    getAlertSummary: getIt(),
-  ));
+  getIt.registerFactory(() => TodayBloc(getTodayDashboard: getIt()));
   getIt.registerFactory(() => EarningsBloc(
     getEarningsSummary: getIt(),
     getProductEarnings: getIt(),
     getWasteSummary: getIt(),
+    getProfitTrend: getIt(),
   ));
 }

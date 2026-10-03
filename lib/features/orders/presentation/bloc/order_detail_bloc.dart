@@ -3,7 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/error/result.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
+import '../../../products/domain/repositories/product_repository.dart';
+import '../../../stock/domain/repositories/material_repository.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_material.dart';
+import '../../domain/entities/order_product.dart';
 import '../../domain/repositories/order_repository.dart';
 import '../../domain/usecases/adjust_materials_used.dart';
 import '../../domain/usecases/delete_order.dart';
@@ -16,6 +20,8 @@ import 'order_detail_state.dart';
 class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final OrderRepository orderRepository;
   final ChannelRepository channelRepository;
+  final MaterialRepository materialRepository;
+  final ProductRepository productRepository;
   final AdjustMaterialsUsed adjustMaterialsUsed;
   final PackOrder packOrder;
   final ShipOrder shipOrder;
@@ -24,6 +30,8 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   OrderDetailBloc({
     required this.orderRepository,
     required this.channelRepository,
+    required this.materialRepository,
+    required this.productRepository,
     required this.adjustMaterialsUsed,
     required this.packOrder,
     required this.shipOrder,
@@ -40,7 +48,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     LoadOrderDetail event,
     Emitter<OrderDetailState> emit,
   ) async {
-    emit(OrderDetailLoading());
+    if (state is! OrderDetailLoaded) emit(OrderDetailLoading());
 
     final orderResult = await orderRepository.getOrderById(event.orderId);
     final Order? order;
@@ -98,6 +106,25 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       Error() => <dynamic>[],
     };
 
+    // Current stock for the pack preview. A missing row just means no
+    // preview numbers for that line, so failures are not fatal here.
+    final materialStock = <int, StockLevel>{};
+    for (final m in materials.cast<OrderMaterial>()) {
+      final r = await materialRepository.getMaterialById(m.materialId);
+      if (r case Success(:final value) when value != null) {
+        materialStock[m.materialId] =
+            StockLevel(onHand: value.quantityOnHand, alertLevel: value.alertLevel);
+      }
+    }
+    final productStock = <int, StockLevel>{};
+    for (final p in products.cast<OrderProduct>()) {
+      final r = await productRepository.getProductById(p.productId);
+      if (r case Success(:final value) when value != null) {
+        productStock[p.productId] =
+            StockLevel(onHand: value.quantityOnHand, alertLevel: value.alertLevel);
+      }
+    }
+
     if (emit.isDone) return;
 
     emit(OrderDetailLoaded(
@@ -106,60 +133,71 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       materials: materials.cast(),
       products: products.cast(),
       channel: channel,
+      materialStock: materialStock,
+      productStock: productStock,
     ));
+  }
+
+  int _serial = 0;
+
+  /// Runs [action] with the loaded screen kept in place: marks it busy,
+  /// reports the outcome as a message, then reloads on success.
+  Future<void> _runAction(
+    Emitter<OrderDetailState> emit,
+    int orderId,
+    Future<Result<void>> Function() action,
+    String successMessage,
+  ) async {
+    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    // One action at a time; a double tap shouldn't pack twice.
+    if (loaded?.isBusy ?? false) return;
+    if (loaded != null) emit(loaded.copyWith(isBusy: true));
+    final result = await action();
+    switch (result) {
+      case Error(:final failure):
+        emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+        if (loaded != null) emit(loaded.copyWith(isBusy: false));
+      case Success():
+        emit(OrderDetailMessage(successMessage, serial: ++_serial));
+        if (loaded != null) emit(loaded.copyWith(isBusy: false));
+        await _onLoadOrderDetail(LoadOrderDetail(orderId), emit);
+    }
   }
 
   Future<void> _onAdjustMaterials(
     AdjustMaterials event,
     Emitter<OrderDetailState> emit,
-  ) async {
-    final result =
-        await adjustMaterialsUsed(event.orderId, event.materials);
-    switch (result) {
-      case Error(:final failure):
-        emit(OrderDetailError(failure.message));
-      case Success():
-        emit(const OrderDetailActionSuccess('Materials adjusted successfully'));
-        add(LoadOrderDetail(event.orderId));
-    }
-  }
+  ) =>
+      _runAction(
+        emit,
+        event.orderId,
+        () => adjustMaterialsUsed(event.orderId, event.materials),
+        'Materials updated',
+      );
 
   Future<void> _onPackOrder(
     PackOrderDetail event,
     Emitter<OrderDetailState> emit,
-  ) async {
-    final result = await packOrder(event.orderId);
-    switch (result) {
-      case Error(:final failure):
-        emit(OrderDetailError(failure.message));
-      case Success():
-        emit(const OrderDetailActionSuccess('Order packed successfully'));
-        add(LoadOrderDetail(event.orderId));
-    }
-  }
+  ) =>
+      _runAction(emit, event.orderId, () => packOrder(event.orderId), 'Packed. Stock updated.');
 
   Future<void> _onShipOrder(
     ShipOrderDetail event,
     Emitter<OrderDetailState> emit,
-  ) async {
-    final result = await shipOrder(event.orderId);
-    switch (result) {
-      case Error(:final failure):
-        emit(OrderDetailError(failure.message));
-      case Success():
-        emit(const OrderDetailActionSuccess('Order shipped successfully'));
-        add(LoadOrderDetail(event.orderId));
-    }
-  }
+  ) =>
+      _runAction(emit, event.orderId, () => shipOrder(event.orderId), 'Marked as shipped');
 
   Future<void> _onDeleteOrder(
     DeleteOrderEvent event,
     Emitter<OrderDetailState> emit,
   ) async {
+    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    if (loaded != null) emit(loaded.copyWith(isBusy: true));
     final result = await deleteOrder(event.orderId);
     switch (result) {
       case Error(:final failure):
-        emit(OrderDetailError(failure.message));
+        emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+        if (loaded != null) emit(loaded.copyWith(isBusy: false));
       case Success():
         emit(OrderDeleted());
     }

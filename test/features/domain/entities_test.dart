@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/stock/domain/entities/material.dart';
-import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/domain/entities/channel.dart';
 
 void main() {

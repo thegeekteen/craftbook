@@ -80,4 +80,20 @@ class DateUtils {
     if (diff < -1 && diff >= -7) return '$diff days ago';
     return formatDate(date);
   }
+
+  /// Short human date: "Today", "Tomorrow", "Yesterday", "Wed, Oct 7",
+  /// or "Oct 7, 2025" outside the current year.
+  static String friendly(DateTime date, {DateTime? now}) {
+    final today = startOfDay(now ?? DateTime.now());
+    final diff = startOfDay(date).difference(today).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    if (diff == -1) return 'Yesterday';
+    if (date.year != today.year) return DateFormat('MMM d, y').format(date);
+    return DateFormat('EEE, MMM d').format(date);
+  }
+
+  /// Days from today to [date] (negative when in the past).
+  static int daysFromToday(DateTime date, {DateTime? now}) =>
+      startOfDay(date).difference(startOfDay(now ?? DateTime.now())).inDays;
 }

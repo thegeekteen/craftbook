@@ -3,110 +3,147 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/route_names.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/services/backup_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/section_label.dart';
+import '../../../products/domain/repositories/channel_repository.dart';
+import '../../../products/domain/repositories/product_repository.dart';
+import '../../../stock/domain/repositories/material_repository.dart';
 
-/// Settings page — backup, import, navigation, app info
-class SettingsPage extends StatelessWidget {
+/// More: the catalogue (products, channels, buy list) and your data.
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  String? _productsHint;
+  String? _channelsHint;
+  String? _buyListHint;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHints();
+  }
+
+  /// Live one-liners under each row. Failures just leave the default text.
+  Future<void> _loadHints() async {
+    final products = await getIt<ProductRepository>().getAllProducts();
+    final channels = await getIt<ChannelRepository>().getAllChannels();
+    final buyList = await getIt<MaterialRepository>().getBuyList();
+    if (!mounted) return;
+    setState(() {
+      if (products case Success(:final value)) {
+        final low = value.where((p) => p.isLowStock).length;
+        _productsHint = '${value.length} ${value.length == 1 ? 'product' : 'products'}'
+            '${low > 0 ? ' · $low low' : ''}';
+      }
+      if (channels case Success(:final value)) {
+        final on = value.where((c) => c.isActive).length;
+        final off = value.length - on;
+        _channelsHint = '$on on${off > 0 ? ' · $off off' : ''}';
+      }
+      if (buyList case Success(:final value)) {
+        final total = value.fold<double>(0, (s, i) => s + i.totalCost);
+        _buyListHint = value.isEmpty
+            ? 'Nothing to buy'
+            : '${value.length} ${value.length == 1 ? 'item' : 'items'} · ${CurrencyFormatter.format(total)}';
+      }
+    });
+  }
+
+  Future<void> _open(String location) async {
+    await context.push(location);
+    if (mounted) _loadHints();
+  }
+
+  Future<void> _import() async {
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: 'Restore from backup?',
+      message: 'Everything on this phone is replaced by the backup. '
+          'Restart the app afterwards.',
+      confirmText: 'Restore',
+      isDestructive: true,
+    );
+    if (confirmed && mounted) await BackupService.importDatabase(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Settings',
-          style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
-        ),
-      ),
+      appBar: AppBar(title: const Text('More')),
       body: ListView(
-        padding: const EdgeInsets.all(14),
+        padding: AppSpacing.page,
         children: [
-          _SectionHeader('Backup'),
+          const SectionLabel('Catalogue', padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
           const SizedBox(height: 8),
-          _SettingsCard(
-            icon: Icons.upload_outlined,
-            title: 'Export backup',
-            subtitle: 'Save database file to your device',
-            onTap: () => BackupService.exportDatabase(context),
-          ),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            icon: Icons.download_outlined,
-            title: 'Import backup',
-            subtitle: 'Restore from a database file',
-            onTap: () async {
-              final confirmed = await ConfirmDialog.show(
-                context,
-                title: 'Import backup?',
-                message:
-                    'This will replace all current data with the backup. '
-                    'You will need to restart the app after importing.',
-                confirmText: 'Import',
-                isDestructive: true,
-              );
-              if (confirmed && context.mounted) {
-                await BackupService.importDatabase(context);
-              }
-            },
-          ),
-          const SizedBox(height: 24),
-          _SectionHeader('Navigation'),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            icon: Icons.inventory_2_outlined,
-            title: 'Products',
-            subtitle: 'Manage products and BOM recipes',
-            onTap: () => context.push(RouteNames.products),
-          ),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            icon: Icons.store_outlined,
-            title: 'Channels & fees',
-            subtitle: 'Configure sales channel fee rates',
-            onTap: () => context.push(RouteNames.channels),
-          ),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            icon: Icons.shopping_cart_outlined,
-            title: 'What to buy',
-            subtitle: 'Low stock materials and blocked products',
-            onTap: () => context.push(RouteNames.buyList),
-          ),
-          const SizedBox(height: 24),
-          _SectionHeader('About'),
-          const SizedBox(height: 8),
-          Card(
-            color: AppColors.paperHigh,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(13),
-              side: const BorderSide(color: AppColors.hair),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppConstants.appName,
-                    style: AppTextStyles.displaySmall
-                        .copyWith(color: AppColors.ink),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Version ${AppConstants.appVersion}',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Offline-first order & material tracker for craft businesses.',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                ],
+          AppCard.flush(
+            child: CardList(children: [
+              _MoreRow(
+                icon: Icons.sell_outlined,
+                title: 'Products',
+                subtitle: _productsHint ?? 'What you sell and what goes into it',
+                onTap: () => _open(RouteNames.products),
               ),
+              _MoreRow(
+                icon: Icons.storefront_outlined,
+                title: 'Channels & fees',
+                subtitle: _channelsHint ?? 'Where you sell and what they charge',
+                onTap: () => _open(RouteNames.channels),
+              ),
+              _MoreRow(
+                icon: Icons.shopping_basket_outlined,
+                title: 'Buy list',
+                subtitle: _buyListHint ?? 'Materials to restock',
+                onTap: () => _open(RouteNames.buyList),
+              ),
+            ]),
+          ),
+          const SectionLabel('Your data', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SizedBox(height: 8),
+          AppCard.flush(
+            child: CardList(children: [
+              _MoreRow(
+                icon: Icons.upload_rounded,
+                title: 'Export backup',
+                subtitle: 'Save a copy of everything to a file',
+                onTap: () => BackupService.exportDatabase(context),
+              ),
+              _MoreRow(
+                icon: Icons.download_rounded,
+                iconColor: c.alert,
+                title: 'Restore from backup',
+                subtitle: 'Replaces everything on this phone',
+                onTap: _import,
+              ),
+            ]),
+          ),
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  AppConstants.appName,
+                  style: AppTextStyles.displaySmall.copyWith(color: c.ink, fontSize: 17),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Version ${AppConstants.appVersion} · all data stays on this phone',
+                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                ),
+              ],
             ),
           ),
         ],
@@ -115,27 +152,16 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title.toUpperCase(),
-      style: AppTextStyles.monoSection,
-    );
-  }
-}
-
-class _SettingsCard extends StatelessWidget {
+class _MoreRow extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _SettingsCard({
+  const _MoreRow({
     required this.icon,
+    this.iconColor,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -143,41 +169,18 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.paperHigh,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(13),
-        side: const BorderSide(color: AppColors.hair),
+    final c = context.colors;
+    return CardRow(
+      onTap: onTap,
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
+        child: Icon(icon, size: 20, color: iconColor ?? c.ink),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: AppColors.muted),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.bodyLarge
-                          .copyWith(color: AppColors.ink),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: AppTextStyles.bodySmall),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right,
-                  size: 18, color: AppColors.muted),
-            ],
-          ),
-        ),
-      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: Icon(Icons.chevron_right_rounded, color: c.muted),
     );
   }
 }
