@@ -59,3 +59,13 @@ class CreateMaterialEvent extends MaterialsEvent {
   List<Object?> get props =>
       [name, packSize, packPrice, alertLevel, supplier, initialQuantity];
 }
+
+/// Delete a material
+class DeleteMaterialEvent extends MaterialsEvent {
+  final int materialId;
+
+  const DeleteMaterialEvent(this.materialId);
+
+  @override
+  List<Object?> get props => [materialId];
+}

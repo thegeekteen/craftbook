@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/repositories/order_repository.dart';
 import '../../domain/usecases/adjust_materials_used.dart';
+import '../../domain/usecases/delete_order.dart';
 import '../../domain/usecases/pack_order.dart';
 import '../../domain/usecases/ship_order.dart';
 import 'order_detail_event.dart';
@@ -11,23 +12,26 @@ import 'order_detail_state.dart';
 /// BLoC for the order detail screen.
 ///
 /// Uses [OrderRepository] directly for reading order/items/materials,
-/// and dedicated use cases for mutations (adjust, pack, ship).
+/// and dedicated use cases for mutations (adjust, pack, ship, delete).
 class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final OrderRepository orderRepository;
   final AdjustMaterialsUsed adjustMaterialsUsed;
   final PackOrder packOrder;
   final ShipOrder shipOrder;
+  final DeleteOrder deleteOrder;
 
   OrderDetailBloc({
     required this.orderRepository,
     required this.adjustMaterialsUsed,
     required this.packOrder,
     required this.shipOrder,
+    required this.deleteOrder,
   }) : super(OrderDetailInitial()) {
     on<LoadOrderDetail>(_onLoadOrderDetail);
     on<AdjustMaterials>(_onAdjustMaterials);
     on<PackOrderDetail>(_onPackOrder);
     on<ShipOrderDetail>(_onShipOrder);
+    on<DeleteOrderEvent>(_onDeleteOrder);
   }
 
   Future<void> _onLoadOrderDetail(
@@ -108,6 +112,17 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
         // Re-load order detail after shipping
         add(LoadOrderDetail(event.orderId));
       },
+    );
+  }
+
+  Future<void> _onDeleteOrder(
+    DeleteOrderEvent event,
+    Emitter<OrderDetailState> emit,
+  ) async {
+    final result = await deleteOrder(event.orderId);
+    result.fold(
+      (failure) => emit(OrderDetailError(failure.message)),
+      (_) => emit(OrderDeleted()),
     );
   }
 }

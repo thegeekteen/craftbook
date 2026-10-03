@@ -53,3 +53,13 @@ class ShipOrderDetail extends OrderDetailEvent {
   @override
   List<Object?> get props => [orderId];
 }
+
+/// Delete the order (with stock reversal)
+class DeleteOrderEvent extends OrderDetailEvent {
+  final int orderId;
+
+  const DeleteOrderEvent(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}

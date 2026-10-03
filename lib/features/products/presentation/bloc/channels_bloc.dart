@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/repositories/channel_repository.dart';
+import '../../domain/usecases/delete_channel.dart';
 import '../../domain/usecases/get_channels.dart';
 import '../../domain/usecases/update_channel.dart';
 import 'channels_event.dart';
@@ -10,16 +11,19 @@ import 'channels_state.dart';
 class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
   final GetChannels getChannels;
   final UpdateChannel updateChannel;
+  final DeleteChannel deleteChannel;
   final ChannelRepository channelRepository;
 
   ChannelsBloc({
     required this.getChannels,
     required this.updateChannel,
+    required this.deleteChannel,
     required this.channelRepository,
   }) : super(ChannelsInitial()) {
     on<LoadChannels>(_onLoadChannels);
     on<CreateChannelEvent>(_onCreateChannel);
     on<UpdateChannelEvent>(_onUpdateChannel);
+    on<DeleteChannelEvent>(_onDeleteChannel);
   }
 
   Future<void> _onLoadChannels(
@@ -68,6 +72,20 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       (failure) => emit(ChannelsError(failure.message)),
       (_) {
         // Re-load channels after successful update
+        add(const LoadChannels());
+      },
+    );
+  }
+
+  Future<void> _onDeleteChannel(
+    DeleteChannelEvent event,
+    Emitter<ChannelsState> emit,
+  ) async {
+    final result = await deleteChannel(event.channelId);
+    result.fold(
+      (failure) => emit(ChannelsError(failure.message)),
+      (_) {
+        emit(ChannelDeleted());
         add(const LoadChannels());
       },
     );

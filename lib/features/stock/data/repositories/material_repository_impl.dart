@@ -256,6 +256,37 @@ class MaterialRepositoryImpl implements MaterialRepository {
   }
 
   @override
+  Future<Either<Failure, void>> restoreDeductedMaterials(
+    int materialId,
+    int quantity,
+  ) async {
+    try {
+      final current = await dao.getMaterialById(materialId);
+      if (current == null) {
+        return Left(NotFoundFailure('Material not found'));
+      }
+
+      await dao.updateMaterialStock(
+        materialId,
+        current.quantityOnHand + quantity,
+        current.quantityPromised,
+      );
+
+      await dao.addStockMovement(db.StockMovementsCompanion(
+        materialId: Value(materialId),
+        type: Value('received'),
+        quantity: Value(quantity),
+        unitCost: Value(current.unitCost),
+        reference: Value('Restored from deleted order'),
+      ));
+
+      return const Right(null);
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<BuyListItem>>> getBuyList() async {
     try {
       final lowStockMaterials = await dao.getLowStockMaterials();

@@ -70,6 +70,25 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
     return (delete(orders)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Delete all order items for a given order
+  Future<int> deleteOrderItemsByOrderId(int orderId) {
+    return (delete(orderItems)..where((t) => t.orderId.equals(orderId))).go();
+  }
+
+  /// Delete all order materials for a given order
+  Future<int> deleteOrderMaterialsByOrderId(int orderId) {
+    return (delete(orderMaterials)..where((t) => t.orderId.equals(orderId)))
+        .go();
+  }
+
+  /// Delete stock movements referencing a given order (via raw SQL)
+  Future<int> deleteStockMovementsByOrderId(int orderId) {
+    return customUpdate(
+      'DELETE FROM stock_movements WHERE order_id = ?',
+      variables: [Variable.withInt(orderId)],
+    );
+  }
+
   /// Get order items
   Future<List<OrderItem>> getOrderItems(int orderId) {
     return (select(orderItems)..where((t) => t.orderId.equals(orderId)))

@@ -249,6 +249,9 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Either<Failure, void>> deleteOrder(int id) async {
     try {
+      await dao.deleteOrderItemsByOrderId(id);
+      await dao.deleteOrderMaterialsByOrderId(id);
+      await dao.deleteStockMovementsByOrderId(id);
       await dao.deleteOrder(id);
       return const Right(null);
     } catch (e) {

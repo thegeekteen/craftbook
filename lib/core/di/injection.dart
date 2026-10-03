@@ -16,6 +16,8 @@ import '../../features/products/domain/usecases/update_channel.dart';
 import '../../features/products/domain/usecases/get_products.dart';
 import '../../features/products/domain/usecases/create_product.dart';
 import '../../features/products/domain/usecases/update_product.dart';
+import '../../features/products/domain/usecases/delete_product.dart';
+import '../../features/products/domain/usecases/delete_channel.dart';
 import '../../features/products/domain/usecases/calculate_bom_cost.dart';
 import '../../features/products/domain/usecases/calculate_buildable_quantity.dart';
 
@@ -27,6 +29,7 @@ import '../../features/stock/domain/usecases/receive_stock.dart';
 import '../../features/stock/domain/usecases/adjust_stock.dart';
 import '../../features/stock/domain/usecases/get_buy_list.dart';
 import '../../features/stock/domain/usecases/get_blocked_products.dart';
+import '../../features/stock/domain/usecases/delete_material.dart';
 
 import '../../features/orders/data/repositories/order_repository_impl.dart';
 import '../../features/orders/domain/repositories/order_repository.dart';
@@ -36,6 +39,7 @@ import '../../features/orders/domain/usecases/pack_order.dart';
 import '../../features/orders/domain/usecases/ship_order.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
+import '../../features/orders/domain/usecases/delete_order.dart';
 
 import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
 import '../../features/earnings/domain/repositories/earnings_repository.dart';
@@ -96,6 +100,11 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => UpdateProduct(getIt()));
   getIt.registerFactory(() => CalculateBomCost(getIt()));
   getIt.registerFactory(() => CalculateBuildableQuantity(getIt()));
+  getIt.registerFactory(() => DeleteProduct(productRepository: getIt()));
+  getIt.registerFactory(() => DeleteChannel(
+    channelRepository: getIt(),
+    orderRepository: getIt(),
+  ));
 
   // Use Cases - Stock
   getIt.registerFactory(() => GetMaterials(getIt()));
@@ -104,6 +113,10 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => AdjustStock(getIt()));
   getIt.registerFactory(() => GetBuyList(getIt()));
   getIt.registerFactory(() => GetBlockedProducts(getIt()));
+  getIt.registerFactory(() => DeleteMaterial(
+    materialRepository: getIt(),
+    productRepository: getIt(),
+  ));
 
   // Use Cases - Orders
   getIt.registerFactory(() => GetOrders(getIt()));
@@ -119,6 +132,10 @@ Future<void> configureDependencies() async {
   getIt.registerFactory(() => ShipOrder(getIt()));
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
+  getIt.registerFactory(() => DeleteOrder(
+    orderRepository: getIt(),
+    materialRepository: getIt(),
+  ));
 
   // Use Cases - Earnings
   getIt.registerFactory(() => GetEarningsSummary(getIt()));
@@ -135,16 +152,19 @@ Future<void> configureDependencies() async {
     getProducts: getIt(),
     createProduct: getIt(),
     updateProduct: getIt(),
+    deleteProduct: getIt(),
   ));
   getIt.registerFactory(() => ChannelsBloc(
     getChannels: getIt(),
     updateChannel: getIt(),
+    deleteChannel: getIt(),
     channelRepository: getIt(),
   ));
   getIt.registerFactory(() => MaterialsBloc(
     getMaterials: getIt(),
     getBuyList: getIt(),
     receiveStock: getIt(),
+    deleteMaterial: getIt(),
     materialRepository: getIt(),
   ));
   getIt.registerFactory(() => OrdersListBloc(
@@ -161,6 +181,7 @@ Future<void> configureDependencies() async {
     adjustMaterialsUsed: getIt(),
     packOrder: getIt(),
     shipOrder: getIt(),
+    deleteOrder: getIt(),
   ));
   getIt.registerFactory(() => TodayBloc(
     getTodayOrders: getIt(),

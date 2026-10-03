@@ -183,8 +183,19 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<Either<Failure, bool>> hasOrdersUsingProduct(int productId) async {
+    try {
+      final result = await dao.hasOrderItemsForProduct(productId);
+      return Right(result);
+    } catch (e) {
+      return Left(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteProduct(int id) async {
     try {
+      await dao.deleteBomItemsByProductId(id);
       await dao.deleteProduct(id);
       return const Right(null);
     } catch (e) {

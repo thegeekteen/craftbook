@@ -30,6 +30,7 @@ abstract class MaterialRepository {
   Future<Either<Failure, void>> reserveMaterials(int materialId, int quantity);
   Future<Either<Failure, void>> releaseReservedMaterials(int materialId, int quantity);
   Future<Either<Failure, void>> deductMaterials(int materialId, int quantity);
+  Future<Either<Failure, void>> restoreDeductedMaterials(int materialId, int quantity);
   Future<Either<Failure, List<BuyListItem>>> getBuyList();
   Future<Either<Failure, void>> deleteMaterial(int id);
 }

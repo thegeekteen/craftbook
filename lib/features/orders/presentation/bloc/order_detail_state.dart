@@ -53,3 +53,6 @@ class OrderDetailActionSuccess extends OrderDetailState {
   @override
   List<Object?> get props => [message];
 }
+
+/// Order was deleted successfully
+class OrderDeleted extends OrderDetailState {}

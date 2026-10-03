@@ -5,6 +5,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/channel.dart';
 import '../bloc/channels_bloc.dart';
 import '../bloc/channels_event.dart';
@@ -49,6 +50,9 @@ class _ChannelsView extends StatelessWidget {
           if (state is ChannelCreated) {
             context.showSnackBar('Channel created');
             context.read<ChannelsBloc>().add(const LoadChannels());
+          }
+          if (state is ChannelDeleted) {
+            context.showSnackBar('Channel deleted');
           }
         },
         builder: (context, state) {
@@ -268,6 +272,26 @@ class _ChannelsView extends StatelessWidget {
           ),
         ),
         actions: [
+          TextButton(
+            onPressed: () async {
+              final confirmed = await ConfirmDialog.show(
+                ctx,
+                title: 'Delete channel?',
+                message:
+                    'This will permanently remove "${channel.name}". This cannot be undone.',
+                confirmText: 'Delete',
+                isDestructive: true,
+              );
+              if (confirmed && ctx.mounted) {
+                Navigator.pop(ctx);
+                context
+                    .read<ChannelsBloc>()
+                    .add(DeleteChannelEvent(channel.id!));
+              }
+            },
+            child: const Text('Delete',
+                style: TextStyle(color: AppColors.alert)),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel', style: TextStyle(color: AppColors.muted)),

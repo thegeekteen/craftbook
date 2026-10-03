@@ -29,6 +29,9 @@ class ChannelsLoaded extends ChannelsState {
 /// A new channel was created successfully
 class ChannelCreated extends ChannelsState {}
 
+/// Channel was deleted successfully
+class ChannelDeleted extends ChannelsState {}
+
 /// Error occurred while loading/managing channels
 class ChannelsError extends ChannelsState {
   final String message;

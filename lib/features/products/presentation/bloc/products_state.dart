@@ -26,6 +26,9 @@ class ProductsLoaded extends ProductsState {
   List<Object?> get props => [products];
 }
 
+/// Product was deleted successfully
+class ProductDeleted extends ProductsState {}
+
 /// Error occurred while loading/managing products
 class ProductsError extends ProductsState {
   final String message;

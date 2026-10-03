@@ -64,6 +64,21 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     return (delete(bomItems)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Delete all BOM items for a given product
+  Future<int> deleteBomItemsByProductId(int productId) {
+    return (delete(bomItems)..where((t) => t.productId.equals(productId))).go();
+  }
+
+  /// Check if any order_items reference this product
+  Future<bool> hasOrderItemsForProduct(int productId) async {
+    final result = await customSelect(
+      'SELECT COUNT(*) as cnt FROM order_items WHERE product_id = ?',
+      variables: [Variable.withInt(productId)],
+      readsFrom: {bomItems},
+    ).getSingle();
+    return result.read<int>('cnt') > 0;
+  }
+
   /// Calculate buildable quantity for product
   Future<int> calculateBuildableQuantity(int productId) async {
     final bomItems = await getBomItems(productId);

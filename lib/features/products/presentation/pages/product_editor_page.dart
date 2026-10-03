@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart' hide Material;
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/currency_text.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../stock/domain/entities/material.dart';
@@ -11,6 +13,7 @@ import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../../domain/usecases/delete_product.dart';
 import '../widgets/bom_editor_list.dart';
 
 /// Product editor page — BOM editor for creating/editing products
@@ -294,6 +297,56 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           _isNew ? 'New product' : 'Edit product',
           style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink),
         ),
+        actions: [
+          if (!_isNew)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'delete') {
+                  final confirmed = await ConfirmDialog.show(
+                    context,
+                    title: 'Delete product?',
+                    message:
+                        'This will permanently remove this product and its BOM. This cannot be undone.',
+                    confirmText: 'Delete',
+                    isDestructive: true,
+                  );
+                  if (confirmed && mounted) {
+                    final deleteProduct = getIt<DeleteProduct>();
+                    final result =
+                        await deleteProduct(widget.productId!);
+                    result.fold(
+                      (failure) {
+                        if (mounted) {
+                          context.showSnackBar(failure.message,
+                              isError: true);
+                        }
+                      },
+                      (_) {
+                        if (mounted) {
+                          context.showSnackBar('Product deleted');
+                          context.pop();
+                        }
+                      },
+                    );
+                  }
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline,
+                          color: AppColors.alert, size: 20),
+                      SizedBox(width: 8),
+                      Text('Delete',
+                          style: TextStyle(color: AppColors.alert)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

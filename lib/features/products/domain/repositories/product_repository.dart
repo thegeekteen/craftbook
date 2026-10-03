@@ -25,6 +25,7 @@ abstract class ProductRepository {
   Future<Either<Failure, int>> calculateBuildableQuantity(int productId);
   Future<Either<Failure, double>> calculateBomCost(int productId);
   Future<Either<Failure, List<Product>>> getProductsUsingMaterial(int materialId);
+  Future<Either<Failure, bool>> hasOrdersUsingProduct(int productId);
   Future<Either<Failure, void>> deleteProduct(int id);
 }
 

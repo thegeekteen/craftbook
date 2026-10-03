@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/repositories/material_repository.dart';
+import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_buy_list.dart';
 import '../../domain/usecases/get_materials.dart';
 import '../../domain/usecases/receive_stock.dart';
@@ -12,18 +13,21 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
   final GetMaterials getMaterials;
   final GetBuyList getBuyList;
   final ReceiveStock receiveStock;
+  final DeleteMaterial deleteMaterial;
   final MaterialRepository materialRepository;
 
   MaterialsBloc({
     required this.getMaterials,
     required this.getBuyList,
     required this.receiveStock,
+    required this.deleteMaterial,
     required this.materialRepository,
   }) : super(MaterialsInitial()) {
     on<LoadMaterials>(_onLoadMaterials);
     on<LoadBuyList>(_onLoadBuyList);
     on<ReceiveStockEvent>(_onReceiveStock);
     on<CreateMaterialEvent>(_onCreateMaterial);
+    on<DeleteMaterialEvent>(_onDeleteMaterial);
   }
 
   Future<void> _onLoadMaterials(
@@ -88,6 +92,20 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
       (failure) => emit(MaterialsError(failure.message)),
       (_) {
         emit(MaterialCreated());
+        add(const LoadMaterials());
+      },
+    );
+  }
+
+  Future<void> _onDeleteMaterial(
+    DeleteMaterialEvent event,
+    Emitter<MaterialsState> emit,
+  ) async {
+    final result = await deleteMaterial(event.materialId);
+    result.fold(
+      (failure) => emit(MaterialsError(failure.message)),
+      (_) {
+        emit(MaterialDeleted());
         add(const LoadMaterials());
       },
     );

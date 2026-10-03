@@ -53,3 +53,13 @@ class UpdateProductEvent extends ProductsEvent {
   @override
   List<Object?> get props => [id, name, description, sellPrice, isActive];
 }
+
+/// Delete a product
+class DeleteProductEvent extends ProductsEvent {
+  final int productId;
+
+  const DeleteProductEvent(this.productId);
+
+  @override
+  List<Object?> get props => [productId];
+}

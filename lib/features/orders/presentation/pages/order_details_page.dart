@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/currency_text.dart';
 import '../../../../core/widgets/status_pill.dart';
 import '../../domain/entities/order.dart';
@@ -44,6 +46,10 @@ class _OrderDetailView extends StatelessWidget {
         }
         if (state is OrderDetailError) {
           context.showSnackBar(state.message, isError: true);
+        }
+        if (state is OrderDeleted) {
+          context.showSnackBar('Order deleted');
+          context.pop();
         }
       },
       builder: (context, state) {
@@ -96,6 +102,40 @@ class _OrderDetailView extends StatelessWidget {
               ),
             ),
           ),
+          if (order.status != OrderStatus.shipped)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'delete') {
+                  final confirmed = await ConfirmDialog.show(
+                    context,
+                    title: 'Delete order?',
+                    message:
+                        'This will permanently remove the order and reverse any stock changes. This cannot be undone.',
+                    confirmText: 'Delete',
+                    isDestructive: true,
+                  );
+                  if (confirmed && context.mounted) {
+                    context.read<OrderDetailBloc>().add(
+                          DeleteOrderEvent(order.id!),
+                        );
+                  }
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline,
+                          color: AppColors.alert, size: 20),
+                      SizedBox(width: 8),
+                      Text('Delete',
+                          style: TextStyle(color: AppColors.alert)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       body: ListView(

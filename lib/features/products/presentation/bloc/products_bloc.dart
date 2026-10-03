@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/create_product.dart';
+import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/get_products.dart';
 import '../../domain/usecases/update_product.dart';
 import 'products_event.dart';
@@ -11,15 +12,18 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   final GetProducts getProducts;
   final CreateProduct createProduct;
   final UpdateProduct updateProduct;
+  final DeleteProduct deleteProduct;
 
   ProductsBloc({
     required this.getProducts,
     required this.createProduct,
     required this.updateProduct,
+    required this.deleteProduct,
   }) : super(ProductsInitial()) {
     on<LoadProducts>(_onLoadProducts);
     on<CreateProductEvent>(_onCreateProduct);
     on<UpdateProductEvent>(_onUpdateProduct);
+    on<DeleteProductEvent>(_onDeleteProduct);
   }
 
   Future<void> _onLoadProducts(
@@ -67,6 +71,20 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       (failure) => emit(ProductsError(failure.message)),
       (_) {
         // Re-load products after successful update
+        add(const LoadProducts());
+      },
+    );
+  }
+
+  Future<void> _onDeleteProduct(
+    DeleteProductEvent event,
+    Emitter<ProductsState> emit,
+  ) async {
+    final result = await deleteProduct(event.productId);
+    result.fold(
+      (failure) => emit(ProductsError(failure.message)),
+      (_) {
+        emit(ProductDeleted());
         add(const LoadProducts());
       },
     );

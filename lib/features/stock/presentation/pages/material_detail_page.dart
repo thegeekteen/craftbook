@@ -7,9 +7,11 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/currency_text.dart';
 import '../../../../core/widgets/pip_strip.dart';
 import '../../../../core/widgets/stepper_input.dart';
+import '../../domain/usecases/delete_material.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
@@ -174,6 +176,53 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
       appBar: AppBar(
         title: Text(mat.name,
             style: AppTextStyles.displaySmall.copyWith(color: AppColors.ink)),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'delete') {
+                final confirmed = await ConfirmDialog.show(
+                  context,
+                  title: 'Delete material?',
+                  message:
+                      'This will permanently remove "${mat.name}". This cannot be undone.',
+                  confirmText: 'Delete',
+                  isDestructive: true,
+                );
+                if (confirmed && mounted) {
+                  final deleteMaterial = getIt<DeleteMaterial>();
+                  final result = await deleteMaterial(widget.materialId);
+                  result.fold(
+                    (failure) {
+                      if (mounted) {
+                        context.showSnackBar(failure.message, isError: true);
+                      }
+                    },
+                    (_) {
+                      if (mounted) {
+                        context.showSnackBar('Material deleted');
+                        context.pop();
+                      }
+                    },
+                  );
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline,
+                        color: AppColors.alert, size: 20),
+                    SizedBox(width: 8),
+                    Text('Delete',
+                        style: TextStyle(color: AppColors.alert)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,

@@ -75,3 +75,13 @@ class UpdateChannelEvent extends ChannelsEvent {
         isActive,
       ];
 }
+
+/// Delete a channel
+class DeleteChannelEvent extends ChannelsEvent {
+  final int channelId;
+
+  const DeleteChannelEvent(this.channelId);
+
+  @override
+  List<Object?> get props => [channelId];
+}
