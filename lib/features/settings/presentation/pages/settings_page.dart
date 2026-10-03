@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/route_names.dart';
+import '../../../../core/services/backup_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 
 /// Settings page — backup, import, navigation, app info
 class SettingsPage extends StatelessWidget {
@@ -28,18 +30,27 @@ class SettingsPage extends StatelessWidget {
           _SettingsCard(
             icon: Icons.upload_outlined,
             title: 'Export backup',
-            subtitle: 'Save all data as JSON file',
-            onTap: () {
-              context.showSnackBar('Backup export coming soon');
-            },
+            subtitle: 'Save database file to your device',
+            onTap: () => BackupService.exportDatabase(context),
           ),
           const SizedBox(height: 8),
           _SettingsCard(
             icon: Icons.download_outlined,
             title: 'Import backup',
-            subtitle: 'Restore from JSON file',
-            onTap: () {
-              context.showSnackBar('Backup import coming soon');
+            subtitle: 'Restore from a database file',
+            onTap: () async {
+              final confirmed = await ConfirmDialog.show(
+                context,
+                title: 'Import backup?',
+                message:
+                    'This will replace all current data with the backup. '
+                    'You will need to restart the app after importing.',
+                confirmText: 'Import',
+                isDestructive: true,
+              );
+              if (confirmed && context.mounted) {
+                await BackupService.importDatabase(context);
+              }
             },
           ),
           const SizedBox(height: 24),
