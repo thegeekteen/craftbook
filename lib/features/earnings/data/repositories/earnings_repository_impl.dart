@@ -41,7 +41,7 @@ class EarningsRepositoryImpl implements EarningsRepository {
       return Right(results
           .map((m) => ProductEarnings(
                 productId: m['productId'] as int,
-                productName: '',
+                productName: m['productName'] as String? ?? '',
                 quantitySold: m['quantity'] as int,
                 totalSales: m['sales'] as double,
                 totalProfit: m['profit'] as double,

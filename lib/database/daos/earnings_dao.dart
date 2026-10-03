@@ -4,11 +4,12 @@ import '../app_database.dart';
 import '../tables/orders_table.dart';
 import '../tables/order_items_table.dart';
 import '../tables/order_materials_table.dart';
+import '../tables/products_table.dart';
 
 part 'earnings_dao.g.dart';
 
 /// Data Access Object for earnings calculations
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials])
+@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products])
 class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin {
   EarningsDao(AppDatabase db) : super(db);
 
@@ -53,8 +54,12 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
       
       for (final item in items) {
         if (!productEarnings.containsKey(item.productId)) {
+          final product = await (select(products)
+                ..where((t) => t.id.equals(item.productId)))
+              .getSingleOrNull();
           productEarnings[item.productId] = {
             'productId': item.productId,
+            'productName': product?.name ?? '',
             'quantity': 0,
             'sales': 0.0,
             'profit': 0.0,
