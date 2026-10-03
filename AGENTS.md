@@ -25,50 +25,29 @@
 | UI Framework | Flutter 3.x | Cross-platform UI (Android target) |
 | State Management | flutter_bloc | Predictable state management with BLoC pattern |
 | Local Database | SQLite via Drift ORM | Type-safe database access with code generation |
-| Dependency Injection | get_it + injectable | Service locator with compile-time code generation |
-| Navigation | go_router | Declarative routing with deep linking support |
+| Dependency Injection | get_it (manual registration) | Service locator in `lib/core/di/injection.dart` |
+| Navigation | go_router | Declarative routing with bottom nav shell |
 | Date/Time | intl | Date formatting and localization |
 | Charts | fl_chart | Simple charts for earnings visualization |
+| File Picker | file_picker | SQLite backup export/import |
 | Testing | mocktail + bloc_test | Unit and widget testing |
 
 ---
 
 ## Architecture Overview
 
-This project follows **Clean Architecture** with a **feature-first** directory structure. Each feature contains its own presentation, domain, and data layers, while shared utilities and core infrastructure live in a common module.
+This project follows **Clean Architecture** with a **feature-first** directory structure. Each feature contains its own presentation, domain, and data layers.
 
-```mermaid
-graph TB
-    subgraph Presentation Layer
-        UI[Flutter Widgets]
-        BLoC[BLoC State Management]
-        Events[Events]
-        States[States]
-    end
-    
-    subgraph Domain Layer
-        UC[Use Cases]
-        Entities[Entities]
-        Repos[Repository Interfaces]
-    end
-    
-    subgraph Data Layer
-        RepoImpl[Repository Implementations]
-        DS[Data Sources]
-        Drift[Drift Database]
-        Models[Data Models]
-    end
-    
-    UI --> BLoC
-    BLoC --> Events
-    BLoC --> States
-    BLoC --> UC
-    UC --> Entities
-    UC --> Repos
-    Repos --> RepoImpl
-    RepoImpl --> DS
-    DS --> Drift
-    DS --> Models
+```
+lib/
+├── core/           # Theme, widgets, utils, DI, error types, constants
+├── database/       # Drift tables, DAOs, migrations
+├── features/       # Feature modules (today, orders, stock, products, earnings, settings)
+│   └── <feature>/
+│       ├── presentation/  (pages, bloc, widgets)
+│       ├── domain/        (entities, usecases, repositories)
+│       └── data/          (repository impls)
+└── app.dart        # MaterialApp, routing, theme
 ```
 
 ### Layer Responsibilities
@@ -77,415 +56,72 @@ graph TB
 |-------|---------------|--------------|
 | **Presentation** | UI rendering, user interaction, state management | Domain (Use Cases, Entities) |
 | **Domain** | Business logic, use cases, entity definitions | None (pure Dart) |
-| **Data** | Data persistence, API calls (none here), repository implementations | Domain (Entities, Repository interfaces) |
+| **Data** | Data persistence, repository implementations | Domain (Entities, Repository interfaces) |
+
+### Feature Modules
+
+| Feature | Route(s) | Key Pages |
+|---------|----------|-----------|
+| **Today** | `/` | Dashboard, week calendar, month calendar |
+| **Orders** | `/orders`, `/orders/new`, `/orders/:id` | List (tabbed), creation wizard, detail view |
+| **Stock** | `/materials`, `/materials/:id` | List (tabbed), detail, receive stock, buy list |
+| **Products** | `/products`, `/products/:id/edit`, `/channels` | List, BOM editor, channels & fees |
+| **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
+| **Settings** | `/settings` | Backup/restore, navigation hub |
 
 ---
 
-## Directory Structure
-
-```
-lib/
-├── main.dart                          # App entry point, DI setup
-├── app.dart                           # MaterialApp configuration, theme, routing
-│
-├── core/                              # Shared infrastructure
-│   ├── constants/
-│   │   ├── app_constants.dart         # App-wide constants (limits, defaults)
-│   │   └── route_names.dart           # Route name constants
-│   ├── theme/
-│   │   ├── app_theme.dart             # Theme configuration
-│   │   ├── colors.dart                # Color palette (matches UI mockup)
-│   │   └── text_styles.dart           # Typography
-│   ├── widgets/                       # Reusable UI components
-│   │   ├── pip_strip.dart             # Pip visualization widget
-│   │   ├── stepper_input.dart         # +/- stepper widget
-│   │   ├── status_pill.dart           # Status badge (READY, SHORT, etc.)
-│   │   ├── currency_text.dart         # Peso-formatted text
-│   │   └── confirm_dialog.dart        # Reusable confirmation dialog
-│   ├── utils/
-│   │   ├── currency_formatter.dart    # PHP currency formatting
-│   │   ├── date_utils.dart            # Date helpers
-│   │   └── extensions.dart            # Dart extensions
-│   └── error/
-│       ├── failures.dart              # Failure types for error handling
-│       └── exceptions.dart            # Custom exceptions
-│
-├── features/                          # Feature modules
-│   │
-│   ├── today/                         # Flow 1: Day view
-│   │   ├── presentation/
-│   │   │   ├── pages/
-│   │   │   │   ├── today_page.dart           # Main today screen (1.1)
-│   │   │   │   ├── calendar_week_page.dart   # Week view (1.2)
-│   │   │   │   └── calendar_month_page.dart  # Month view (1.3)
-│   │   │   ├── bloc/
-│   │   │   │   ├── today_bloc.dart
-│   │   │   │   ├── today_event.dart
-│   │   │   │   └── today_state.dart
-│   │   │   └── widgets/
-│   │   │       ├── order_card.dart
-│   │   │       ├── alert_banner.dart
-│   │   │       ├── week_lane.dart
-│   │   │       └── month_calendar.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   └── daily_summary.dart
-│   │   │   ├── usecases/
-│   │   │   │   ├── get_today_orders.dart
-│   │   │   │   ├── get_week_orders.dart
-│   │   │   │   └── get_alert_summary.dart
-│   │   │   └── repositories/
-│   │   │       └── order_repository.dart     # Interface only
-│   │   └── data/
-│   │       ├── repositories/
-│   │       │   └── order_repository_impl.dart
-│   │       └── datasources/
-│   │           └── order_local_datasource.dart
-│   │
-│   ├── orders/                        # Flow 2: Order creation & management
-│   │   ├── presentation/
-│   │   │   ├── pages/
-│   │   │   │   ├── orders_list_page.dart     # Orders list (2.1)
-│   │   │   │   ├── new_order_page.dart       # Multi-step order creation
-│   │   │   │   ├── order_details_page.dart   # Order detail view (3.1)
-│   │   │   │   └── adjust_materials_page.dart # Material adjustment (3.2)
-│   │   │   ├── bloc/
-│   │   │   │   ├── orders_list_bloc.dart
-│   │   │   │   ├── new_order_bloc.dart
-│   │   │   │   └── order_detail_bloc.dart
-│   │   │   └── widgets/
-│   │   │       ├── order_list_card.dart
-│   │   │       ├── product_picker_sheet.dart
-│   │   │       ├── review_summary.dart
-│   │   │       └── pack_confirm_dialog.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   ├── order.dart
-│   │   │   │   ├── order_item.dart
-│   │   │   │   ├── order_material.dart
-│   │   │   │   └── order_status.dart
-│   │   │   ├── usecases/
-│   │   │   │   ├── create_order.dart
-│   │   │   │   ├── update_order.dart
-│   │   │   │   ├── pack_order.dart
-│   │   │   │   ├── ship_order.dart
-│   │   │   │   ├── adjust_materials_used.dart
-│   │   │   │   ├── calculate_order_profit.dart
-│   │   │   │   └── reserve_materials.dart
-│   │   │   └── repositories/
-│   │   │       └── order_repository.dart
-│   │   └── data/
-│   │       ├── models/
-│   │       │   ├── order_model.dart
-│   │       │   └── order_item_model.dart
-│   │       ├── repositories/
-│   │       │   └── order_repository_impl.dart
-│   │       └── datasources/
-│   │           └── order_local_datasource.dart
-│   │
-│   ├── stock/                         # Flow 4: Stock management
-│   │   ├── presentation/
-│   │   │   ├── pages/
-│   │   │   │   ├── materials_list_page.dart  # Materials list (4.1)
-│   │   │   │   ├── material_detail_page.dart # Material detail (4.2)
-│   │   │   │   ├── receive_stock_page.dart   # Receive stock (4.3)
-│   │   │   │   └── buy_list_page.dart        # What to buy (4.4)
-│   │   │   ├── bloc/
-│   │   │   │   ├── materials_bloc.dart
-│   │   │   │   ├── material_detail_bloc.dart
-│   │   │   │   └── buy_list_bloc.dart
-│   │   │   └── widgets/
-│   │   │       ├── material_card.dart
-│   │   │       ├── stock_movement_list.dart
-│   │   │       └── buy_list_card.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   ├── material.dart
-│   │   │   │   ├── stock_movement.dart
-│   │   │   │   └── buy_list_item.dart
-│   │   │   ├── usecases/
-│   │   │   │   ├── get_materials.dart
-│   │   │   │   ├── get_material_detail.dart
-│   │   │   │   ├── receive_stock.dart
-│   │   │   │   ├── adjust_stock.dart
-│   │   │   │   ├── get_buy_list.dart
-│   │   │   │   └── get_blocked_products.dart
-│   │   │   └── repositories/
-│   │   │       └── material_repository.dart
-│   │   └── data/
-│   │       ├── models/
-│   │       │   └── material_model.dart
-│   │       ├── repositories/
-│   │       │   └── material_repository_impl.dart
-│   │       └── datasources/
-│   │           └── material_local_datasource.dart
-│   │
-│   ├── products/                      # Flow 5: Products & BOM
-│   │   ├── presentation/
-│   │   │   ├── pages/
-│   │   │   │   ├── products_list_page.dart   # Products list (5.1)
-│   │   │   │   ├── product_editor_page.dart  # BOM editor (5.2)
-│   │   │   │   └── channels_page.dart        # Channels & fees (5.3)
-│   │   │   ├── bloc/
-│   │   │   │   ├── products_bloc.dart
-│   │   │   │   ├── product_editor_bloc.dart
-│   │   │   │   └── channels_bloc.dart
-│   │   │   └── widgets/
-│   │   │       ├── product_card.dart
-│   │   │       ├── bom_editor_list.dart
-│   │   │       └── channel_card.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   ├── product.dart
-│   │   │   │   ├── bom_item.dart
-│   │   │   │   └── channel.dart
-│   │   │   ├── usecases/
-│   │   │   │   ├── get_products.dart
-│   │   │   │   ├── create_product.dart
-│   │   │   │   ├── update_product.dart
-│   │   │   │   ├── calculate_bom_cost.dart
-│   │   │   │   ├── calculate_buildable_quantity.dart
-│   │   │   │   ├── get_channels.dart
-│   │   │   │   └── update_channel.dart
-│   │   │   └── repositories/
-│   │   │       ├── product_repository.dart
-│   │   │       └── channel_repository.dart
-│   │   └── data/
-│   │       ├── models/
-│   │       │   ├── product_model.dart
-│   │       │   └── channel_model.dart
-│   │       ├── repositories/
-│   │       │   ├── product_repository_impl.dart
-│   │       │   └── channel_repository_impl.dart
-│   │       └── datasources/
-│   │           ├── product_local_datasource.dart
-│   │           └── channel_local_datasource.dart
-│   │
-│   ├── earnings/                      # Flow 6: Earnings
-│   │   ├── presentation/
-│   │   │   ├── pages/
-│   │   │   │   ├── earnings_page.dart        # Earnings overview (6.1)
-│   │   │   │   └── product_earnings_page.dart # Per-product drill-down (6.2)
-│   │   │   ├── bloc/
-│   │   │   │   ├── earnings_bloc.dart
-│   │   │   │   └── product_earnings_bloc.dart
-│   │   │   └── widgets/
-│   │   │       ├── earnings_summary_card.dart
-│   │   │       ├── product_profit_card.dart
-│   │   │       └── earnings_chart.dart
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   │   ├── earnings_summary.dart
-│   │   │   │   └── product_earnings.dart
-│   │   │   ├── usecases/
-│   │   │   │   ├── get_earnings_summary.dart
-│   │   │   │   ├── get_product_earnings.dart
-│   │   │   │   └── get_waste_summary.dart
-│   │   │   └── repositories/
-│   │   │       └── earnings_repository.dart
-│   │   └── data/
-│   │       ├── repositories/
-│   │       │   └── earnings_repository_impl.dart
-│   │       └── datasources/
-│   │           └── earnings_local_datasource.dart
-│   │
-│   └── settings/                      # Settings & Configuration
-│       ├── presentation/
-│       │   ├── pages/
-│       │   │   └── settings_page.dart
-│       │   └── bloc/
-│       │       └── settings_bloc.dart
-│       ├── domain/
-│       │   ├── entities/
-│       │   │   └── app_settings.dart
-│       │   └── usecases/
-│       │       ├── get_settings.dart
-│       │       ├── update_settings.dart
-│       │       ├── export_backup.dart
-│       │       └── import_backup.dart
-│       └── data/
-│           └── repositories/
-│               └── settings_repository_impl.dart
-│
-└── database/                          # Drift database layer
-    ├── app_database.dart              # Main database class
-    ├── tables/
-    │   ├── orders_table.dart
-    │   ├── order_items_table.dart
-    │   ├── order_materials_table.dart
-    │   ├── materials_table.dart
-    │   ├── products_table.dart
-    │   ├── bom_items_table.dart
-    │   ├── channels_table.dart
-    │   ├── stock_movements_table.dart
-    │   └── settings_table.dart
-    ├── daos/
-    │   ├── order_dao.dart
-    │   ├── material_dao.dart
-    │   ├── product_dao.dart
-    │   ├── channel_dao.dart
-    │   └── earnings_dao.dart
-    └── migrations/
-        └── migrations.dart            # Database schema migrations
-```
-
----
-
-## Data Models
-
-### Core Entities
-
-```mermaid
-erDiagram
-    ORDER ||--o{ ORDER_ITEM : contains
-    ORDER ||--o{ ORDER_MATERIAL : uses
-    ORDER }o--|| CHANNEL : sold_on
-    ORDER_ITEM }o--|| PRODUCT : references
-    PRODUCT ||--o{ BOM_ITEM : requires
-    BOM_ITEM }o--|| MATERIAL : consumes
-    MATERIAL ||--o{ STOCK_MOVEMENT : has
-    
-    ORDER {
-        int id PK
-        string customer_name
-        string customer_address
-        string note
-        DateTime order_date
-        DateTime ship_by_date
-        DateTime packed_at
-        DateTime shipped_at
-        string status
-        int channel_id FK
-        decimal total_sales
-        decimal total_material_cost
-        decimal channel_fees
-        decimal shipping_cost
-        decimal profit
-    }
-    
-    ORDER_ITEM {
-        int id PK
-        int order_id FK
-        int product_id FK
-        int quantity
-        decimal unit_price
-        decimal subtotal
-    }
-    
-    ORDER_MATERIAL {
-        int id PK
-        int order_id FK
-        int material_id FK
-        int planned_quantity
-        int actual_quantity
-        int waste_quantity
-        string waste_reason
-        decimal unit_cost
-    }
-    
-    PRODUCT {
-        int id PK
-        string name
-        string description
-        decimal sell_price
-        boolean is_active
-        DateTime created_at
-    }
-    
-    BOM_ITEM {
-        int id PK
-        int product_id FK
-        int material_id FK
-        int quantity_required
-    }
-    
-    MATERIAL {
-        int id PK
-        string name
-        int pack_size
-        decimal pack_price
-        decimal unit_cost
-        int quantity_on_hand
-        int quantity_promised
-        int alert_level
-        string supplier
-        DateTime last_received_at
-    }
-    
-    CHANNEL {
-        int id PK
-        string name
-        decimal commission_rate
-        decimal transaction_fee_rate
-        decimal flat_fee
-        decimal shipping_paid_by_us
-        boolean is_active
-    }
-    
-    STOCK_MOVEMENT {
-        int id PK
-        int material_id FK
-        int order_id FK
-        string type
-        int quantity
-        decimal unit_cost
-        DateTime created_at
-        string reference
-    }
-```
-
-### Key Business Rules
+## Key Business Rules
 
 1. **Stock Reservation**: When an order is saved, materials are **reserved** (promised) but not deducted. The `quantity_promised` field on Material tracks this.
 
 2. **Stock Deduction**: When an order is **packed**, materials are actually deducted from `quantity_on_hand`. The `quantity_promised` is also reduced.
 
-3. **Waste Tracking**: The `ORDER_MATERIAL` table stores both planned and actual quantities. The difference is waste, which affects profit calculation.
+3. **Waste Tracking**: The `order_materials` table stores both planned and actual quantities. The difference is waste, which affects profit calculation.
 
-4. **Weighted Average Cost**: When receiving stock, the unit cost is recalculated as a weighted average:
+4. **Weighted Average Cost**: When receiving stock, the unit cost is recalculated:
    ```
    new_unit_cost = (old_qty × old_cost + new_qty × new_price) / (old_qty + new_qty)
    ```
 
-5. **Profit Calculation**:
+5. **Profit Calculation**: Always recalculated from components on display:
    ```
    profit = sales - actual_material_cost - channel_fees - shipping
    ```
+   **Do NOT trust stored `order.profit`** — it can become stale after material adjustments. Always compute `sales - materials - fees - shipping` at display time.
 
 6. **Buildable Quantity**: For a product, the maximum buildable quantity is:
    ```
    min(material.quantity_on_hand / bom_item.quantity_required) for all BOM items
    ```
 
+7. **Safe Deletion**: Orders blocked when shipped. Materials blocked when used in BOM or have stock movements. Products blocked when in orders or have BOM items. Channels blocked when orders reference them.
+
+8. **Earnings Scope**: Earnings include both **packed and shipped** orders. Waste also only counts from packed/shipped orders.
+
 ---
 
 ## State Management Pattern
 
-Each feature uses the **BLoC pattern** with the following structure:
+Each feature uses the **BLoC pattern**:
 
 ```dart
 // Event: User actions
 abstract class OrdersListEvent extends Equatable {}
 class LoadOrders extends OrdersListEvent {}
-class FilterByStatus extends OrdersListEvent {
-  final OrderStatus status;
-}
 
 // State: UI state
 class OrdersListState extends Equatable {
   final List<Order> orders;
   final bool isLoading;
   final String? error;
-  final OrderStatus? filter;
 }
 
 // BLoC: Business logic
 class OrdersListBloc extends Bloc<OrdersListEvent, OrdersListState> {
   final GetOrdersUseCase getOrders;
-  
   OrdersListBloc({required this.getOrders}) : super(OrdersListInitial()) {
     on<LoadOrders>(_onLoadOrders);
-    on<FilterByStatus>(_onFilterByStatus);
   }
 }
 ```
@@ -494,20 +130,29 @@ class OrdersListBloc extends Bloc<OrdersListEvent, OrdersListState> {
 
 ## Dependency Injection
 
-Using `get_it` with `injectable` for code generation:
+Using `get_it` with manual registration in `lib/core/di/injection.dart`:
 
 ```dart
-// lib/core/di/injection.dart
 final getIt = GetIt.instance;
 
-@InjectableInit()
-Future<void> configureDependencies() async => getIt.init();
+Future<void> configureDependencies() async {
+  final db = AppDatabase();
+  getIt.registerSingleton<AppDatabase>(db);
 
-// Usage in features
-@Injectable()
-class GetOrdersUseCase {
-  final OrderRepository repository;
-  GetOrdersUseCase(this.repository);
+  // DAOs
+  getIt.registerSingleton(OrderDao(db));
+  // ...
+
+  // Repositories
+  getIt.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(getIt<OrderDao>()),
+  );
+
+  // Use Cases
+  getIt.registerFactory(() => GetOrders(getIt()));
+
+  // BLoCs
+  getIt.registerFactory(() => OrdersListBloc(getOrders: getIt()));
 }
 ```
 
@@ -515,26 +160,14 @@ class GetOrdersUseCase {
 
 ## Navigation
 
-Using `go_router` with named routes:
+Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Stock, Money, More) and push routes for detail pages.
 
-```dart
-// lib/core/constants/route_names.dart
-class RouteNames {
-  static const today = '/';
-  static const calendarWeek = '/calendar/week';
-  static const calendarMonth = '/calendar/month';
-  static const orders = '/orders';
-  static const newOrder = '/orders/new';
-  static const orderDetail = '/orders/:id';
-  static const materials = '/materials';
-  static const materialDetail = '/materials/:id';
-  static const products = '/products';
-  static const productEditor = '/products/:id/edit';
-  static const channels = '/channels';
-  static const earnings = '/earnings';
-  static const settings = '/settings';
-}
-```
+- Tab switches use `context.go()` (replace)
+- Detail pages use `context.push()` (push)
+- Child pages pop with `context.pop(true)` after successful operations
+- Parent pages `await` the push result and reload their BLoC
+
+**Auto-refresh pattern**: After any create/edit/delete, child pages pop with `true`. Parent pages check the result and dispatch a reload event.
 
 ---
 
@@ -543,45 +176,41 @@ class RouteNames {
 All use cases return `Either<Failure, Success>` using the `dartz` package:
 
 ```dart
-// lib/core/error/failures.dart
 abstract class Failure {
   final String message;
-  Failure(this.message);
+  const Failure(this.message);
 }
 
 class DatabaseFailure extends Failure {}
 class ValidationFailure extends Failure {}
 class NotFoundFailure extends Failure {}
-
-// Use case signature
-class GetOrdersUseCase {
-  Future<Either<Failure, List<Order>>> call(OrderFilter filter);
-}
 ```
 
 ---
 
 ## Testing Strategy
 
-**MANDATORY RULE: When working on any feature, always write test cases.** Every use case must have unit tests, every BLoC must have `bloc_test` coverage, and every new widget must have a widget test. No feature is considered complete without its tests.
+**MANDATORY RULE: When working on any feature, always write test cases.** Every use case must have unit tests, every BLoC must have `bloc_test` coverage, and every new widget must have a widget test.
 
 | Level | Tool | Coverage Target |
 |-------|------|----------------|
 | Unit Tests | `test`, `mocktail` | Use cases, BLoCs, repositories |
-| Widget Tests | `flutter_test` | Key widgets, pip strip, stepper |
-| Integration Tests | `integration_test` | Critical flows (create order, pack) |
+| Widget Tests | `flutter_test` | Key widgets (PipStrip, StepperInput, etc.) |
 
 ### Testing Requirements
-1. **Every use case** — at least one test for the happy path, one for each validation failure
-2. **Every BLoC** — test each event handler using `bloc_test`, verify correct states are emitted
-3. **Every new widget** — widget test verifying it renders correctly with expected data
-4. **Business logic** — dedicated tests for profit calculation, stock reservation/deduction, BOM expansion, weighted average cost
+1. **Every use case** — happy path + each validation failure
+2. **Every BLoC** — each event handler, verify correct state emissions
+3. **Every new widget** — renders correctly with expected data
+4. **Business logic** — profit calculation, stock reservation/deduction, BOM expansion, weighted average cost
 
-### Testing Priorities
-1. **Profit calculation** — must be exact
-2. **Stock reservation/deduction** — must be atomic
-3. **BOM expansion** — must correctly calculate material needs
-4. **Weighted average cost** — must update correctly on stock receipt
+### dartz Either in Tests
+When mocking methods returning `Either<Failure, T>`, always add explicit type parameters:
+```dart
+// CORRECT
+when(mockRepo.getOrders()).thenAnswer((_) async => Right<Failure, List<Order>>([testOrder]));
+// WRONG — infers Right<dynamic, List<Order>>
+when(mockRepo.getOrders()).thenAnswer((_) async => Right([testOrder]));
+```
 
 ---
 
@@ -594,84 +223,31 @@ class GetOrdersUseCase {
 - **Constants**: `camelCase` (not SCREAMING_CAPS)
 - **Private members**: `_prefixWithUnderscore`
 
-### File Organization
-Each file should contain:
-1. Imports (Dart SDK, Flutter, packages, project)
-2. One public class per file (exception: closely related events/states)
-3. Private helper classes at the bottom
-
 ### Comments
 - Document **why**, not **what**
 - Use `///` for public API documentation
-- Use `//` for implementation notes
 
 ### Error Handling
 - Never swallow errors silently
 - Always show user-friendly error messages
-- Log errors to a local file for debugging
 
 ---
 
 ## Database Migrations
 
-Drift supports schema migrations. Every schema change must:
-1. Increment the schema version in `app_database.dart`
+Every schema change must:
+1. Increment `schemaVersion` in `app_database.dart`
 2. Add a migration step in `migrations.dart`
 3. Handle data preservation during migration
-
-```dart
-@DriftDatabase(tables: [Orders, OrderItems, ...])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-  
-  @override
-  int get schemaVersion => 2;  // Increment on changes
-  
-  @override
-  MigrationStrategy get migration {
-    return MigrationStrategy(
-      onCreate: (Migrator m) => m.createAll(),
-      onUpgrade: (Migrator m, int from, int to) async {
-        if (from < 2) {
-          await m.alterTable(TableMigration.orders));
-        }
-      },
-    );
-  }
-}
-```
-
----
-
-## Performance Considerations
-
-1. **Pagination**: Orders list should paginate (50 items per page)
-2. **Lazy Loading**: Material detail loads movements on demand
-3. **Computed Fields**: Profit and buildable quantity are computed, not stored
-4. **Indexes**: Add indexes on frequently queried columns:
-   - `orders.status`
-   - `orders.ship_by_date`
-   - `stock_movements.material_id`
-   - `order_materials.material_id`
+4. Run `dart run build_runner build` to regenerate code
 
 ---
 
 ## Backup & Export
 
-Since the app is offline-only, backup is critical:
-- **Export**: Single JSON file with all data
-- **Import**: Restore from JSON file
-- **Location**: User chooses via file picker
-- **Frequency**: Remind user weekly to backup
-
----
-
-## Future Considerations
-
-- **Multi-currency**: Currently PHP only, but structure should support extension
-- **Reports**: PDF export of earnings, waste reports
-- **Barcode scanning**: For receiving stock
-- **Cloud sync**: Optional, via user's own Google Drive
+Raw SQLite file copy via `file_picker` (`lib/core/services/backup_service.dart`):
+- **Export**: Reads `craftbook.sqlite` as bytes, passes to `FilePicker.saveFile()` (Android SAF compatible)
+- **Import**: Picks a file, copies over current DB (or writes bytes), prompts restart
 
 ---
 
@@ -679,24 +255,14 @@ Since the app is offline-only, backup is critical:
 
 1. **Branch naming**: `feature/feature-name`, `fix/bug-name`, `refactor/description`
 2. **Commit messages**: Conventional commits (`feat:`, `fix:`, `docs:`, etc.)
-3. **Code review**: Required before merge to main
-4. **CI/CD**: Run tests and lint on every PR
+3. **After adding plugins**: Run `flutter clean && flutter pub get` then full rebuild (hot restart won't register native code)
 
----
-
-## Getting Started
+### Getting Started
 
 ```bash
-# Install dependencies
 flutter pub get
-
-# Run code generation (Drift, injectable)
 dart run build_runner build
-
-# Run the app
 flutter run
-
-# Run tests
 flutter test
 ```
 
@@ -704,13 +270,9 @@ flutter test
 
 ## Documentation
 
-- **This file (AGENTS.md)**: Code architecture, patterns, and technical conventions — the single source of truth for *how* to build.
-- **[docs/project.md](docs/project.md)**: Business context, feature status, and current state — the single source of truth for *what* has been built and *what's next*.
-- **[docs/craftbook-ui-flow.html](docs/craftbook-ui-flow.html)**: Interactive UI flow mockup — visual reference for the 6 user flows and screen layouts.
-
-**Keep both files in sync.** When completing features, updating architecture, or changing project state, update the relevant doc. Stale docs lead to stale context.
-
-**General rule:** Always document decisions, changes, and progress in the `docs/` folder when possible. Future-you (and your AI assistant) will thank you.
+- **This file (AGENTS.md)**: Code architecture, patterns, and technical conventions.
+- **[docs/project.md](docs/project.md)**: Business context, feature status, and current state.
+- **[docs/craftbook-ui-flow.html](docs/craftbook-ui-flow.html)**: Interactive UI flow mockup.
 
 ---
 
