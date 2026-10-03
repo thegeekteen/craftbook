@@ -108,14 +108,16 @@ class CraftbookApp extends StatelessWidget {
             builder: (context, state) => const ProductsListPage(),
           ),
           GoRoute(
-            path: RouteNames.channels,
-            builder: (context, state) => const ChannelsPage(),
-          ),
-          GoRoute(
             path: RouteNames.buyList,
             builder: (context, state) => const BuyListPage(),
           ),
         ],
+      ),
+      // Top-level (no shell): it is pushed from the order wizard, and a shell
+      // child there would mount a second AppShell and duplicate its GlobalKey.
+      GoRoute(
+        path: RouteNames.channels,
+        builder: (context, state) => const ChannelsPage(),
       ),
       GoRoute(
         path: RouteNames.calendarWeek,
