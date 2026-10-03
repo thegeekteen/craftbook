@@ -47,7 +47,7 @@ class CraftbookApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget app(ThemeSettings look) => MaterialApp.router(
-      title: 'Craftbook',
+      title: 'CraftBook',
       theme: AppTheme.light(look.palette),
       darkTheme: AppTheme.dark(look.palette),
       themeMode: look.mode,

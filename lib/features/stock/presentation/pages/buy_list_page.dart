@@ -54,7 +54,7 @@ class _BuyListViewState extends State<_BuyListView> {
 
   Future<void> _copy(List<BuyListItem> items) async {
     final total = items.fold<double>(0, (s, i) => s + i.totalCost);
-    final buffer = StringBuffer('Craftbook buy list\n\n');
+    final buffer = StringBuffer('CraftBook buy list\n\n');
     for (final i in items) {
       final pcs = i.packsToOrder * i.packSize;
       buffer.writeln('- ${i.materialName}: ${i.packsToOrder} '

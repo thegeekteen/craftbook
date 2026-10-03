@@ -24,6 +24,6 @@ class AppConstants {
   static const String currencyCode = 'PHP';
 
   // App info
-  static const String appName = 'Craftbook';
+  static const String appName = 'CraftBook';
   static const String appVersion = '1.0.0';
 }
