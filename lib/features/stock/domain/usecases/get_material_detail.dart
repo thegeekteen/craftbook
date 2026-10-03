@@ -16,7 +16,7 @@ class GetMaterialDetail {
         return Error(failure);
       case Success(value: final material):
         if (material == null) {
-          return Error(NotFoundFailure('Material not found'));
+          return const Error(NotFoundFailure('Material not found'));
         }
         final movementsResult = await repository.getStockMovements(materialId);
         switch (movementsResult) {

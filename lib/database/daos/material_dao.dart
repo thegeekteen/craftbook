@@ -9,7 +9,7 @@ part 'material_dao.g.dart';
 /// Data Access Object for materials
 @DriftAccessor(tables: [Materials, StockMovements])
 class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin {
-  MaterialDao(AppDatabase db) : super(db);
+  MaterialDao(super.db);
 
   /// Get all materials
   Future<List<Material>> getAllMaterials() {

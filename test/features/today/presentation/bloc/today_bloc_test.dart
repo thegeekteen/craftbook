@@ -46,7 +46,7 @@ void main() {
     setUp: () => when(() => getTodayDashboard())
         .thenAnswer((_) async => const Success(dashboard)),
     build: build,
-    act: (bloc) => bloc.add(LoadToday()),
+    act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [isA<TodayLoading>(), const TodayLoaded(dashboard)],
     verify: (_) => verify(() => getTodayDashboard()).called(1),
   );
@@ -56,7 +56,7 @@ void main() {
     setUp: () => when(() => getTodayDashboard()).thenAnswer(
         (_) async => const Error(DatabaseFailure('db down'))),
     build: build,
-    act: (bloc) => bloc.add(LoadToday()),
+    act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [isA<TodayLoading>(), const TodayError('db down')],
   );
 
@@ -66,7 +66,7 @@ void main() {
         .thenAnswer((_) async => const Success(updatedDashboard)),
     build: build,
     seed: () => const TodayLoaded(dashboard),
-    act: (bloc) => bloc.add(LoadToday()),
+    act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [const TodayLoaded(updatedDashboard)],
   );
 
@@ -76,7 +76,7 @@ void main() {
         (_) async => const Error(DatabaseFailure('oops'))),
     build: build,
     seed: () => const TodayLoaded(dashboard),
-    act: (bloc) => bloc.add(LoadToday()),
+    act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [const TodayError('oops')],
   );
 

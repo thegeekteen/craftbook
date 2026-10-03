@@ -69,8 +69,8 @@ class AppTheme {
       labelSmall: AppTextStyles.monoLabel.copyWith(color: c.muted),
     );
 
-    final controlShape =
-        const RoundedRectangleBorder(borderRadius: AppRadii.controlAll);
+    const controlShape =
+        RoundedRectangleBorder(borderRadius: AppRadii.controlAll);
     final buttonText = AppTextStyles.bodyMedium
         .copyWith(fontWeight: FontWeight.w600, fontSize: 14.5);
 

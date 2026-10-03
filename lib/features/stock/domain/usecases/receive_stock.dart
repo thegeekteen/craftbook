@@ -15,10 +15,10 @@ class ReceiveStock {
     String? supplier,
   }) async {
     if (packsReceived <= 0) {
-      return Error(const ValidationFailure('Packs received must be greater than 0'));
+      return const Error(ValidationFailure('Packs received must be greater than 0'));
     }
     if (pricePerPack < 0) {
-      return Error(const ValidationFailure('Price per pack cannot be negative'));
+      return const Error(ValidationFailure('Price per pack cannot be negative'));
     }
     return repository.receiveStock(
       materialId: materialId,

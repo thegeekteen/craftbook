@@ -97,7 +97,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       final newQty = packsReceived * current.packSize;
@@ -135,7 +135,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       // Record stock movement
       await dao.addStockMovement(db.StockMovementsCompanion(
         materialId: Value(materialId),
-        type: Value('received'),
+        type: const Value('received'),
         quantity: Value(newQty),
         unitCost: Value(newUnitPrice),
         reference: Value('Received $packsReceived packs'),
@@ -155,7 +155,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       final difference = newQuantityOnHand - current.quantityOnHand;
@@ -165,7 +165,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       // Record stock movement
       await dao.addStockMovement(db.StockMovementsCompanion(
         materialId: Value(materialId),
-        type: Value('adjusted'),
+        type: const Value('adjusted'),
         quantity: Value(difference),
         unitCost: Value(current.unitCost),
         reference: Value('Adjusted from ${current.quantityOnHand} to $newQuantityOnHand'),
@@ -185,7 +185,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -208,7 +208,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -232,7 +232,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -244,10 +244,10 @@ class MaterialRepositoryImpl implements MaterialRepository {
       // Record stock movement
       await dao.addStockMovement(db.StockMovementsCompanion(
         materialId: Value(materialId),
-        type: Value('deducted'),
+        type: const Value('deducted'),
         quantity: Value(quantity),
         unitCost: Value(current.unitCost),
-        reference: Value('Deducted for order'),
+        reference: const Value('Deducted for order'),
       ));
 
       return const Success(null);
@@ -264,7 +264,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Error(NotFoundFailure('Material not found'));
+        return const Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -275,10 +275,10 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
       await dao.addStockMovement(db.StockMovementsCompanion(
         materialId: Value(materialId),
-        type: Value('received'),
+        type: const Value('received'),
         quantity: Value(quantity),
         unitCost: Value(current.unitCost),
-        reference: Value('Restored from deleted order'),
+        reference: const Value('Restored from deleted order'),
       ));
 
       return const Success(null);

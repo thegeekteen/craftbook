@@ -500,7 +500,7 @@ class _CustomerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: SectionLabel('Customer', padding: EdgeInsets.zero)),
+              const Expanded(child: SectionLabel('Customer', padding: EdgeInsets.zero)),
               if (channelName != null) AppTag(channelName!, type: AppTagType.outline),
             ],
           ),

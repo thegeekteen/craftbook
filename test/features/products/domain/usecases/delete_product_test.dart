@@ -46,7 +46,7 @@ void main() {
   group('DeleteProduct', () {
     test('deletes product when not in use', () async {
       when(() => mockRepo.getBomItems(1))
-          .thenAnswer((_) async => Success<List<BomItem>>([]));
+          .thenAnswer((_) async => const Success<List<BomItem>>([]));
       when(() => mockRepo.hasOrdersUsingProduct(1))
           .thenAnswer((_) async => const Success<bool>(false));
       when(() => mockRepo.deleteProduct(1))
@@ -78,7 +78,7 @@ void main() {
 
     test('blocks deletion when referenced by orders', () async {
       when(() => mockRepo.getBomItems(1))
-          .thenAnswer((_) async => Success<List<BomItem>>([]));
+          .thenAnswer((_) async => const Success<List<BomItem>>([]));
       when(() => mockRepo.hasOrdersUsingProduct(1))
           .thenAnswer((_) async => const Success<bool>(true));
 

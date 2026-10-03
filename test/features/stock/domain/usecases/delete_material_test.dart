@@ -50,10 +50,10 @@ void main() {
   group('DeleteMaterial', () {
     test('deletes material when not in use', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
-          .thenAnswer((_) async => Success<List<Product>>([]));
+          .thenAnswer((_) async => const Success<List<Product>>([]));
       when(() => mockMaterialRepo.getStockMovements(1))
           .thenAnswer(
-              (_) async => Success<List<StockMovement>>([]));
+              (_) async => const Success<List<StockMovement>>([]));
       when(() => mockMaterialRepo.deleteMaterial(1))
           .thenAnswer((_) async => const Success<void>(null));
 
@@ -83,7 +83,7 @@ void main() {
 
     test('blocks deletion when has stock movement history', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
-          .thenAnswer((_) async => Success<List<Product>>([]));
+          .thenAnswer((_) async => const Success<List<Product>>([]));
       when(() => mockMaterialRepo.getStockMovements(1))
           .thenAnswer((_) async =>
               Success<List<StockMovement>>([testMovement]));

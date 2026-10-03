@@ -20,7 +20,7 @@ class PackOrder {
     final materialsResult = await orderRepository.getOrderMaterials(orderId);
     switch (materialsResult) {
       case Error():
-        return Error<void>(const DatabaseFailure('Failed to load order materials'));
+        return const Error<void>(DatabaseFailure('Failed to load order materials'));
       case Success(:final value):
         for (final mat in value) {
           // On-hand drops by what was used; promised by what was reserved.

@@ -15,5 +15,5 @@ abstract class TodayEvent extends Equatable {
 class LoadToday extends TodayEvent {
   final Completer<void>? done;
 
-  LoadToday({this.done});
+  const LoadToday({this.done});
 }

@@ -89,7 +89,7 @@ void main() {
     );
 
     when(() => mockOrderRepo.getOrderProducts(any()))
-        .thenAnswer((_) async => Success<List<OrderProduct>>(const []));
+        .thenAnswer((_) async => const Success<List<OrderProduct>>([]));
   });
 
   group('DeleteOrder', () {

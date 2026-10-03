@@ -31,7 +31,7 @@ class TodayPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<TodayBloc>()..add(LoadToday()),
+      create: (_) => getIt<TodayBloc>()..add(const LoadToday()),
       child: const _TodayView(),
     );
   }
@@ -47,7 +47,7 @@ class _TodayView extends StatefulWidget {
 class _TodayViewState extends State<_TodayView> {
   Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
 
-  void _reload() => context.read<TodayBloc>().add(LoadToday());
+  void _reload() => context.read<TodayBloc>().add(const LoadToday());
 
   /// Pushes [location] and reloads when the child reports a change.
   Future<void> _open(String location) async {

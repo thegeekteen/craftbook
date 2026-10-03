@@ -110,7 +110,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final existing = await dao.getProductById(id);
       if (existing == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
 
       await dao.updateProduct(db.Product(
@@ -177,7 +177,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
 
       // Standalone products use their own unit cost
@@ -251,7 +251,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
 
       final oldQty = product.quantityOnHand;
@@ -292,7 +292,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
 
       await dao.updateProductStock(
@@ -328,7 +328,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
       await dao.updateProductStock(
         productId,
@@ -349,7 +349,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
       final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
       await dao.updateProductStock(
@@ -371,7 +371,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
       final newOnHand = (product.quantityOnHand - quantity).clamp(0, 999999);
       final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
@@ -401,7 +401,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Error(NotFoundFailure('Product not found'));
+        return const Error(NotFoundFailure('Product not found'));
       }
       await dao.updateProductStock(
         productId,

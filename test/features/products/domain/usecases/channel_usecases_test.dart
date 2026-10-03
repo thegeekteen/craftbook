@@ -67,7 +67,7 @@ void main() {
 
     test('returns failure when repository fails', () async {
       when(() => mockRepository.getAllChannels())
-          .thenAnswer((_) async => Error(const DatabaseFailure('DB error')));
+          .thenAnswer((_) async => const Error(DatabaseFailure('DB error')));
 
       final result = await getChannels();
 

@@ -12,7 +12,7 @@ part 'earnings_dao.g.dart';
 /// Data Access Object for earnings calculations
 @DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
 class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin {
-  EarningsDao(AppDatabase db) : super(db);
+  EarningsDao(super.db);
 
   /// Get completed orders (packed or shipped) whose completion date falls within the range.
   /// Uses packedAt for packed orders, shippedAt for shipped orders.

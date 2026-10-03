@@ -92,7 +92,7 @@ void main() {
 
     test('deletes channel when no orders exist at all', () async {
       when(() => mockOrderRepo.getAllOrders())
-          .thenAnswer((_) async => Success<List<Order>>([]));
+          .thenAnswer((_) async => const Success<List<Order>>([]));
       when(() => mockChannelRepo.deleteChannel(5))
           .thenAnswer((_) async => const Success<void>(null));
 

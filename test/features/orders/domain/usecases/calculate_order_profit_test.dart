@@ -66,7 +66,7 @@ void main() {
       const fees = 51.76;
       const shipping = 0.0;
 
-      final profit = sales - materialCost - fees - shipping;
+      const profit = sales - materialCost - fees - shipping;
       expect(profit, closeTo(500.94, 0.01));
     });
 
@@ -78,7 +78,7 @@ void main() {
       const fees = 51.76;
       const shipping = 0.0;
 
-      final profit = sales - actualMaterialCost - fees - shipping;
+      const profit = sales - actualMaterialCost - fees - shipping;
       expect(profit, closeTo(491.94, 0.01));
     });
   });

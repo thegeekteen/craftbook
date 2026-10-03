@@ -25,7 +25,7 @@ class DeleteOrder {
       case Success(:final value):
         final order = value;
         if (order == null) {
-          return Error<void>(const NotFoundFailure('Order not found'));
+          return const Error<void>(NotFoundFailure('Order not found'));
         }
 
         if (order.status == OrderStatus.shipped) {

@@ -12,7 +12,7 @@ part 'product_dao.g.dart';
 /// Data Access Object for products
 @DriftAccessor(tables: [Products, BomItems, Materials, ProductStockMovements, OrderProducts])
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
-  ProductDao(AppDatabase db) : super(db);
+  ProductDao(super.db);
 
   /// Get all products
   Future<List<Product>> getAllProducts() {

@@ -14,7 +14,7 @@ part 'order_dao.g.dart';
 /// Data Access Object for orders
 @DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, OrderProducts, Products, Materials, ProductStockMovements])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
-  OrderDao(AppDatabase db) : super(db);
+  OrderDao(super.db);
 
   /// Get all orders
   Future<List<Order>> getAllOrders() {

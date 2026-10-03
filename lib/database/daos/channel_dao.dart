@@ -8,7 +8,7 @@ part 'channel_dao.g.dart';
 /// Data Access Object for channels
 @DriftAccessor(tables: [Channels])
 class ChannelDao extends DatabaseAccessor<AppDatabase> with _$ChannelDaoMixin {
-  ChannelDao(AppDatabase db) : super(db);
+  ChannelDao(super.db);
 
   /// Get all channels
   Future<List<Channel>> getAllChannels() {

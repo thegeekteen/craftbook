@@ -115,8 +115,9 @@ class OrderCard extends StatelessWidget {
         if (order.status == OrderStatus.pending && days < 0) {
           return (days == -1 ? 'Due yesterday' : 'Due ${-days} days ago', true);
         }
-        if (days == 0)
+        if (days == 0) {
           return ('Ships today', order.status == OrderStatus.pending);
+        }
         return (
           'Ships ${app_date.DateUtils.friendly(order.shipByDate)}',
           false

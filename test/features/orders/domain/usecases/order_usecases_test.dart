@@ -73,7 +73,7 @@ void main() {
 
     test('returns failure on repository error', () async {
       when(() => mockRepository.getAllOrders())
-          .thenAnswer((_) async => Error<List<Order>>(const DatabaseFailure('error')));
+          .thenAnswer((_) async => const Error<List<Order>>(DatabaseFailure('error')));
 
       final result = await getOrders();
 

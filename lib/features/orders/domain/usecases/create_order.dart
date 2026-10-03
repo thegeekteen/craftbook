@@ -32,10 +32,10 @@ class CreateOrder {
     required List<OrderItemInput> items,
   }) async {
     if (customerName.trim().isEmpty) {
-      return Error<int>(const ValidationFailure('Customer name is required'));
+      return const Error<int>(ValidationFailure('Customer name is required'));
     }
     if (items.isEmpty) {
-      return Error<int>(const ValidationFailure('At least one item is required'));
+      return const Error<int>(ValidationFailure('At least one item is required'));
     }
 
     final expandedMaterials = <OrderMaterialInput>[];

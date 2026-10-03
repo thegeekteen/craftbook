@@ -13,8 +13,8 @@ class AdjustProductStock {
     required int newQuantityOnHand,
   }) async {
     if (newQuantityOnHand < 0) {
-      return Error(
-        const ValidationFailure('Quantity on hand cannot be negative'),
+      return const Error(
+        ValidationFailure('Quantity on hand cannot be negative'),
       );
     }
 

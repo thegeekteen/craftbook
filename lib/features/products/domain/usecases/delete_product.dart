@@ -18,7 +18,7 @@ class DeleteProduct {
       case Success(:final value):
         final product = value;
         if (product == null) {
-          return Error(NotFoundFailure('Product not found'));
+          return const Error(NotFoundFailure('Product not found'));
         }
 
         // For BOM products: check BOM items

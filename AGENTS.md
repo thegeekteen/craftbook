@@ -273,6 +273,11 @@ switch (result) {
 - Document **why**, not **what**
 - Use `///` for public API documentation
 
+### Linting
+- Run `flutter analyze` before finishing any change and fix **every** issue it reports, including `info`-level messages. There is no such thing as an acceptable info; the codebase stays at "No issues found!".
+- Try `dart fix --apply` first for mechanical fixes (e.g. `prefer_const_constructors`, `use_super_parameters`), then fix the rest by hand.
+- Don't silence a lint with `// ignore:` unless it's a false positive, and say why in the comment.
+
 ### Error Handling
 - Never swallow errors silently
 - Always show user-friendly error messages
