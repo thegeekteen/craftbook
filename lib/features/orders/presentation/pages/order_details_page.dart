@@ -443,6 +443,64 @@ class _StatusStepper extends StatelessWidget {
                 ? 2
                 : -1;
 
+    // Build: [Step0] [Line] [Step1] [Line] [Step2]
+    final children = <Widget>[];
+    for (var i = 0; i < stepLabels.length; i++) {
+      final isDone = i <= currentIndex;
+      final isCurrent = i == currentIndex;
+
+      children.add(
+        Expanded(
+          child: Column(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDone ? AppColors.success : AppColors.paper,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDone ? AppColors.success : AppColors.hair,
+                    width: isCurrent ? 2.5 : 1.5,
+                  ),
+                ),
+                child: Icon(
+                  stepIcons[i],
+                  size: 18,
+                  color: isDone ? Colors.white : AppColors.muted,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                stepLabels[i],
+                style: AppTextStyles.monoLabel.copyWith(
+                  color: isDone ? AppColors.success : AppColors.muted,
+                  fontWeight:
+                      isDone ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (i < stepLabels.length - 1) {
+        children.add(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 26),
+              child: Container(
+                height: 2,
+                color: i < currentIndex
+                    ? AppColors.success
+                    : AppColors.hair,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
@@ -458,67 +516,8 @@ class _StatusStepper extends StatelessWidget {
         ],
       ),
       child: Row(
-        children: List.generate(stepLabels.length, (index) {
-          final isDone = index <= currentIndex;
-          final isCurrent = index == currentIndex;
-          return Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isDone
-                              ? AppColors.success
-                              : AppColors.paper,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDone
-                                ? AppColors.success
-                                : AppColors.hair,
-                            width: isCurrent ? 2.5 : 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          stepIcons[index],
-                          size: 18,
-                          color: isDone
-                              ? Colors.white
-                              : AppColors.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        stepLabels[index],
-                        style: AppTextStyles.monoLabel.copyWith(
-                          color: isDone
-                              ? AppColors.success
-                              : AppColors.muted,
-                          fontWeight: isDone
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (index < stepLabels.length - 1)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      margin: const EdgeInsets.only(bottom: 26),
-                      color: index < currentIndex
-                          ? AppColors.success
-                          : AppColors.hair,
-                    ),
-                  ),
-              ],
-            ),
-          );
-        }),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }
