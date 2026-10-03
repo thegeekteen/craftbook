@@ -26,8 +26,15 @@ class OrdersListPage extends StatelessWidget {
   }
 }
 
-class _OrdersListView extends StatelessWidget {
+class _OrdersListView extends StatefulWidget {
   const _OrdersListView();
+
+  @override
+  State<_OrdersListView> createState() => _OrdersListViewState();
+}
+
+class _OrdersListViewState extends State<_OrdersListView> {
+  String _searchQuery = '';
 
   static const _tabs = ['All', 'To Pack', 'Packed', 'Shipped'];
 
@@ -72,13 +79,38 @@ class _OrdersListView extends StatelessWidget {
             }
           },
           builder: (context, state) {
-            return TabBarView(
-              children: List.generate(_tabs.length, (index) {
-                return _OrdersTab(
-                  status: _statusForTab(index),
-                  state: state,
-                );
-              }),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search orders...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () =>
+                                  setState(() => _searchQuery = ''),
+                            )
+                          : null,
+                      isDense: true,
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: List.generate(_tabs.length, (index) {
+                      return _OrdersTab(
+                        status: _statusForTab(index),
+                        state: state,
+                        searchQuery: _searchQuery,
+                      );
+                    }),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -100,8 +132,13 @@ class _OrdersListView extends StatelessWidget {
 class _OrdersTab extends StatelessWidget {
   final OrderStatus? status;
   final OrdersListState state;
+  final String searchQuery;
 
-  const _OrdersTab({required this.status, required this.state});
+  const _OrdersTab({
+    required this.status,
+    required this.state,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,9 +148,16 @@ class _OrdersTab extends StatelessWidget {
 
     if (state is OrdersListLoaded) {
       final loaded = state as OrdersListLoaded;
-      final orders = status == null
+      var orders = status == null
           ? loaded.orders
           : loaded.orders.where((o) => o.status == status).toList();
+
+      if (searchQuery.isNotEmpty) {
+        final q = searchQuery.toLowerCase();
+        orders = orders.where((o) =>
+            o.customerName.toLowerCase().contains(q) ||
+            '#${o.id}'.contains(q)).toList();
+      }
 
       if (orders.isEmpty) {
         return Center(

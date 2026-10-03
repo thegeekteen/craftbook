@@ -26,8 +26,15 @@ class MaterialsListPage extends StatelessWidget {
   }
 }
 
-class _MaterialsListView extends StatelessWidget {
+class _MaterialsListView extends StatefulWidget {
   const _MaterialsListView();
+
+  @override
+  State<_MaterialsListView> createState() => _MaterialsListViewState();
+}
+
+class _MaterialsListViewState extends State<_MaterialsListView> {
+  String _searchQuery = '';
 
   static const _tabs = ['All', 'Low', 'Promised'];
 
@@ -64,11 +71,42 @@ class _MaterialsListView extends StatelessWidget {
             }
           },
           builder: (context, state) {
-            return TabBarView(
+            return Column(
               children: [
-                _buildTab(context, state, _MaterialsTabFilter.all),
-                _buildTab(context, state, _MaterialsTabFilter.low),
-                _buildTab(context, state, _MaterialsTabFilter.promised),
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search materials...',
+                      prefixIcon:
+                          const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close,
+                                  size: 18),
+                              onPressed: () => setState(
+                                  () => _searchQuery = ''),
+                            )
+                          : null,
+                      isDense: true,
+                    ),
+                    onChanged: (v) =>
+                        setState(() => _searchQuery = v),
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildTab(context, state,
+                          _MaterialsTabFilter.all),
+                      _buildTab(context, state,
+                          _MaterialsTabFilter.low),
+                      _buildTab(context, state,
+                          _MaterialsTabFilter.promised),
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -221,6 +259,11 @@ class _MaterialsListView extends StatelessWidget {
           break;
         case _MaterialsTabFilter.all:
           break;
+      }
+
+      if (_searchQuery.isNotEmpty) {
+        materials = materials.where((m) =>
+            m.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
       }
 
       if (materials.isEmpty) {

@@ -27,8 +27,15 @@ class ProductsListPage extends StatelessWidget {
   }
 }
 
-class _ProductsListView extends StatelessWidget {
+class _ProductsListView extends StatefulWidget {
   const _ProductsListView();
+
+  @override
+  State<_ProductsListView> createState() => _ProductsListViewState();
+}
+
+class _ProductsListViewState extends State<_ProductsListView> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +64,11 @@ class _ProductsListView extends StatelessWidget {
           }
 
           if (state is ProductsLoaded) {
+            final filtered = _searchQuery.isEmpty
+                ? state.products
+                : state.products.where((p) =>
+                    p.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+
             if (state.products.isEmpty) {
               return Center(
                 child: Column(
@@ -84,13 +96,41 @@ class _ProductsListView extends StatelessWidget {
               onRefresh: () async {
                 context.read<ProductsBloc>().add(const LoadProducts());
               },
-              child: ListView.builder(
+              child: ListView(
                 padding: const EdgeInsets.all(16),
-                itemCount: state.products.length,
-                itemBuilder: (context, index) {
-                  final product = state.products[index];
-                  return _ProductCardWithAsyncData(product: product);
-                },
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search products...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () =>
+                                  setState(() => _searchQuery = ''),
+                            )
+                          : null,
+                      isDense: true,
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                  const SizedBox(height: 12),
+                  if (filtered.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 32),
+                      child: Center(
+                        child: Text(
+                          'No products match "$_searchQuery"',
+                          style: AppTextStyles.bodyMedium
+                              .copyWith(color: AppColors.muted),
+                        ),
+                      ),
+                    ),
+                  ...filtered.map(
+                    (product) =>
+                        _ProductCardWithAsyncData(product: product),
+                  ),
+                ],
               ),
             );
           }
