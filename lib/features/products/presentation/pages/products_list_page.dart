@@ -130,7 +130,7 @@ class _ProductsListViewState extends State<_ProductsListView> {
                       padding: const EdgeInsets.only(top: 32),
                       child: Center(
                         child: Text(
-                          'No products match "$_searchQuery"',
+                          'No products match "${_searchController.text}"',
                           style: AppTextStyles.bodyMedium
                               .copyWith(color: AppColors.muted),
                         ),
