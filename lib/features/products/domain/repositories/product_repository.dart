@@ -2,6 +2,7 @@ import 'package:craftbook/core/error/result.dart';
 
 import '../entities/product.dart';
 import '../entities/bom_item.dart';
+import '../entities/product_sale.dart';
 import '../entities/product_stock_movement.dart';
 
 abstract class ProductRepository {
@@ -53,6 +54,9 @@ abstract class ProductRepository {
   Future<Result<void>> restoreDeductedProductStock(int productId, int quantity);
   Future<Result<List<ProductStockMovement>>> getProductStockMovements(int productId);
   Future<Result<List<Product>>> getLowStockProducts();
+
+  /// Every order line this product appears in, across all statuses.
+  Future<Result<List<ProductSale>>> getProductSales(int productId);
 }
 
 class BomItemInput {

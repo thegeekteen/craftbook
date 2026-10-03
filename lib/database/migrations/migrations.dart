@@ -55,4 +55,14 @@ Future<void> runMigrations(
       ')',
     );
   }
+
+  // Version 3: product counts stored their difference unsigned, so a count
+  // that lowered stock read as an addition. The sign survives only in the
+  // reference text ('Adjusted -N units').
+  if (from < 3) {
+    await db.customStatement(
+      "UPDATE product_stock_movements SET quantity = -quantity "
+      "WHERE type = 'adjusted' AND reference LIKE 'Adjusted -%' AND quantity > 0",
+    );
+  }
 }
