@@ -135,6 +135,18 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
+          const SectionLabel('About', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SizedBox(height: 8),
+          AppCard.flush(
+            child: CardList(children: [
+              _MoreRow(
+                icon: Icons.info_outline_rounded,
+                title: 'About Craftbook',
+                subtitle: 'What it does and how to use it',
+                onTap: () => _open(RouteNames.about),
+              ),
+            ]),
+          ),
           const SizedBox(height: 32),
           Center(
             child: Column(

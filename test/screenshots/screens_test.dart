@@ -8,6 +8,7 @@ import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
 import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
+import 'package:craftbook/features/settings/presentation/pages/about_page.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,11 +54,17 @@ void main() {
     ('money', RouteNames.earnings),
     ('product_earnings', RouteNames.productEarningsPath(1, weekStart.subtract(const Duration(days: 28)), weekEnd)),
     ('more', RouteNames.settings),
+    ('about', RouteNames.about),
   ];
 
   for (final (name, route) in screens) {
     for (final dark in [false, true]) {
       testWidgets('$name ${dark ? 'dark' : 'light'}', (tester) async {
+        // rootBundle caches, so reading the README outside the fake-async
+        // zone lets the About page resolve instantly once it asks for it.
+        if (name == 'about') {
+          await tester.runAsync(() => rootBundle.loadString(AboutPage.readmeAsset));
+        }
         await _boot(tester, route, dark);
         await expectLater(
           find.byType(CraftbookApp),
