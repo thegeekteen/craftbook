@@ -17,6 +17,7 @@ class BackupService {
   }
 
   /// Export the database file to a user-chosen location.
+  /// On Android, uses SAF with bytes (required by file_picker).
   static Future<bool> exportDatabase(BuildContext context) async {
     try {
       final dbFile = File(await _dbPath);
@@ -29,6 +30,7 @@ class BackupService {
         return false;
       }
 
+      final bytes = await dbFile.readAsBytes();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final fileName = 'craftbook_backup_$timestamp.sqlite';
 
@@ -36,15 +38,20 @@ class BackupService {
         dialogTitle: 'Save backup',
         fileName: fileName,
         type: FileType.any,
+        bytes: bytes,
       );
 
-      if (outputPath == null) return false; // User cancelled
+      if (outputPath == null) return false;
 
-      await dbFile.copy(outputPath);
+      // On non-Android platforms, saveFile returns the path but
+      // doesn't write bytes — copy manually.
+      if (!Platform.isAndroid) {
+        await dbFile.copy(outputPath);
+      }
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Backup saved successfully')),
+          const SnackBar(content: Text('Backup saved successfully')),
         );
       }
       return true;
@@ -65,25 +72,29 @@ class BackupService {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Select backup file',
         type: FileType.any,
+        withData: true,
       );
 
       if (result == null || result.files.isEmpty) return false;
 
-      final sourceFile = File(result.files.single.path!);
-      if (!await sourceFile.exists()) {
+      final picked = result.files.single;
+      final dbPath = await _dbPath;
+      final dbFile = File(dbPath);
+
+      if (picked.path != null && await File(picked.path!).exists()) {
+        // Direct file path available
+        await File(picked.path!).copy(dbPath);
+      } else if (picked.bytes != null) {
+        // SAF on Android — write bytes directly
+        await dbFile.writeAsBytes(picked.bytes!, flush: true);
+      } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Selected file not found')),
+            const SnackBar(content: Text('Could not read the selected file')),
           );
         }
         return false;
       }
-
-      final dbPath = await _dbPath;
-      final dbFile = File(dbPath);
-
-      // Copy the backup over the current database
-      await sourceFile.copy(dbPath);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
