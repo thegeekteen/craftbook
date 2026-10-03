@@ -14,20 +14,31 @@ part 'earnings_dao.g.dart';
 class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin {
   EarningsDao(AppDatabase db) : super(db);
 
-  /// Get total earnings for date range
-  Future<Map<String, dynamic>> getEarningsSummary(DateTime startDate, DateTime endDate) async {
-    final shippedOrders = await (select(orders)
+  /// Get completed orders (packed or shipped) whose completion date falls within the range.
+  /// Uses packedAt for packed orders, shippedAt for shipped orders.
+  Future<List<Order>> _getCompletedOrders(DateTime startDate, DateTime endDate) async {
+    final allCompleted = await (select(orders)
           ..where((t) =>
-              t.shippedAt.isBiggerOrEqualValue(startDate) &
-              t.shippedAt.isSmallerOrEqualValue(endDate) &
-              t.status.equals('shipped')))
+              t.status.equals('packed') | t.status.equals('shipped')))
         .get();
 
-    final totalSales = shippedOrders.fold<double>(0, (sum, order) => sum + order.totalSales);
-    final totalMaterialCost = shippedOrders.fold<double>(0, (sum, order) => sum + order.totalMaterialCost);
-    final totalChannelFees = shippedOrders.fold<double>(0, (sum, order) => sum + order.channelFees);
-    final totalShippingCost = shippedOrders.fold<double>(0, (sum, order) => sum + order.shippingCost);
-    final totalProfit = shippedOrders.fold<double>(0, (sum, order) => sum + order.profit);
+    return allCompleted.where((o) {
+      final completionDate = o.status == 'packed' ? o.packedAt : o.shippedAt;
+      if (completionDate == null) return false;
+      return !completionDate.isBefore(startDate) &&
+          !completionDate.isAfter(endDate);
+    }).toList();
+  }
+
+  /// Get total earnings for date range
+  Future<Map<String, dynamic>> getEarningsSummary(DateTime startDate, DateTime endDate) async {
+    final completedOrders = await _getCompletedOrders(startDate, endDate);
+
+    final totalSales = completedOrders.fold<double>(0, (sum, order) => sum + order.totalSales);
+    final totalMaterialCost = completedOrders.fold<double>(0, (sum, order) => sum + order.totalMaterialCost);
+    final totalChannelFees = completedOrders.fold<double>(0, (sum, order) => sum + order.channelFees);
+    final totalShippingCost = completedOrders.fold<double>(0, (sum, order) => sum + order.shippingCost);
+    final totalProfit = completedOrders.fold<double>(0, (sum, order) => sum + order.profit);
 
     return {
       'totalSales': totalSales,
@@ -35,22 +46,17 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
       'totalChannelFees': totalChannelFees,
       'totalShippingCost': totalShippingCost,
       'totalProfit': totalProfit,
-      'orderCount': shippedOrders.length,
+      'orderCount': completedOrders.length,
     };
   }
 
   /// Get earnings by product for date range
   Future<List<Map<String, dynamic>>> getEarningsByProduct(DateTime startDate, DateTime endDate) async {
-    final shippedOrders = await (select(orders)
-          ..where((t) =>
-              t.shippedAt.isBiggerOrEqualValue(startDate) &
-              t.shippedAt.isSmallerOrEqualValue(endDate) &
-              t.status.equals('shipped')))
-        .get();
+    final completedOrders = await _getCompletedOrders(startDate, endDate);
 
     final Map<int, Map<String, dynamic>> productEarnings = {};
 
-    for (final order in shippedOrders) {
+    for (final order in completedOrders) {
       final items = await (select(orderItems)..where((t) => t.orderId.equals(order.id))).get();
       
       for (final item in items) {
@@ -81,19 +87,28 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
     return productEarnings.values.toList();
   }
 
-  /// Get waste summary for date range, with per-material breakdown
+  /// Get waste summary for date range, with per-material breakdown.
+  /// Only counts waste from packed or shipped orders.
   Future<Map<String, dynamic>> getWasteSummary(DateTime startDate, DateTime endDate) async {
+    final completedOrders = await _getCompletedOrders(startDate, endDate);
+    final completedOrderIds = completedOrders.map((o) => o.id).toSet();
+
     final allOrderMaterials = await (select(orderMaterials)
           ..where((t) => t.createdAt.isBiggerOrEqualValue(startDate) &
                   t.createdAt.isSmallerOrEqualValue(endDate)))
         .get();
 
-    final totalWaste = allOrderMaterials.fold<int>(0, (sum, m) => sum + m.wasteQuantity);
-    final wasteCost = allOrderMaterials.fold<double>(0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
+    // Only count waste from completed (packed/shipped) orders
+    final filtered = allOrderMaterials
+        .where((m) => completedOrderIds.contains(m.orderId))
+        .toList();
+
+    final totalWaste = filtered.fold<int>(0, (sum, m) => sum + m.wasteQuantity);
+    final wasteCost = filtered.fold<double>(0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
 
     // Group waste by materialId
     final Map<int, Map<String, dynamic>> byMaterial = {};
-    for (final m in allOrderMaterials) {
+    for (final m in filtered) {
       if (m.wasteQuantity <= 0) continue;
       byMaterial.putIfAbsent(m.materialId, () => {
         'materialId': m.materialId,
