@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -40,9 +40,9 @@ void main() {
             isStandalone: any(named: 'isStandalone'),
             initialQuantity: any(named: 'initialQuantity'),
             initialUnitCost: any(named: 'initialUnitCost'),
-          )).thenAnswer((_) async => const Right<Failure, int>(1));
+          )).thenAnswer((_) async => const Success<int>(1));
       when(() => mockRepository.getProductById(1))
-          .thenAnswer((_) async => Right<Failure, Product?>(testProduct));
+          .thenAnswer((_) async => Success<Product?>(testProduct));
 
       final result = await createProduct(
         name: 'Custom Magnets',
@@ -50,11 +50,13 @@ void main() {
         sellPrice: 249.0,
       );
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (product) => expect(product, testProduct),
-      );
+      expect(result, isA<Success<Product?>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(:final value):
+          expect(value, testProduct);
+      }
     });
 
     test('returns validation failure when name is empty', () async {
@@ -63,11 +65,13 @@ void main() {
         sellPrice: 249.0,
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not return right'),
-      );
+      expect(result, isA<Error<Product?>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should return error');
+      }
     });
 
     test('returns validation failure when price is zero', () async {
@@ -76,39 +80,45 @@ void main() {
         sellPrice: 0,
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not return right'),
-      );
+      expect(result, isA<Error<Product?>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should return error');
+      }
     });
   });
 
   group('GetProducts', () {
     test('returns all products', () async {
       when(() => mockRepository.getAllProducts())
-          .thenAnswer((_) async => Right<Failure, List<Product>>([testProduct]));
+          .thenAnswer((_) async => Success<List<Product>>([testProduct]));
 
       final result = await getProducts();
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (products) => expect(products, [testProduct]),
-      );
+      expect(result, isA<Success<List<Product>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(:final value):
+          expect(value, [testProduct]);
+      }
     });
 
     test('returns active products only', () async {
       when(() => mockRepository.getActiveProducts())
-          .thenAnswer((_) async => Right<Failure, List<Product>>([testProduct]));
+          .thenAnswer((_) async => Success<List<Product>>([testProduct]));
 
       final result = await getProducts(activeOnly: true);
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (products) => expect(products, [testProduct]),
-      );
+      expect(result, isA<Success<List<Product>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(:final value):
+          expect(value, [testProduct]);
+      }
     });
   });
 }

@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../../database/daos/earnings_dao.dart';
 import '../../domain/entities/earnings_summary.dart';
 import '../../domain/entities/product_earnings.dart';
@@ -13,13 +12,13 @@ class EarningsRepositoryImpl implements EarningsRepository {
   EarningsRepositoryImpl(this.dao);
 
   @override
-  Future<Either<Failure, EarningsSummary>> getEarningsSummary(
+  Future<Result<EarningsSummary>> getEarningsSummary(
     DateTime startDate,
     DateTime endDate,
   ) async {
     try {
       final result = await dao.getEarningsSummary(startDate, endDate);
-      return Right(EarningsSummary(
+      return Success(EarningsSummary(
         totalSales: result['totalSales'] as double,
         totalMaterialCost: result['totalMaterialCost'] as double,
         totalChannelFees: result['totalChannelFees'] as double,
@@ -28,18 +27,18 @@ class EarningsRepositoryImpl implements EarningsRepository {
         orderCount: result['orderCount'] as int,
       ));
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<ProductEarnings>>> getProductEarnings(
+  Future<Result<List<ProductEarnings>>> getProductEarnings(
     DateTime startDate,
     DateTime endDate,
   ) async {
     try {
       final results = await dao.getEarningsByProduct(startDate, endDate);
-      return Right(results
+      return Success(results
           .map((m) => ProductEarnings(
                 productId: m['productId'] as int,
                 productName: m['productName'] as String? ?? '',
@@ -49,12 +48,12 @@ class EarningsRepositoryImpl implements EarningsRepository {
               ))
           .toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, WasteSummary>> getWasteSummary(
+  Future<Result<WasteSummary>> getWasteSummary(
     DateTime startDate,
     DateTime endDate,
   ) async {
@@ -69,13 +68,13 @@ class EarningsRepositoryImpl implements EarningsRepository {
               ))
           .toList();
 
-      return Right(WasteSummary(
+      return Success(WasteSummary(
         totalWasteQuantity: result['totalWasteQuantity'] as int,
         totalWasteCost: result['totalWasteCost'] as double,
         items: wasteItems,
       ));
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../domain/entities/earnings_summary.dart';
 import '../../domain/entities/product_earnings.dart';
 import '../../domain/usecases/get_earnings_summary.dart';
@@ -42,10 +43,11 @@ class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
     _wasteSummary = null;
 
     final result = await getEarningsSummary(event.startDate, event.endDate);
-    result.fold(
-      (failure) => emit(EarningsError(failure.message)),
-      (summary) {
-        _summary = summary;
+    switch (result) {
+      case Error(:final failure):
+        emit(EarningsError(failure.message));
+      case Success(:final value):
+        _summary = value;
         // Trigger loading of product earnings and waste summary
         add(LoadProductEarnings(
           startDate: event.startDate,
@@ -55,8 +57,7 @@ class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
           startDate: event.startDate,
           endDate: event.endDate,
         ));
-      },
-    );
+    }
   }
 
   Future<void> _onLoadProductEarnings(
@@ -65,13 +66,13 @@ class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
   ) async {
     final result =
         await getProductEarnings(event.startDate, event.endDate);
-    result.fold(
-      (failure) => emit(EarningsError(failure.message)),
-      (productEarnings) {
-        _productEarnings = productEarnings;
+    switch (result) {
+      case Error(:final failure):
+        emit(EarningsError(failure.message));
+      case Success(:final value):
+        _productEarnings = value;
         _tryEmitLoaded(emit);
-      },
-    );
+    }
   }
 
   Future<void> _onLoadWasteSummary(
@@ -80,13 +81,13 @@ class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
   ) async {
     final result =
         await getWasteSummary(event.startDate, event.endDate);
-    result.fold(
-      (failure) => emit(EarningsError(failure.message)),
-      (wasteSummary) {
-        _wasteSummary = wasteSummary;
+    switch (result) {
+      case Error(:final failure):
+        emit(EarningsError(failure.message));
+      case Success(:final value):
+        _wasteSummary = value;
         _tryEmitLoaded(emit);
-      },
-    );
+    }
   }
 
   /// Emit [EarningsLoaded] once all three data sets are available.

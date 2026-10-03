@@ -173,9 +173,25 @@ Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, 
 
 ## Error Handling
 
-All use cases return `Either<Failure, Success>` using the `dartz` package:
+All use cases return `Result<T>` using a custom sealed class hierarchy:
 
 ```dart
+// lib/core/error/result.dart
+sealed class Result<T> {
+  const Result();
+}
+
+class Success<T> extends Result<T> {
+  final T value;
+  const Success(this.value);
+}
+
+class Error<T> extends Result<T> {
+  final Failure failure;
+  const Error(this.failure);
+}
+
+// lib/core/error/failures.dart
 abstract class Failure {
   final String message;
   const Failure(this.message);
@@ -184,6 +200,17 @@ abstract class Failure {
 class DatabaseFailure extends Failure {}
 class ValidationFailure extends Failure {}
 class NotFoundFailure extends Failure {}
+```
+
+Handle results with pattern matching:
+
+```dart
+switch (result) {
+  case Success(:final value):
+    // Handle success
+  case Error(:final failure):
+    // Handle error
+}
 ```
 
 ---
@@ -203,13 +230,20 @@ class NotFoundFailure extends Failure {}
 3. **Every new widget** — renders correctly with expected data
 4. **Business logic** — profit calculation, stock reservation/deduction, BOM expansion, weighted average cost
 
-### dartz Either in Tests
-When mocking methods returning `Either<Failure, T>`, always add explicit type parameters:
+### Result Types in Tests
+The custom `Result` sealed class has proper equality, so you can use direct assertions:
 ```dart
-// CORRECT
-when(mockRepo.getOrders()).thenAnswer((_) async => Right<Failure, List<Order>>([testOrder]));
-// WRONG — infers Right<dynamic, List<Order>>
-when(mockRepo.getOrders()).thenAnswer((_) async => Right([testOrder]));
+// Direct equality works
+expect(result, Success<void>(null));
+expect(result, Error<void>(const ValidationFailure('Invalid')));
+
+// Pattern matching for complex assertions
+switch (result) {
+  case Success(:final value):
+    expect(value, expectedValue);
+  case Error(:final failure):
+    expect(failure, isA<ValidationFailure>());
+}
 ```
 
 ---

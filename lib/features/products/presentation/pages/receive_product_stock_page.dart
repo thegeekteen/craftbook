@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -46,22 +47,21 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
     final repo = getIt<ProductRepository>();
     final result = await repo.getProductById(widget.productId);
 
-    result.fold(
-      (failure) {
+    switch (result) {
+      case Error(:final failure):
         if (mounted) {
           setState(() => _isLoading = false);
           context.showSnackBar(failure.message, isError: true);
         }
-      },
-      (product) {
+      case Success(:final value):
+        final product = value;
         if (mounted) {
           setState(() {
             _product = product;
             _isLoading = false;
           });
         }
-      },
-    );
+    }
   }
 
   double get _pricePerUnit {
@@ -94,20 +94,18 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
       pricePerUnit: _pricePerUnit,
     );
 
-    result.fold(
-      (failure) {
+    switch (result) {
+      case Error(:final failure):
         if (mounted) {
           setState(() => _isSaving = false);
           context.showSnackBar(failure.message, isError: true);
         }
-      },
-      (_) {
+      case Success():
         if (mounted) {
           context.showSnackBar('Stock received!');
           context.pop(true);
         }
-      },
-    );
+    }
   }
 
   @override

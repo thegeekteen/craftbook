@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -301,8 +302,14 @@ class _ProductCardWithAsyncDataState extends State<_ProductCardWithAsyncData> {
 
     if (mounted) {
       setState(() {
-        _buildableQuantity = bResult.fold((_) => null, (b) => b);
-        _materialCost = cResult.fold((_) => null, (c) => c);
+        _buildableQuantity = switch (bResult) {
+          Error() => null,
+          Success(:final value) => value,
+        };
+        _materialCost = switch (cResult) {
+          Error() => null,
+          Success(:final value) => value,
+        };
       });
     }
   }

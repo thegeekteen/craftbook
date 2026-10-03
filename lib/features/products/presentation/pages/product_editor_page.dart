@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -62,7 +63,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   Future<void> _loadData() async {
     final getMaterials = getIt<GetMaterials>();
     final matResult = await getMaterials();
-    final materials = matResult.fold((_) => <Material>[], (m) => m);
+    final materials = switch (matResult) {
+      Error() => <Material>[],
+      Success(:final value) => value,
+    };
 
     if (widget.productId != null) {
       final productRepo = getIt<ProductRepository>();
@@ -70,8 +74,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           await productRepo.getProductById(widget.productId!);
       final bomResult = await productRepo.getBomItems(widget.productId!);
 
-      productResult.fold(
-        (failure) {
+      switch (productResult) {
+        case Error(:final failure):
           if (mounted) {
             setState(() {
               _availableMaterials = materials;
@@ -79,9 +83,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             });
             context.showSnackBar(failure.message, isError: true);
           }
-        },
-        (product) {
-          final bomItems = bomResult.fold((_) => <BomItem>[], (b) => b);
+        case Success(:final value):
+          final product = value;
+          final bomItems = switch (bomResult) {
+            Error() => <BomItem>[],
+            Success(:final value) => value,
+          };
 
           if (mounted) {
             setState(() {
@@ -106,8 +113,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               _isLoading = false;
             });
           }
-        },
-      );
+      }
     } else {
       if (mounted) {
         setState(() {
@@ -254,19 +260,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   productId: widget.productId!,
                   newQuantityOnHand: adjustedQty,
                 );
-                result.fold(
-                  (failure) {
+                switch (result) {
+                  case Error(:final failure):
                     if (mounted) {
                       context.showSnackBar(failure.message, isError: true);
                     }
-                  },
-                  (_) {
+                  case Success():
                     if (mounted) {
                       context.showSnackBar('Stock adjusted');
                       _loadData();
                     }
-                  },
-                );
+                }
               },
               child: const Text('Adjust'),
             ),
@@ -305,14 +309,14 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         initialUnitCost: _isStandalone ? initialCost : 0,
       );
 
-      await result.fold(
-        (failure) async {
+      switch (result) {
+        case Error(:final failure):
           if (mounted) {
             setState(() => _isSaving = false);
             context.showSnackBar(failure.message, isError: true);
           }
-        },
-        (productId) async {
+        case Success(:final value):
+          final productId = value;
           if (!_isStandalone && _bomItems.isNotEmpty) {
             await productRepo.saveBomItems(
               productId,
@@ -330,8 +334,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             context.showSnackBar('Product created!');
             Navigator.of(context).pop(true);
           }
-        },
-      );
+      }
     } else {
       final alertLevel = int.tryParse(_alertLevelController.text) ?? 0;
 
@@ -343,14 +346,13 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         alertLevel: _isStandalone ? alertLevel : 0,
       );
 
-      await result.fold(
-        (failure) async {
+      switch (result) {
+        case Error(:final failure):
           if (mounted) {
             setState(() => _isSaving = false);
             context.showSnackBar(failure.message, isError: true);
           }
-        },
-        (_) async {
+        case Success():
           if (!_isStandalone) {
             await productRepo.saveBomItems(
               widget.productId!,
@@ -368,8 +370,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             context.showSnackBar('Product updated!');
             Navigator.of(context).pop(true);
           }
-        },
-      );
+      }
     }
   }
 
@@ -405,20 +406,18 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     final deleteProduct = getIt<DeleteProduct>();
                     final result =
                         await deleteProduct(widget.productId!);
-                    result.fold(
-                      (failure) {
+                    switch (result) {
+                      case Error(:final failure):
                         if (mounted) {
                           context.showSnackBar(failure.message,
                               isError: true);
                         }
-                      },
-                      (_) {
+                      case Success():
                         if (mounted) {
                           context.showSnackBar('Product deleted');
                           context.pop(true);
                         }
-                      },
-                    );
+                    }
                   }
                 }
               },

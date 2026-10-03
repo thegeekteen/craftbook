@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order.dart';
@@ -17,18 +16,20 @@ class DeleteOrder {
     required this.productRepository,
   });
 
-  Future<Either<Failure, void>> call(int orderId) async {
+  Future<Result<void>> call(int orderId) async {
     final orderResult = await orderRepository.getOrderById(orderId);
 
-    return orderResult.fold(
-      (failure) => Left(failure),
-      (order) async {
+    switch (orderResult) {
+      case Error(:final failure):
+        return Error<void>(failure);
+      case Success(:final value):
+        final order = value;
         if (order == null) {
-          return Left(const NotFoundFailure('Order not found'));
+          return Error<void>(const NotFoundFailure('Order not found'));
         }
 
         if (order.status == OrderStatus.shipped) {
-          return const Left(
+          return const Error<void>(
             ValidationFailure('Shipped orders cannot be deleted'),
           );
         }
@@ -38,66 +39,65 @@ class DeleteOrder {
           // Release reserved materials
           final materialsResult =
               await orderRepository.getOrderMaterials(orderId);
-          await materialsResult.fold(
-            (_) async {},
-            (materials) async {
-              for (final mat in materials) {
+          switch (materialsResult) {
+            case Success(:final value):
+              for (final mat in value) {
                 await materialRepository.releaseReservedMaterials(
                   mat.materialId,
                   mat.plannedQuantity,
                 );
               }
-            },
-          );
+            case Error():
+              break;
+          }
 
           // Release reserved standalone products
           final productsResult =
               await orderRepository.getOrderProducts(orderId);
-          await productsResult.fold(
-            (_) async {},
-            (products) async {
-              for (final prod in products) {
+          switch (productsResult) {
+            case Success(:final value):
+              for (final prod in value) {
                 await productRepository.releaseReservedProductStock(
                   prod.productId,
                   prod.quantity,
                 );
               }
-            },
-          );
+            case Error():
+              break;
+          }
         } else if (order.status == OrderStatus.packed) {
           // Restore deducted materials
           final materialsResult =
               await orderRepository.getOrderMaterials(orderId);
-          await materialsResult.fold(
-            (_) async {},
-            (materials) async {
-              for (final mat in materials) {
+          switch (materialsResult) {
+            case Success(:final value):
+              for (final mat in value) {
                 await materialRepository.restoreDeductedMaterials(
                   mat.materialId,
                   mat.actualQuantity,
                 );
               }
-            },
-          );
+            case Error():
+              break;
+          }
 
           // Restore deducted standalone products
           final productsResult =
               await orderRepository.getOrderProducts(orderId);
-          await productsResult.fold(
-            (_) async {},
-            (products) async {
-              for (final prod in products) {
+          switch (productsResult) {
+            case Success(:final value):
+              for (final prod in value) {
                 await productRepository.restoreDeductedProductStock(
                   prod.productId,
                   prod.quantity,
                 );
               }
-            },
-          );
+            case Error():
+              break;
+          }
         }
 
         return orderRepository.deleteOrder(orderId);
-      },
-    );
+    }
   }
 }

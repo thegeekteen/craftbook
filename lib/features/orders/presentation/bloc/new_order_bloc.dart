@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/usecases/calculate_order_profit.dart';
 import '../../domain/usecases/create_order.dart';
@@ -109,14 +110,14 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       shippingCost: 0.0,
     );
 
-    final channelFees = profitResult.fold(
-      (_) => 0.0,
-      (breakdown) => breakdown.channelFees,
-    );
-    final shippingCost = profitResult.fold(
-      (_) => 0.0,
-      (breakdown) => breakdown.shippingCost,
-    );
+    final channelFees = switch (profitResult) {
+      Success(:final value) => value.channelFees,
+      Error() => 0.0,
+    };
+    final shippingCost = switch (profitResult) {
+      Success(:final value) => value.shippingCost,
+      Error() => 0.0,
+    };
 
     final result = await createOrder(
       customerName: _customerName,
@@ -131,10 +132,12 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       items: _items,
     );
 
-    result.fold(
-      (failure) => emit(NewOrderError(failure.message)),
-      (orderId) => emit(NewOrderSaved(orderId)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(NewOrderError(failure.message));
+      case Success(:final value):
+        emit(NewOrderSaved(value));
+    }
   }
 
   void _onResetOrder(

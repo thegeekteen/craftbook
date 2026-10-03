@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../repositories/order_repository.dart';
 
 class ShipOrder {
@@ -8,7 +6,7 @@ class ShipOrder {
 
   ShipOrder(this.repository);
 
-  Future<Either<Failure, void>> call(int orderId) {
+  Future<Result<void>> call(int orderId) {
     return repository.shipOrder(orderId);
   }
 }

@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -22,14 +22,14 @@ void main() {
       when(() => mockRepo.adjustProductStock(
             productId: 1,
             newQuantityOnHand: 50,
-          )).thenAnswer((_) async => const Right<Failure, void>(null));
+          )).thenAnswer((_) async => const Success<void>(null));
 
       final result = await adjustProductStock(
         productId: 1,
         newQuantityOnHand: 50,
       );
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
       verify(() => mockRepo.adjustProductStock(
             productId: 1,
             newQuantityOnHand: 50,
@@ -40,14 +40,14 @@ void main() {
       when(() => mockRepo.adjustProductStock(
             productId: any(named: 'productId'),
             newQuantityOnHand: any(named: 'newQuantityOnHand'),
-          )).thenAnswer((_) async => const Right<Failure, void>(null));
+          )).thenAnswer((_) async => const Success<void>(null));
 
       final result = await adjustProductStock(
         productId: 1,
         newQuantityOnHand: 0,
       );
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
     });
 
     test('returns validation failure when quantity is negative', () async {
@@ -56,11 +56,13 @@ void main() {
         newQuantityOnHand: -5,
       );
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) => expect(f, isA<ValidationFailure>()),
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockRepo.adjustProductStock(
             productId: any(named: 'productId'),
             newQuantityOnHand: any(named: 'newQuantityOnHand'),
@@ -72,18 +74,20 @@ void main() {
             productId: any(named: 'productId'),
             newQuantityOnHand: any(named: 'newQuantityOnHand'),
           )).thenAnswer(
-          (_) async => Left(DatabaseFailure('DB error')));
+          (_) async => Error(DatabaseFailure('DB error')));
 
       final result = await adjustProductStock(
         productId: 1,
         newQuantityOnHand: 10,
       );
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) => expect(f, isA<DatabaseFailure>()),
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<DatabaseFailure>());
+        case Success():
+          fail('Should return error');
+      }
     });
   });
 }

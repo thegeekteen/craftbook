@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 
 class ReserveMaterials {
@@ -8,7 +6,7 @@ class ReserveMaterials {
 
   ReserveMaterials(this.repository);
 
-  Future<Either<Failure, void>> call(int materialId, int quantity) {
+  Future<Result<void>> call(int materialId, int quantity) {
     return repository.reserveMaterials(materialId, quantity);
   }
 }

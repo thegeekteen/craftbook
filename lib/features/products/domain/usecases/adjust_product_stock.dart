@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
 import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
@@ -8,12 +8,12 @@ class AdjustProductStock {
 
   AdjustProductStock(this.repository);
 
-  Future<Either<Failure, void>> call({
+  Future<Result<void>> call({
     required int productId,
     required int newQuantityOnHand,
   }) async {
     if (newQuantityOnHand < 0) {
-      return Left(
+      return Error(
         const ValidationFailure('Quantity on hand cannot be negative'),
       );
     }

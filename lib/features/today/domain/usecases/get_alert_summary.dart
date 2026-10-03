@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 
 class GetAlertSummary {
@@ -8,15 +6,17 @@ class GetAlertSummary {
 
   GetAlertSummary(this.repository);
 
-  Future<Either<Failure, AlertSummary>> call() async {
+  Future<Result<AlertSummary>> call() async {
     final result = await repository.getLowStockMaterials();
-    return result.fold(
-      (failure) => Left(failure),
-      (materials) => Right(AlertSummary(
-        lowStockCount: materials.length,
-        materialNames: materials.map((m) => m.name).toList(),
-      )),
-    );
+    switch (result) {
+      case Error(:final failure):
+        return Error(failure);
+      case Success(:final value):
+        return Success(AlertSummary(
+          lowStockCount: value.length,
+          materialNames: value.map((m) => m.name).toList(),
+        ));
+    }
   }
 }
 

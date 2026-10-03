@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart' hide Order;
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -63,42 +63,42 @@ void main() {
     test('deletes channel when no orders reference it', () async {
       when(() => mockOrderRepo.getAllOrders())
           .thenAnswer(
-              (_) async => Right<Failure, List<Order>>([orderNoChannel]));
+              (_) async => Success<List<Order>>([orderNoChannel]));
       when(() => mockChannelRepo.deleteChannel(5))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteChannel(5);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
       verify(() => mockChannelRepo.deleteChannel(5)).called(1);
     });
 
     test('blocks deletion when orders reference the channel', () async {
       when(() => mockOrderRepo.getAllOrders()).thenAnswer(
-          (_) async => Right<Failure, List<Order>>([orderWithChannel]));
+          (_) async => Success<List<Order>>([orderWithChannel]));
 
       final result = await deleteChannel(5);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) {
-          expect(f, isA<ValidationFailure>());
-          expect(f.message, contains('order'));
-        },
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+          expect(failure.message, contains('order'));
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockChannelRepo.deleteChannel(any()));
     });
 
     test('deletes channel when no orders exist at all', () async {
       when(() => mockOrderRepo.getAllOrders())
-          .thenAnswer((_) async => Right<Failure, List<Order>>([]));
+          .thenAnswer((_) async => Success<List<Order>>([]));
       when(() => mockChannelRepo.deleteChannel(5))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteChannel(5);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
       verify(() => mockChannelRepo.deleteChannel(5)).called(1);
     });
   });

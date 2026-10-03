@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../entities/material.dart';
 import '../entities/stock_movement.dart';
 import '../repositories/material_repository.dart';
@@ -10,24 +9,26 @@ class GetMaterialDetail {
 
   GetMaterialDetail(this.repository);
 
-  Future<Either<Failure, MaterialDetailResult>> call(int materialId) async {
+  Future<Result<MaterialDetailResult>> call(int materialId) async {
     final materialResult = await repository.getMaterialById(materialId);
-    return materialResult.fold(
-      (failure) => Left(failure),
-      (material) async {
+    switch (materialResult) {
+      case Error(:final failure):
+        return Error(failure);
+      case Success(value: final material):
         if (material == null) {
-          return Left(NotFoundFailure('Material not found'));
+          return Error(NotFoundFailure('Material not found'));
         }
         final movementsResult = await repository.getStockMovements(materialId);
-        return movementsResult.fold(
-          (failure) => Left(failure),
-          (movements) => Right(MaterialDetailResult(
-            material: material,
-            movements: movements,
-          )),
-        );
-      },
-    );
+        switch (movementsResult) {
+          case Error(:final failure):
+            return Error(failure);
+          case Success(value: final movements):
+            return Success(MaterialDetailResult(
+              material: material,
+              movements: movements,
+            ));
+        }
+    }
   }
 }
 

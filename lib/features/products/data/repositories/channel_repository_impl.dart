@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/error/failures.dart';
@@ -13,37 +13,37 @@ class ChannelRepositoryImpl implements ChannelRepository {
   ChannelRepositoryImpl(this.dao);
 
   @override
-  Future<Either<Failure, List<Channel>>> getAllChannels() async {
+  Future<Result<List<Channel>>> getAllChannels() async {
     try {
       final rows = await dao.getAllChannels();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Channel>>> getActiveChannels() async {
+  Future<Result<List<Channel>>> getActiveChannels() async {
     try {
       final rows = await dao.getActiveChannels();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Channel?>> getChannelById(int id) async {
+  Future<Result<Channel?>> getChannelById(int id) async {
     try {
       final row = await dao.getChannelById(id);
-      return Right(row != null ? _toEntity(row) : null);
+      return Success(row != null ? _toEntity(row) : null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, int>> createChannel({
+  Future<Result<int>> createChannel({
     required String name,
     required double commissionRate,
     required double transactionFeeRate,
@@ -58,14 +58,14 @@ class ChannelRepositoryImpl implements ChannelRepository {
         flatFee: Value(flatFee),
         shippingPaidByUs: Value(shippingPaidByUs),
       ));
-      return Right(id);
+      return Success(id);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> updateChannel({
+  Future<Result<void>> updateChannel({
     required int id,
     String? name,
     double? commissionRate,
@@ -76,7 +76,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
   }) async {
     try {
       final existing = await dao.getChannelById(id);
-      if (existing == null) return Left(NotFoundFailure('Channel not found'));
+      if (existing == null) return Error(NotFoundFailure('Channel not found'));
 
       await dao.updateChannel(db.Channel(
         id: existing.id,
@@ -88,19 +88,19 @@ class ChannelRepositoryImpl implements ChannelRepository {
         isActive: isActive ?? existing.isActive,
         createdAt: existing.createdAt,
       ));
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deleteChannel(int id) async {
+  Future<Result<void>> deleteChannel(int id) async {
     try {
       await dao.deleteChannel(id);
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 

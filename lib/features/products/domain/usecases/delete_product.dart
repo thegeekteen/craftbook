@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
 import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
@@ -8,36 +8,37 @@ class DeleteProduct {
 
   DeleteProduct({required this.productRepository});
 
-  Future<Either<Failure, void>> call(int productId) async {
+  Future<Result<void>> call(int productId) async {
     // Check if product exists and get its type
     final productResult = await productRepository.getProductById(productId);
 
-    return productResult.fold(
-      (failure) => Left(failure),
-      (product) async {
+    switch (productResult) {
+      case Error(:final failure):
+        return Error(failure);
+      case Success(:final value):
+        final product = value;
         if (product == null) {
-          return Left(NotFoundFailure('Product not found'));
+          return Error(NotFoundFailure('Product not found'));
         }
 
         // For BOM products: check BOM items
         if (!product.isStandalone) {
           final bomResult = await productRepository.getBomItems(productId);
-          final bomBlocked = bomResult.fold<bool>(
-            (_) => false,
-            (bomItems) => bomItems.isNotEmpty,
-          );
-          if (bomBlocked) {
-            final bomItems = bomResult.fold((_) => <dynamic>[], (items) => items);
-            return Left(ValidationFailure(
-              'Cannot delete product: has ${bomItems.length} BOM item(s). '
-              'Remove the BOM first.',
-            ));
+          switch (bomResult) {
+            case Success(:final value) when value.isNotEmpty:
+              final bomItems = value;
+              return Error(ValidationFailure(
+                'Cannot delete product: has ${bomItems.length} BOM item(s). '
+                'Remove the BOM first.',
+              ));
+            default:
+              break;
           }
         }
 
         // For standalone products: check stock on hand
         if (product.isStandalone && product.quantityOnHand > 0) {
-          return Left(ValidationFailure(
+          return Error(ValidationFailure(
             'Cannot delete product: has ${product.quantityOnHand} unit(s) in stock. '
             'Adjust stock to 0 first.',
           ));
@@ -47,19 +48,17 @@ class DeleteProduct {
         final hasOrdersResult =
             await productRepository.hasOrdersUsingProduct(productId);
 
-        return hasOrdersResult.fold(
-          (failure) => Left(failure),
-          (hasOrders) async {
-            if (hasOrders) {
-              return const Left(ValidationFailure(
+        switch (hasOrdersResult) {
+          case Error(:final failure):
+            return Error(failure);
+          case Success(:final value):
+            if (value) {
+              return const Error(ValidationFailure(
                 'Cannot delete product: referenced by existing orders',
               ));
             }
-
             return productRepository.deleteProduct(productId);
-          },
-        );
-      },
-    );
+        }
+    }
   }
 }

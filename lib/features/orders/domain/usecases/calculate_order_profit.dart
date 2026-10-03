@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 
@@ -9,7 +8,7 @@ class CalculateOrderProfit {
 
   CalculateOrderProfit(this.channelRepository);
 
-  Future<Either<Failure, OrderProfitBreakdown>> call({
+  Future<Result<OrderProfitBreakdown>> call({
     required double totalSales,
     required double totalMaterialCost,
     required int channelId,
@@ -17,26 +16,27 @@ class CalculateOrderProfit {
   }) async {
     final channelResult = await channelRepository.getChannelById(channelId);
 
-    return channelResult.fold(
-      (failure) => Left(failure),
-      (channel) {
+    switch (channelResult) {
+      case Error(:final failure):
+        return Error<OrderProfitBreakdown>(failure);
+      case Success(:final value):
+        final channel = value;
         if (channel == null) {
-          return Left(NotFoundFailure('Channel not found'));
+          return Error<OrderProfitBreakdown>(NotFoundFailure('Channel not found'));
         }
 
         final fees = channel.calculateFees(totalSales);
         final totalShipping = shippingCost + channel.shippingPaidByUs;
         final profit = totalSales - totalMaterialCost - fees - totalShipping;
 
-        return Right(OrderProfitBreakdown(
+        return Success(OrderProfitBreakdown(
           totalSales: totalSales,
           totalMaterialCost: totalMaterialCost,
           channelFees: fees,
           shippingCost: totalShipping,
           profit: profit,
         ));
-      },
-    );
+    }
   }
 }
 

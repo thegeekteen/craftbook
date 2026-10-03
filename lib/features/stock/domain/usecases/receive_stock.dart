@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../repositories/material_repository.dart';
 
 class ReceiveStock {
@@ -8,7 +7,7 @@ class ReceiveStock {
 
   ReceiveStock(this.repository);
 
-  Future<Either<Failure, void>> call({
+  Future<Result<void>> call({
     required int materialId,
     required int packsReceived,
     required double pricePerPack,
@@ -16,10 +15,10 @@ class ReceiveStock {
     String? supplier,
   }) async {
     if (packsReceived <= 0) {
-      return Left(const ValidationFailure('Packs received must be greater than 0'));
+      return Error(const ValidationFailure('Packs received must be greater than 0'));
     }
     if (pricePerPack < 0) {
-      return Left(const ValidationFailure('Price per pack cannot be negative'));
+      return Error(const ValidationFailure('Price per pack cannot be negative'));
     }
     return repository.receiveStock(
       materialId: materialId,

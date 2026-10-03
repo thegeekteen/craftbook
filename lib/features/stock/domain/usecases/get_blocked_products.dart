@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../entities/buy_list_item.dart';
 import '../repositories/material_repository.dart';
 
@@ -9,11 +7,13 @@ class GetBlockedProducts {
 
   GetBlockedProducts(this.repository);
 
-  Future<Either<Failure, List<BuyListItem>>> call() async {
+  Future<Result<List<BuyListItem>>> call() async {
     final result = await repository.getBuyList();
-    return result.fold(
-      (failure) => Left(failure),
-      (items) => Right(items.where((item) => item.blockedProducts.isNotEmpty).toList()),
-    );
+    switch (result) {
+      case Error(:final failure):
+        return Error(failure);
+      case Success(:final value):
+        return Success(value.where((item) => item.blockedProducts.isNotEmpty).toList());
+    }
   }
 }

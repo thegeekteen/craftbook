@@ -1,8 +1,8 @@
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/domain/entities/stock_movement.dart';
@@ -50,54 +50,54 @@ void main() {
   group('DeleteMaterial', () {
     test('deletes material when not in use', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
-          .thenAnswer((_) async => Right<Failure, List<Product>>([]));
+          .thenAnswer((_) async => Success<List<Product>>([]));
       when(() => mockMaterialRepo.getStockMovements(1))
           .thenAnswer(
-              (_) async => Right<Failure, List<StockMovement>>([]));
+              (_) async => Success<List<StockMovement>>([]));
       when(() => mockMaterialRepo.deleteMaterial(1))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteMaterial(1);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
       verify(() => mockMaterialRepo.deleteMaterial(1)).called(1);
     });
 
     test('blocks deletion when used in products (BOM)', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
           .thenAnswer(
-              (_) async => Right<Failure, List<Product>>([testProduct]));
+              (_) async => Success<List<Product>>([testProduct]));
 
       final result = await deleteMaterial(1);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) {
-          expect(f, isA<ValidationFailure>());
-          expect(f.message, contains('used in'));
-        },
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+          expect(failure.message, contains('used in'));
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockMaterialRepo.deleteMaterial(any()));
     });
 
     test('blocks deletion when has stock movement history', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
-          .thenAnswer((_) async => Right<Failure, List<Product>>([]));
+          .thenAnswer((_) async => Success<List<Product>>([]));
       when(() => mockMaterialRepo.getStockMovements(1))
           .thenAnswer((_) async =>
-              Right<Failure, List<StockMovement>>([testMovement]));
+              Success<List<StockMovement>>([testMovement]));
 
       final result = await deleteMaterial(1);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) {
-          expect(f, isA<ValidationFailure>());
-          expect(f.message, contains('stock movement'));
-        },
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+          expect(failure.message, contains('stock movement'));
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockMaterialRepo.deleteMaterial(any()));
     });
   });

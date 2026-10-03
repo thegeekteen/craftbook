@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart' hide Order;
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../entities/order.dart';
 import '../repositories/order_repository.dart';
 
@@ -9,7 +7,7 @@ class GetOrders {
 
   GetOrders(this.repository);
 
-  Future<Either<Failure, List<Order>>> call({OrderStatus? status}) async {
+  Future<Result<List<Order>>> call({OrderStatus? status}) async {
     if (status != null) {
       return repository.getOrdersByStatus(status);
     }

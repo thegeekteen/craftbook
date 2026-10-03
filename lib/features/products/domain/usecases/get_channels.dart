@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
-import '../../../../core/error/failures.dart';
 import '../entities/channel.dart';
 import '../repositories/channel_repository.dart';
 
@@ -9,7 +8,7 @@ class GetChannels {
 
   GetChannels(this.repository);
 
-  Future<Either<Failure, List<Channel>>> call({bool activeOnly = false}) async {
+  Future<Result<List<Channel>>> call({bool activeOnly = false}) async {
     if (activeOnly) {
       return repository.getActiveChannels();
     }

@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/error/failures.dart';
@@ -15,37 +15,37 @@ class ProductRepositoryImpl implements ProductRepository {
   ProductRepositoryImpl(this.dao);
 
   @override
-  Future<Either<Failure, List<Product>>> getAllProducts() async {
+  Future<Result<List<Product>>> getAllProducts() async {
     try {
       final rows = await dao.getAllProducts();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Product>>> getActiveProducts() async {
+  Future<Result<List<Product>>> getActiveProducts() async {
     try {
       final rows = await dao.getActiveProducts();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Product?>> getProductById(int id) async {
+  Future<Result<Product?>> getProductById(int id) async {
     try {
       final row = await dao.getProductById(id);
-      return Right(row != null ? _toEntity(row) : null);
+      return Success(row != null ? _toEntity(row) : null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<BomItem>>> getBomItems(int productId) async {
+  Future<Result<List<BomItem>>> getBomItems(int productId) async {
     try {
       final rows = await dao.getBomItems(productId);
       final items = <BomItem>[];
@@ -53,14 +53,14 @@ class ProductRepositoryImpl implements ProductRepository {
         final material = await dao.getMaterialById(row.materialId);
         items.add(_toBomItemEntity(row, material));
       }
-      return Right(items);
+      return Success(items);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, int>> createProduct({
+  Future<Result<int>> createProduct({
     required String name,
     String? description,
     required double sellPrice,
@@ -91,14 +91,14 @@ class ProductRepositoryImpl implements ProductRepository {
         );
       }
 
-      return Right(id);
+      return Success(id);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> updateProduct({
+  Future<Result<void>> updateProduct({
     required int id,
     String? name,
     String? description,
@@ -110,7 +110,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final existing = await dao.getProductById(id);
       if (existing == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
 
       await dao.updateProduct(db.Product(
@@ -127,14 +127,14 @@ class ProductRepositoryImpl implements ProductRepository {
         createdAt: existing.createdAt,
         updatedAt: DateTime.now(),
       ));
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> saveBomItems(
+  Future<Result<void>> saveBomItems(
     int productId,
     List<BomItemInput> items,
   ) async {
@@ -154,35 +154,35 @@ class ProductRepositoryImpl implements ProductRepository {
         ));
       }
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, int>> calculateBuildableQuantity(
+  Future<Result<int>> calculateBuildableQuantity(
     int productId,
   ) async {
     try {
       final quantity = await dao.calculateBuildableQuantity(productId);
-      return Right(quantity);
+      return Success(quantity);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, double>> calculateBomCost(int productId) async {
+  Future<Result<double>> calculateBomCost(int productId) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
 
       // Standalone products use their own unit cost
       if (product.isStandalone) {
-        return Right(product.unitCost);
+        return Success(product.unitCost);
       }
 
       final bomRows = await dao.getBomItems(productId);
@@ -193,14 +193,14 @@ class ProductRepositoryImpl implements ProductRepository {
           total += row.quantityRequired * material.unitCost;
         }
       }
-      return Right(total);
+      return Success(total);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Product>>> getProductsUsingMaterial(
+  Future<Result<List<Product>>> getProductsUsingMaterial(
     int materialId,
   ) async {
     try {
@@ -214,35 +214,35 @@ class ProductRepositoryImpl implements ProductRepository {
         }
       }
 
-      return Right(matchingProducts);
+      return Success(matchingProducts);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, bool>> hasOrdersUsingProduct(int productId) async {
+  Future<Result<bool>> hasOrdersUsingProduct(int productId) async {
     try {
       final result = await dao.hasOrderItemsForProduct(productId);
-      return Right(result);
+      return Success(result);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deleteProduct(int id) async {
+  Future<Result<void>> deleteProduct(int id) async {
     try {
       await dao.deleteBomItemsByProductId(id);
       await dao.deleteProduct(id);
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> receiveProductStock({
+  Future<Result<void>> receiveProductStock({
     required int productId,
     required int quantity,
     required double pricePerUnit,
@@ -251,7 +251,7 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
 
       final oldQty = product.quantityOnHand;
@@ -278,21 +278,21 @@ class ProductRepositoryImpl implements ProductRepository {
         ),
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> adjustProductStock({
+  Future<Result<void>> adjustProductStock({
     required int productId,
     required int newQuantityOnHand,
   }) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
 
       await dao.updateProductStock(
@@ -314,42 +314,42 @@ class ProductRepositoryImpl implements ProductRepository {
         ),
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> reserveProductStock(
+  Future<Result<void>> reserveProductStock(
     int productId,
     int quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
       await dao.updateProductStock(
         productId,
         product.quantityOnHand,
         product.quantityPromised + quantity,
       );
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> releaseReservedProductStock(
+  Future<Result<void>> releaseReservedProductStock(
     int productId,
     int quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
       final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
       await dao.updateProductStock(
@@ -357,21 +357,21 @@ class ProductRepositoryImpl implements ProductRepository {
         product.quantityOnHand,
         newPromised,
       );
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deductProductStock(
+  Future<Result<void>> deductProductStock(
     int productId,
     int quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
       final newOnHand = (product.quantityOnHand - quantity).clamp(0, 999999);
       final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
@@ -387,21 +387,21 @@ class ProductRepositoryImpl implements ProductRepository {
         ),
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> restoreDeductedProductStock(
+  Future<Result<void>> restoreDeductedProductStock(
     int productId,
     int quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
-        return Left(NotFoundFailure('Product not found'));
+        return Error(NotFoundFailure('Product not found'));
       }
       await dao.updateProductStock(
         productId,
@@ -419,31 +419,31 @@ class ProductRepositoryImpl implements ProductRepository {
         ),
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<ProductStockMovement>>> getProductStockMovements(
+  Future<Result<List<ProductStockMovement>>> getProductStockMovements(
     int productId,
   ) async {
     try {
       final rows = await dao.getProductStockMovements(productId);
-      return Right(rows.map(_toStockMovementEntity).toList());
+      return Success(rows.map(_toStockMovementEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Product>>> getLowStockProducts() async {
+  Future<Result<List<Product>>> getLowStockProducts() async {
     try {
       final rows = await dao.getLowStockProducts();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 

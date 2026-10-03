@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
-import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
 
 class UpdateProduct {
@@ -8,7 +7,7 @@ class UpdateProduct {
 
   UpdateProduct(this.repository);
 
-  Future<Either<Failure, void>> call({
+  Future<Result<void>> call({
     required int id,
     String? name,
     String? description,

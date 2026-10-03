@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../domain/usecases/get_orders.dart';
 import '../../domain/usecases/pack_order.dart';
 import '../../domain/usecases/ship_order.dart';
@@ -28,10 +29,12 @@ class OrdersListBloc extends Bloc<OrdersListEvent, OrdersListState> {
   ) async {
     emit(OrdersListLoading());
     final result = await getOrders(status: event.status);
-    result.fold(
-      (failure) => emit(OrdersListError(failure.message)),
-      (orders) => emit(OrdersListLoaded(orders)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(OrdersListError(failure.message));
+      case Success(:final value):
+        emit(OrdersListLoaded(value));
+    }
   }
 
   Future<void> _onPackOrder(
@@ -39,10 +42,12 @@ class OrdersListBloc extends Bloc<OrdersListEvent, OrdersListState> {
     Emitter<OrdersListState> emit,
   ) async {
     final result = await packOrder(event.orderId);
-    result.fold(
-      (failure) => emit(OrdersListError(failure.message)),
-      (_) => emit(const OrderActionSuccess('Order packed successfully')),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(OrdersListError(failure.message));
+      case Success():
+        emit(const OrderActionSuccess('Order packed successfully'));
+    }
   }
 
   Future<void> _onShipOrder(
@@ -50,9 +55,11 @@ class OrdersListBloc extends Bloc<OrdersListEvent, OrdersListState> {
     Emitter<OrdersListState> emit,
   ) async {
     final result = await shipOrder(event.orderId);
-    result.fold(
-      (failure) => emit(OrdersListError(failure.message)),
-      (_) => emit(const OrderActionSuccess('Order shipped successfully')),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(OrdersListError(failure.message));
+      case Success():
+        emit(const OrderActionSuccess('Order shipped successfully'));
+    }
   }
 }

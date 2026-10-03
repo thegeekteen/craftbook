@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/currency_text.dart';
@@ -82,12 +83,18 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
     final calcBuildable = getIt<CalculateBuildableQuantity>();
 
     final result = await getProducts(activeOnly: true);
-    final products = result.fold((_) => <Product>[], (p) => p);
+    final products = switch (result) {
+      Success(:final value) => value,
+      Error() => <Product>[],
+    };
 
     final buildable = <int, int>{};
     for (final product in products) {
       final bResult = await calcBuildable(product.id!);
-      buildable[product.id!] = bResult.fold((_) => 0, (b) => b);
+      buildable[product.id!] = switch (bResult) {
+        Success(:final value) => value,
+        Error() => 0,
+      };
     }
 
     if (mounted) {

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../domain/usecases/get_alert_summary.dart';
 import '../../domain/usecases/get_today_orders.dart';
@@ -34,14 +35,14 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     _alertSummary = null;
 
     final result = await getTodayOrders();
-    result.fold(
-      (failure) => emit(TodayError(failure.message)),
-      (orders) {
-        _orders = orders;
+    switch (result) {
+      case Error(:final failure):
+        emit(TodayError(failure.message));
+      case Success(:final value):
+        _orders = value;
         // Trigger alert loading
         add(LoadAlerts());
-      },
-    );
+    }
   }
 
   Future<void> _onLoadAlerts(
@@ -49,17 +50,17 @@ class TodayBloc extends Bloc<TodayEvent, TodayState> {
     Emitter<TodayState> emit,
   ) async {
     final result = await getAlertSummary();
-    result.fold(
-      (failure) => emit(TodayError(failure.message)),
-      (alertSummary) {
-        _alertSummary = alertSummary;
+    switch (result) {
+      case Error(:final failure):
+        emit(TodayError(failure.message));
+      case Success(:final value):
+        _alertSummary = value;
         if (_orders != null) {
           emit(TodayLoaded(
             orders: _orders!,
             alertSummary: _alertSummary!,
           ));
         }
-      },
-    );
+    }
   }
 }

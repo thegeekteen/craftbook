@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -40,58 +40,58 @@ void main() {
 
     // Default: return a non-standalone product
     when(() => mockRepo.getProductById(1))
-        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct));
+        .thenAnswer((_) async => Success<Product?>(bomProduct));
   });
 
   group('DeleteProduct', () {
     test('deletes product when not in use', () async {
       when(() => mockRepo.getBomItems(1))
-          .thenAnswer((_) async => Right<Failure, List<BomItem>>([]));
+          .thenAnswer((_) async => Success<List<BomItem>>([]));
       when(() => mockRepo.hasOrdersUsingProduct(1))
-          .thenAnswer((_) async => const Right<Failure, bool>(false));
+          .thenAnswer((_) async => const Success<bool>(false));
       when(() => mockRepo.deleteProduct(1))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteProduct(1);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success<void>>());
       verify(() => mockRepo.deleteProduct(1)).called(1);
     });
 
     test('blocks deletion when has BOM items', () async {
       when(() => mockRepo.getBomItems(1))
           .thenAnswer(
-              (_) async => Right<Failure, List<BomItem>>([testBomItem]));
+              (_) async => Success<List<BomItem>>([testBomItem]));
 
       final result = await deleteProduct(1);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) {
-          expect(f, isA<ValidationFailure>());
-          expect(f.message, contains('BOM'));
-        },
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+          expect(failure.message, contains('BOM'));
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockRepo.deleteProduct(any()));
     });
 
     test('blocks deletion when referenced by orders', () async {
       when(() => mockRepo.getBomItems(1))
-          .thenAnswer((_) async => Right<Failure, List<BomItem>>([]));
+          .thenAnswer((_) async => Success<List<BomItem>>([]));
       when(() => mockRepo.hasOrdersUsingProduct(1))
-          .thenAnswer((_) async => const Right<Failure, bool>(true));
+          .thenAnswer((_) async => const Success<bool>(true));
 
       final result = await deleteProduct(1);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) {
-          expect(f, isA<ValidationFailure>());
-          expect(f.message, contains('orders'));
-        },
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+          expect(failure.message, contains('orders'));
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockRepo.deleteProduct(any()));
     });
   });

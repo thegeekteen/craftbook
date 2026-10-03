@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../entities/buy_list_item.dart';
 import '../repositories/material_repository.dart';
 
@@ -9,7 +7,7 @@ class GetBuyList {
 
   GetBuyList(this.repository);
 
-  Future<Either<Failure, List<BuyListItem>>> call() async {
+  Future<Result<List<BuyListItem>>> call() async {
     return repository.getBuyList();
   }
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
@@ -54,16 +55,18 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
     final result = await _orderRepository.getOrdersForDateRange(start, end);
     if (!mounted) return;
 
-    result.fold(
-      (failure) => setState(() {
-        _error = failure.message;
-        _isLoading = false;
-      }),
-      (orders) => setState(() {
-        _orders = orders;
-        _isLoading = false;
-      }),
-    );
+    switch (result) {
+      case Error(:final failure):
+        setState(() {
+          _error = failure.message;
+          _isLoading = false;
+        });
+      case Success(:final value):
+        setState(() {
+          _orders = value;
+          _isLoading = false;
+        });
+    }
   }
 
   void _previousMonth() {

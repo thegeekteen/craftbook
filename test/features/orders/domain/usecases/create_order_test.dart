@@ -1,8 +1,8 @@
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
@@ -54,11 +54,11 @@ void main() {
 
     // Default: all products are BOM-based (not standalone)
     when(() => mockProductRepo.getProductById(1))
-        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct1));
+        .thenAnswer((_) async => Success<Product?>(bomProduct1));
     when(() => mockProductRepo.getProductById(2))
-        .thenAnswer((_) async => Right<Failure, Product?>(bomProduct2));
+        .thenAnswer((_) async => Success<Product?>(bomProduct2));
     when(() => mockProductRepo.reserveProductStock(any(), any()))
-        .thenAnswer((_) async => const Right<Failure, void>(null));
+        .thenAnswer((_) async => const Success<void>(null));
   });
 
   final testItems = [
@@ -94,7 +94,7 @@ void main() {
   group('CreateOrder', () {
     test('expands BOM and creates order with correct material cost', () async {
       when(() => mockProductRepo.getBomItems(1))
-          .thenAnswer((_) async => Right<Failure, List<BomItem>>(testBomItems));
+          .thenAnswer((_) async => Success<List<BomItem>>(testBomItems));
 
       when(() => mockOrderRepo.createOrder(
             customerName: any(named: 'customerName'),
@@ -111,10 +111,10 @@ void main() {
             items: any(named: 'items'),
             materials: any(named: 'materials'),
             products: any(named: 'products'),
-          )).thenAnswer((_) async => const Right<Failure, int>(1));
+          )).thenAnswer((_) async => const Success<int>(1));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await createOrder(
         customerName: 'Test Customer',
@@ -128,7 +128,7 @@ void main() {
         items: testItems,
       );
 
-      expect(result, const Right<Failure, int>(1));
+      expect(result, const Success<int>(1));
 
       // Verify BOM was queried for the product
       verify(() => mockProductRepo.getBomItems(1)).called(1);
@@ -151,11 +151,13 @@ void main() {
         items: testItems,
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not succeed'),
-      );
+      expect(result, isA<Error>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should not succeed');
+      }
     });
 
     test('returns validation failure for empty items', () async {
@@ -171,11 +173,13 @@ void main() {
         items: [],
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not succeed'),
-      );
+      expect(result, isA<Error>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should not succeed');
+      }
     });
 
     test('combines materials from multiple items', () async {
@@ -197,9 +201,9 @@ void main() {
       ];
 
       when(() => mockProductRepo.getBomItems(1))
-          .thenAnswer((_) async => Right<Failure, List<BomItem>>(testBomItems));
+          .thenAnswer((_) async => Success<List<BomItem>>(testBomItems));
       when(() => mockProductRepo.getBomItems(2))
-          .thenAnswer((_) async => Right<Failure, List<BomItem>>(keychainBom));
+          .thenAnswer((_) async => Success<List<BomItem>>(keychainBom));
 
       when(() => mockOrderRepo.createOrder(
             customerName: any(named: 'customerName'),
@@ -216,10 +220,10 @@ void main() {
             items: any(named: 'items'),
             materials: any(named: 'materials'),
             products: any(named: 'products'),
-          )).thenAnswer((_) async => const Right<Failure, int>(2));
+          )).thenAnswer((_) async => const Success<int>(2));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await createOrder(
         customerName: 'Test',
@@ -233,7 +237,7 @@ void main() {
         items: multiItems,
       );
 
-      expect(result, const Right<Failure, int>(2));
+      expect(result, const Success<int>(2));
 
       // Magnet sheet: 2 (from magnets) + 1 (from keychain) = 3
       verify(() => mockMaterialRepo.reserveMaterials(1, 3)).called(1);

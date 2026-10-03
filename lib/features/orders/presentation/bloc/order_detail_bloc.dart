@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../domain/entities/order.dart';
@@ -42,12 +43,14 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     emit(OrderDetailLoading());
 
     final orderResult = await orderRepository.getOrderById(event.orderId);
-    if (orderResult.isLeft()) {
-      orderResult.fold((f) => emit(OrderDetailError(f.message)), (_) {});
-      return;
+    final Order? order;
+    switch (orderResult) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+        return;
+      case Success(:final value):
+        order = value;
     }
-
-    final order = orderResult.fold<Order?>((_) => null, (o) => o);
     if (order == null) {
       emit(const OrderDetailError('Order not found'));
       return;
@@ -58,32 +61,42 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     if (order.channelId != null) {
       final channelResult =
           await channelRepository.getChannelById(order.channelId!);
-      channelResult.fold((_) {}, (c) => channel = c);
+      switch (channelResult) {
+        case Success(:final value):
+          channel = value;
+        case Error():
+          break;
+      }
     }
 
     final itemsResult = await orderRepository.getOrderItems(event.orderId);
-    if (itemsResult.isLeft()) {
-      itemsResult.fold((f) => emit(OrderDetailError(f.message)), (_) {});
-      return;
+    final List<dynamic> items;
+    switch (itemsResult) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+        return;
+      case Success(:final value):
+        items = value;
     }
-    final items = itemsResult.fold<List<dynamic>>(
-        (_) => [], (list) => list);
 
     final materialsResult =
         await orderRepository.getOrderMaterials(event.orderId);
-    if (materialsResult.isLeft()) {
-      materialsResult.fold(
-          (f) => emit(OrderDetailError(f.message)), (_) {});
-      return;
+    final List<dynamic> materials;
+    switch (materialsResult) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+        return;
+      case Success(:final value):
+        materials = value;
     }
-    final materials = materialsResult.fold<List<dynamic>>(
-        (_) => [], (list) => list);
 
     // Load standalone products for this order
     final productsResult =
         await orderRepository.getOrderProducts(event.orderId);
-    final products = productsResult.fold<List<dynamic>>(
-        (_) => [], (list) => list);
+    final List<dynamic> products = switch (productsResult) {
+      Success(:final value) => value,
+      Error() => <dynamic>[],
+    };
 
     if (emit.isDone) return;
 
@@ -102,13 +115,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   ) async {
     final result =
         await adjustMaterialsUsed(event.orderId, event.materials);
-    result.fold(
-      (failure) => emit(OrderDetailError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+      case Success():
         emit(const OrderDetailActionSuccess('Materials adjusted successfully'));
         add(LoadOrderDetail(event.orderId));
-      },
-    );
+    }
   }
 
   Future<void> _onPackOrder(
@@ -116,13 +129,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) async {
     final result = await packOrder(event.orderId);
-    result.fold(
-      (failure) => emit(OrderDetailError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+      case Success():
         emit(const OrderDetailActionSuccess('Order packed successfully'));
         add(LoadOrderDetail(event.orderId));
-      },
-    );
+    }
   }
 
   Future<void> _onShipOrder(
@@ -130,13 +143,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) async {
     final result = await shipOrder(event.orderId);
-    result.fold(
-      (failure) => emit(OrderDetailError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+      case Success():
         emit(const OrderDetailActionSuccess('Order shipped successfully'));
         add(LoadOrderDetail(event.orderId));
-      },
-    );
+    }
   }
 
   Future<void> _onDeleteOrder(
@@ -144,9 +157,11 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) async {
     final result = await deleteOrder(event.orderId);
-    result.fold(
-      (failure) => emit(OrderDetailError(failure.message)),
-      (_) => emit(OrderDeleted()),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(OrderDetailError(failure.message));
+      case Success():
+        emit(OrderDeleted());
+    }
   }
 }

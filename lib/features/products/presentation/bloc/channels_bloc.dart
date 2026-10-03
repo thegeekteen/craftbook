@@ -1,3 +1,4 @@
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/repositories/channel_repository.dart';
@@ -32,10 +33,12 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
   ) async {
     emit(ChannelsLoading());
     final result = await getChannels(activeOnly: event.activeOnly);
-    result.fold(
-      (failure) => emit(ChannelsError(failure.message)),
-      (channels) => emit(ChannelsLoaded(channels)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(ChannelsError(failure.message));
+      case Success(:final value):
+        emit(ChannelsLoaded(value));
+    }
   }
 
   Future<void> _onCreateChannel(
@@ -49,10 +52,12 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       flatFee: event.flatFee,
       shippingPaidByUs: event.shippingPaidByUs,
     );
-    result.fold(
-      (failure) => emit(ChannelsError(failure.message)),
-      (_) => emit(ChannelCreated()),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(ChannelsError(failure.message));
+      case Success():
+        emit(ChannelCreated());
+    }
   }
 
   Future<void> _onUpdateChannel(
@@ -68,13 +73,13 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       shippingPaidByUs: event.shippingPaidByUs,
       isActive: event.isActive,
     );
-    result.fold(
-      (failure) => emit(ChannelsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(ChannelsError(failure.message));
+      case Success():
         // Re-load channels after successful update
         add(const LoadChannels());
-      },
-    );
+    }
   }
 
   Future<void> _onDeleteChannel(
@@ -82,12 +87,12 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
     Emitter<ChannelsState> emit,
   ) async {
     final result = await deleteChannel(event.channelId);
-    result.fold(
-      (failure) => emit(ChannelsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(ChannelsError(failure.message));
+      case Success():
         emit(ChannelDeleted());
         add(const LoadChannels());
-      },
-    );
+    }
   }
 }

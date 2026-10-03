@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -35,50 +35,54 @@ void main() {
   group('GetChannels', () {
     test('returns all channels when activeOnly is false', () async {
       when(() => mockRepository.getAllChannels())
-          .thenAnswer((_) async => Right<Failure, List<Channel>>([testChannel]));
+          .thenAnswer((_) async => Success<List<Channel>>([testChannel]));
 
       final result = await getChannels();
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (channels) => expect(channels, [testChannel]),
-      );
+      expect(result, isA<Success<List<Channel>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(:final value):
+          expect(value, [testChannel]);
+      }
       verify(() => mockRepository.getAllChannels()).called(1);
     });
 
     test('returns active channels when activeOnly is true', () async {
       when(() => mockRepository.getActiveChannels())
-          .thenAnswer((_) async => Right<Failure, List<Channel>>([testChannel]));
+          .thenAnswer((_) async => Success<List<Channel>>([testChannel]));
 
       final result = await getChannels(activeOnly: true);
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (channels) => expect(channels, [testChannel]),
-      );
+      expect(result, isA<Success<List<Channel>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(:final value):
+          expect(value, [testChannel]);
+      }
       verify(() => mockRepository.getActiveChannels()).called(1);
     });
 
     test('returns failure when repository fails', () async {
       when(() => mockRepository.getAllChannels())
-          .thenAnswer((_) async => Left(const DatabaseFailure('DB error')));
+          .thenAnswer((_) async => Error(const DatabaseFailure('DB error')));
 
       final result = await getChannels();
 
-      expect(result, isA<Left>());
+      expect(result, isA<Error<List<Channel>>>());
     });
   });
 
   group('UpdateChannel', () {
     test('updates channel successfully', () async {
       when(() => mockRepository.updateChannel(id: any(named: 'id'), name: any(named: 'name')))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await updateChannel(id: 1, name: 'Shopee Updated');
 
-      expect(result, const Right<Failure, void>(null));
+      expect(result, const Success<void>(null));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -52,14 +53,13 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
     final getDetail = getIt<GetMaterialDetail>();
     final result = await getDetail(widget.materialId);
 
-    result.fold(
-      (failure) {
+    switch (result) {
+      case Error(:final failure):
         if (mounted) {
           setState(() => _isLoading = false);
           context.showSnackBar(failure.message, isError: true);
         }
-      },
-      (detail) {
+      case Success(value: final detail):
         if (mounted) {
           setState(() {
             _material = detail.material;
@@ -68,8 +68,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
             _isLoading = false;
           });
         }
-      },
-    );
+    }
   }
 
   double get _pricePerPack {

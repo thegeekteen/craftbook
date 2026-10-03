@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -66,19 +67,19 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
   Future<void> _loadChannels() async {
     final result = await getIt<GetChannels>()(activeOnly: true);
-    result.fold(
-      (_) {},
-      (channels) {
+    switch (result) {
+      case Success(:final value):
         if (mounted) {
           setState(() {
-            _channels = channels;
-            if (channels.isNotEmpty) {
-              _selectedChannelId = channels.first.id;
+            _channels = value;
+            if (value.isNotEmpty) {
+              _selectedChannelId = value.first.id;
             }
           });
         }
-      },
-    );
+      case Error():
+        break;
+    }
   }
 
   void _goToStep(int step) {

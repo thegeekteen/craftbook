@@ -1,11 +1,9 @@
-import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
-import 'package:craftbook/features/orders/domain/entities/order_item.dart';
-import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/get_orders.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
@@ -43,50 +41,54 @@ void main() {
   group('GetOrders', () {
     test('returns all orders when no status filter', () async {
       when(() => mockRepository.getAllOrders())
-          .thenAnswer((_) async => Right<Failure, List<Order>>([testOrder]));
+          .thenAnswer((_) async => Success<List<Order>>([testOrder]));
 
       final result = await getOrders();
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (orders) => expect(orders, [testOrder]),
-      );
+      expect(result, isA<Success>());
+      switch (result) {
+        case Success(:final value):
+          expect(value, [testOrder]);
+        case Error():
+          fail('Should not return error');
+      }
       verify(() => mockRepository.getAllOrders()).called(1);
     });
 
     test('returns filtered orders by status', () async {
       when(() => mockRepository.getOrdersByStatus(OrderStatus.pending))
-          .thenAnswer((_) async => Right<Failure, List<Order>>([testOrder]));
+          .thenAnswer((_) async => Success<List<Order>>([testOrder]));
 
       final result = await getOrders(status: OrderStatus.pending);
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (orders) => expect(orders, [testOrder]),
-      );
+      expect(result, isA<Success>());
+      switch (result) {
+        case Success(:final value):
+          expect(value, [testOrder]);
+        case Error():
+          fail('Should not return error');
+      }
       verify(() => mockRepository.getOrdersByStatus(OrderStatus.pending)).called(1);
     });
 
     test('returns failure on repository error', () async {
       when(() => mockRepository.getAllOrders())
-          .thenAnswer((_) async => Left(const DatabaseFailure('error')));
+          .thenAnswer((_) async => Error<List<Order>>(const DatabaseFailure('error')));
 
       final result = await getOrders();
 
-      expect(result, isA<Left>());
+      expect(result, isA<Error>());
     });
   });
 
   group('ShipOrder', () {
     test('ships order successfully', () async {
       when(() => mockRepository.shipOrder(1))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await shipOrder(1);
 
-      expect(result, const Right<Failure, void>(null));
+      expect(result, const Success<void>(null));
       verify(() => mockRepository.shipOrder(1)).called(1);
     });
   });

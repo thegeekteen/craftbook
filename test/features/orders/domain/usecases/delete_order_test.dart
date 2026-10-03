@@ -1,8 +1,8 @@
-import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/entities/order_product.dart';
@@ -89,38 +89,40 @@ void main() {
     );
 
     when(() => mockOrderRepo.getOrderProducts(any()))
-        .thenAnswer((_) async => Right<Failure, List<OrderProduct>>(const []));
+        .thenAnswer((_) async => Success<List<OrderProduct>>(const []));
   });
 
   group('DeleteOrder', () {
     test('blocks deletion of shipped orders', () async {
       when(() => mockOrderRepo.getOrderById(3))
-          .thenAnswer((_) async => Right<Failure, Order?>(shippedOrder));
+          .thenAnswer((_) async => Success<Order?>(shippedOrder));
 
       final result = await deleteOrder(3);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) => expect(f, isA<ValidationFailure>()),
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should return error');
+      }
       verifyNever(() => mockOrderRepo.deleteOrder(any()));
     });
 
     test('deletes pending order and releases reserved materials', () async {
       when(() => mockOrderRepo.getOrderById(1))
-          .thenAnswer((_) async => Right<Failure, Order?>(pendingOrder));
+          .thenAnswer((_) async => Success<Order?>(pendingOrder));
       when(() => mockOrderRepo.getOrderMaterials(1))
           .thenAnswer(
-              (_) async => Right<Failure, List<OrderMaterial>>(testMaterials));
+              (_) async => Success<List<OrderMaterial>>(testMaterials));
       when(() => mockMaterialRepo.releaseReservedMaterials(any(), any()))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
       when(() => mockOrderRepo.deleteOrder(1))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteOrder(1);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success>());
       verify(() => mockMaterialRepo.releaseReservedMaterials(10, 5)).called(1);
       verify(() => mockMaterialRepo.releaseReservedMaterials(20, 3)).called(1);
       verify(() => mockOrderRepo.deleteOrder(1)).called(1);
@@ -128,18 +130,18 @@ void main() {
 
     test('deletes packed order and restores deducted materials', () async {
       when(() => mockOrderRepo.getOrderById(2))
-          .thenAnswer((_) async => Right<Failure, Order?>(packedOrder));
+          .thenAnswer((_) async => Success<Order?>(packedOrder));
       when(() => mockOrderRepo.getOrderMaterials(2))
           .thenAnswer(
-              (_) async => Right<Failure, List<OrderMaterial>>(testMaterials));
+              (_) async => Success<List<OrderMaterial>>(testMaterials));
       when(() => mockMaterialRepo.restoreDeductedMaterials(any(), any()))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
       when(() => mockOrderRepo.deleteOrder(2))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await deleteOrder(2);
 
-      expect(result.isRight(), true);
+      expect(result, isA<Success>());
       verify(() => mockMaterialRepo.restoreDeductedMaterials(10, 5)).called(1);
       verify(() => mockMaterialRepo.restoreDeductedMaterials(20, 4)).called(1);
       verify(() => mockOrderRepo.deleteOrder(2)).called(1);
@@ -149,15 +151,17 @@ void main() {
 
     test('returns failure when order not found', () async {
       when(() => mockOrderRepo.getOrderById(99))
-          .thenAnswer((_) async => const Right<Failure, Order?>(null));
+          .thenAnswer((_) async => const Success<Order?>(null));
 
       final result = await deleteOrder(99);
 
-      expect(result.isLeft(), true);
-      result.fold(
-        (f) => expect(f, isA<NotFoundFailure>()),
-        (_) => fail('Should return left'),
-      );
+      expect(result, isA<Error>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<NotFoundFailure>());
+        case Success():
+          fail('Should return error');
+      }
     });
   });
 }

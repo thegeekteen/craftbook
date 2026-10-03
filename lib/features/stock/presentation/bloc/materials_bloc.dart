@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/result.dart';
 import '../../domain/repositories/material_repository.dart';
 import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_buy_list.dart';
@@ -36,10 +37,12 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
   ) async {
     emit(MaterialsLoading());
     final result = await getMaterials(lowStockOnly: event.lowStockOnly);
-    result.fold(
-      (failure) => emit(MaterialsError(failure.message)),
-      (materials) => emit(MaterialsLoaded(materials)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success(:final value):
+        emit(MaterialsLoaded(value));
+    }
   }
 
   Future<void> _onLoadBuyList(
@@ -48,10 +51,12 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
   ) async {
     emit(MaterialsLoading());
     final result = await getBuyList();
-    result.fold(
-      (failure) => emit(MaterialsError(failure.message)),
-      (items) => emit(BuyListLoaded(items)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success(value: final items):
+        emit(BuyListLoaded(items));
+    }
   }
 
   Future<void> _onReceiveStock(
@@ -63,14 +68,14 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
       packsReceived: event.packsReceived,
       pricePerPack: event.pricePerPack,
     );
-    result.fold(
-      (failure) => emit(MaterialsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success():
         emit(StockReceived());
         // Re-load materials after receiving stock
         add(const LoadMaterials());
-      },
-    );
+    }
   }
 
   Future<void> _onCreateMaterial(
@@ -88,13 +93,13 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
       alertLevel: event.alertLevel,
       supplier: event.supplier,
     );
-    result.fold(
-      (failure) => emit(MaterialsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success():
         emit(MaterialCreated());
         add(const LoadMaterials());
-      },
-    );
+    }
   }
 
   Future<void> _onDeleteMaterial(
@@ -102,12 +107,12 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     Emitter<MaterialsState> emit,
   ) async {
     final result = await deleteMaterial(event.materialId);
-    result.fold(
-      (failure) => emit(MaterialsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(MaterialsError(failure.message));
+      case Success():
         emit(MaterialDeleted());
         add(const LoadMaterials());
-      },
-    );
+    }
   }
 }

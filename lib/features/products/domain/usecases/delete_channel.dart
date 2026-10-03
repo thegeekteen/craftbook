@@ -1,4 +1,4 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../orders/domain/repositories/order_repository.dart';
@@ -13,23 +13,24 @@ class DeleteChannel {
     required this.orderRepository,
   });
 
-  Future<Either<Failure, void>> call(int channelId) async {
+  Future<Result<void>> call(int channelId) async {
     final ordersResult = await orderRepository.getAllOrders();
 
-    return ordersResult.fold(
-      (failure) => Left(failure),
-      (orders) async {
+    switch (ordersResult) {
+      case Error(:final failure):
+        return Error(failure);
+      case Success(:final value):
+        final orders = value;
         final ordersUsingChannel =
             orders.where((o) => o.channelId == channelId).toList();
 
         if (ordersUsingChannel.isNotEmpty) {
-          return Left(ValidationFailure(
+          return Error(ValidationFailure(
             'Cannot delete channel: used by ${ordersUsingChannel.length} order(s)',
           ));
         }
 
         return channelRepository.deleteChannel(channelId);
-      },
-    );
+    }
   }
 }

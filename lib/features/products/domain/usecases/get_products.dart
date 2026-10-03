@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
-import '../../../../core/error/failures.dart';
 import '../entities/product.dart';
 import '../repositories/product_repository.dart';
 
@@ -9,7 +8,7 @@ class GetProducts {
 
   GetProducts(this.repository);
 
-  Future<Either<Failure, List<Product>>> call({bool activeOnly = false}) async {
+  Future<Result<List<Product>>> call({bool activeOnly = false}) async {
     if (activeOnly) {
       return repository.getActiveProducts();
     }

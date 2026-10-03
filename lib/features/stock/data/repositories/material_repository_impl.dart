@@ -1,9 +1,9 @@
 import 'dart:math';
 
-import 'package:dartz/dartz.dart';
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/material_dao.dart';
 import '../../../../database/daos/product_dao.dart';
@@ -19,49 +19,49 @@ class MaterialRepositoryImpl implements MaterialRepository {
   MaterialRepositoryImpl(this.dao, this.productDao);
 
   @override
-  Future<Either<Failure, List<Material>>> getAllMaterials() async {
+  Future<Result<List<Material>>> getAllMaterials() async {
     try {
       final rows = await dao.getAllMaterials();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Material?>> getMaterialById(int id) async {
+  Future<Result<Material?>> getMaterialById(int id) async {
     try {
       final row = await dao.getMaterialById(id);
-      return Right(row != null ? _toEntity(row) : null);
+      return Success(row != null ? _toEntity(row) : null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Material>>> getLowStockMaterials() async {
+  Future<Result<List<Material>>> getLowStockMaterials() async {
     try {
       final rows = await dao.getLowStockMaterials();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<StockMovement>>> getStockMovements(
+  Future<Result<List<StockMovement>>> getStockMovements(
     int materialId,
   ) async {
     try {
       final rows = await dao.getStockMovements(materialId);
-      return Right(rows.map(_toMovementEntity).toList());
+      return Success(rows.map(_toMovementEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, int>> createMaterial({
+  Future<Result<int>> createMaterial({
     required String name,
     required int packSize,
     required double packPrice,
@@ -80,14 +80,14 @@ class MaterialRepositoryImpl implements MaterialRepository {
         alertLevel: Value(alertLevel),
         supplier: Value(supplier),
       ));
-      return Right(id);
+      return Success(id);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> receiveStock({
+  Future<Result<void>> receiveStock({
     required int materialId,
     required int packsReceived,
     required double pricePerPack,
@@ -97,7 +97,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       final newQty = packsReceived * current.packSize;
@@ -141,21 +141,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
         reference: Value('Received $packsReceived packs'),
       ));
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> adjustStock(
+  Future<Result<void>> adjustStock(
     int materialId,
     int newQuantityOnHand,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       final difference = newQuantityOnHand - current.quantityOnHand;
@@ -171,21 +171,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
         reference: Value('Adjusted from ${current.quantityOnHand} to $newQuantityOnHand'),
       ));
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> reserveMaterials(
+  Future<Result<void>> reserveMaterials(
     int materialId,
     int quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -194,21 +194,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
         current.quantityPromised + quantity,
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> releaseReservedMaterials(
+  Future<Result<void>> releaseReservedMaterials(
     int materialId,
     int quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -217,21 +217,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
         max(0, current.quantityPromised - quantity),
       );
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deductMaterials(
+  Future<Result<void>> deductMaterials(
     int materialId,
     int quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -249,21 +249,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
         reference: Value('Deducted for order'),
       ));
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> restoreDeductedMaterials(
+  Future<Result<void>> restoreDeductedMaterials(
     int materialId,
     int quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
-        return Left(NotFoundFailure('Material not found'));
+        return Error(NotFoundFailure('Material not found'));
       }
 
       await dao.updateMaterialStock(
@@ -280,14 +280,14 @@ class MaterialRepositoryImpl implements MaterialRepository {
         reference: Value('Restored from deleted order'),
       ));
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<BuyListItem>>> getBuyList() async {
+  Future<Result<List<BuyListItem>>> getBuyList() async {
     try {
       final lowStockMaterials = await dao.getLowStockMaterials();
       final allProducts = await productDao.getActiveProducts();
@@ -335,19 +335,19 @@ class MaterialRepositoryImpl implements MaterialRepository {
         ));
       }
 
-      return Right(buyList);
+      return Success(buyList);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deleteMaterial(int id) async {
+  Future<Result<void>> deleteMaterial(int id) async {
     try {
       await dao.deleteMaterial(id);
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 

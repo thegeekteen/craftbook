@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
@@ -20,7 +19,7 @@ class CreateOrder {
     required this.materialRepository,
   });
 
-  Future<Either<Failure, int>> call({
+  Future<Result<int>> call({
     required String customerName,
     required String customerAddress,
     String? note,
@@ -33,10 +32,10 @@ class CreateOrder {
     required List<OrderItemInput> items,
   }) async {
     if (customerName.trim().isEmpty) {
-      return Left(const ValidationFailure('Customer name is required'));
+      return Error<int>(const ValidationFailure('Customer name is required'));
     }
     if (items.isEmpty) {
-      return Left(const ValidationFailure('At least one item is required'));
+      return Error<int>(const ValidationFailure('At least one item is required'));
     }
 
     final expandedMaterials = <OrderMaterialInput>[];
@@ -47,10 +46,10 @@ class CreateOrder {
       // Check if product is standalone
       final productResult =
           await productRepository.getProductById(item.productId);
-      final product = productResult.fold<dynamic>(
-        (_) => null,
-        (p) => p,
-      );
+      final product = switch (productResult) {
+        Success(:final value) => value,
+        Error() => null,
+      };
 
       if (product != null && product.isStandalone) {
         // Standalone product: no BOM expansion, use product's own stock
@@ -63,10 +62,10 @@ class CreateOrder {
       } else {
         // BOM product: expand into materials
         final bomResult = await productRepository.getBomItems(item.productId);
-        final bomItems = bomResult.fold(
-          (_) => <BomItem>[],
-          (items) => items,
-        );
+        final bomItems = switch (bomResult) {
+          Success(:final value) => value,
+          Error() => <BomItem>[],
+        };
 
         for (final bom in bomItems) {
           final needed = bom.quantityRequired * item.quantity;
@@ -127,9 +126,10 @@ class CreateOrder {
       products: expandedProducts,
     );
 
-    return result.fold(
-      (failure) => Left(failure),
-      (orderId) async {
+    switch (result) {
+      case Error(:final failure):
+        return Error<int>(failure);
+      case Success(:final value):
         // Reserve material stock for BOM products
         for (final mat in expandedMaterials) {
           await materialRepository.reserveMaterials(
@@ -140,8 +140,7 @@ class CreateOrder {
           await productRepository.reserveProductStock(
               prod.productId, prod.quantity);
         }
-        return Right(orderId);
-      },
-    );
+        return Success<int>(value);
+    }
   }
 }

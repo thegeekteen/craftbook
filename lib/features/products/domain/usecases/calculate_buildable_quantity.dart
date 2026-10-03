@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
-import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
 
 class CalculateBuildableQuantity {
@@ -8,7 +7,7 @@ class CalculateBuildableQuantity {
 
   CalculateBuildableQuantity(this.repository);
 
-  Future<Either<Failure, int>> call(int productId) async {
+  Future<Result<int>> call(int productId) async {
     return repository.calculateBuildableQuantity(productId);
   }
 }

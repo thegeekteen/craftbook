@@ -1,6 +1,5 @@
-import 'package:dartz/dartz.dart';
+import 'package:craftbook/core/error/result.dart';
 
-import '../../../../core/error/failures.dart';
 import '../repositories/product_repository.dart';
 
 class CalculateBomCost {
@@ -8,7 +7,7 @@ class CalculateBomCost {
 
   CalculateBomCost(this.repository);
 
-  Future<Either<Failure, double>> call(int productId) async {
+  Future<Result<double>> call(int productId) async {
     return repository.calculateBomCost(productId);
   }
 }

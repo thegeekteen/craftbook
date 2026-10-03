@@ -1,6 +1,4 @@
-import 'package:dartz/dartz.dart';
-
-import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../entities/product_earnings.dart';
 import '../repositories/earnings_repository.dart';
 
@@ -9,7 +7,7 @@ class GetProductEarnings {
 
   GetProductEarnings(this.repository);
 
-  Future<Either<Failure, List<ProductEarnings>>> call(DateTime startDate, DateTime endDate) {
+  Future<Result<List<ProductEarnings>>> call(DateTime startDate, DateTime endDate) {
     return repository.getProductEarnings(startDate, endDate);
   }
 }

@@ -1,8 +1,8 @@
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
+import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/stock/domain/entities/material.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:craftbook/features/stock/domain/usecases/receive_stock.dart';
@@ -43,7 +43,7 @@ void main() {
             materialId: any(named: 'materialId'),
             packsReceived: any(named: 'packsReceived'),
             pricePerPack: any(named: 'pricePerPack'),
-          )).thenAnswer((_) async => const Right<Failure, void>(null));
+          )).thenAnswer((_) async => const Success<void>(null));
 
       final result = await receiveStock(
         materialId: 1,
@@ -51,7 +51,7 @@ void main() {
         pricePerPack: 235.0,
       );
 
-      expect(result, const Right<Failure, void>(null));
+      expect(result, const Success<void>(null));
       verify(() => mockRepository.receiveStock(
             materialId: 1,
             packsReceived: 2,
@@ -66,11 +66,13 @@ void main() {
         pricePerPack: 235.0,
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not return right'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should not return success');
+      }
     });
 
     test('returns validation failure when price is negative', () async {
@@ -80,60 +82,68 @@ void main() {
         pricePerPack: -10.0,
       );
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not return right'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should not return success');
+      }
     });
   });
 
   group('AdjustStock', () {
     test('adjusts stock successfully', () async {
       when(() => mockRepository.adjustStock(1, 50))
-          .thenAnswer((_) async => const Right<Failure, void>(null));
+          .thenAnswer((_) async => const Success<void>(null));
 
       final result = await adjustStock(1, 50);
 
-      expect(result, const Right<Failure, void>(null));
+      expect(result, const Success<void>(null));
     });
 
     test('returns validation failure for negative quantity', () async {
       final result = await adjustStock(1, -5);
 
-      expect(result, isA<Left>());
-      result.fold(
-        (failure) => expect(failure, isA<ValidationFailure>()),
-        (_) => fail('Should not return right'),
-      );
+      expect(result, isA<Error<void>>());
+      switch (result) {
+        case Error(:final failure):
+          expect(failure, isA<ValidationFailure>());
+        case Success():
+          fail('Should not return success');
+      }
     });
   });
 
   group('GetMaterials', () {
     test('returns all materials', () async {
       when(() => mockRepository.getAllMaterials())
-          .thenAnswer((_) async => Right<Failure, List<Material>>([testMaterial]));
+          .thenAnswer((_) async => Success<List<Material>>([testMaterial]));
 
       final result = await getMaterials();
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (materials) => expect(materials, [testMaterial]),
-      );
+      expect(result, isA<Success<List<Material>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(value: final materials):
+          expect(materials, [testMaterial]);
+      }
     });
 
     test('returns low stock materials only', () async {
       when(() => mockRepository.getLowStockMaterials())
-          .thenAnswer((_) async => Right<Failure, List<Material>>([testMaterial]));
+          .thenAnswer((_) async => Success<List<Material>>([testMaterial]));
 
       final result = await getMaterials(lowStockOnly: true);
 
-      expect(result.isRight(), true);
-      result.fold(
-        (_) => fail('Should not return left'),
-        (materials) => expect(materials, [testMaterial]),
-      );
+      expect(result, isA<Success<List<Material>>>());
+      switch (result) {
+        case Error():
+          fail('Should not return error');
+        case Success(value: final materials):
+          expect(materials, [testMaterial]);
+      }
     });
   });
 }

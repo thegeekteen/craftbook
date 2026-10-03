@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
@@ -36,15 +37,14 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
     final getProductEarnings = getIt<GetProductEarnings>();
     final result = await getProductEarnings(start, end);
 
-    result.fold(
-      (failure) {
+    switch (result) {
+      case Error(:final failure):
         if (mounted) {
           setState(() => _isLoading = false);
           context.showSnackBar(failure.message, isError: true);
         }
-      },
-      (products) {
-        final earnings = products
+      case Success(:final value):
+        final earnings = value
             .where((p) => p.productId == widget.productId)
             .firstOrNull;
 
@@ -54,8 +54,7 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
             _isLoading = false;
           });
         }
-      },
-    );
+    }
   }
 
   @override

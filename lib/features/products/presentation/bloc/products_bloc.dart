@@ -1,3 +1,4 @@
+import 'package:craftbook/core/error/result.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/create_product.dart';
@@ -32,10 +33,12 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   ) async {
     emit(ProductsLoading());
     final result = await getProducts(activeOnly: event.activeOnly);
-    result.fold(
-      (failure) => emit(ProductsError(failure.message)),
-      (products) => emit(ProductsLoaded(products)),
-    );
+    switch (result) {
+      case Error(:final failure):
+        emit(ProductsError(failure.message));
+      case Success(:final value):
+        emit(ProductsLoaded(value));
+    }
   }
 
   Future<void> _onCreateProduct(
@@ -50,13 +53,13 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       initialQuantity: event.initialQuantity,
       initialUnitCost: event.initialUnitCost,
     );
-    result.fold(
-      (failure) => emit(ProductsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(ProductsError(failure.message));
+      case Success():
         // Re-load products after successful creation
         add(const LoadProducts());
-      },
-    );
+    }
   }
 
   Future<void> _onUpdateProduct(
@@ -70,13 +73,13 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       sellPrice: event.sellPrice,
       isActive: event.isActive,
     );
-    result.fold(
-      (failure) => emit(ProductsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(ProductsError(failure.message));
+      case Success():
         // Re-load products after successful update
         add(const LoadProducts());
-      },
-    );
+    }
   }
 
   Future<void> _onDeleteProduct(
@@ -84,12 +87,12 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     Emitter<ProductsState> emit,
   ) async {
     final result = await deleteProduct(event.productId);
-    result.fold(
-      (failure) => emit(ProductsError(failure.message)),
-      (_) {
+    switch (result) {
+      case Error(:final failure):
+        emit(ProductsError(failure.message));
+      case Success():
         emit(ProductDeleted());
         add(const LoadProducts());
-      },
-    );
+    }
   }
 }

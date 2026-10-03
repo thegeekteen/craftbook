@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
@@ -52,35 +53,33 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     final getDetail = getIt<GetMaterialDetail>();
     final result = await getDetail(widget.materialId);
 
-    await result.fold(
-      (failure) async {
+    switch (result) {
+      case Error(:final failure):
         if (mounted) {
           setState(() {
             _error = failure.message;
             _isLoading = false;
           });
         }
-      },
-      (detail) async {
+      case Success(:final value):
         // Load products using this material
         final productRepo = getIt<ProductRepository>();
         final productsResult =
             await productRepo.getProductsUsingMaterial(widget.materialId);
-        final products = productsResult.fold(
-          (_) => <Product>[],
-          (p) => p,
-        );
+        final products = switch (productsResult) {
+          Error() => <Product>[],
+          Success(:final value) => value,
+        };
 
         if (mounted) {
           setState(() {
-            _material = detail.material;
-            _movements = detail.movements;
+            _material = value.material;
+            _movements = value.movements;
             _usedInProducts = products;
             _isLoading = false;
           });
         }
-      },
-    );
+    }
   }
 
   void _showAdjustDialog() {
@@ -121,19 +120,17 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 final adjustStock = getIt<AdjustStock>();
                 final result =
                     await adjustStock(widget.materialId, newQty);
-                result.fold(
-                  (failure) {
+                switch (result) {
+                  case Error(:final failure):
                     if (mounted) {
                       context.showSnackBar(failure.message, isError: true);
                     }
-                  },
-                  (_) {
+                  case Success():
                     if (mounted) {
                       context.showSnackBar('Stock adjusted');
                       _loadData();
                     }
-                  },
-                );
+                }
               },
               child: const Text('Save'),
             ),
@@ -191,19 +188,17 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 if (confirmed && mounted) {
                   final deleteMaterial = getIt<DeleteMaterial>();
                   final result = await deleteMaterial(widget.materialId);
-                  result.fold(
-                    (failure) {
+                  switch (result) {
+                    case Error(:final failure):
                       if (mounted) {
                         context.showSnackBar(failure.message, isError: true);
                       }
-                    },
-                    (_) {
+                    case Success():
                       if (mounted) {
                         context.showSnackBar('Material deleted');
                         context.pop(true);
                       }
-                    },
-                  );
+                  }
                 }
               }
             },

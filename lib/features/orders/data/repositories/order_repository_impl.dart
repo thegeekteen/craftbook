@@ -1,7 +1,7 @@
-import 'package:dartz/dartz.dart' hide Order;
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/order_dao.dart';
 import '../../domain/entities/order.dart';
@@ -18,59 +18,59 @@ class OrderRepositoryImpl implements OrderRepository {
   // ── Queries ──────────────────────────────────────────────────────────
 
   @override
-  Future<Either<Failure, List<Order>>> getAllOrders() async {
+  Future<Result<List<Order>>> getAllOrders() async {
     try {
       final rows = await dao.getAllOrders();
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, Order?>> getOrderById(int id) async {
+  Future<Result<Order?>> getOrderById(int id) async {
     try {
       final row = await dao.getOrderById(id);
-      return Right(row != null ? _toEntity(row) : null);
+      return Success(row != null ? _toEntity(row) : null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Order>>> getOrdersByStatus(
+  Future<Result<List<Order>>> getOrdersByStatus(
       OrderStatus status) async {
     try {
       final rows = await dao.getOrdersByStatus(_statusToString(status));
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Order>>> getOrdersForDate(DateTime date) async {
+  Future<Result<List<Order>>> getOrdersForDate(DateTime date) async {
     try {
       final rows = await dao.getOrdersForToday(date);
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<Order>>> getOrdersForDateRange(
+  Future<Result<List<Order>>> getOrdersForDateRange(
       DateTime start, DateTime end) async {
     try {
       final rows = await dao.getOrdersForDateRange(start, end);
-      return Right(rows.map(_toEntity).toList());
+      return Success(rows.map(_toEntity).toList());
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<OrderItem>>> getOrderItems(
+  Future<Result<List<OrderItem>>> getOrderItems(
       int orderId) async {
     try {
       final rows = await dao.getOrderItems(orderId);
@@ -79,14 +79,14 @@ class OrderRepositoryImpl implements OrderRepository {
         final productName = await dao.getProductName(row.productId);
         items.add(_itemToEntity(row, productName));
       }
-      return Right(items);
+      return Success(items);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<OrderMaterial>>> getOrderMaterials(
+  Future<Result<List<OrderMaterial>>> getOrderMaterials(
       int orderId) async {
     try {
       final rows = await dao.getOrderMaterials(orderId);
@@ -95,14 +95,14 @@ class OrderRepositoryImpl implements OrderRepository {
         final materialName = await dao.getMaterialName(row.materialId);
         materials.add(_materialToEntity(row, materialName));
       }
-      return Right(materials);
+      return Success(materials);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<OrderProduct>>> getOrderProducts(
+  Future<Result<List<OrderProduct>>> getOrderProducts(
       int orderId) async {
     try {
       final rows = await dao.getOrderProducts(orderId);
@@ -111,16 +111,16 @@ class OrderRepositoryImpl implements OrderRepository {
         final productName = await dao.getProductName(row.productId);
         products.add(_productToEntity(row, productName));
       }
-      return Right(products);
+      return Success(products);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   // ── Commands ─────────────────────────────────────────────────────────
 
   @override
-  Future<Either<Failure, int>> createOrder({
+  Future<Result<int>> createOrder({
     required String customerName,
     required String customerAddress,
     String? note,
@@ -186,14 +186,14 @@ class OrderRepositoryImpl implements OrderRepository {
         ));
       }
 
-      return Right(orderId);
+      return Success(orderId);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> packOrder(int orderId) async {
+  Future<Result<void>> packOrder(int orderId) async {
     try {
       final now = DateTime.now();
       await (dao.update(dao.orders)..where((t) => t.id.equals(orderId)))
@@ -202,14 +202,14 @@ class OrderRepositoryImpl implements OrderRepository {
         packedAt: Value(now),
         updatedAt: Value(now),
       ));
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> shipOrder(int orderId) async {
+  Future<Result<void>> shipOrder(int orderId) async {
     try {
       final now = DateTime.now();
       await (dao.update(dao.orders)..where((t) => t.id.equals(orderId)))
@@ -218,14 +218,14 @@ class OrderRepositoryImpl implements OrderRepository {
         shippedAt: Value(now),
         updatedAt: Value(now),
       ));
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> adjustMaterialsUsed(
+  Future<Result<void>> adjustMaterialsUsed(
     int orderId,
     List<OrderMaterialInput> materials,
   ) async {
@@ -287,14 +287,14 @@ class OrderRepositoryImpl implements OrderRepository {
         updatedAt: Value(now),
       ));
 
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> deleteOrder(int id) async {
+  Future<Result<void>> deleteOrder(int id) async {
     try {
       await dao.deleteOrderItemsByOrderId(id);
       await dao.deleteOrderMaterialsByOrderId(id);
@@ -302,9 +302,9 @@ class OrderRepositoryImpl implements OrderRepository {
       await dao.deleteStockMovementsByOrderId(id);
       await dao.deleteProductStockMovementsByOrderId(id);
       await dao.deleteOrder(id);
-      return const Right(null);
+      return const Success(null);
     } catch (e) {
-      return Left(DatabaseFailure(e.toString()));
+      return Error(DatabaseFailure(e.toString()));
     }
   }
 
