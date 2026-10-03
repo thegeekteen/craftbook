@@ -180,15 +180,22 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
               ),
               const SizedBox(height: 20),
 
-              // Quantity per pack
+              // Quantity per pack (read-only)
               Text('QUANTITY PER PACK', style: AppTextStyles.monoSection),
               const SizedBox(height: 8),
-              StepperInput(
-                value: _packSize,
-                min: 1,
-                max: 9999,
-                onChanged: (val) =>
-                    setState(() => _packSize = val.toInt()),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.paperHigh,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.hair),
+                ),
+                child: Text(
+                  '$_packSize pcs per pack',
+                  style: AppTextStyles.bodyLarge
+                      .copyWith(color: AppColors.ink),
+                ),
               ),
               const SizedBox(height: 20),
 
