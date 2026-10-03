@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
@@ -7,6 +8,7 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/section_card.dart';
 import '../bloc/earnings_bloc.dart';
 import '../bloc/earnings_event.dart';
 import '../bloc/earnings_state.dart';
@@ -41,37 +43,81 @@ class _EarningsView extends StatefulWidget {
 
 class _EarningsViewState extends State<_EarningsView> {
   int _selectedRange = 0; // 0=Week, 1=Month, 2=Year
+  int _offset = 0; // period offset: 0=current, -1=previous, +1=next, etc.
 
   static const _rangeLabels = ['Week', 'Month', 'Year'];
 
-  void _onRangeChanged(int index) {
-    setState(() => _selectedRange = index);
-
+  DateTimeRange get _currentRange {
     final now = DateTime.now();
     DateTime start;
     DateTime end;
 
-    switch (index) {
+    switch (_selectedRange) {
       case 0: // Week
-        start = app_date.DateUtils.startOfWeek(now);
-        end = app_date.DateUtils.endOfWeek(now);
+        final baseStart = app_date.DateUtils.startOfWeek(now);
+        start = baseStart.add(Duration(days: 7 * _offset));
+        end = start.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
         break;
       case 1: // Month
-        start = app_date.DateUtils.startOfMonth(now);
-        end = app_date.DateUtils.endOfMonth(now);
+        final baseMonth = DateTime(now.year, now.month + _offset, 1);
+        start = baseMonth;
+        end = DateTime(baseMonth.year, baseMonth.month + 1, 0, 23, 59, 59);
         break;
       case 2: // Year
-        start = DateTime(now.year, 1, 1);
-        end = DateTime(now.year, 12, 31, 23, 59, 59);
+        final year = now.year + _offset;
+        start = DateTime(year, 1, 1);
+        end = DateTime(year, 12, 31, 23, 59, 59);
         break;
       default:
         start = app_date.DateUtils.startOfWeek(now);
         end = app_date.DateUtils.endOfWeek(now);
     }
 
+    return DateTimeRange(start: start, end: end);
+  }
+
+  String get _rangeLabel {
+    final range = _currentRange;
+    switch (_selectedRange) {
+      case 0: // Week
+        final fmt = DateFormat('MMM d');
+        return '${fmt.format(range.start)} – ${fmt.format(range.end)}';
+      case 1: // Month
+        return DateFormat('MMMM y').format(range.start);
+      case 2: // Year
+        return DateFormat('y').format(range.start);
+      default:
+        return '';
+    }
+  }
+
+  void _onRangeChanged(int index) {
+    setState(() {
+      _selectedRange = index;
+      _offset = 0;
+    });
+    _reload();
+  }
+
+  void _onPrevious() {
+    setState(() => _offset--);
+    _reload();
+  }
+
+  void _onNext() {
+    if (_offset < 0) {
+      setState(() => _offset++);
+      _reload();
+    }
+  }
+
+  bool get _canGoNext => _offset < 0;
+
+  void _reload() {
+    final range = _currentRange;
     context.read<EarningsBloc>().add(LoadEarnings(
-          startDate: start,
-          endDate: end,
+          startDate: range.start,
+          endDate: range.end,
         ));
   }
 
@@ -93,14 +139,49 @@ class _EarningsViewState extends State<_EarningsView> {
         builder: (context, state) {
           return Column(
             children: [
-              // Range selector
+              // Range type selector
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: _RangeSelector(
                   selectedIndex: _selectedRange,
                   onSelected: _onRangeChanged,
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // Period navigation
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: _onPrevious,
+                      icon: const Icon(Icons.chevron_left, size: 22),
+                      color: AppColors.ink,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _rangeLabel,
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _canGoNext ? _onNext : null,
+                      icon: const Icon(Icons.chevron_right, size: 22),
+                      color: _canGoNext ? AppColors.ink : AppColors.muted,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // Content
               Expanded(
@@ -120,39 +201,34 @@ class _EarningsViewState extends State<_EarningsView> {
 
     if (state is EarningsLoaded) {
       return RefreshIndicator(
-        onRefresh: () async {
-          // Re-trigger load with current range
-          _onRangeChanged(_selectedRange);
-        },
+        onRefresh: () async => _reload(),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // Summary card
             EarningsSummaryCard(summary: state.summary),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // Product earnings
             if (state.productEarnings.isNotEmpty) ...[
-              Text('BY PRODUCT', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              ...state.productEarnings.map(
-                (pe) => ProductProfitCard(earnings: pe),
+              SectionCard(
+                label: 'By Product',
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: state.productEarnings
+                      .map((pe) => ProductProfitCard(earnings: pe))
+                      .toList(),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
             ],
 
             // Waste summary
             if (state.wasteSummary.totalWasteQuantity > 0) ...[
-              Text('WASTE', style: AppTextStyles.monoSection),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.alertSoft.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(13),
-                  border:
-                      Border.all(color: AppColors.alert.withOpacity(0.3)),
-                ),
+              SectionCard(
+                label: 'Waste',
+                backgroundColor: AppColors.alertSoft.withOpacity(0.3),
+                borderColor: AppColors.alert.withOpacity(0.3),
                 child: Row(
                   children: [
                     Expanded(
@@ -212,7 +288,7 @@ class _RangeSelector extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.paper,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: List.generate(3, (index) {
@@ -220,20 +296,21 @@ class _RangeSelector extends StatelessWidget {
           return Expanded(
             child: GestureDetector(
               onTap: () => onSelected(index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.paperHigh : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: isSelected
-                      ? Border.all(color: AppColors.hair)
-                      : null,
+                  color: isSelected ? AppColors.success : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
-                    _EarningsViewState._rangeLabels[index].toUpperCase(),
+                    _rangeLabels[index].toUpperCase(),
                     style: AppTextStyles.monoLabel.copyWith(
-                      color: isSelected ? AppColors.ink : AppColors.muted,
+                      color: isSelected ? Colors.white : AppColors.muted,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -244,4 +321,6 @@ class _RangeSelector extends StatelessWidget {
       ),
     );
   }
+
+  static const _rangeLabels = ['Week', 'Month', 'Year'];
 }
