@@ -34,7 +34,13 @@ class _OrdersListView extends StatefulWidget {
 }
 
 class _OrdersListViewState extends State<_OrdersListView> {
-  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   static const _tabs = ['All', 'To Pack', 'Packed', 'Shipped'];
 
@@ -84,19 +90,22 @@ class _OrdersListViewState extends State<_OrdersListView> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search orders...',
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
+                      suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close, size: 18),
-                              onPressed: () =>
-                                  setState(() => _searchQuery = ''),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
                             )
                           : null,
                       isDense: true,
                     ),
-                    onChanged: (v) => setState(() => _searchQuery = v),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 Expanded(
@@ -105,7 +114,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
                       return _OrdersTab(
                         status: _statusForTab(index),
                         state: state,
-                        searchQuery: _searchQuery,
+                        searchQuery: _searchController.text,
                       );
                     }),
                   ),

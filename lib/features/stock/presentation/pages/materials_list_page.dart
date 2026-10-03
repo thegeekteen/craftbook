@@ -34,7 +34,13 @@ class _MaterialsListView extends StatefulWidget {
 }
 
 class _MaterialsListViewState extends State<_MaterialsListView> {
-  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   static const _tabs = ['All', 'Low', 'Promised'];
 
@@ -77,22 +83,24 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
                   padding:
                       const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search materials...',
                       prefixIcon:
                           const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
+                      suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close,
                                   size: 18),
-                              onPressed: () => setState(
-                                  () => _searchQuery = ''),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
                             )
                           : null,
                       isDense: true,
                     ),
-                    onChanged: (v) =>
-                        setState(() => _searchQuery = v),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 Expanded(
@@ -261,9 +269,10 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
           break;
       }
 
-      if (_searchQuery.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      if (query.isNotEmpty) {
         materials = materials.where((m) =>
-            m.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+            m.name.toLowerCase().contains(query)).toList();
       }
 
       if (materials.isEmpty) {

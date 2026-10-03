@@ -35,7 +35,13 @@ class _ProductsListView extends StatefulWidget {
 }
 
 class _ProductsListViewState extends State<_ProductsListView> {
-  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +70,11 @@ class _ProductsListViewState extends State<_ProductsListView> {
           }
 
           if (state is ProductsLoaded) {
-            final filtered = _searchQuery.isEmpty
+            final query = _searchController.text.toLowerCase();
+            final filtered = query.isEmpty
                 ? state.products
                 : state.products.where((p) =>
-                    p.name.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+                    p.name.toLowerCase().contains(query)).toList();
 
             if (state.products.isEmpty) {
               return Center(
@@ -100,19 +107,22 @@ class _ProductsListViewState extends State<_ProductsListView> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search products...',
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _searchQuery.isNotEmpty
+                      suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close, size: 18),
-                              onPressed: () =>
-                                  setState(() => _searchQuery = ''),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
                             )
                           : null,
                       isDense: true,
                     ),
-                    onChanged: (v) => setState(() => _searchQuery = v),
+                    onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 12),
                   if (filtered.isEmpty)
