@@ -6,6 +6,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
+import '../../../../core/widgets/status_filter_chips.dart';
 import '../../../../core/widgets/status_pill.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../../orders/domain/repositories/order_repository.dart';
@@ -26,6 +27,7 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
   String? _error;
   DateTime _selectedDay = DateTime.now();
   late DateTime _displayMonth;
+  Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
 
   static const _monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -78,16 +80,19 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
     _loadOrders();
   }
 
-  /// Returns orders whose shipByDate falls on the given day.
+  /// Returns orders whose shipByDate falls on the given day, filtered by status.
   List<Order> _ordersForDay(DateTime day) {
     return _orders.where((o) {
+      if (!_statusFilter.contains(o.status)) return false;
       return app_date.DateUtils.isSameDay(o.shipByDate, day);
     }).toList();
   }
 
-  /// Check if a day has any orders.
+  /// Check if a day has any orders (respecting status filter).
   bool _hasOrders(DateTime day) {
-    return _orders.any((o) => app_date.DateUtils.isSameDay(o.shipByDate, day));
+    return _orders.any((o) =>
+        _statusFilter.contains(o.status) &&
+        app_date.DateUtils.isSameDay(o.shipByDate, day));
   }
 
   /// Build the grid of days for the current month.
@@ -174,6 +179,15 @@ class _CalendarMonthPageState extends State<CalendarMonthPage> {
                 onPressed: _nextMonth,
               ),
             ],
+          ),
+        ),
+
+        // Status filter chips
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: StatusFilterChips(
+            selected: _statusFilter,
+            onChanged: (s) => setState(() => _statusFilter = s),
           ),
         ),
 

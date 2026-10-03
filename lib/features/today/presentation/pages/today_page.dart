@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/status_filter_chips.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../domain/usecases/get_alert_summary.dart';
 import '../bloc/today_bloc.dart';
@@ -27,8 +28,15 @@ class TodayPage extends StatelessWidget {
   }
 }
 
-class _TodayView extends StatelessWidget {
+class _TodayView extends StatefulWidget {
   const _TodayView();
+
+  @override
+  State<_TodayView> createState() => _TodayViewState();
+}
+
+class _TodayViewState extends State<_TodayView> {
+  Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +102,13 @@ class _TodayView extends StatelessWidget {
                   final today = DateTime.now();
                   final todayDate = DateTime(today.year, today.month, today.day);
                   final shipTodayOrders = state.orders.where((o) =>
+                    _statusFilter.contains(o.status) &&
                     o.status == OrderStatus.pending &&
                     o.shipByDate.year == todayDate.year &&
                     o.shipByDate.month == todayDate.month &&
                     o.shipByDate.day == todayDate.day).toList();
                   final newTodayOrders = state.orders.where((o) =>
+                    _statusFilter.contains(o.status) &&
                     o.orderDate.year == todayDate.year &&
                     o.orderDate.month == todayDate.month &&
                     o.orderDate.day == todayDate.day).toList();
@@ -121,6 +131,15 @@ class _TodayView extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                       ],
+
+                      // Status filter chips
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: StatusFilterChips(
+                          selected: _statusFilter,
+                          onChanged: (s) => setState(() => _statusFilter = s),
+                        ),
+                      ),
 
                       // Ships today section
                       if (shipTodayOrders.isNotEmpty) ...[

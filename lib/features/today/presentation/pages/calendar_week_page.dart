@@ -6,6 +6,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
+import '../../../../core/widgets/status_filter_chips.dart';
 import '../../../../core/widgets/status_pill.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../domain/usecases/get_week_orders.dart';
@@ -23,6 +24,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
   List<Order> _orders = [];
   bool _isLoading = true;
   String? _error;
+  Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
   final DateTime _weekStart = app_date.DateUtils.startOfWeek(DateTime.now());
 
   @override
@@ -53,9 +55,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
     );
   }
 
-  /// Returns orders whose shipByDate falls on the given day.
+  /// Returns orders whose shipByDate falls on the given day, filtered by status.
   List<Order> _ordersForDay(DateTime day) {
     return _orders.where((o) {
+      if (!_statusFilter.contains(o.status)) return false;
       final shipDay = DateTime(o.shipByDate.year, o.shipByDate.month, o.shipByDate.day);
       final target = DateTime(day.year, day.month, day.day);
       return shipDay.isAtSameMomentAs(target);
@@ -126,11 +129,20 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 7,
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        StatusFilterChips(
+          selected: _statusFilter,
+          onChanged: (s) => setState(() => _statusFilter = s),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadOrders,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 7,
         itemBuilder: (context, index) {
           final day = _weekStart.add(Duration(days: index));
           final dayOrders = _ordersForDay(day);
@@ -144,7 +156,10 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
             orders: dayOrders,
           );
         },
-      ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
