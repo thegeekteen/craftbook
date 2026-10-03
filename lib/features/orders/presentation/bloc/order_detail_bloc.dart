@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../products/domain/entities/channel.dart';
+import '../../../products/domain/repositories/channel_repository.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/repositories/order_repository.dart';
 import '../../domain/usecases/adjust_materials_used.dart';
@@ -10,11 +12,9 @@ import 'order_detail_event.dart';
 import 'order_detail_state.dart';
 
 /// BLoC for the order detail screen.
-///
-/// Uses [OrderRepository] directly for reading order/items/materials,
-/// and dedicated use cases for mutations (adjust, pack, ship, delete).
 class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final OrderRepository orderRepository;
+  final ChannelRepository channelRepository;
   final AdjustMaterialsUsed adjustMaterialsUsed;
   final PackOrder packOrder;
   final ShipOrder shipOrder;
@@ -22,6 +22,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
 
   OrderDetailBloc({
     required this.orderRepository,
+    required this.channelRepository,
     required this.adjustMaterialsUsed,
     required this.packOrder,
     required this.shipOrder,
@@ -41,32 +42,51 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     emit(OrderDetailLoading());
 
     final orderResult = await orderRepository.getOrderById(event.orderId);
+    if (orderResult.isLeft()) {
+      orderResult.fold((f) => emit(OrderDetailError(f.message)), (_) {});
+      return;
+    }
+
+    final order = orderResult.fold<Order?>((_) => null, (o) => o);
+    if (order == null) {
+      emit(const OrderDetailError('Order not found'));
+      return;
+    }
+
+    // Resolve channel name if channelId is set
+    Channel? channel;
+    if (order.channelId != null) {
+      final channelResult =
+          await channelRepository.getChannelById(order.channelId!);
+      channelResult.fold((_) {}, (c) => channel = c);
+    }
+
     final itemsResult = await orderRepository.getOrderItems(event.orderId);
+    if (itemsResult.isLeft()) {
+      itemsResult.fold((f) => emit(OrderDetailError(f.message)), (_) {});
+      return;
+    }
+    final items = itemsResult.fold<List<dynamic>>(
+        (_) => [], (list) => list);
+
     final materialsResult =
         await orderRepository.getOrderMaterials(event.orderId);
+    if (materialsResult.isLeft()) {
+      materialsResult.fold(
+          (f) => emit(OrderDetailError(f.message)), (_) {});
+      return;
+    }
+    final materials = materialsResult.fold<List<dynamic>>(
+        (_) => [], (list) => list);
 
-    // Chain fold calls to handle failures at each step
-    orderResult.fold<void>(
-      (failure) => emit(OrderDetailError(failure.message)),
-      (Order? maybeOrder) {
-        if (maybeOrder == null) {
-          emit(const OrderDetailError('Order not found'));
-          return;
-        }
-        final order = maybeOrder;
-        itemsResult.fold<void>(
-          (failure) => emit(OrderDetailError(failure.message)),
-          (items) => materialsResult.fold<void>(
-            (failure) => emit(OrderDetailError(failure.message)),
-            (materials) => emit(OrderDetailLoaded(
-              order: order,
-              items: items,
-              materials: materials,
-            )),
-          ),
-        );
-      },
-    );
+    if (emit.isDone) return;
+
+    emit(OrderDetailLoaded(
+      order: order,
+      items: items.cast(),
+      materials: materials.cast(),
+      channel: channel,
+    ));
   }
 
   Future<void> _onAdjustMaterials(
@@ -79,7 +99,6 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       (failure) => emit(OrderDetailError(failure.message)),
       (_) {
         emit(const OrderDetailActionSuccess('Materials adjusted successfully'));
-        // Re-load order detail after adjustment
         add(LoadOrderDetail(event.orderId));
       },
     );
@@ -94,7 +113,6 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       (failure) => emit(OrderDetailError(failure.message)),
       (_) {
         emit(const OrderDetailActionSuccess('Order packed successfully'));
-        // Re-load order detail after packing
         add(LoadOrderDetail(event.orderId));
       },
     );
@@ -109,7 +127,6 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       (failure) => emit(OrderDetailError(failure.message)),
       (_) {
         emit(const OrderDetailActionSuccess('Order shipped successfully'));
-        // Re-load order detail after shipping
         add(LoadOrderDetail(event.orderId));
       },
     );

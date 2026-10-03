@@ -105,7 +105,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 value: newQty,
                 min: 0,
                 max: 99999,
-                onChanged: (val) => setDialogState(() => newQty = val),
+                onChanged: (val) => setDialogState(() => newQty = val.toInt()),
               ),
             ],
           ),

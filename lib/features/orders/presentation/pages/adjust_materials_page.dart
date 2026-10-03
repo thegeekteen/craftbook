@@ -133,7 +133,7 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
                             max: mat.plannedQuantity * 3,
                             onChanged: (val) {
                               setState(() {
-                                _actualQuantities[mat.materialId] = val;
+                                _actualQuantities[mat.materialId] = val.toInt();
                               });
                             },
                           ),

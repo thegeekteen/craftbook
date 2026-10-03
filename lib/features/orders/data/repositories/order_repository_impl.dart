@@ -61,8 +61,7 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, List<Order>>> getOrdersForDateRange(
       DateTime start, DateTime end) async {
     try {
-      // Reuse the DAO's per-day query; a range query can be added later.
-      final rows = await dao.getOrdersForToday(end);
+      final rows = await dao.getOrdersForDateRange(start, end);
       return Right(rows.map(_toEntity).toList());
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));
@@ -74,7 +73,12 @@ class OrderRepositoryImpl implements OrderRepository {
       int orderId) async {
     try {
       final rows = await dao.getOrderItems(orderId);
-      return Right(rows.map(_itemToEntity).toList());
+      final items = <OrderItem>[];
+      for (final row in rows) {
+        final productName = await dao.getProductName(row.productId);
+        items.add(_itemToEntity(row, productName));
+      }
+      return Right(items);
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));
     }
@@ -85,7 +89,12 @@ class OrderRepositoryImpl implements OrderRepository {
       int orderId) async {
     try {
       final rows = await dao.getOrderMaterials(orderId);
-      return Right(rows.map(_materialToEntity).toList());
+      final materials = <OrderMaterial>[];
+      for (final row in rows) {
+        final materialName = await dao.getMaterialName(row.materialId);
+        materials.add(_materialToEntity(row, materialName));
+      }
+      return Right(materials);
     } catch (e) {
       return Left(DatabaseFailure(e.toString()));
     }
@@ -281,25 +290,23 @@ class OrderRepositoryImpl implements OrderRepository {
         updatedAt: row.updatedAt,
       );
 
-  /// Drift OrderItem has no productName — set to '' for the use-case layer
-  /// to enrich from the products table.
-  OrderItem _itemToEntity(db.OrderItem row) => OrderItem(
+  OrderItem _itemToEntity(db.OrderItem row, String productName) => OrderItem(
         id: row.id,
         orderId: row.orderId,
         productId: row.productId,
-        productName: '',
+        productName: productName,
         quantity: row.quantity,
         unitPrice: row.unitPrice,
         subtotal: row.subtotal,
       );
 
-  /// Drift OrderMaterial has no materialName — set to '' for the use-case
-  /// layer to enrich from the materials table.
-  OrderMaterial _materialToEntity(db.OrderMaterial row) => OrderMaterial(
+  OrderMaterial _materialToEntity(
+          db.OrderMaterial row, String materialName) =>
+      OrderMaterial(
         id: row.id,
         orderId: row.orderId,
         materialId: row.materialId,
-        materialName: '',
+        materialName: materialName,
         plannedQuantity: row.plannedQuantity,
         actualQuantity: row.actualQuantity,
         wasteQuantity: row.wasteQuantity,

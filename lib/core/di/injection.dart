@@ -178,6 +178,7 @@ Future<void> configureDependencies() async {
   ));
   getIt.registerFactory(() => OrderDetailBloc(
     orderRepository: getIt(),
+    channelRepository: getIt(),
     adjustMaterialsUsed: getIt(),
     packOrder: getIt(),
     shipOrder: getIt(),

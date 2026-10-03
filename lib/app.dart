@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/di/injection.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/route_names.dart';
 import 'core/widgets/app_shell.dart';
+import 'features/stock/presentation/bloc/materials_bloc.dart';
 
 import 'features/today/presentation/pages/today_page.dart';
 import 'features/today/presentation/pages/calendar_week_page.dart';
@@ -93,7 +96,10 @@ class CraftbookApp extends StatelessWidget {
         path: RouteNames.receiveStock,
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
-          return ReceiveStockPage(materialId: id);
+          return BlocProvider(
+            create: (_) => getIt<MaterialsBloc>(),
+            child: ReceiveStockPage(materialId: id),
+          );
         },
       ),
       GoRoute(

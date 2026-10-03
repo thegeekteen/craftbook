@@ -117,7 +117,7 @@ void main() {
           home: Scaffold(
             body: StepperInput(
               value: 5,
-              onChanged: (v) => newValue = v,
+              onChanged: (v) => newValue = v.toInt(),
             ),
           ),
         ),
@@ -136,7 +136,7 @@ void main() {
           home: Scaffold(
             body: StepperInput(
               value: 5,
-              onChanged: (v) => newValue = v,
+              onChanged: (v) => newValue = v.toInt(),
             ),
           ),
         ),
@@ -156,7 +156,7 @@ void main() {
             body: StepperInput(
               value: 0,
               min: 0,
-              onChanged: (v) => changedValue = v,
+              onChanged: (v) => changedValue = v.toInt(),
             ),
           ),
         ),

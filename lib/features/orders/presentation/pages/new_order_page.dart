@@ -150,7 +150,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   children: [
                     _buildDetailsStep(),
                     _buildItemsStep(items, totalSales),
-                    const _ReviewStep(),
+                    _ReviewStep(onBack: () => _goToStep(1)),
                   ],
                 ),
               ),
@@ -314,7 +314,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
                             min: 0,
                             max: 999,
                             onChanged: (qty) {
-                              if (qty == 0) {
+                              final q = qty.toInt();
+                              if (q == 0) {
                                 context
                                     .read<NewOrderBloc>()
                                     .add(RemoveItem(item.productId));
@@ -322,7 +323,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                                 context.read<NewOrderBloc>().add(
                                     UpdateItemQuantity(
                                         productId: item.productId,
-                                        quantity: qty));
+                                        quantity: q));
                               }
                             },
                           ),
@@ -333,7 +334,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                 ),
         ),
 
-        // Bottom bar: total + add button + next
+        // Bottom bar: back + total + add button + review
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -343,6 +344,11 @@ class _NewOrderViewState extends State<_NewOrderView> {
           child: SafeArea(
             child: Row(
               children: [
+                TextButton(
+                  onPressed: () => _goToStep(0),
+                  child: const Text('Back'),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +400,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
 }
 
 class _ReviewStep extends StatelessWidget {
-  const _ReviewStep();
+  final VoidCallback onBack;
+
+  const _ReviewStep({required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -450,18 +458,32 @@ class _ReviewStep extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.read<NewOrderBloc>().add(SaveOrder());
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+            // Back + Save buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onBack,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Back'),
+                  ),
                 ),
-                child: const Text('Save order'),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.read<NewOrderBloc>().add(SaveOrder());
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Save order'),
+                  ),
+                ),
+              ],
             ),
           ],
         );

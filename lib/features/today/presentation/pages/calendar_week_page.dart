@@ -95,7 +95,7 @@ class _CalendarWeekPageState extends State<CalendarWeekPage> {
           IconButton(
             icon: const Icon(Icons.calendar_view_month_outlined, size: 20),
             tooltip: 'Month view',
-            onPressed: () => context.push(RouteNames.calendarMonth),
+            onPressed: () => context.pushReplacement(RouteNames.calendarMonth),
           ),
         ],
       ),

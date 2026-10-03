@@ -543,7 +543,7 @@ class _EditableBomList extends StatelessWidget {
                   min: 1,
                   max: 999,
                   onChanged: (val) {
-                    item.quantityRequired = val;
+                    item.quantityRequired = val.toInt();
                     onChanged();
                   },
                 ),

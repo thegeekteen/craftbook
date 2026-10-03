@@ -24,7 +24,8 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     if (location == RouteNames.today) return 0;
     if (location.startsWith('/orders')) return 1;
-    if (location.startsWith('/materials') || location.startsWith('/stock')) return 2;
+    if (location.startsWith('/materials') ||
+        location.startsWith('/stock')) return 2;
     if (location.startsWith('/earnings')) return 3;
     if (location.startsWith('/settings') ||
         location.startsWith('/products') ||
@@ -60,9 +61,15 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.paperHigh,
-        border: Border(top: BorderSide(color: AppColors.hair)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         child: SizedBox(
@@ -70,15 +77,15 @@ class _BottomNav extends StatelessWidget {
           child: Row(
             children: [
               _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
+                icon: Icons.today_outlined,
+                activeIcon: Icons.today,
                 label: 'Today',
                 isSelected: currentIndex == 0,
                 onTap: () => onTabSelected(0),
               ),
               _NavItem(
-                icon: Icons.layers_outlined,
-                activeIcon: Icons.layers,
+                icon: Icons.receipt_long_outlined,
+                activeIcon: Icons.receipt_long,
                 label: 'Orders',
                 isSelected: currentIndex == 1,
                 onTap: () => onTabSelected(1),
@@ -137,15 +144,15 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              size: 20,
+              size: 22,
               color: isSelected ? AppColors.success : AppColors.muted,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 fontFamily: 'IBMPlexSans',
                 color: isSelected ? AppColors.success : AppColors.muted,
                 letterSpacing: 0.02,

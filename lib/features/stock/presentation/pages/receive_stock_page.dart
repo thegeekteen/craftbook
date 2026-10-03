@@ -187,7 +187,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                     min: 1,
                     max: 999,
                     onChanged: (val) =>
-                        setState(() => _packsReceived = val),
+                        setState(() => _packsReceived = val.toInt()),
                   ),
                   const SizedBox(width: 16),
                   Text(

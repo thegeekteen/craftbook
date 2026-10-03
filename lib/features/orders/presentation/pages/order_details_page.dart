@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
@@ -8,7 +9,9 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/currency_text.dart';
+import '../../../../core/widgets/section_card.dart';
 import '../../../../core/widgets/status_pill.dart';
+import '../../../products/domain/entities/channel.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_material.dart';
@@ -18,7 +21,6 @@ import '../bloc/order_detail_state.dart';
 import '../widgets/pack_confirm_dialog.dart';
 import 'adjust_materials_page.dart';
 
-/// Order detail view — Flow 3
 class OrderDetailsPage extends StatelessWidget {
   final int orderId;
 
@@ -85,6 +87,7 @@ class _OrderDetailView extends StatelessWidget {
 
   Widget _buildLoaded(BuildContext context, OrderDetailLoaded state) {
     final order = state.order;
+    final dateFmt = DateFormat('MMM d, y');
 
     return Scaffold(
       appBar: AppBar(
@@ -110,14 +113,14 @@ class _OrderDetailView extends StatelessWidget {
                     context,
                     title: 'Delete order?',
                     message:
-                        'This will permanently remove the order and reverse any stock changes. This cannot be undone.',
+                        'This will permanently remove the order and reverse any stock changes.',
                     confirmText: 'Delete',
                     isDestructive: true,
                   );
                   if (confirmed && context.mounted) {
-                    context.read<OrderDetailBloc>().add(
-                          DeleteOrderEvent(order.id!),
-                        );
+                    context
+                        .read<OrderDetailBloc>()
+                        .add(DeleteOrderEvent(order.id!));
                   }
                 }
               },
@@ -143,18 +146,39 @@ class _OrderDetailView extends StatelessWidget {
         children: [
           // Status stepper
           _StatusStepper(status: order.status),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Customer info
-          _SectionLabel('CUSTOMER'),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.paperHigh,
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.hair),
+          // Dates
+          SectionCard(
+            label: 'Dates',
+            child: Column(
+              children: [
+                _DateRow(
+                    icon: Icons.calendar_today,
+                    label: 'Ordered',
+                    value: dateFmt.format(order.orderDate)),
+                _DateRow(
+                    icon: Icons.local_shipping_outlined,
+                    label: 'Ship by',
+                    value: dateFmt.format(order.shipByDate)),
+                if (order.packedAt != null)
+                  _DateRow(
+                      icon: Icons.inventory_2_outlined,
+                      label: 'Packed',
+                      value: dateFmt.format(order.packedAt!)),
+                if (order.shippedAt != null)
+                  _DateRow(
+                      icon: Icons.check_circle_outline,
+                      label: 'Shipped',
+                      value: dateFmt.format(order.shippedAt!)),
+              ],
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Customer
+          SectionCard(
+            label: 'Customer',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -162,43 +186,101 @@ class _OrderDetailView extends StatelessWidget {
                     style: AppTextStyles.bodyLarge
                         .copyWith(color: AppColors.ink)),
                 if (order.customerAddress.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(order.customerAddress,
-                      style: AppTextStyles.bodySmall),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 14, color: AppColors.muted),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(order.customerAddress,
+                            style: AppTextStyles.bodySmall),
+                      ),
+                    ],
+                  ),
                 ],
                 if (order.note != null && order.note!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text('Note: ${order.note}',
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.muted)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.note_outlined,
+                          size: 14, color: AppColors.muted),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(order.note!,
+                            style: AppTextStyles.bodySmall),
+                      ),
+                    ],
+                  ),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Channel
+          if (state.channel != null) ...[
+            SectionCard(
+              label: 'Channel',
+              child: Row(
+                children: [
+                  Icon(Icons.store_outlined,
+                      size: 18, color: AppColors.coin),
+                  const SizedBox(width: 8),
+                  Text(state.channel!.name,
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppColors.ink)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Items
-          _SectionLabel('ITEMS'),
-          const SizedBox(height: 8),
-          ...state.items.map((item) => _ItemRow(item: item)),
-          const SizedBox(height: 20),
+          SectionCard(
+            label: 'Items',
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: state.items.isEmpty
+                  ? [
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text('No items',
+                              style: AppTextStyles.bodySmall),
+                        ),
+                      ),
+                    ]
+                  : state.items.map((item) => _ItemRow(item: item)).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Materials
-          _SectionLabel('MATERIALS'),
-          const SizedBox(height: 8),
-          ...state.materials.map((mat) => _MaterialRow(material: mat)),
-          const SizedBox(height: 20),
+          SectionCard(
+            label: 'Materials',
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: state.materials.isEmpty
+                  ? [
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text('No materials',
+                              style: AppTextStyles.bodySmall),
+                        ),
+                      ),
+                    ]
+                  : state.materials
+                      .map((mat) => _MaterialRow(material: mat))
+                      .toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Financial summary
-          _SectionLabel('SUMMARY'),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.paperHigh,
-              borderRadius: BorderRadius.circular(13),
-              border: Border.all(color: AppColors.hair),
-            ),
+          SectionCard(
+            label: 'Summary',
             child: Column(
               children: [
                 _SummaryRow(
@@ -217,15 +299,16 @@ class _OrderDetailView extends StatelessWidget {
                     label: 'Shipping',
                     amount: order.shippingCost,
                     color: AppColors.muted),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Divider(color: AppColors.hair),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: AppColors.hair, height: 1),
                 ),
                 _SummaryRow(
                     label: 'Profit',
                     amount: order.profit,
-                    color:
-                        order.profit >= 0 ? AppColors.success : AppColors.alert,
+                    color: order.profit >= 0
+                        ? AppColors.success
+                        : AppColors.alert,
                     isBold: true),
               ],
             ),
@@ -237,7 +320,8 @@ class _OrderDetailView extends StatelessWidget {
     );
   }
 
-  Widget? _buildBottomActions(BuildContext context, OrderDetailLoaded state) {
+  Widget? _buildBottomActions(
+      BuildContext context, OrderDetailLoaded state) {
     final order = state.order;
 
     if (order.status == OrderStatus.shipped ||
@@ -247,9 +331,15 @@ class _OrderDetailView extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.paperHigh,
-        border: Border(top: BorderSide(color: AppColors.hair)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Row(
@@ -273,10 +363,10 @@ class _OrderDetailView extends StatelessWidget {
                   child: const Text('Adjust'),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: () async {
                     final confirmed = await PackConfirmDialog.show(
                       context,
@@ -289,27 +379,25 @@ class _OrderDetailView extends StatelessWidget {
                           .add(PackOrderDetail(order.id!));
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Pack this order'),
+                  icon: const Icon(Icons.inventory_2, size: 18),
+                  label: const Text('Pack this order'),
                 ),
               ),
             ],
             if (order.status == OrderStatus.packed)
               Expanded(
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: () {
                     context
                         .read<OrderDetailBloc>()
                         .add(ShipOrderDetail(order.id!));
                   },
+                  icon: const Icon(Icons.local_shipping, size: 18),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.coin,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Mark shipped'),
+                  label: const Text('Mark shipped'),
                 ),
               ),
           ],
@@ -332,6 +420,8 @@ class _OrderDetailView extends StatelessWidget {
   }
 }
 
+// ── Sub-widgets ──────────────────────────────────────────────
+
 class _StatusStepper extends StatelessWidget {
   final OrderStatus status;
 
@@ -348,38 +438,80 @@ class _StatusStepper extends StatelessWidget {
                 ? 2
                 : -1;
 
-    return Row(
-      children: List.generate(steps.length, (index) {
-        final isDone = index <= currentIndex;
-        final isCurrent = index == currentIndex;
-        return Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 3,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.paperHigh,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.hair),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: List.generate(steps.length, (index) {
+          final isDone = index <= currentIndex;
+          return Expanded(
+            child: Column(
+              children: [
+                Container(
+                  height: 4,
                   decoration: BoxDecoration(
                     color: isDone ? AppColors.success : AppColors.hair,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              if (index < steps.length - 1) const SizedBox(width: 4),
-            ],
-          ),
-        );
-      }),
+                const SizedBox(height: 6),
+                Text(
+                  steps[index],
+                  style: AppTextStyles.monoLabel.copyWith(
+                    color: isDone ? AppColors.success : AppColors.muted,
+                    fontWeight:
+                        isDone ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-class _SectionLabel extends StatelessWidget {
+class _DateRow extends StatelessWidget {
+  final IconData icon;
   final String label;
-  const _SectionLabel(this.label);
+  final String value;
+
+  const _DateRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(label.toUpperCase(), style: AppTextStyles.monoSection);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.muted),
+          const SizedBox(width: 8),
+          Text(label,
+              style:
+                  AppTextStyles.bodySmall.copyWith(color: AppColors.muted)),
+          const Spacer(),
+          Text(value,
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.ink)),
+        ],
+      ),
+    );
   }
 }
 
@@ -390,9 +522,8 @@ class _ItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.hair)),
       ),
       child: Row(
@@ -404,6 +535,7 @@ class _ItemRow extends StatelessWidget {
                 Text(item.productName,
                     style: AppTextStyles.bodyMedium
                         .copyWith(color: AppColors.ink)),
+                const SizedBox(height: 2),
                 Text('${item.quantity} × ${item.unitPrice.currency}',
                     style: AppTextStyles.bodySmall),
               ],
@@ -411,7 +543,8 @@ class _ItemRow extends StatelessWidget {
           ),
           CurrencyText(
             amount: item.subtotal,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.ink),
+            style: AppTextStyles.bodyMedium
+                .copyWith(color: AppColors.ink, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -426,9 +559,8 @@ class _MaterialRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.paperHigh,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.hair)),
       ),
       child: Row(
@@ -440,22 +572,27 @@ class _MaterialRow extends StatelessWidget {
                 Text(material.materialName,
                     style: AppTextStyles.bodyMedium
                         .copyWith(color: AppColors.ink)),
+                const SizedBox(height: 2),
                 Text(
                   'Planned: ${material.plannedQuantity} · Actual: ${material.actualQuantity}',
                   style: AppTextStyles.bodySmall,
                 ),
                 if (material.wasteQuantity > 0)
-                  Text(
-                    'Waste: ${material.wasteQuantity}${material.wasteReason != null ? ' (${material.wasteReason})' : ''}',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.alert),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      'Waste: ${material.wasteQuantity}${material.wasteReason != null ? ' (${material.wasteReason})' : ''}',
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.alert),
+                    ),
                   ),
               ],
             ),
           ),
           CurrencyText(
             amount: material.totalCost,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.muted, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -479,7 +616,7 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -487,11 +624,14 @@ class _SummaryRow extends StatelessWidget {
             label,
             style: isBold
                 ? AppTextStyles.bodyLarge.copyWith(color: AppColors.ink)
-                : AppTextStyles.bodySmall.copyWith(color: AppColors.muted),
+                : AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.muted),
           ),
           CurrencyText(
             amount: amount,
-            style: (isBold ? AppTextStyles.bodyLarge : AppTextStyles.bodyMedium)
+            style: (isBold
+                    ? AppTextStyles.displaySmall
+                    : AppTextStyles.bodyMedium)
                 .copyWith(color: color),
           ),
         ],

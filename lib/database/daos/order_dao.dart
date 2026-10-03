@@ -4,11 +4,13 @@ import '../app_database.dart';
 import '../tables/orders_table.dart';
 import '../tables/order_items_table.dart';
 import '../tables/order_materials_table.dart';
+import '../tables/products_table.dart';
+import '../tables/materials_table.dart';
 
 part 'order_dao.g.dart';
 
 /// Data Access Object for orders
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials])
+@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   OrderDao(AppDatabase db) : super(db);
 
@@ -37,6 +39,15 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
           ..where((t) =>
               t.orderDate.isBiggerOrEqualValue(startOfDay) &
               t.orderDate.isSmallerThanValue(endOfDay)))
+        .get();
+  }
+
+  /// Get orders within a date range (by shipByDate)
+  Future<List<Order>> getOrdersForDateRange(DateTime start, DateTime end) {
+    return (select(orders)
+          ..where((t) =>
+              t.shipByDate.isBiggerOrEqualValue(start) &
+              t.shipByDate.isSmallerThanValue(end)))
         .get();
   }
 
@@ -114,5 +125,20 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   /// Update order material
   Future<bool> updateOrderMaterial(OrderMaterial material) {
     return update(orderMaterials).replace(material);
+  }
+
+  /// Look up product name by ID
+  Future<String> getProductName(int productId) async {
+    final row = await (select(products)..where((t) => t.id.equals(productId)))
+        .getSingleOrNull();
+    return row?.name ?? '';
+  }
+
+  /// Look up material name by ID
+  Future<String> getMaterialName(int materialId) async {
+    final row =
+        await (select(materials)..where((t) => t.id.equals(materialId)))
+            .getSingleOrNull();
+    return row?.name ?? '';
   }
 }

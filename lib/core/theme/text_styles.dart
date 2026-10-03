@@ -23,7 +23,7 @@ class AppTextStyles {
 
   static const TextStyle displaySmall = TextStyle(
     fontFamily: 'SpaceGrotesk',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.02,
   );
@@ -31,39 +31,39 @@ class AppTextStyles {
   // Body styles (IBM Plex Sans)
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: 'IBMPlexSans',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.01,
-    height: 1.25,
+    height: 1.35,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: 'IBMPlexSans',
-    fontSize: 12.5,
-    fontWeight: FontWeight.w600,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
     letterSpacing: -0.01,
-    height: 1.25,
+    height: 1.35,
   );
 
   static const TextStyle bodySmall = TextStyle(
     fontFamily: 'IBMPlexSans',
-    fontSize: 10.5,
+    fontSize: 13,
     fontWeight: FontWeight.w400,
-    height: 1.35,
+    height: 1.4,
     color: AppColors.muted,
   );
 
   // Mono styles (IBM Plex Mono)
   static const TextStyle monoLabel = TextStyle(
     fontFamily: 'IBMPlexMono',
-    fontSize: 9.5,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.02,
   );
 
   static const TextStyle monoSection = TextStyle(
     fontFamily: 'IBMPlexMono',
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.14,
     color: AppColors.muted,
