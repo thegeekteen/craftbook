@@ -127,7 +127,20 @@ class _TodayView extends StatelessWidget {
                         _SectionHeader(title: 'Ships today'),
                         const SizedBox(height: 8),
                         ...shipTodayOrders.map(
-                          (order) => OrderCard(order: order),
+                          (order) => OrderCard(
+                            order: order,
+                            onTap: () async {
+                              final result = await context.push<bool>(
+                                RouteNames.orderDetail
+                                    .replaceFirst(':id', '${order.id}'),
+                              );
+                              if (result == true && context.mounted) {
+                                context.read<TodayBloc>()
+                                  ..add(LoadToday())
+                                  ..add(LoadAlerts());
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -137,7 +150,20 @@ class _TodayView extends StatelessWidget {
                         _SectionHeader(title: 'New today'),
                         const SizedBox(height: 8),
                         ...newTodayOrders.map(
-                          (order) => OrderCard(order: order),
+                          (order) => OrderCard(
+                            order: order,
+                            onTap: () async {
+                              final result = await context.push<bool>(
+                                RouteNames.orderDetail
+                                    .replaceFirst(':id', '${order.id}'),
+                              );
+                              if (result == true && context.mounted) {
+                                context.read<TodayBloc>()
+                                  ..add(LoadToday())
+                                  ..add(LoadAlerts());
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -157,7 +183,14 @@ class _TodayView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RouteNames.newOrder),
+        onPressed: () async {
+          final result = await context.push<bool>(RouteNames.newOrder);
+          if (result == true && context.mounted) {
+            context.read<TodayBloc>()
+              ..add(LoadToday())
+              ..add(LoadAlerts());
+          }
+        },
         backgroundColor: AppColors.success,
         child: const Icon(Icons.add, color: Colors.white),
       ),

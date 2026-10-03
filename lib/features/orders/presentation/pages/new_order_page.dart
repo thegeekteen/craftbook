@@ -119,7 +119,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
       listener: (context, state) {
         if (state is NewOrderSaved) {
           context.showSnackBar('Order created!');
-          context.pop();
+          context.pop(true);
         }
         if (state is NewOrderError) {
           context.showSnackBar(state.message, isError: true);

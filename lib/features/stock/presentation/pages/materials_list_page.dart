@@ -252,10 +252,15 @@ class _MaterialsListView extends StatelessWidget {
             final material = materials[index];
             return MaterialCard(
               material: material,
-              onTap: () => context.push(
-                RouteNames.materialDetail
-                    .replaceFirst(':id', '${material.id}'),
-              ),
+              onTap: () async {
+                final result = await context.push<bool>(
+                  RouteNames.materialDetail
+                      .replaceFirst(':id', '${material.id}'),
+                );
+                if (result == true && context.mounted) {
+                  context.read<MaterialsBloc>().add(const LoadMaterials());
+                }
+              },
             );
           },
         ),

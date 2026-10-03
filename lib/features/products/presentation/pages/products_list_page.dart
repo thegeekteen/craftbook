@@ -220,10 +220,15 @@ class _ProductCardWithAsyncDataState extends State<_ProductCardWithAsyncData> {
       product: widget.product,
       buildableQuantity: _buildableQuantity,
       materialCost: _materialCost,
-      onTap: () => context.push(
-        RouteNames.productEditor
-            .replaceFirst(':id', '${widget.product.id}'),
-      ),
+      onTap: () async {
+        final result = await context.push<bool>(
+          RouteNames.productEditor
+              .replaceFirst(':id', '${widget.product.id}'),
+        );
+        if (result == true && context.mounted) {
+          context.read<ProductsBloc>().add(const LoadProducts());
+        }
+      },
     );
   }
 }

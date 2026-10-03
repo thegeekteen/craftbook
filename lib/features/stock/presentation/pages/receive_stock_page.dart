@@ -126,7 +126,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
       listener: (context, state) {
         if (state is StockReceived) {
           context.showSnackBar('Stock received!');
-          context.pop();
+          context.pop(true);
         }
         if (state is MaterialsError) {
           context.showSnackBar(state.message, isError: true);

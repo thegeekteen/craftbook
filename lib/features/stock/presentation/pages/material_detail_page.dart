@@ -200,7 +200,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                     (_) {
                       if (mounted) {
                         context.showSnackBar('Material deleted');
-                        context.pop();
+                        context.pop(true);
                       }
                     },
                   );
@@ -287,10 +287,15 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => context.push(
-                      RouteNames.receiveStock
-                          .replaceFirst(':id', '${mat.id}'),
-                    ),
+                    onPressed: () async {
+                      final result = await context.push<bool>(
+                        RouteNames.receiveStock
+                            .replaceFirst(':id', '${mat.id}'),
+                      );
+                      if (result == true && mounted) {
+                        _loadData();
+                      }
+                    },
                     icon: const Icon(Icons.add_box_outlined, size: 16),
                     label: const Text('Receive'),
                     style: ElevatedButton.styleFrom(

@@ -51,7 +51,7 @@ class _OrderDetailView extends StatelessWidget {
         }
         if (state is OrderDeleted) {
           context.showSnackBar('Order deleted');
-          context.pop();
+          context.pop(true);
         }
       },
       builder: (context, state) {
@@ -347,8 +347,8 @@ class _OrderDetailView extends StatelessWidget {
             if (order.status == OrderStatus.pending) ...[
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push<bool>(
                       MaterialPageRoute(
                         builder: (_) => BlocProvider.value(
                           value: context.read<OrderDetailBloc>(),
@@ -359,6 +359,11 @@ class _OrderDetailView extends StatelessWidget {
                         ),
                       ),
                     );
+                    if (result == true && context.mounted) {
+                      context
+                          .read<OrderDetailBloc>()
+                          .add(LoadOrderDetail(order.id!));
+                    }
                   },
                   child: const Text('Adjust'),
                 ),

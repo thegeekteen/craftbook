@@ -242,7 +242,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           if (mounted) {
             setState(() => _isSaving = false);
             context.showSnackBar('Product created!');
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true);
           }
         },
       );
@@ -275,7 +275,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           if (mounted) {
             setState(() => _isSaving = false);
             context.showSnackBar('Product updated!');
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true);
           }
         },
       );
@@ -324,7 +324,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                       (_) {
                         if (mounted) {
                           context.showSnackBar('Product deleted');
-                          context.pop();
+                          context.pop(true);
                         }
                       },
                     );

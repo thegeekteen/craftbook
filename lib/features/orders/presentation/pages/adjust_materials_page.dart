@@ -77,7 +77,7 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
             materials: updatedMaterials,
           ),
         );
-    context.pop();
+    context.pop(true);
   }
 
   @override

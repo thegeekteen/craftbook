@@ -83,7 +83,12 @@ class _OrdersListView extends StatelessWidget {
           },
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () => context.push(RouteNames.newOrder),
+          onPressed: () async {
+            final result = await context.push<bool>(RouteNames.newOrder);
+            if (result == true && context.mounted) {
+              context.read<OrdersListBloc>().add(const LoadOrders());
+            }
+          },
           backgroundColor: AppColors.success,
           child: const Icon(Icons.add, color: Colors.white),
         ),
@@ -134,7 +139,18 @@ class _OrdersTab extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           itemCount: orders.length,
           itemBuilder: (context, index) {
-            return OrderCard(order: orders[index]);
+            return OrderCard(
+              order: orders[index],
+              onTap: () async {
+                final result = await context.push<bool>(
+                  RouteNames.orderDetail
+                      .replaceFirst(':id', '${orders[index].id}'),
+                );
+                if (result == true && context.mounted) {
+                  context.read<OrdersListBloc>().add(LoadOrders(status: status));
+                }
+              },
+            );
           },
         ),
       );
