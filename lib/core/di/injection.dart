@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../database/app_database.dart';
+import '../services/backup_store.dart';
 import '../../database/daos/channel_dao.dart';
 import '../../database/daos/earnings_dao.dart';
 import '../../database/daos/material_dao.dart';
@@ -80,6 +81,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
 
   // Database
   getIt.registerSingleton<AppDatabase>(db);
+
+  getIt.registerLazySingleton(() => BackupStore());
 
   // DAOs
   getIt.registerSingleton(OrderDao(db));
@@ -239,7 +242,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     updateOrderNote: getIt(),
   ));
   // App-wide: lives above the router, so a singleton.
-  getIt.registerSingleton(ThemeCubit(getIt()));
+  getIt.registerSingleton(ThemeCubit(getIt()), dispose: (cubit) => cubit.close());
   getIt.registerFactory(() => TodayBloc(getTodayDashboard: getIt()));
   getIt.registerFactory(() => EarningsBloc(
     getEarningsSummary: getIt(),
