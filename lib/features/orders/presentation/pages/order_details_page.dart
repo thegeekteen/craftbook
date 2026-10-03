@@ -429,7 +429,12 @@ class _StatusStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = ['Placed', 'Packed', 'Shipped'];
+    const stepLabels = ['Placed', 'Packed', 'Shipped'];
+    const stepIcons = [
+      Icons.receipt_long,
+      Icons.inventory_2,
+      Icons.local_shipping,
+    ];
     final currentIndex = status == OrderStatus.pending
         ? 0
         : status == OrderStatus.packed
@@ -439,7 +444,7 @@ class _StatusStepper extends StatelessWidget {
                 : -1;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.paperHigh,
         borderRadius: BorderRadius.circular(14),
@@ -453,27 +458,63 @@ class _StatusStepper extends StatelessWidget {
         ],
       ),
       child: Row(
-        children: List.generate(steps.length, (index) {
+        children: List.generate(stepLabels.length, (index) {
           final isDone = index <= currentIndex;
+          final isCurrent = index == currentIndex;
           return Expanded(
-            child: Column(
+            child: Row(
               children: [
-                Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDone ? AppColors.success : AppColors.hair,
-                    borderRadius: BorderRadius.circular(2),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDone
+                              ? AppColors.success
+                              : AppColors.paper,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDone
+                                ? AppColors.success
+                                : AppColors.hair,
+                            width: isCurrent ? 2.5 : 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          stepIcons[index],
+                          size: 18,
+                          color: isDone
+                              ? Colors.white
+                              : AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        stepLabels[index],
+                        style: AppTextStyles.monoLabel.copyWith(
+                          color: isDone
+                              ? AppColors.success
+                              : AppColors.muted,
+                          fontWeight: isDone
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  steps[index],
-                  style: AppTextStyles.monoLabel.copyWith(
-                    color: isDone ? AppColors.success : AppColors.muted,
-                    fontWeight:
-                        isDone ? FontWeight.w700 : FontWeight.w500,
+                if (index < stepLabels.length - 1)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      margin: const EdgeInsets.only(bottom: 26),
+                      color: index < currentIndex
+                          ? AppColors.success
+                          : AppColors.hair,
+                    ),
                   ),
-                ),
               ],
             ),
           );
