@@ -236,18 +236,22 @@ class _EarningsViewState extends State<_EarningsView> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              item.materialName,
-                              style: AppTextStyles.bodyMedium
-                                  .copyWith(color: AppColors.ink),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.materialName,
+                                  style: AppTextStyles.bodyMedium
+                                      .copyWith(color: AppColors.ink),
+                                ),
+                                Text(
+                                  '${item.quantity} pcs wasted',
+                                  style: AppTextStyles.bodySmall
+                                      .copyWith(color: AppColors.muted),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            '${item.quantity} pcs wasted',
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: AppColors.muted),
-                          ),
-                          const SizedBox(width: 12),
                           CurrencyText(
                             amount: item.cost,
                             style: AppTextStyles.bodyMedium.copyWith(
