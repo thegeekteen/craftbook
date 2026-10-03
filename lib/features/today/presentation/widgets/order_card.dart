@@ -103,14 +103,20 @@ class OrderCard extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Profit
-                  if (order.profit > 0)
-                    CurrencyText(
-                      amount: order.profit,
+                  // Profit (recalculated from components)
+                  Builder(builder: (_) {
+                    final profit = order.totalSales -
+                        order.totalMaterialCost -
+                        order.channelFees -
+                        order.shippingCost;
+                    if (profit <= 0) return const SizedBox.shrink();
+                    return CurrencyText(
+                      amount: profit,
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.success,
                       ),
-                    ),
+                    );
+                  }),
                 ],
               ),
             ],

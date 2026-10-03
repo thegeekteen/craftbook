@@ -305,8 +305,15 @@ class _OrderDetailView extends StatelessWidget {
                 ),
                 _SummaryRow(
                     label: 'Profit',
-                    amount: order.profit,
-                    color: order.profit >= 0
+                    amount: order.totalSales -
+                        order.totalMaterialCost -
+                        order.channelFees -
+                        order.shippingCost,
+                    color: (order.totalSales -
+                                order.totalMaterialCost -
+                                order.channelFees -
+                                order.shippingCost) >=
+                            0
                         ? AppColors.success
                         : AppColors.alert,
                     isBold: true),
