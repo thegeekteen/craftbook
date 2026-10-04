@@ -56,6 +56,7 @@ void main() {
     ('product_resell', RouteNames.productEditorPath(4)),
     ('channels', RouteNames.channels),
     ('order_fields', RouteNames.orderFields),
+    ('social_shortcuts', RouteNames.socialLinks),
     ('money', RouteNames.earnings),
     (
       'product_earnings',

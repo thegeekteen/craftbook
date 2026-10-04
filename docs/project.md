@@ -66,7 +66,7 @@ The app is built around 6 main user flows:
 ### Settings
 - **Export backup**: Raw SQLite file export via file picker (Android SAF compatible)
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
-- **Navigation hub**: Links to Products, Channels, Order fields, Buy List, Notes
+- **Navigation hub**: Links to Products, Channels, Order fields, Buy List, Notes, Social shortcuts
 
 ---
 
@@ -96,6 +96,7 @@ The app is built around 6 main user flows:
 | Delete channels | ✅ | Blocked if orders reference them |
 | Order fields | ✅ | Text, number, date and choice fields; drag to reorder; used fields archive instead of deleting. Replaced the built-in address (migrated in schema v4) |
 | Notes | ✅ | Shop notebook with title and rich-text body (headings, checklists, lists, quote, code, links, highlight, alignment); pin to Today; search; delete with Undo. Added in schema v5 |
+| Social shortcuts | ✅ | Configurable links to Facebook, TikTok, Shopee, Lazada and more (presets with brand colours, or a custom name and colour); tap to open in the browser or app; drag to reorder. Opens through the phone's own browser, so the app still makes no network calls. Added in schema v6 |
 | Earnings report | ✅ | Period navigation, summary, per-product, waste |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |

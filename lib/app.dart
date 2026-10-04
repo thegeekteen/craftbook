@@ -37,6 +37,7 @@ import 'features/earnings/presentation/pages/product_earnings_page.dart';
 import 'features/notes/presentation/pages/note_edit_page.dart';
 import 'features/notes/presentation/pages/notes_page.dart';
 import 'features/settings/presentation/pages/about_page.dart';
+import 'features/social_links/presentation/pages/social_links_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
 class CraftbookApp extends StatelessWidget {
@@ -149,6 +150,10 @@ class CraftbookApp extends StatelessWidget {
           GoRoute(
             path: RouteNames.orderFields,
             builder: (context, state) => const OrderFieldsPage(),
+          ),
+          GoRoute(
+            path: RouteNames.socialLinks,
+            builder: (context, state) => const SocialLinksPage(),
           ),
           // The note editor takes the whole screen, keyboard and toolbar included.
           GoRoute(

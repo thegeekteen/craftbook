@@ -54,6 +54,15 @@ import '../../features/orders/domain/usecases/delete_order.dart';
 import '../../features/orders/domain/usecases/get_order_list_entries.dart';
 import '../../features/orders/domain/usecases/preview_order.dart';
 
+import '../../database/daos/social_link_dao.dart';
+import '../../features/social_links/data/repositories/social_link_repository_impl.dart';
+import '../../features/social_links/domain/repositories/social_link_repository.dart';
+import '../../features/social_links/domain/usecases/delete_social_link.dart';
+import '../../features/social_links/domain/usecases/get_social_links.dart';
+import '../../features/social_links/domain/usecases/reorder_social_links.dart';
+import '../../features/social_links/domain/usecases/save_social_link.dart';
+import '../../features/social_links/presentation/bloc/social_links_bloc.dart';
+import '../services/link_launcher.dart';
 import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
 import '../../features/earnings/domain/repositories/earnings_repository.dart';
 import '../../features/earnings/domain/usecases/get_earnings_summary.dart';
@@ -114,6 +123,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(EarningsDao(db));
   getIt.registerSingleton(OrderFieldDao(db));
   getIt.registerSingleton(NoteDao(db));
+  getIt.registerSingleton(SocialLinkDao(db));
+  getIt.registerLazySingleton<LinkLauncher>(() => const LinkLauncher());
 
   // Repositories
   getIt.registerLazySingleton<ChannelRepository>(
@@ -134,6 +145,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<NoteRepository>(
     () => NoteRepositoryImpl(getIt<NoteDao>()),
   );
+  getIt.registerLazySingleton<SocialLinkRepository>(
+    () => SocialLinkRepositoryImpl(getIt<SocialLinkDao>()),
+  );
   getIt.registerLazySingleton<EarningsRepository>(
     () => EarningsRepositoryImpl(getIt<EarningsDao>()),
   );
@@ -148,6 +162,12 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => RemoveOrderField(getIt()));
   getIt.registerFactory(() => RestoreOrderField(getIt()));
   getIt.registerFactory(() => ReorderOrderFields(getIt()));
+
+  // Use Cases - Social links
+  getIt.registerFactory(() => GetSocialLinks(getIt()));
+  getIt.registerFactory(() => SaveSocialLink(getIt()));
+  getIt.registerFactory(() => DeleteSocialLink(getIt()));
+  getIt.registerFactory(() => ReorderSocialLinks(getIt()));
 
   // Use Cases - Notes
   getIt.registerFactory(() => GetNotes(getIt()));
@@ -257,6 +277,12 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         removeOrderField: getIt(),
         restoreOrderField: getIt(),
         reorderOrderFields: getIt(),
+      ));
+  getIt.registerFactory(() => SocialLinksBloc(
+        getSocialLinks: getIt(),
+        saveSocialLink: getIt(),
+        deleteSocialLink: getIt(),
+        reorderSocialLinks: getIt(),
       ));
   getIt.registerFactory(() => NotesBloc(
         getNotes: getIt(),

@@ -17,6 +17,7 @@ import 'tables/product_stock_movements_table.dart';
 import 'tables/settings_table.dart';
 import 'tables/order_fields_table.dart';
 import 'tables/notes_table.dart';
+import 'tables/social_links_table.dart';
 import 'migrations/migrations.dart';
 
 part 'app_database.g.dart';
@@ -42,6 +43,7 @@ const craftbookAppId = 0x43524654;
     OrderFieldDefinitions,
     OrderFieldValues,
     Notes,
+    SocialLinks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -55,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Readable without opening a database, so a backup's version can be
   /// checked before anything touches it.
-  static const currentSchemaVersion = 5;
+  static const currentSchemaVersion = 6;
 
   @override
   int get schemaVersion => currentSchemaVersion;

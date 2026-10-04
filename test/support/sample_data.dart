@@ -1,7 +1,7 @@
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/utils/note_codec.dart';
-import 'package:craftbook/database/app_database.dart' hide Note;
+import 'package:craftbook/database/app_database.dart' hide Note, SocialLink;
 import 'package:craftbook/features/notes/domain/entities/note.dart';
 import 'package:craftbook/features/notes/domain/repositories/note_repository.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
@@ -15,6 +15,8 @@ import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
 import 'package:craftbook/features/products/domain/repositories/channel_repository.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
+import 'package:craftbook/features/social_links/domain/entities/social_link.dart';
+import 'package:craftbook/features/social_links/domain/repositories/social_link_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:drift/drift.dart' hide isNull;
@@ -328,6 +330,38 @@ Future<void> seedSampleShop() async {
   _ok(await fields.setArchived(cardField, true));
 
   await _seedNotes();
+  await _seedSocialLinks();
+}
+
+/// The shop's pages, with one custom link so both kinds show.
+Future<void> _seedSocialLinks() async {
+  final links = getIt<SocialLinkRepository>();
+  const seeds = [
+    SocialLink(
+        platform: 'facebook',
+        label: 'Facebook',
+        url: 'https://facebook.com/lorna.crafts'),
+    SocialLink(
+        platform: 'tiktok',
+        label: 'TikTok',
+        url: 'https://tiktok.com/@lornacrafts'),
+    SocialLink(
+        platform: 'shopee',
+        label: 'Shopee',
+        url: 'https://shopee.ph/lornacrafts'),
+    SocialLink(
+        platform: 'lazada',
+        label: 'Lazada',
+        url: 'https://lazada.com.ph/shop/lornacrafts'),
+    SocialLink(
+        platform: 'custom',
+        label: 'Lorna Crafts',
+        url: 'https://lornacrafts.ph',
+        colorValue: 0xFF7048E8),
+  ];
+  for (final seed in seeds) {
+    _ok(await links.createLink(seed));
+  }
 }
 
 /// Note 1 is a pinned checklist, so Today and the editor both have one.
