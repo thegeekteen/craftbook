@@ -68,6 +68,7 @@ class AppShell extends StatelessWidget {
     if (location.startsWith('/settings') ||
         location.startsWith('/products') ||
         location.startsWith('/channels') ||
+        location.startsWith(RouteNames.notes) ||
         location.startsWith(RouteNames.about)) {
       return 4;
     }
