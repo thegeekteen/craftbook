@@ -56,6 +56,17 @@ Channel _channel({
 
 void main() {
   group('ProductCard', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(ProductCard(
+        product: _product(),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Tulip bouquet'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('shows name, price, cost, margin and can-build count',
         (tester) async {
       var taps = 0;
@@ -209,6 +220,17 @@ void main() {
   });
 
   group('ChannelCard', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(ChannelCard(
+        channel: _channel(),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Shopee'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('shows name, recipe, effective rate and what you keep',
         (tester) async {
       await tester.pumpWidget(_wrap(ChannelCard(channel: _channel())));

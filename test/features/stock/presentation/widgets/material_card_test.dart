@@ -34,6 +34,17 @@ entity.Material _material({
 
 void main() {
   group('MaterialCard', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(MaterialCard(
+        material: _material(),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Glass beads'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('shows name, on hand, pips and summary', (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(MaterialCard(

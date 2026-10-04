@@ -72,5 +72,6 @@ abstract class OrderRepository {
   Future<Result<void>> shipOrder(int orderId);
   Future<Result<void>> adjustMaterialsUsed(
       int orderId, List<OrderMaterialInput> materials);
+  Future<Result<void>> cancelOrder(int orderId);
   Future<Result<void>> deleteOrder(int id);
 }

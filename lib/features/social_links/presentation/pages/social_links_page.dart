@@ -7,6 +7,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
@@ -106,8 +107,8 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
                 ),
               ),
             SocialLinksLoaded() => editing
-                ? _EditList(links: links, bloc: bloc)
-                : _Grid(links: links, onOpen: _open),
+                ? _EditList(links: links, bloc: bloc, onOpen: _open)
+                : _Grid(links: links, bloc: bloc, onOpen: _open),
             _ => const Center(child: CircularProgressIndicator()),
           },
           floatingActionButton: FloatingActionButton.extended(
@@ -121,11 +122,60 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
   }
 }
 
+enum _LinkAction { open, edit, remove }
+
+/// The long-press menu on a shortcut, in the grid and in edit mode.
+Future<void> _linkActions(BuildContext context, SocialLinksBloc bloc,
+    SocialLink link, ValueChanged<SocialLink> onOpen) async {
+  final action = await showActionSheet<_LinkAction>(
+    context,
+    title: link.label,
+    subtitle: link.displayUrl,
+    actions: const [
+      SheetAction(
+          value: _LinkAction.open,
+          icon: Icons.open_in_new_rounded,
+          label: 'Open'),
+      SheetAction(
+          value: _LinkAction.edit,
+          icon: Icons.edit_outlined,
+          label: 'Edit shortcut'),
+      SheetAction(
+          value: _LinkAction.remove,
+          icon: Icons.delete_outline_rounded,
+          label: 'Remove',
+          destructive: true),
+    ],
+  );
+  if (action == null || !context.mounted) return;
+  switch (action) {
+    case _LinkAction.open:
+      onOpen(link);
+    case _LinkAction.edit:
+      await _SocialLinkSheet.open(context, bloc, link: link);
+    case _LinkAction.remove:
+      if (await _confirmRemove(context, link)) {
+        bloc.add(DeleteSocialLinkEvent(link.id!));
+      }
+  }
+}
+
+Future<bool> _confirmRemove(BuildContext context, SocialLink link) {
+  return ConfirmDialog.show(
+    context,
+    title: 'Remove ${link.label}?',
+    message: 'Only the shortcut goes; the page itself is untouched.',
+    confirmText: 'Remove',
+    isDestructive: true,
+  );
+}
+
 class _Grid extends StatelessWidget {
   final List<SocialLink> links;
+  final SocialLinksBloc bloc;
   final ValueChanged<SocialLink> onOpen;
 
-  const _Grid({required this.links, required this.onOpen});
+  const _Grid({required this.links, required this.bloc, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +200,7 @@ class _Grid extends StatelessWidget {
             itemBuilder: (context, i) => SocialLinkTile(
               link: links[i],
               onTap: () => onOpen(links[i]),
+              onLongPress: () => _linkActions(context, bloc, links[i], onOpen),
             ),
           ),
         ),
@@ -173,8 +224,10 @@ class _Grid extends StatelessWidget {
 class _EditList extends StatelessWidget {
   final List<SocialLink> links;
   final SocialLinksBloc bloc;
+  final ValueChanged<SocialLink> onOpen;
 
-  const _EditList({required this.links, required this.bloc});
+  const _EditList(
+      {required this.links, required this.bloc, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +258,7 @@ class _EditList extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: AppCard(
                   onTap: () => _SocialLinkSheet.open(context, bloc, link: link),
+                  onLongPress: () => _linkActions(context, bloc, link, onOpen),
                   padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
                   child: Row(
                     children: [
@@ -318,14 +372,7 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
 
   Future<void> _remove() async {
     final link = widget.link!;
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Remove ${link.label}?',
-      message: 'Only the shortcut goes; the page itself is untouched.',
-      confirmText: 'Remove',
-      isDestructive: true,
-    );
-    if (confirmed && mounted) {
+    if (await _confirmRemove(context, link) && mounted) {
       widget.bloc.add(DeleteSocialLinkEvent(link.id!));
       Navigator.pop(context);
     }

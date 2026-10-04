@@ -57,7 +57,10 @@ abstract class ProductRepository {
   Future<Result<void>> reserveProductStock(int productId, int quantity);
   Future<Result<void>> releaseReservedProductStock(int productId, int quantity);
   Future<Result<void>> deductProductStock(int productId, int quantity);
-  Future<Result<void>> restoreDeductedProductStock(int productId, int quantity);
+
+  /// Puts [quantity] back on hand, logged under [reference] in the history.
+  Future<Result<void>> restoreDeductedProductStock(int productId, int quantity,
+      {String reference = 'Restored from deleted order'});
   Future<Result<List<ProductStockMovement>>> getProductStockMovements(
       int productId);
 

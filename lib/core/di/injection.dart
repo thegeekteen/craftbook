@@ -53,7 +53,9 @@ import '../../features/orders/domain/usecases/update_order_note.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/update_order.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
+import '../../features/orders/domain/usecases/cancel_order.dart';
 import '../../features/orders/domain/usecases/delete_order.dart';
+import '../../features/orders/domain/usecases/return_order_stock.dart';
 import '../../features/orders/domain/usecases/get_order_list_entries.dart';
 import '../../features/orders/domain/usecases/preview_order.dart';
 
@@ -248,10 +250,18 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         orderRepository: getIt(),
         channelRepository: getIt(),
       ));
-  getIt.registerFactory(() => DeleteOrder(
+  getIt.registerFactory(() => ReturnOrderStock(
         orderRepository: getIt(),
         materialRepository: getIt(),
         productRepository: getIt(),
+      ));
+  getIt.registerFactory(() => DeleteOrder(
+        orderRepository: getIt(),
+        returnOrderStock: getIt(),
+      ));
+  getIt.registerFactory(() => CancelOrder(
+        orderRepository: getIt(),
+        returnOrderStock: getIt(),
       ));
 
   // Use Cases - Earnings
@@ -338,6 +348,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         adjustMaterialsUsed: getIt(),
         packOrder: getIt(),
         shipOrder: getIt(),
+        cancelOrder: getIt(),
         deleteOrder: getIt(),
         updateOrderNote: getIt(),
       ));

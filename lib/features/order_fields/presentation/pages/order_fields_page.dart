@@ -6,6 +6,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
@@ -120,6 +121,7 @@ class _FieldList extends StatelessWidget {
                   field: field,
                   onTap: () =>
                       _OrderFieldSheet.open(context, bloc, field: field),
+                  onLongPress: () => _fieldActions(context, bloc, field),
                   leading: ReorderableDragStartListener(
                     index: i,
                     child: Padding(
@@ -148,6 +150,7 @@ class _FieldList extends StatelessWidget {
                 for (final field in state.archived) ...[
                   OrderFieldTile(
                     field: field,
+                    onLongPress: () => _fieldActions(context, bloc, field),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -183,6 +186,48 @@ class _FieldList extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+enum _FieldAction { edit, restore, remove }
+
+/// The long-press menu: active fields edit or go, archived ones come back.
+Future<void> _fieldActions(
+    BuildContext context, OrderFieldsBloc bloc, OrderField field) async {
+  final archived = field.isArchived;
+  final action = await showActionSheet<_FieldAction>(
+    context,
+    title: field.name,
+    actions: [
+      if (!archived)
+        const SheetAction(
+            value: _FieldAction.edit,
+            icon: Icons.edit_outlined,
+            label: 'Edit field'),
+      if (archived)
+        const SheetAction(
+            value: _FieldAction.restore,
+            icon: Icons.unarchive_outlined,
+            label: 'Restore'),
+      if (!archived || !field.isUsed)
+        SheetAction(
+          value: _FieldAction.remove,
+          icon: field.isUsed
+              ? Icons.archive_outlined
+              : Icons.delete_outline_rounded,
+          label: field.isUsed ? 'Archive' : 'Delete',
+          destructive: true,
+        ),
+    ],
+  );
+  if (action == null || !context.mounted) return;
+  switch (action) {
+    case _FieldAction.edit:
+      await _OrderFieldSheet.open(context, bloc, field: field);
+    case _FieldAction.restore:
+      bloc.add(RestoreOrderFieldEvent(field.id!));
+    case _FieldAction.remove:
+      await _confirmRemove(context, bloc, field);
   }
 }
 

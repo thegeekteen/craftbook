@@ -298,8 +298,9 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> restoreDeductedMaterials(
     int materialId,
-    int quantity,
-  ) async {
+    int quantity, {
+    String reference = 'Restored from deleted order',
+  }) async {
     try {
       final current = await dao.getMaterialById(materialId);
       if (current == null) {
@@ -317,7 +318,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         type: const Value('received'),
         quantity: Value(quantity),
         unitCost: Value(current.unitCost),
-        reference: const Value('Restored from deleted order'),
+        reference: Value(reference),
       ));
 
       return const Success(null);

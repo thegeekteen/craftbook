@@ -167,6 +167,17 @@ void main() {
   });
 
   group('OrderCard', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(OrderCard(
+        entry: _entry(_order()),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Maria Santos'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('renders customer, items, id, channel and the order total',
         (tester) async {
       var taps = 0;
@@ -307,6 +318,17 @@ void main() {
   });
 
   group('OrderMiniRow', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(OrderMiniRow(
+        entry: _entry(_order()),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Maria Santos'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('shows name, id, piece count, order total and pill',
         (tester) async {
       var taps = 0;

@@ -12,6 +12,7 @@ import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/adjust_materials_used.dart';
+import 'package:craftbook/features/orders/domain/usecases/cancel_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
@@ -40,6 +41,8 @@ class MockPackOrder extends Mock implements PackOrder {}
 
 class MockShipOrder extends Mock implements ShipOrder {}
 
+class MockCancelOrder extends Mock implements CancelOrder {}
+
 class MockDeleteOrder extends Mock implements DeleteOrder {}
 
 class MockUpdateOrderNote extends Mock implements UpdateOrderNote {}
@@ -52,6 +55,7 @@ void main() {
   late MockAdjustMaterialsUsed adjustMaterialsUsed;
   late MockPackOrder packOrder;
   late MockShipOrder shipOrder;
+  late MockCancelOrder cancelOrder;
   late MockDeleteOrder deleteOrder;
   late MockUpdateOrderNote updateOrderNote;
 
@@ -188,6 +192,7 @@ void main() {
     adjustMaterialsUsed = MockAdjustMaterialsUsed();
     packOrder = MockPackOrder();
     shipOrder = MockShipOrder();
+    cancelOrder = MockCancelOrder();
     deleteOrder = MockDeleteOrder();
     updateOrderNote = MockUpdateOrderNote();
   });
@@ -200,6 +205,7 @@ void main() {
         adjustMaterialsUsed: adjustMaterialsUsed,
         packOrder: packOrder,
         shipOrder: shipOrder,
+        cancelOrder: cancelOrder,
         deleteOrder: deleteOrder,
         updateOrderNote: updateOrderNote,
       );
@@ -470,6 +476,46 @@ void main() {
             .having((m) => m.message, 'message', 'Not packed yet')
             .having((m) => m.isError, 'isError', true),
         loaded(),
+      ],
+    );
+  });
+
+  group('CancelOrderDetail', () {
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'success: busy, message, idle, then reloaded as cancelled',
+      setUp: () {
+        stubLoad(status: OrderStatus.cancelled);
+        when(() => cancelOrder(orderId))
+            .thenAnswer((_) async => const Success(null));
+      },
+      build: build,
+      seed: () => loaded(),
+      act: (bloc) => bloc.add(const CancelOrderDetail(orderId)),
+      expect: () => [
+        loaded(isBusy: true),
+        isA<OrderDetailMessage>()
+            .having(
+                (m) => m.message, 'message', 'Order cancelled. Stock returned.')
+            .having((m) => m.isError, 'isError', false),
+        loaded(),
+        loaded(status: OrderStatus.cancelled),
+      ],
+    );
+
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'failure: busy, error message, idle',
+      setUp: () => when(() => cancelOrder(orderId)).thenAnswer((_) async =>
+          const Error(ValidationFailure('Shipped orders cannot be cancelled'))),
+      build: build,
+      seed: () => loaded(status: OrderStatus.shipped),
+      act: (bloc) => bloc.add(const CancelOrderDetail(orderId)),
+      expect: () => [
+        loaded(status: OrderStatus.shipped, isBusy: true),
+        isA<OrderDetailMessage>()
+            .having((m) => m.message, 'message',
+                'Shipped orders cannot be cancelled')
+            .having((m) => m.isError, 'isError', true),
+        loaded(status: OrderStatus.shipped),
       ],
     );
   });

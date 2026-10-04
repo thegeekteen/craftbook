@@ -15,12 +15,14 @@ import 'order_status_ui.dart';
 class OrderMiniRow extends StatelessWidget {
   final OrderListEntry entry;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final OrderAmountShown amountShown;
 
   const OrderMiniRow({
     super.key,
     required this.entry,
     this.onTap,
+    this.onLongPress,
     this.amountShown = OrderAmountShown.total,
   });
 
@@ -46,6 +48,7 @@ class OrderMiniRow extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
           child: Row(

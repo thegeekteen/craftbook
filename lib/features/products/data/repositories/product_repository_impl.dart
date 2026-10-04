@@ -417,8 +417,9 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> restoreDeductedProductStock(
     int productId,
-    int quantity,
-  ) async {
+    int quantity, {
+    String reference = 'Restored from deleted order',
+  }) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
@@ -436,7 +437,7 @@ class ProductRepositoryImpl implements ProductRepository {
           type: const Value('received'),
           quantity: Value(quantity),
           unitCost: Value(product.unitCost),
-          reference: const Value('Restored from deleted order'),
+          reference: Value(reference),
         ),
       );
 

@@ -107,6 +107,17 @@ void main() {
   });
 
   group('OrderFieldTile', () {
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(_wrap(OrderFieldTile(
+        field: const OrderField(name: 'Address', type: OrderFieldType.text),
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Address'));
+      expect((taps, longPresses), (0, 1));
+    });
     testWidgets('shows name, type and usage', (tester) async {
       await tester.pumpWidget(_wrap(const OrderFieldTile(
         field: OrderField(

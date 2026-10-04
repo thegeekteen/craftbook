@@ -11,6 +11,7 @@ import '../../domain/entities/channel.dart';
 class ChannelCard extends StatelessWidget {
   final Channel channel;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final ValueChanged<bool>? onActiveChanged;
 
   /// Sale amount used for the "you keep" example.
@@ -20,6 +21,7 @@ class ChannelCard extends StatelessWidget {
     super.key,
     required this.channel,
     this.onTap,
+    this.onLongPress,
     this.onActiveChanged,
   });
 
@@ -50,6 +52,7 @@ class ChannelCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
+      onLongPress: onLongPress,
       padding: const EdgeInsets.fromLTRB(14, 8, 8, 14),
       child: Opacity(
         opacity: ch.isActive ? 1 : 0.6,

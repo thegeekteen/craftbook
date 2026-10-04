@@ -13,8 +13,10 @@ import '../../domain/entities/material.dart';
 class MaterialCard extends StatelessWidget {
   final Material material;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
-  const MaterialCard({super.key, required this.material, this.onTap});
+  const MaterialCard(
+      {super.key, required this.material, this.onTap, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,7 @@ class MaterialCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -8,6 +8,7 @@ import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/return_order_stock.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 
@@ -83,8 +84,11 @@ void main() {
     mockProductRepo = MockProductRepository();
     deleteOrder = DeleteOrder(
       orderRepository: mockOrderRepo,
-      materialRepository: mockMaterialRepo,
-      productRepository: mockProductRepo,
+      returnOrderStock: ReturnOrderStock(
+        orderRepository: mockOrderRepo,
+        materialRepository: mockMaterialRepo,
+        productRepository: mockProductRepo,
+      ),
     );
 
     when(() => mockOrderRepo.getOrderProducts(any()))
@@ -131,7 +135,8 @@ void main() {
           .thenAnswer((_) async => Success<Order?>(packedOrder));
       when(() => mockOrderRepo.getOrderMaterials(2))
           .thenAnswer((_) async => Success<List<OrderMaterial>>(testMaterials));
-      when(() => mockMaterialRepo.restoreDeductedMaterials(any(), any()))
+      when(() => mockMaterialRepo.restoreDeductedMaterials(any(), any(),
+              reference: any(named: 'reference')))
           .thenAnswer((_) async => const Success<void>(null));
       when(() => mockOrderRepo.deleteOrder(2))
           .thenAnswer((_) async => const Success<void>(null));
@@ -139,11 +144,32 @@ void main() {
       final result = await deleteOrder(2);
 
       expect(result, isA<Success>());
-      verify(() => mockMaterialRepo.restoreDeductedMaterials(10, 5)).called(1);
-      verify(() => mockMaterialRepo.restoreDeductedMaterials(20, 4)).called(1);
+      verify(() => mockMaterialRepo.restoreDeductedMaterials(10, 5,
+          reference: 'Restored from deleted order')).called(1);
+      verify(() => mockMaterialRepo.restoreDeductedMaterials(20, 4,
+          reference: 'Restored from deleted order')).called(1);
       verify(() => mockOrderRepo.deleteOrder(2)).called(1);
       verifyNever(
           () => mockMaterialRepo.releaseReservedMaterials(any(), any()));
+    });
+
+    test('deletes a cancelled order without returning stock twice', () async {
+      final cancelledOrder =
+          pendingOrder.copyWith(id: 4, status: OrderStatus.cancelled);
+      when(() => mockOrderRepo.getOrderById(4))
+          .thenAnswer((_) async => Success<Order?>(cancelledOrder));
+      when(() => mockOrderRepo.deleteOrder(4))
+          .thenAnswer((_) async => const Success<void>(null));
+
+      final result = await deleteOrder(4);
+
+      expect(result, const Success<void>(null));
+      verify(() => mockOrderRepo.deleteOrder(4)).called(1);
+      verifyNever(() => mockOrderRepo.getOrderMaterials(any()));
+      verifyNever(
+          () => mockMaterialRepo.releaseReservedMaterials(any(), any()));
+      verifyNever(() => mockMaterialRepo.restoreDeductedMaterials(any(), any(),
+          reference: any(named: 'reference')));
     });
 
     test('returns failure when order not found', () async {

@@ -54,6 +54,16 @@ class ShipOrderDetail extends OrderDetailEvent {
   List<Object?> get props => [orderId];
 }
 
+/// Cancel the order and give its stock back
+class CancelOrderDetail extends OrderDetailEvent {
+  final int orderId;
+
+  const CancelOrderDetail(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
 /// Store a new note for the order (edited, or a to-do ticked)
 class SaveOrderNote extends OrderDetailEvent {
   final int orderId;
