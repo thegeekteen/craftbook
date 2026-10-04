@@ -45,10 +45,10 @@ The app is built around 6 main user flows:
 - **Pack/Ship actions**: Updates status, deducts stock, recalculates profit
 
 ### Flow 4: Stock Management
-- **Materials list**: Tabbed (All, Low, Promised) with search by material name
+- **Materials list**: Opened from More. Tabbed (All, Low, Promised, Archived) with search by material name
 - **Material detail**: Stock overview with pip strip, receive/adjust actions, movements, products using it
 - **Receive stock**: Packs received + price per pack with live weighted average cost preview. Pack size shown read-only
-- **Delete material**: Blocked if used in BOM or has stock movement history
+- **Delete material**: Blocked if used in a BOM or an order; its stock history goes with it. Archive it otherwise
 
 ### Flow 5: Products & BOM
 - **Products list**: With search by product name, shows margin and buildable quantity
@@ -146,7 +146,7 @@ An address made sense for some shops and not others, so it became one of the sho
 Week and month are one screen with a toggle and prev/next navigation, so there is no back-stack juggling between them.
 
 ### Catalogue pages keep the bottom nav
-Products, Channels and the Buy list live inside the ShellRoute. Editors and receive pages are full-screen with their own bottom action bar.
+Products has its own tab, since products are what orders are made of; it also carries the Buy list shortcut. Materials and the Buy list open from More and live inside the ShellRoute too. Editors and receive pages are full-screen with their own bottom action bar.
 
 ### Overcommitted stock is shown, not hidden
 When promised exceeds on hand, pips only draw pieces that exist and the shortfall is stated ("8 short").

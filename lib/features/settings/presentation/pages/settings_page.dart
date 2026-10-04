@@ -18,14 +18,13 @@ import '../../../notes/domain/repositories/note_repository.dart';
 import '../../../order_fields/domain/repositories/order_field_repository.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../social_links/domain/repositories/social_link_repository.dart';
-import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../../../updates/presentation/bloc/update_cubit.dart';
 import '../../../updates/presentation/bloc/update_state.dart';
 import '../../../updates/presentation/widgets/update_row.dart';
 import '../widgets/appearance_card.dart';
 
-/// More: the catalogue (products, channels, order fields, buy list), the
+/// More: the catalogue (materials, channels, order fields, buy list), the
 /// notebook and your data.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -35,7 +34,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String? _productsHint;
+  String? _materialsHint;
   String? _channelsHint;
   String? _orderFieldsHint;
   String? _buyListHint;
@@ -51,7 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   /// Live one-liners under each row. Failures just leave the default text.
   Future<void> _loadHints() async {
-    final products = await getIt<ProductRepository>().getAllProducts();
+    final materials = await getIt<MaterialRepository>().getAllMaterials();
     final channels = await getIt<ChannelRepository>().getAllChannels();
     final buyList = await getIt<MaterialRepository>().getBuyList();
     final orderFields = await getIt<OrderFieldRepository>().getFields();
@@ -61,13 +60,11 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     setState(() {
       _canUndoRestore = canUndoRestore;
-      if (products case Success(:final value)) {
-        // Resell only: handmade low needs buildable counts, which are too
-        // costly to work out for a hint.
-        final listed = value.where((p) => !p.isArchived).toList();
-        final low = listed.where((p) => p.isLowStock).length;
-        _productsHint =
-            '${listed.length} ${listed.length == 1 ? 'product' : 'products'}'
+      if (materials case Success(:final value)) {
+        final listed = value.where((m) => !m.isArchived).toList();
+        final low = listed.where((m) => m.isLowStock).length;
+        _materialsHint =
+            '${listed.length} ${listed.length == 1 ? 'material' : 'materials'}'
             '${low > 0 ? ' · $low low' : ''}';
       }
       if (channels case Success(:final value)) {
@@ -126,11 +123,11 @@ class _SettingsPageState extends State<SettingsPage> {
             AppCard.flush(
               child: CardList(children: [
                 _MoreRow(
-                  icon: Icons.sell_outlined,
-                  title: 'Products',
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Materials',
                   subtitle:
-                      _productsHint ?? 'What you sell and what goes into it',
-                  onTap: () => _open(RouteNames.products),
+                      _materialsHint ?? 'What your products are made from',
+                  onTap: () => _open(RouteNames.materials),
                 ),
                 _MoreRow(
                   icon: Icons.storefront_outlined,

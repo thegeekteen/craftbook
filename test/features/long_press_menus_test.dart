@@ -263,6 +263,33 @@ void main() {
     });
   });
 
+  group('Navigation', () {
+    Finder tab(String label) => find.descendant(
+        of: find.byType(NavigationBar), matching: find.text(label));
+
+    testWidgets('Products is a tab with the buy list; Materials is under More',
+        (tester) async {
+      await startApp(tester, seed: seed);
+      await openApp(tester, RouteNames.today);
+      expect(tab('Stock'), findsNothing);
+
+      await tester.tap(tab('Products'));
+      await settle(tester);
+      expect(find.text('Tulip'), findsOneWidget);
+      expect(find.textContaining('Buy list'), findsOneWidget);
+
+      await tester.tap(tab('More'));
+      await settle(tester);
+      final row = find.text('Materials');
+      await tester.ensureVisible(row);
+      await tester.tap(row);
+      await settle(tester);
+      expect(find.text('Glue'), findsOneWidget);
+      expect(find.textContaining('Buy list'), findsOneWidget);
+      await closeApp(tester);
+    });
+  });
+
   group('Detail page menus', () {
     Future<void> archiveFromMenu(WidgetTester tester) async {
       await tester.tap(find.byIcon(Icons.more_vert_rounded));

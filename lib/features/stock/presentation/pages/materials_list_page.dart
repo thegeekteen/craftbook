@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
-import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -14,6 +12,7 @@ import '../../domain/entities/material.dart';
 import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
 import '../bloc/materials_state.dart';
+import '../widgets/buy_list_button.dart';
 import '../widgets/material_actions.dart';
 import '../widgets/material_card.dart';
 
@@ -54,29 +53,15 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     final lowCount =
         _materials.where((m) => m.isLowStock && !m.isArchived).length +
             _lowProducts;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stock'),
+        title: const Text('Materials'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: OutlinedButton.icon(
-              onPressed: () => _open(RouteNames.buyList),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 38),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                textStyle: AppTextStyles.bodySmall
-                    .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              icon: Icon(Icons.shopping_basket_outlined,
-                  size: 17, color: lowCount > 0 ? c.alert : c.muted),
-              label: Text(lowCount > 0 ? 'Buy list · $lowCount' : 'Buy list'),
-            ),
-          ),
+          BuyListButton(
+              lowCount: lowCount, onPressed: () => _open(RouteNames.buyList)),
         ],
       ),
       body: BlocConsumer<MaterialsBloc, MaterialsState>(

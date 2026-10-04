@@ -65,8 +65,8 @@ lib/
 |---------|----------|-----------|
 | **Today** | `/` | Dashboard, week calendar, month calendar |
 | **Orders** | `/orders`, `/orders/new`, `/orders/:id` | List (tabbed), creation wizard, detail view |
-| **Stock** | `/materials`, `/materials/:id` | List (tabbed), detail, receive stock, buy list |
-| **Products** | `/products`, `/products/:id/edit`, `/channels` | List, BOM editor, channels & fees |
+| **Stock** | `/materials`, `/materials/:id` | Materials list (tabbed, opened from More), detail, receive stock, buy list |
+| **Products** | `/products`, `/products/:id/edit`, `/channels` | List (a bottom-nav tab, with the Buy list shortcut), BOM editor, channels & fees |
 | **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
 | **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields |
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
@@ -181,7 +181,7 @@ Future<void> configureDependencies() async {
 
 ## Navigation
 
-Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Stock, Money, More) and push routes for detail pages.
+Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Products, Money, More; Materials sits under More) and push routes for detail pages.
 
 - Tab switches use `context.go()` (replace)
 - Detail pages use `context.push()` (push)

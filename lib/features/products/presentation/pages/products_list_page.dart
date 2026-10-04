@@ -8,6 +8,9 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/error/result.dart';
+import '../../../stock/domain/usecases/get_buy_list.dart';
+import '../../../stock/presentation/widgets/buy_list_button.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/product_stock_status.dart';
 import '../bloc/products_bloc.dart';
@@ -42,7 +45,28 @@ class _ProductsListViewState extends State<_ProductsListView> {
   _ProductFilter _filter = _ProductFilter.all;
   String _query = '';
 
-  void _reload() => context.read<ProductsBloc>().add(const LoadProducts());
+  /// Items on the buy list, for the app-bar shortcut.
+  int _toBuy = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBuyCount();
+  }
+
+  /// A failed count just leaves the shortcut without a number.
+  Future<void> _loadBuyCount() async {
+    final result = await getIt<GetBuyList>()();
+    if (!mounted) return;
+    if (result case Success(:final value)) {
+      setState(() => _toBuy = value.length);
+    }
+  }
+
+  void _reload() {
+    context.read<ProductsBloc>().add(const LoadProducts());
+    _loadBuyCount();
+  }
 
   Future<void> _open(String location) async {
     final changed = await context.push<bool>(location);
@@ -52,7 +76,13 @@ class _ProductsListViewState extends State<_ProductsListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
+      appBar: AppBar(
+        title: const Text('Products'),
+        actions: [
+          BuyListButton(
+              lowCount: _toBuy, onPressed: () => _open(RouteNames.buyList)),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
