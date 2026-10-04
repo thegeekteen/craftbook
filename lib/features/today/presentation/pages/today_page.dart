@@ -142,8 +142,8 @@ class _TodayViewState extends State<_TodayView> {
     }
 
     final alerts = d.alerts;
-    final names = alerts.materialNames.take(2).join(', ');
-    final more = alerts.materialNames.length > 2 ? '…' : '';
+    final names = alerts.names.take(2).join(', ');
+    final more = alerts.names.length > 2 ? '…' : '';
 
     return RefreshIndicator(
       onRefresh: () {

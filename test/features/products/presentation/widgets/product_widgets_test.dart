@@ -89,14 +89,38 @@ void main() {
       expect(find.text('Cost ₱150 · −50% margin'), findsOneWidget);
     });
 
-    testWidgets('few buildable shows LOW', (tester) async {
+    testWidgets('buildable at the alert level shows LOW', (tester) async {
       await tester.pumpWidget(_wrap(ProductCard(
-        product: _product(),
+        product: _product(alertLevel: 3),
         unitCost: 100,
         available: 3,
       )));
       expect(find.text('Can build 3'), findsOneWidget);
       expect(find.text('LOW'), findsOneWidget);
+    });
+
+    testWidgets('handmade without an alert level is never LOW', (tester) async {
+      await tester.pumpWidget(_wrap(ProductCard(
+        product: _product(),
+        unitCost: 100,
+        available: 1,
+      )));
+      expect(find.text('LOW'), findsNothing);
+    });
+
+    testWidgets('short product shows the Short for orders tag', (tester) async {
+      await tester.pumpWidget(_wrap(ProductCard(
+        product: _product(),
+        unitCost: 100,
+        available: 0,
+        isShort: true,
+      )));
+      expect(find.text('SHORT FOR ORDERS'), findsOneWidget);
+    });
+
+    testWidgets('no Short tag by default', (tester) async {
+      await tester.pumpWidget(_wrap(ProductCard(product: _product())));
+      expect(find.text('SHORT FOR ORDERS'), findsNothing);
     });
 
     testWidgets('zero buildable is not tagged LOW', (tester) async {

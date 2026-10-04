@@ -365,8 +365,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
         }
 
         buyList.add(BuyListItem(
-          materialId: material.id,
-          materialName: material.name,
+          id: material.id,
+          name: material.name,
           quantityOnHand: material.quantityOnHand,
           quantityPromised: material.quantityPromised,
           alertLevel: material.alertLevel,
@@ -374,6 +374,30 @@ class MaterialRepositoryImpl implements MaterialRepository {
           packPrice: material.packPrice,
           packsToOrder: packsToOrder,
           blockedProducts: blockedProducts,
+        ));
+      }
+
+      // Resell products are bought in like materials, one piece at a time.
+      final lowProducts = await productDao.getLowStockProducts();
+      final pending = lowProducts.isEmpty
+          ? const <int, int>{}
+          : await productDao.pendingOrderCounts();
+      for (final product in lowProducts) {
+        final deficit = product.alertLevel +
+            product.quantityPromised -
+            product.quantityOnHand;
+        buyList.add(BuyListItem(
+          kind: BuyListKind.product,
+          id: product.id,
+          name: product.name,
+          quantityOnHand: product.quantityOnHand,
+          quantityPromised: product.quantityPromised,
+          alertLevel: product.alertLevel,
+          packSize: 1,
+          packPrice: product.unitCost,
+          packsToOrder: max(1, deficit),
+          blockedProducts: const [],
+          ownOpenOrders: pending[product.id] ?? 0,
         ));
       }
 

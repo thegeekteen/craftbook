@@ -42,6 +42,7 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
   _StockFilter _filter = _StockFilter.all;
   String _query = '';
   List<Material> _materials = [];
+  int _lowProducts = 0;
 
   void _reload() => context.read<MaterialsBloc>().add(const LoadMaterials());
 
@@ -53,7 +54,8 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final lowCount = _materials.where((m) => m.isLowStock).length;
+    final lowCount =
+        _materials.where((m) => m.isLowStock).length + _lowProducts;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Stock'),
@@ -77,6 +79,13 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
       ),
       body: BlocConsumer<MaterialsBloc, MaterialsState>(
         listener: (context, state) {
+          // The app bar's Buy list count sits outside the builder.
+          if (state is MaterialsLoaded) {
+            setState(() {
+              _materials = state.materials;
+              _lowProducts = state.lowProductCount;
+            });
+          }
           if (state is MaterialsError) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(state.message)));

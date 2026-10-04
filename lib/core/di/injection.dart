@@ -29,6 +29,8 @@ import '../../features/products/domain/usecases/calculate_buildable_quantity.dar
 import '../../features/products/domain/usecases/receive_product_stock.dart';
 import '../../features/products/domain/usecases/adjust_product_stock.dart';
 import '../../features/products/domain/usecases/get_product_history.dart';
+import '../../features/products/domain/usecases/get_low_stock_products.dart';
+import '../../features/products/domain/usecases/get_pending_order_counts.dart';
 
 import '../../features/stock/data/repositories/material_repository_impl.dart';
 import '../../features/stock/domain/repositories/material_repository.dart';
@@ -194,6 +196,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => ReceiveProductStock(getIt()));
   getIt.registerFactory(() => AdjustProductStock(getIt()));
   getIt.registerFactory(() => GetProductHistory(getIt()));
+  getIt.registerFactory(() => GetLowStockProducts(getIt()));
+  getIt.registerFactory(() => GetPendingOrderCounts(getIt()));
   getIt.registerFactory(() => DeleteChannel(
         channelRepository: getIt(),
         orderRepository: getIt(),
@@ -258,7 +262,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => GetProductOrderLines(getIt()));
 
   // Use Cases - Today
-  getIt.registerFactory(() => GetAlertSummary(getIt()));
+  getIt.registerFactory(() => GetAlertSummary(getIt(), getIt()));
   getIt.registerFactory(() => GetTodayDashboard(
         orderRepository: getIt(),
         earningsRepository: getIt(),
@@ -274,6 +278,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         deleteProduct: getIt(),
         calculateBomCost: getIt(),
         calculateBuildableQuantity: getIt(),
+        getPendingOrderCounts: getIt(),
       ));
   getIt.registerFactory(() => OrderFieldsBloc(
         getOrderFields: getIt(),
@@ -312,6 +317,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         deleteMaterial: getIt(),
         updateMaterial: getIt(),
         materialRepository: getIt(),
+        getLowStockProducts: getIt(),
       ));
   getIt.registerFactory(() => OrdersListBloc(
         getOrders: getIt(),

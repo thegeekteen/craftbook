@@ -6,6 +6,7 @@ import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_list_entry.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/get_order_list_entries.dart';
+import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:craftbook/features/today/domain/usecases/get_alert_summary.dart';
 import 'package:craftbook/features/today/domain/usecases/get_today_dashboard.dart';
@@ -17,6 +18,8 @@ class MockOrderRepository extends Mock implements OrderRepository {}
 class MockEarningsRepository extends Mock implements EarningsRepository {}
 
 class MockMaterialRepository extends Mock implements MaterialRepository {}
+
+class MockProductRepository extends Mock implements ProductRepository {}
 
 class MockGetOrderListEntries extends Mock implements GetOrderListEntries {}
 
@@ -46,6 +49,7 @@ void main() {
   late MockOrderRepository orders;
   late MockEarningsRepository earnings;
   late MockMaterialRepository materials;
+  late MockProductRepository products;
   late MockGetOrderListEntries entries;
   late GetTodayDashboard useCase;
 
@@ -55,14 +59,17 @@ void main() {
     orders = MockOrderRepository();
     earnings = MockEarningsRepository();
     materials = MockMaterialRepository();
+    products = MockProductRepository();
     entries = MockGetOrderListEntries();
     useCase = GetTodayDashboard(
       orderRepository: orders,
       earningsRepository: earnings,
-      getAlertSummary: GetAlertSummary(materials),
+      getAlertSummary: GetAlertSummary(materials, products),
       getOrderListEntries: entries,
     );
     when(() => materials.getLowStockMaterials())
+        .thenAnswer((_) async => const Success([]));
+    when(() => products.getLowStockProducts())
         .thenAnswer((_) async => const Success([]));
     when(() => entries(any())).thenAnswer((inv) async => Success([
           for (final o in inv.positionalArguments.first as List<Order>)

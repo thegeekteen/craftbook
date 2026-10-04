@@ -1,8 +1,18 @@
 import 'package:equatable/equatable.dart';
 
+/// What a buy-list line restocks.
+enum BuyListKind { material, product }
+
+/// One thing to buy: a low material, or a low resell product.
+///
+/// Resell products are bought by the piece, so they carry a pack size of 1
+/// and their unit cost as the pack price.
 class BuyListItem extends Equatable {
-  final int materialId;
-  final String materialName;
+  final BuyListKind kind;
+
+  /// Material id or product id, depending on [kind].
+  final int id;
+  final String name;
   final int quantityOnHand;
   final int quantityPromised;
   final int alertLevel;
@@ -11,9 +21,14 @@ class BuyListItem extends Equatable {
   final int packsToOrder;
   final List<BlockedProduct> blockedProducts;
 
+  /// Pending orders for a resell product itself. Materials use
+  /// [blockedProducts] instead.
+  final int ownOpenOrders;
+
   const BuyListItem({
-    required this.materialId,
-    required this.materialName,
+    this.kind = BuyListKind.material,
+    required this.id,
+    required this.name,
     required this.quantityOnHand,
     required this.quantityPromised,
     required this.alertLevel,
@@ -21,7 +36,13 @@ class BuyListItem extends Equatable {
     required this.packPrice,
     required this.packsToOrder,
     required this.blockedProducts,
+    this.ownOpenOrders = 0,
   });
+
+  /// Open orders waiting on this item.
+  int get blockingOrders => kind == BuyListKind.product
+      ? ownOpenOrders
+      : blockedProducts.fold(0, (s, p) => s + p.openOrderCount);
 
   int get quantityFree => quantityOnHand - quantityPromised;
   double get totalCost => packsToOrder * packPrice;
@@ -29,8 +50,9 @@ class BuyListItem extends Equatable {
 
   @override
   List<Object?> get props => [
-        materialId,
-        materialName,
+        kind,
+        id,
+        name,
         quantityOnHand,
         quantityPromised,
         alertLevel,
@@ -38,6 +60,7 @@ class BuyListItem extends Equatable {
         packPrice,
         packsToOrder,
         blockedProducts,
+        ownOpenOrders,
       ];
 }
 

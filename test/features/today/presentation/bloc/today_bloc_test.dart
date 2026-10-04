@@ -22,7 +22,7 @@ void main() {
   late MockGetTodayDashboard getTodayDashboard;
   late MockGetPinnedNotes getPinnedNotes;
 
-  const alerts = AlertSummary(lowStockCount: 0, materialNames: []);
+  const alerts = AlertSummary(lowStockCount: 0, names: []);
   const dashboard = TodayDashboard(
     due: [],
     placedToday: [],

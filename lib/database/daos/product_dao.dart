@@ -121,16 +121,37 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     return minBuildable == double.maxFinite.toInt() ? 0 : minBuildable;
   }
 
+  /// How many pending orders each product appears in, by product id.
+  ///
+  /// Only pending orders still hold reservations; packed ones have already
+  /// taken their stock.
+  Future<Map<int, int>> pendingOrderCounts() async {
+    final rows = await customSelect(
+      '''
+      SELECT oi.product_id AS product_id, COUNT(DISTINCT oi.order_id) AS cnt
+      FROM order_items oi
+      INNER JOIN orders o ON o.id = oi.order_id
+      WHERE o.status = 'pending'
+      GROUP BY oi.product_id
+      ''',
+      readsFrom: {orderItems, orders},
+    ).get();
+    return {
+      for (final r in rows) r.read<int>('product_id'): r.read<int>('cnt'),
+    };
+  }
+
   /// Get material by ID (helper)
   Future<Material?> getMaterialById(int id) {
     return (select(materials)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
-  /// Get low-stock standalone products
+  /// Active standalone products at or below their alert level.
   Future<List<Product>> getLowStockProducts() {
     return (select(products)
           ..where((t) =>
               t.isStandalone.equals(true) &
+              t.isActive.equals(true) &
               t.quantityOnHand.isSmallerOrEqual(t.alertLevel) &
               t.alertLevel.isBiggerThanValue(0)))
         .get();

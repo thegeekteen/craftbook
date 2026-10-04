@@ -18,9 +18,11 @@ import '../../../../core/widgets/stepper_input.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_history_entry.dart';
+import '../../domain/product_stock_status.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/adjust_product_stock.dart';
 import '../../domain/usecases/delete_product.dart';
+import '../../domain/usecases/get_pending_order_counts.dart';
 import '../../domain/usecases/get_product_history.dart';
 import '../widgets/product_history_row.dart';
 import '../widgets/product_profit_card.dart';
@@ -40,7 +42,10 @@ class ProductDetailPage extends StatefulWidget {
 class _ProductDetailPageState extends State<ProductDetailPage> {
   Product? _product;
   List<BomItem> _bom = [];
+
+  /// Unclamped: negative when reservations exceed what's on hand.
   int _buildable = 0;
+  int _pendingOrders = 0;
   List<ProductHistoryEntry> _history = [];
   String? _historyError;
   bool _loading = true;
@@ -60,6 +65,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final buildableResult =
         await repo.calculateBuildableQuantity(widget.productId);
     final historyResult = await getIt<GetProductHistory>()(widget.productId);
+    final pendingResult = await getIt<GetPendingOrderCounts>()();
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -78,6 +84,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       };
       _buildable = switch (buildableResult) {
         Success(:final value) => value,
+        Error() => 0,
+      };
+      _pendingOrders = switch (pendingResult) {
+        Success(:final value) => value[widget.productId] ?? 0,
         Error() => 0,
       };
       switch (historyResult) {
@@ -239,7 +249,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         child: ListView(
           padding: AppSpacing.page.copyWith(top: 8),
           children: [
-            ProductSummaryCard(product: p, cost: cost, buildable: _buildable),
+            ProductSummaryCard(
+              product: p,
+              cost: cost,
+              buildable: _buildable < 0 ? 0 : _buildable,
+              isShort: isProductShort(p,
+                  rawBuildable: _buildable, pendingOrders: _pendingOrders),
+            ),
             if (p.isStandalone) ...[
               const SizedBox(height: 12),
               Row(children: [

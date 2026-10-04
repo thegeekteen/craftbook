@@ -47,9 +47,7 @@ class _BuyListViewState extends State<_BuyListView> {
 
   /// Urgency: blocking orders, then out of free stock, then the rest.
   static int _rank(BuyListItem i) {
-    if (i.blockedProducts.any((p) => p.openOrderCount > 0) && i.isCritical) {
-      return 0;
-    }
+    if (i.blockingOrders > 0 && i.isCritical) return 0;
     if (i.isCritical) return 1;
     return 2;
   }
@@ -59,9 +57,12 @@ class _BuyListViewState extends State<_BuyListView> {
     final buffer = StringBuffer('CraftBook buy list\n\n');
     for (final i in items) {
       final pcs = i.packsToOrder * i.packSize;
-      buffer.writeln('- ${i.materialName}: ${i.packsToOrder} '
-          '${i.packsToOrder == 1 ? 'pack' : 'packs'} ($pcs pcs), '
-          '${CurrencyFormatter.format(i.totalCost)}');
+      final amount = i.kind == BuyListKind.product
+          ? '$pcs pcs'
+          : '${i.packsToOrder} ${i.packsToOrder == 1 ? 'pack' : 'packs'} '
+              '($pcs pcs)';
+      buffer.writeln(
+          '- ${i.name}: $amount, ${CurrencyFormatter.format(i.totalCost)}');
     }
     buffer.write('\nTotal: ${CurrencyFormatter.format(total)}');
     await Clipboard.setData(ClipboardData(text: buffer.toString()));
@@ -90,7 +91,7 @@ class _BuyListViewState extends State<_BuyListView> {
                   child: EmptyState(
                     icon: Icons.shopping_basket_outlined,
                     title: 'Nothing to buy',
-                    message: 'Every material is above its reorder level.',
+                    message: 'Everything is above its reorder level.',
                   ),
                 ),
               BuyListLoaded() => RefreshIndicator(
@@ -102,8 +103,11 @@ class _BuyListViewState extends State<_BuyListView> {
                     itemBuilder: (context, i) => _BuyCard(
                       item: items[i],
                       onTap: () async {
+                        final item = items[i];
                         final changed = await context.push<bool>(
-                            RouteNames.materialPath(items[i].materialId));
+                            item.kind == BuyListKind.product
+                                ? RouteNames.productPath(item.id)
+                                : RouteNames.materialPath(item.id));
                         if (changed == true && mounted) {
                           _changed = true;
                           _reload();
@@ -149,8 +153,8 @@ class _BuyCard extends StatelessWidget {
     final c = context.colors;
     final holdingUp =
         item.blockedProducts.where((p) => p.openOrderCount > 0).toList();
-    final blockedOrders =
-        holdingUp.fold<int>(0, (s, p) => s + p.openOrderCount);
+    final blockedOrders = item.blockingOrders;
+    final isProduct = item.kind == BuyListKind.product;
     final pcs = item.packsToOrder * item.packSize;
 
     return AppCard(
@@ -162,10 +166,14 @@ class _BuyCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(item.materialName,
+                child: Text(item.name,
                     style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
               ),
               const SizedBox(width: 8),
+              if (isProduct) ...[
+                const AppTag('Resell'),
+                const SizedBox(width: 6),
+              ],
               if (item.isCritical && blockedOrders > 0)
                 AppTag(
                     'Blocking $blockedOrders ${blockedOrders == 1 ? 'order' : 'orders'}',
@@ -194,14 +202,15 @@ class _BuyCard extends StatelessWidget {
                   TextSpan(children: [
                     const TextSpan(text: 'Buy '),
                     TextSpan(
-                      text:
-                          '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
+                      text: isProduct
+                          ? '$pcs pcs'
+                          : '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
                       style:
                           TextStyle(color: c.ink, fontWeight: FontWeight.w600),
                     ),
                     TextSpan(
-                        text:
-                            ' · $pcs pcs · ${item.quantityFree < 0 ? 0 : item.quantityFree} free now'),
+                        text: '${isProduct ? '' : ' · $pcs pcs'}'
+                            ' · ${item.quantityFree < 0 ? 0 : item.quantityFree} free now'),
                   ]),
                   style: AppTextStyles.bodySmall
                       .copyWith(color: c.muted, fontSize: 13),

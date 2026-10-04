@@ -5,6 +5,8 @@ import '../../domain/usecases/create_product.dart';
 import '../../domain/usecases/calculate_bom_cost.dart';
 import '../../domain/usecases/calculate_buildable_quantity.dart';
 import '../../domain/usecases/delete_product.dart';
+import '../../domain/product_stock_status.dart';
+import '../../domain/usecases/get_pending_order_counts.dart';
 import '../../domain/usecases/get_products.dart';
 import '../../domain/usecases/update_product.dart';
 import 'products_event.dart';
@@ -18,6 +20,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   final DeleteProduct deleteProduct;
   final CalculateBomCost calculateBomCost;
   final CalculateBuildableQuantity calculateBuildableQuantity;
+  final GetPendingOrderCounts getPendingOrderCounts;
 
   ProductsBloc({
     required this.getProducts,
@@ -26,6 +29,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     required this.deleteProduct,
     required this.calculateBomCost,
     required this.calculateBuildableQuantity,
+    required this.getPendingOrderCounts,
   }) : super(ProductsInitial()) {
     on<LoadProducts>(_onLoadProducts);
     on<CreateProductEvent>(_onCreateProduct);
@@ -45,6 +49,12 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       case Success(:final value):
         final costs = <int, double>{};
         final available = <int, int>{};
+        final shortIds = <int>{};
+        // A failed count only hides the Short tag; the list still loads.
+        final pending = switch (await getPendingOrderCounts()) {
+          Success(:final value) => value,
+          Error() => const <int, int>{},
+        };
         for (final p in value) {
           if (p.id == null) continue;
           if (await calculateBomCost(p.id!) case Success(value: final cost)) {
@@ -53,9 +63,14 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
           if (await calculateBuildableQuantity(p.id!)
               case Success(value: final n)) {
             available[p.id!] = n < 0 ? 0 : n;
+            if (isProductShort(p,
+                rawBuildable: n, pendingOrders: pending[p.id!] ?? 0)) {
+              shortIds.add(p.id!);
+            }
           }
         }
-        emit(ProductsLoaded(value, unitCosts: costs, available: available));
+        emit(ProductsLoaded(value,
+            unitCosts: costs, available: available, shortIds: shortIds));
     }
   }
 

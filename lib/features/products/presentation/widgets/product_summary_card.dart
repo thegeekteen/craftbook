@@ -11,6 +11,7 @@ import '../../../../core/widgets/pip_strip.dart';
 import '../../../../core/widgets/product_photo.dart';
 import '../../../../core/widgets/stat_tile.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/product_stock_status.dart';
 
 /// Details card at the top of a product's page: what's available now,
 /// then price, cost and margin.
@@ -26,11 +27,15 @@ class ProductSummaryCard extends StatelessWidget {
   /// How many can be built from materials on hand. Ignored for resell.
   final int buildable;
 
+  /// Pending orders want more than stock or materials can cover.
+  final bool isShort;
+
   const ProductSummaryCard({
     super.key,
     required this.product,
     required this.cost,
     this.buildable = 0,
+    this.isShort = false,
   });
 
   @override
@@ -38,9 +43,8 @@ class ProductSummaryCard extends StatelessWidget {
     final c = context.colors;
     final p = product;
     final qty = p.isStandalone ? p.quantityOnHand : buildable;
-    // Matches the low rule on ProductCard so the list and page agree.
-    final low = p.isStandalone ? p.isLowStock : qty > 0 && qty < 5;
-    final alertQty = low || qty == 0;
+    final low = isProductLow(p, buildable);
+    final alertQty = low || isShort || qty == 0;
     final margin =
         (MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0)
                     .margin *
@@ -50,7 +54,7 @@ class ProductSummaryCard extends StatelessWidget {
     final photo = p.photo;
 
     return AppCard(
-      borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
+      borderColor: low || isShort ? c.alert.withValues(alpha: 0.55) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -94,6 +98,9 @@ class ProductSummaryCard extends StatelessWidget {
                 children: [
                   if (p.isStandalone) const AppTag('Resell'),
                   if (!p.isActive) const AppTag('Hidden'),
+                  // Resell already shows its shortfall as a stat below.
+                  if (isShort && !p.isStandalone)
+                    const AppTag.low(text: 'Short'),
                   if (low) const AppTag.low(),
                 ],
               ),
@@ -128,6 +135,12 @@ class ProductSummaryCard extends StatelessWidget {
                 valueColor: p.quantityPromised > 0 ? c.alert : null,
               ),
               StatTile(label: 'Reorder at', value: '${p.alertLevel}'),
+            ]),
+          ],
+          if (!p.isStandalone && p.alertLevel > 0) ...[
+            const SizedBox(height: 14),
+            StatRow(children: [
+              StatTile(label: 'Warn at', value: '${p.alertLevel}'),
             ]),
           ],
           const SizedBox(height: 12),

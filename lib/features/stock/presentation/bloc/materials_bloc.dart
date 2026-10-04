@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/result.dart';
+import '../../../products/domain/usecases/get_low_stock_products.dart';
 import '../../domain/repositories/material_repository.dart';
 import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_buy_list.dart';
@@ -18,6 +19,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
   final DeleteMaterial deleteMaterial;
   final UpdateMaterial updateMaterial;
   final MaterialRepository materialRepository;
+  final GetLowStockProducts getLowStockProducts;
 
   MaterialsBloc({
     required this.getMaterials,
@@ -26,6 +28,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     required this.deleteMaterial,
     required this.updateMaterial,
     required this.materialRepository,
+    required this.getLowStockProducts,
   }) : super(MaterialsInitial()) {
     on<LoadMaterials>(_onLoadMaterials);
     on<LoadBuyList>(_onLoadBuyList);
@@ -45,7 +48,12 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
       case Error(:final failure):
         emit(MaterialsError(failure.message));
       case Success(:final value):
-        emit(MaterialsLoaded(value));
+        // A failed count only drops resell from the Buy list badge.
+        final lowProducts = switch (await getLowStockProducts()) {
+          Success(:final value) => value.length,
+          Error() => 0,
+        };
+        emit(MaterialsLoaded(value, lowProductCount: lowProducts));
     }
   }
 
