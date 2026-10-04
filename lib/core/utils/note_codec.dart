@@ -43,8 +43,10 @@ abstract final class NoteCodec {
   }
 
   /// One line of plain text for previews, rows and subtitles.
-  static String plainText(String? raw) =>
-      textOf(decode(raw)).replaceAll('\n', ' ').replaceAll(_runsOfSpace, ' ').trim();
+  static String plainText(String? raw) => textOf(decode(raw))
+      .replaceAll('\n', ' ')
+      .replaceAll(_runsOfSpace, ' ')
+      .trim();
 
   /// True when there is nothing worth keeping, so callers store null.
   static bool isBlank(String? raw) => textOf(decode(raw)).trim().isEmpty;

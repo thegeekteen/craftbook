@@ -65,7 +65,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
       case Success(:final value):
         final repo = getIt<ProductRepository>();
         final usedIn = <(Product, int)>[];
-        final productsResult = await repo.getProductsUsingMaterial(widget.materialId);
+        final productsResult =
+            await repo.getProductsUsingMaterial(widget.materialId);
         if (productsResult case Success(value: final products)) {
           for (final p in products) {
             final bom = await repo.getBomItems(p.id!);
@@ -81,7 +82,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
         if (!mounted) return;
         setState(() {
           _material = value.material;
-          _movements = value.movements..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _movements = value.movements
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _usedIn = usedIn;
           _loading = false;
           _error = null;
@@ -90,7 +92,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   }
 
   Future<void> _receive() async {
-    final changed = await context.push<bool>(RouteNames.receiveStockPath(widget.materialId));
+    final changed = await context
+        .push<bool>(RouteNames.receiveStockPath(widget.materialId));
     if (changed == true && mounted) {
       _changed = true;
       _load();
@@ -98,7 +101,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   }
 
   Future<void> _edit() async {
-    final changed = await context.push<bool>(RouteNames.editMaterialPath(widget.materialId));
+    final changed = await context
+        .push<bool>(RouteNames.editMaterialPath(widget.materialId));
     if (changed == true && mounted) {
       _changed = true;
       _load();
@@ -147,7 +151,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               ),
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: diff == 0 ? null : () => Navigator.pop(sheetContext, true),
+                onPressed:
+                    diff == 0 ? null : () => Navigator.pop(sheetContext, true),
                 child: const Text('Save count'),
               ),
             ],
@@ -172,7 +177,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     final confirmed = await ConfirmDialog.show(
       context,
       title: 'Delete ${m.name}?',
-      message: "This can't be undone. Materials used in a product or with stock history can't be deleted.",
+      message:
+          "This can't be undone. Materials used in a product or with stock history can't be deleted.",
       confirmText: 'Delete',
       isDestructive: true,
     );
@@ -202,12 +208,16 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   Widget _buildScaffold() {
     final back = BackButton(onPressed: () => context.pop(_changed));
     if (_loading) {
-      return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(leading: back),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_error != null || _material == null) {
       return Scaffold(
         appBar: AppBar(leading: back),
-        body: Center(child: ErrorState(message: _error ?? 'Material not found', onRetry: _load)),
+        body: Center(
+            child: ErrorState(
+                message: _error ?? 'Material not found', onRetry: _load)),
       );
     }
     final c = context.colors;
@@ -262,10 +272,13 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                     children: [
                       Text(
                         '${m.quantityOnHand}',
-                        style: AppTextStyles.displayLarge.copyWith(color: low ? c.alert : c.ink, fontSize: 44),
+                        style: AppTextStyles.displayLarge.copyWith(
+                            color: low ? c.alert : c.ink, fontSize: 44),
                       ),
                       const SizedBox(width: 8),
-                      Text('PCS ON HAND', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                      Text('PCS ON HAND',
+                          style:
+                              AppTextStyles.monoLabel.copyWith(color: c.muted)),
                       const Spacer(),
                       if (low) const AppTag.low(),
                     ],
@@ -284,18 +297,37 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   const SizedBox(height: 14),
                   StatRow(children: [
                     m.quantityFree < 0
-                        ? StatTile(label: 'Short', value: '${-m.quantityFree}', valueColor: c.alert)
-                        : StatTile(label: 'Free', value: '${m.quantityFree}', valueColor: c.go),
-                    StatTile(label: 'Promised', value: '${m.quantityPromised}', valueColor: m.quantityPromised > 0 ? c.alert : null),
+                        ? StatTile(
+                            label: 'Short',
+                            value: '${-m.quantityFree}',
+                            valueColor: c.alert)
+                        : StatTile(
+                            label: 'Free',
+                            value: '${m.quantityFree}',
+                            valueColor: c.go),
+                    StatTile(
+                        label: 'Promised',
+                        value: '${m.quantityPromised}',
+                        valueColor: m.quantityPromised > 0 ? c.alert : null),
                     StatTile(label: 'Reorder at', value: '${m.alertLevel}'),
                   ]),
                   const SizedBox(height: 12),
                   Divider(color: c.hair),
                   const SizedBox(height: 12),
                   StatRow(children: [
-                    StatTile(label: 'Unit cost', value: CurrencyFormatter.format(m.unitCost), compact: true),
-                    StatTile(label: 'Pack', value: '${m.packSize} pcs', compact: true),
-                    StatTile(label: 'Supplier', value: m.supplier?.isNotEmpty == true ? m.supplier! : '—', compact: true),
+                    StatTile(
+                        label: 'Unit cost',
+                        value: CurrencyFormatter.format(m.unitCost),
+                        compact: true),
+                    StatTile(
+                        label: 'Pack',
+                        value: '${m.packSize} pcs',
+                        compact: true),
+                    StatTile(
+                        label: 'Supplier',
+                        value:
+                            m.supplier?.isNotEmpty == true ? m.supplier! : '—',
+                        compact: true),
                   ]),
                 ],
               ),
@@ -347,7 +379,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
             else
               AppCard.flush(
                 child: CardList(children: [
-                  for (final mv in _movements.take(30)) _MovementRow(movement: mv),
+                  for (final mv in _movements.take(30))
+                    _MovementRow(movement: mv),
                 ]),
               ),
           ],
@@ -358,7 +391,9 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
 
   Widget _quiet(String text) => Padding(
         padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
-        child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
+        child: Text(text,
+            style:
+                AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
       );
 }
 
@@ -376,7 +411,9 @@ class _MovementRow extends StatelessWidget {
     final color = adds ? c.go : c.alert;
     final qty = mv.quantity.abs();
     final title = switch (mv.type) {
-      StockMovementType.received => mv.reference?.contains('Restored') == true ? 'Returned from deleted order' : 'Received',
+      StockMovementType.received => mv.reference?.contains('Restored') == true
+          ? 'Returned from deleted order'
+          : 'Received',
       StockMovementType.deducted => 'Used in an order',
       StockMovementType.adjusted => 'Counted',
       StockMovementType.waste => 'Waste',
@@ -390,7 +427,8 @@ class _MovementRow extends StatelessWidget {
           color: adds ? c.goSoft : c.alertSoft,
           shape: BoxShape.circle,
         ),
-        child: Icon(adds ? Icons.south_west_rounded : Icons.north_east_rounded, size: 16, color: color),
+        child: Icon(adds ? Icons.south_west_rounded : Icons.north_east_rounded,
+            size: 16, color: color),
       ),
       title: Text(title),
       subtitle: Text(

@@ -11,6 +11,7 @@ class UpdateOrderNote {
   /// A note with no words left in it is stored as null, so "has a note"
   /// checks elsewhere don't see an empty checklist as a note.
   Future<Result<void>> call(int orderId, String? note) {
-    return repository.updateOrderNote(orderId, NoteCodec.isBlank(note) ? null : note);
+    return repository.updateOrderNote(
+        orderId, NoteCodec.isBlank(note) ? null : note);
   }
 }

@@ -23,8 +23,9 @@ class ChannelCard extends StatelessWidget {
     this.onActiveChanged,
   });
 
-  static String _pct(double v) =>
-      v == v.roundToDouble() ? '${v.toStringAsFixed(0)}%' : '${v.toStringAsFixed(1)}%';
+  static String _pct(double v) => v == v.roundToDouble()
+      ? '${v.toStringAsFixed(0)}%'
+      : '${v.toStringAsFixed(1)}%';
 
   /// "8% + 2% + ₱5 · ships ₱130"
   static String recipe(Channel ch) {
@@ -58,7 +59,9 @@ class ChannelCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(ch.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink, fontSize: 16)),
+                  child: Text(ch.name,
+                      style: AppTextStyles.bodyLarge
+                          .copyWith(color: c.ink, fontSize: 16)),
                 ),
                 Text(
                   ch.isActive ? 'On' : 'Off',
@@ -74,11 +77,14 @@ class ChannelCard extends StatelessWidget {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Expanded(
-                    child: Text(recipe(ch), style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13)),
+                    child: Text(recipe(ch),
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: c.muted, fontSize: 13)),
                   ),
                   Text(
                     '~${_pct(effective)}',
-                    style: AppTextStyles.amount.copyWith(color: c.warn, fontSize: 16),
+                    style: AppTextStyles.amount
+                        .copyWith(color: c.warn, fontSize: 16),
                   ),
                 ],
               ),
@@ -86,9 +92,10 @@ class ChannelCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text.rich(
               TextSpan(children: [
-                TextSpan(text: ch.isActive
-                    ? 'On a ${CurrencyFormatter.formatShort(exampleSale)} sale you keep '
-                    : 'Hidden from new orders · on a ${CurrencyFormatter.formatShort(exampleSale)} sale you keep '),
+                TextSpan(
+                    text: ch.isActive
+                        ? 'On a ${CurrencyFormatter.formatShort(exampleSale)} sale you keep '
+                        : 'Hidden from new orders · on a ${CurrencyFormatter.formatShort(exampleSale)} sale you keep '),
                 TextSpan(
                   text: CurrencyFormatter.format(keep),
                   style: TextStyle(color: c.ink, fontWeight: FontWeight.w600),

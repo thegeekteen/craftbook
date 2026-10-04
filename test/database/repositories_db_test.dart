@@ -8,7 +8,8 @@ import 'package:craftbook/database/daos/product_dao.dart';
 import 'package:craftbook/features/earnings/data/repositories/earnings_repository_impl.dart';
 import 'package:craftbook/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
-import 'package:craftbook/features/orders/domain/entities/order.dart' show OrderStatus;
+import 'package:craftbook/features/orders/domain/entities/order.dart'
+    show OrderStatus;
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/products/data/repositories/product_repository_impl.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
@@ -42,7 +43,8 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<int> material({int onHand = 10, int promised = 0, int alert = 5, int pack = 10}) async {
+  Future<int> material(
+      {int onHand = 10, int promised = 0, int alert = 5, int pack = 10}) async {
     final id = ok(await materials.createMaterial(
       name: 'Yarn',
       packSize: pack,
@@ -55,10 +57,11 @@ void main() {
     return id;
   }
 
-  Future<int> productId() => db.into(db.products).insert(ProductsCompanion.insert(
-        name: 'Tulip',
-        sellPrice: 450,
-      ));
+  Future<int> productId() =>
+      db.into(db.products).insert(ProductsCompanion.insert(
+            name: 'Tulip',
+            sellPrice: 450,
+          ));
 
   Future<int> order({
     required int product,
@@ -76,7 +79,13 @@ void main() {
         channelFees: 10,
         shippingCost: 0,
         profit: 0,
-        items: [OrderItemInput(productId: product, productName: 'Tulip', quantity: qty, unitPrice: 450)],
+        items: [
+          OrderItemInput(
+              productId: product,
+              productName: 'Tulip',
+              quantity: qty,
+              unitPrice: 450)
+        ],
         materials: materials,
       ));
 
@@ -116,9 +125,11 @@ void main() {
       expect(m.quantityPromised, 15);
     });
 
-    test('keeps the weighted-average cost when price and pack are unchanged', () async {
+    test('keeps the weighted-average cost when price and pack are unchanged',
+        () async {
       final id = await material(pack: 10);
-      ok(await materials.receiveStock(materialId: id, packsReceived: 1, pricePerPack: 200));
+      ok(await materials.receiveStock(
+          materialId: id, packsReceived: 1, pricePerPack: 200));
       final before = ok(await materials.getMaterialById(id))!;
       ok(await materials.updateMaterial(
         id: id,
@@ -127,10 +138,12 @@ void main() {
         packPrice: before.packPrice,
         alertLevel: before.alertLevel,
       ));
-      expect(ok(await materials.getMaterialById(id))!.unitCost, before.unitCost);
+      expect(
+          ok(await materials.getMaterialById(id))!.unitCost, before.unitCost);
     });
 
-    test('resets unit cost to packPrice / packSize when the price changes', () async {
+    test('resets unit cost to packPrice / packSize when the price changes',
+        () async {
       final id = await material(pack: 10);
       ok(await materials.updateMaterial(
         id: id,
@@ -157,7 +170,8 @@ void main() {
   group('updateProduct', () {
     test('clears the description when given an empty one', () async {
       final repo = ProductRepositoryImpl(ProductDao(db));
-      final id = ok(await repo.createProduct(name: 'Tulip', description: 'Pink', sellPrice: 450));
+      final id = ok(await repo.createProduct(
+          name: 'Tulip', description: 'Pink', sellPrice: 450));
       ok(await repo.updateProduct(id: id, description: ''));
       expect(ok(await repo.getProductById(id))!.description, isNull);
     });
@@ -174,7 +188,8 @@ void main() {
       ));
       ok(await repo.updateProduct(id: id, name: 'Pin v2'));
       var p = ok(await repo.getProductById(id))!;
-      expect((p.name, p.description, p.unitCost, p.quantityOnHand), ('Pin v2', 'Gold', 20.0, 5));
+      expect((p.name, p.description, p.unitCost, p.quantityOnHand),
+          ('Pin v2', 'Gold', 20.0, 5));
 
       ok(await repo.updateProduct(id: id, unitCost: 25));
       p = ok(await repo.getProductById(id))!;
@@ -185,15 +200,18 @@ void main() {
       final repo = ProductRepositoryImpl(ProductDao(db));
       final id = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
       final yarn = await material();
-      ok(await repo.saveBomItems(id, [BomItemInput(materialId: yarn, quantityRequired: 2)]));
-      ok(await repo.saveBomItems(id, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
+      ok(await repo.saveBomItems(
+          id, [BomItemInput(materialId: yarn, quantityRequired: 2)]));
+      ok(await repo.saveBomItems(
+          id, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
       final bom = ok(await repo.getBomItems(id));
       expect(bom.map((b) => b.quantityRequired), [5]);
     });
   });
 
   group('getBuyList', () {
-    test('suggests at least one pack for an item sitting at its reorder level', () async {
+    test('suggests at least one pack for an item sitting at its reorder level',
+        () async {
       await material(onHand: 5, alert: 5);
       final item = ok(await materials.getBuyList()).single;
       expect(item.packsToOrder, 1);
@@ -203,12 +221,15 @@ void main() {
     test('covers the reorder level plus promised pieces', () async {
       await material(onHand: 7, promised: 15, alert: 10, pack: 10);
       final item = ok(await materials.getBuyList()).single;
-      expect(item.packsToOrder, 2); // needs 25, has 7 → 18 short → 2 packs of 10
+      expect(
+          item.packsToOrder, 2); // needs 25, has 7 → 18 short → 2 packs of 10
     });
   });
 
   group('orders', () {
-    test('getOpenOrdersDueBefore returns pending and packed orders due before the date', () async {
+    test(
+        'getOpenOrdersDueBefore returns pending and packed orders due before the date',
+        () async {
       final p = await productId();
       final overdue = await order(product: p, shipBy: DateTime(2026, 10, 3));
       final today = await order(product: p, shipBy: DateTime(2026, 10, 4, 9));
@@ -217,11 +238,13 @@ void main() {
       await orders.packOrder(shipped);
       await orders.shipOrder(shipped);
 
-      final due = ok(await orders.getOpenOrdersDueBefore(DateTime(2026, 10, 5)));
+      final due =
+          ok(await orders.getOpenOrdersDueBefore(DateTime(2026, 10, 5)));
       expect(due.map((o) => o.id), [overdue, today]);
     });
 
-    test('getOrderLines returns product names and quantities per order', () async {
+    test('getOrderLines returns product names and quantities per order',
+        () async {
       final p = await productId();
       final a = await order(product: p, shipBy: DateTime(2026, 10, 4), qty: 2);
       final b = await order(product: p, shipBy: DateTime(2026, 10, 4));
@@ -231,13 +254,15 @@ void main() {
       expect(lines[b]!.single.quantity, 1);
     });
 
-    test('updateOrderNote changes only the note, even on a shipped order', () async {
+    test('updateOrderNote changes only the note, even on a shipped order',
+        () async {
       final p = await productId();
       final id = await order(product: p, shipBy: DateTime(2026, 10, 4));
       await orders.packOrder(id);
       await orders.shipOrder(id);
 
-      expect(await orders.updateOrderNote(id, 'Ring twice'), const Success<void>(null));
+      expect(await orders.updateOrderNote(id, 'Ring twice'),
+          const Success<void>(null));
       final saved = ok(await orders.getOrderById(id))!;
       expect(saved.note, 'Ring twice');
       expect(saved.status, OrderStatus.shipped);
@@ -261,24 +286,40 @@ void main() {
       final id = await order(
         product: p,
         shipBy: DateTime(2026, 9, 10),
-        materials: [OrderMaterialInput(materialId: m, materialName: 'Yarn', plannedQuantity: 3, actualQuantity: 3, unitCost: 10)],
+        materials: [
+          OrderMaterialInput(
+              materialId: m,
+              materialName: 'Yarn',
+              plannedQuantity: 3,
+              actualQuantity: 3,
+              unitCost: 10)
+        ],
       );
       await orders.adjustMaterialsUsed(id, [
-        OrderMaterialInput(materialId: m, materialName: 'Yarn', plannedQuantity: 3, actualQuantity: 5, wasteQuantity: 2, unitCost: 10),
+        OrderMaterialInput(
+            materialId: m,
+            materialName: 'Yarn',
+            plannedQuantity: 3,
+            actualQuantity: 5,
+            wasteQuantity: 2,
+            unitCost: 10),
       ]);
       await orders.packOrder(id);
       // Packed in October although its material rows were created in September.
       await (db.update(db.orders)..where((t) => t.id.equals(id)))
           .write(OrdersCompanion(packedAt: Value(DateTime(2026, 10, 2))));
       await (db.update(db.orderMaterials)..where((t) => t.orderId.equals(id)))
-          .write(OrderMaterialsCompanion(createdAt: Value(DateTime(2026, 9, 8))));
+          .write(
+              OrderMaterialsCompanion(createdAt: Value(DateTime(2026, 9, 8))));
 
-      final waste = ok(await earnings.getWasteSummary(DateTime(2026, 10, 1), DateTime(2026, 10, 31, 23, 59)));
+      final waste = ok(await earnings.getWasteSummary(
+          DateTime(2026, 10, 1), DateTime(2026, 10, 31, 23, 59)));
       expect(waste.totalWasteQuantity, 2);
       expect(waste.totalWasteCost, 20);
     });
 
-    test('profit points and product order lines follow completion dates', () async {
+    test('profit points and product order lines follow completion dates',
+        () async {
       final p = await productId();
       final id = await order(product: p, shipBy: DateTime(2026, 10, 2), qty: 2);
       await orders.packOrder(id);
@@ -295,16 +336,21 @@ void main() {
       expect(lines.single.quantity, 2);
       expect(lines.single.profit, closeTo(840, 0.001));
 
-      expect(ok(await earnings.getCompletedOrderProfits(DateTime(2026, 11), DateTime(2026, 11, 30))), isEmpty);
+      expect(
+          ok(await earnings.getCompletedOrderProfits(
+              DateTime(2026, 11), DateTime(2026, 11, 30))),
+          isEmpty);
     });
   });
 
   group('product history', () {
-    test('getProductSales lists the product in every order, dated by its stage', () async {
+    test('getProductSales lists the product in every order, dated by its stage',
+        () async {
       final products = ProductRepositoryImpl(ProductDao(db));
       final id = await productId();
       final pending = await order(product: id, shipBy: DateTime(2026, 3, 10));
-      final packed = await order(product: id, shipBy: DateTime(2026, 3, 5), qty: 2);
+      final packed =
+          await order(product: id, shipBy: DateTime(2026, 3, 5), qty: 2);
       ok(await orders.packOrder(packed));
       await order(product: await productId(), shipBy: DateTime(2026, 3, 1));
 
@@ -313,16 +359,19 @@ void main() {
       expect(sales.map((s) => s.orderId), unorderedEquals([pending, packed]));
       final p = sales.firstWhere((s) => s.orderId == pending);
       expect(p.status, OrderStatus.pending);
-      expect(p.date, DateTime(2026, 3, 8), reason: 'pending orders use the order date');
+      expect(p.date, DateTime(2026, 3, 8),
+          reason: 'pending orders use the order date');
       expect(p.customerName, 'Maria');
       final k = sales.firstWhere((s) => s.orderId == packed);
       expect(k.status, OrderStatus.packed);
       expect(k.quantity, 2);
       expect(k.subtotal, 900);
-      expect(k.date.isAfter(DateTime(2026, 3, 3)), isTrue, reason: 'packed orders use packedAt');
+      expect(k.date.isAfter(DateTime(2026, 3, 3)), isTrue,
+          reason: 'packed orders use packedAt');
     });
 
-    test('adjustProductStock keeps the sign of a count that lowers stock', () async {
+    test('adjustProductStock keeps the sign of a count that lowers stock',
+        () async {
       final products = ProductRepositoryImpl(ProductDao(db));
       final id = ok(await products.createProduct(
         name: 'Gift box',
@@ -332,8 +381,10 @@ void main() {
         initialUnitCost: 28,
       ));
 
-      ok(await products.adjustProductStock(productId: id, newQuantityOnHand: 4));
-      ok(await products.adjustProductStock(productId: id, newQuantityOnHand: 7));
+      ok(await products.adjustProductStock(
+          productId: id, newQuantityOnHand: 4));
+      ok(await products.adjustProductStock(
+          productId: id, newQuantityOnHand: 7));
 
       final counts = ok(await products.getProductStockMovements(id))
           .where((m) => m.reference?.startsWith('Adjusted') == true)

@@ -197,7 +197,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
       final difference = newQuantityOnHand - current.quantityOnHand;
 
-      await dao.updateMaterialStock(materialId, newQuantityOnHand, current.quantityPromised);
+      await dao.updateMaterialStock(
+          materialId, newQuantityOnHand, current.quantityPromised);
 
       // Record stock movement
       await dao.addStockMovement(db.StockMovementsCompanion(
@@ -205,7 +206,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
         type: const Value('adjusted'),
         quantity: Value(difference),
         unitCost: Value(current.unitCost),
-        reference: Value('Adjusted from ${current.quantityOnHand} to $newQuantityOnHand'),
+        reference: Value(
+            'Adjusted from ${current.quantityOnHand} to $newQuantityOnHand'),
       ));
 
       return const Success(null);
@@ -338,8 +340,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         final packSize = material.packSize > 0 ? material.packSize : 1;
         // Anything on this list needs at least one pack, even when it sits
         // exactly at its reorder level.
-        final packsToOrder =
-            deficit > 0 ? (deficit / packSize).ceil() : 1;
+        final packsToOrder = deficit > 0 ? (deficit / packSize).ceil() : 1;
 
         // Find products blocked by this material
         final blockedProducts = <BlockedProduct>[];

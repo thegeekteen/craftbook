@@ -61,7 +61,9 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     await _finish(
       emit,
       result,
-      event.id == null ? '${event.name.trim()} added' : '${event.name.trim()} saved',
+      event.id == null
+          ? '${event.name.trim()} added'
+          : '${event.name.trim()} saved',
     );
   }
 
@@ -133,8 +135,14 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     return switch (result) {
       Error(:final failure) => Error(failure),
       Success(:final value) => Success(OrderFieldsLoaded(
-          active: [for (final f in value) if (!f.isArchived) f],
-          archived: [for (final f in value) if (f.isArchived) f],
+          active: [
+            for (final f in value)
+              if (!f.isArchived) f
+          ],
+          archived: [
+            for (final f in value)
+              if (f.isArchived) f
+          ],
         )),
     };
   }
@@ -149,4 +157,3 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
         'Field';
   }
 }
-

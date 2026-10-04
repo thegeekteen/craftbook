@@ -21,7 +21,8 @@ void main() {
           builder: (context) => Scaffold(
             body: Center(
               child: FilledButton(
-                onPressed: () => popped = NoteEditorPage.open(context, note: note),
+                onPressed: () =>
+                    popped = NoteEditorPage.open(context, note: note),
                 child: const Text('open'),
               ),
             ),
@@ -47,7 +48,8 @@ void main() {
       expect(find.text('Add note'), findsOneWidget);
     });
 
-    testWidgets('titles itself "Edit note" over an existing note', (tester) async {
+    testWidgets('titles itself "Edit note" over an existing note',
+        (tester) async {
       await open(tester, note: 'Gift wrap');
       expect(find.text('Edit note'), findsOneWidget);
     });
@@ -55,23 +57,35 @@ void main() {
     testWidgets('offers the formatting toolbar', (tester) async {
       await open(tester);
       expect(find.byType(NoteToolbar), findsOneWidget);
-      for (final tool in ['Bold', 'Italic', 'Heading', 'Checklist', 'Bullet list']) {
+      for (final tool in [
+        'Bold',
+        'Italic',
+        'Heading',
+        'Checklist',
+        'Bullet list'
+      ]) {
         expect(find.byTooltip(tool), findsOneWidget, reason: tool);
       }
     });
 
-    testWidgets('keeps the toolbar to one row under the editor', (tester) async {
+    testWidgets('keeps the toolbar to one row under the editor',
+        (tester) async {
       await open(tester);
       final toolbar = tester.getRect(find.byType(NoteToolbar));
-      expect(toolbar.height, lessThanOrEqualTo(56), reason: 'the editor needs the screen');
+      expect(toolbar.height, lessThanOrEqualTo(56),
+          reason: 'the editor needs the screen');
       // Pinned to the bottom, where it rides on top of the keyboard.
-      expect(toolbar.bottom, tester.view.physicalSize.height / tester.view.devicePixelRatio);
+      expect(toolbar.bottom,
+          tester.view.physicalSize.height / tester.view.devicePixelRatio);
     });
 
-    testWidgets('lights a toolbar button while its format is on', (tester) async {
+    testWidgets('lights a toolbar button while its format is on',
+        (tester) async {
       await open(tester, note: 'Gift wrap');
       IconButton checklist() => tester.widget<IconButton>(
-            find.ancestor(of: find.byTooltip('Checklist'), matching: find.byType(IconButton)),
+            find.ancestor(
+                of: find.byTooltip('Checklist'),
+                matching: find.byType(IconButton)),
           );
       expect(checklist().isSelected, isFalse);
 
@@ -82,10 +96,12 @@ void main() {
     testWidgets('shows the note it was given', (tester) async {
       await open(tester, note: 'Gift wrap please');
       // Quill paints bare RichText, which the finder skips by default.
-      expect(find.textContaining('Gift wrap please', findRichText: true), findsWidgets);
+      expect(find.textContaining('Gift wrap please', findRichText: true),
+          findsWidgets);
     });
 
-    testWidgets('keeps formatting when a rich note is saved unchanged', (tester) async {
+    testWidgets('keeps formatting when a rich note is saved unchanged',
+        (tester) async {
       final rich = NoteCodec.encode(
         Delta()
           ..insert('Wrap in ')
@@ -97,10 +113,12 @@ void main() {
       await settleNote(tester);
 
       final saved = await popped;
-      expect(NoteCodec.decode(saved!.note).toList(), NoteCodec.decode(rich).toList());
+      expect(NoteCodec.decode(saved!.note).toList(),
+          NoteCodec.decode(rich).toList());
     });
 
-    testWidgets('saves a formatting change made in the toolbar', (tester) async {
+    testWidgets('saves a formatting change made in the toolbar',
+        (tester) async {
       await open(tester, note: 'Gift wrap');
       await makeFirstLineATodo(tester);
       await tester.tap(find.text('Save'));
@@ -116,7 +134,8 @@ void main() {
       expect(todos, isNotEmpty);
     });
 
-    testWidgets('backing out of a change asks, and discards on confirm', (tester) async {
+    testWidgets('backing out of a change asks, and discards on confirm',
+        (tester) async {
       await open(tester, note: 'Gift wrap');
       await makeFirstLineATodo(tester);
       await tester.tap(find.byTooltip('Close'));
@@ -146,7 +165,8 @@ void main() {
       expect(NoteCodec.plainText((await popped)!.note), 'Gift wrap');
     });
 
-    testWidgets('backing out of an untouched note needs no confirmation', (tester) async {
+    testWidgets('backing out of an untouched note needs no confirmation',
+        (tester) async {
       await open(tester, note: 'Gift wrap');
       await tester.tap(find.byTooltip('Close'));
       await settleNote(tester);

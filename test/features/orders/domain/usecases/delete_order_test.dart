@@ -112,8 +112,7 @@ void main() {
       when(() => mockOrderRepo.getOrderById(1))
           .thenAnswer((_) async => Success<Order?>(pendingOrder));
       when(() => mockOrderRepo.getOrderMaterials(1))
-          .thenAnswer(
-              (_) async => Success<List<OrderMaterial>>(testMaterials));
+          .thenAnswer((_) async => Success<List<OrderMaterial>>(testMaterials));
       when(() => mockMaterialRepo.releaseReservedMaterials(any(), any()))
           .thenAnswer((_) async => const Success<void>(null));
       when(() => mockOrderRepo.deleteOrder(1))
@@ -131,8 +130,7 @@ void main() {
       when(() => mockOrderRepo.getOrderById(2))
           .thenAnswer((_) async => Success<Order?>(packedOrder));
       when(() => mockOrderRepo.getOrderMaterials(2))
-          .thenAnswer(
-              (_) async => Success<List<OrderMaterial>>(testMaterials));
+          .thenAnswer((_) async => Success<List<OrderMaterial>>(testMaterials));
       when(() => mockMaterialRepo.restoreDeductedMaterials(any(), any()))
           .thenAnswer((_) async => const Success<void>(null));
       when(() => mockOrderRepo.deleteOrder(2))

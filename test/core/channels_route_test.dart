@@ -13,16 +13,19 @@ import '../support/sqlite.dart';
 void main() {
   setUpAll(useHostSqlite);
 
-  testWidgets('"Add channel" banner in the order wizard opens Channels without a duplicate-key crash',
+  testWidgets(
+      '"Add channel" banner in the order wizard opens Channels without a duplicate-key crash',
       (tester) async {
     await tester.runAsync(() async {
       await getIt.reset();
-      await configureDependencies(database: AppDatabase.forTesting(NativeDatabase.memory()));
+      await configureDependencies(
+          database: AppDatabase.forTesting(NativeDatabase.memory()));
     });
     await tester.pumpWidget(CraftbookApp(initialLocation: RouteNames.orders));
     await _settle(tester);
 
-    GoRouter.of(tester.element(find.byType(Scaffold).first)).push(RouteNames.newOrder);
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .push(RouteNames.newOrder);
     await _settle(tester);
 
     await tester.tap(find.text('Add'));
@@ -38,7 +41,8 @@ void main() {
 
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump(const Duration(milliseconds: 100));
   }
 }

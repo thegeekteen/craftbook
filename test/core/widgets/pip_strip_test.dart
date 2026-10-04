@@ -27,7 +27,8 @@ _Pips _countPips(WidgetTester tester, {PipSize size = PipSize.small}) {
   const colors = CraftColors.light;
   final out = _Pips();
   final containers = tester.widgetList<Container>(
-    find.descendant(of: find.byType(PipStrip), matching: find.byType(Container)),
+    find.descendant(
+        of: find.byType(PipStrip), matching: find.byType(Container)),
   );
   for (final ct in containers) {
     final d = ct.decoration;
@@ -36,7 +37,9 @@ _Pips _countPips(WidgetTester tester, {PipSize size = PipSize.small}) {
       out.markers++;
       continue;
     }
-    if (ct.constraints != BoxConstraints.tightFor(width: w, height: h)) continue;
+    if (ct.constraints != BoxConstraints.tightFor(width: w, height: h)) {
+      continue;
+    }
     if (d.gradient != null) {
       out.promised++;
     } else if (d.border != null) {
@@ -57,7 +60,8 @@ _Pips _countPips(WidgetTester tester, {PipSize size = PipSize.small}) {
 void main() {
   group('PipStrip', () {
     testWidgets('draws free, promised and empty pips', (tester) async {
-      await tester.pumpWidget(_wrap(const PipStrip(total: 10, free: 6, promised: 2)));
+      await tester
+          .pumpWidget(_wrap(const PipStrip(total: 10, free: 6, promised: 2)));
       final p = _countPips(tester);
       expect(p.free, 6);
       expect(p.promised, 2);
@@ -105,21 +109,25 @@ void main() {
     });
 
     testWidgets('no marker when alert level is zero', (tester) async {
-      await tester.pumpWidget(_wrap(const PipStrip(total: 5, free: 5, promised: 0)));
+      await tester
+          .pumpWidget(_wrap(const PipStrip(total: 5, free: 5, promised: 0)));
       expect(_countPips(tester).markers, 0);
     });
 
     testWidgets('promised pips are capped at pieces physically available',
         (tester) async {
-      await tester.pumpWidget(_wrap(const PipStrip(total: 7, free: 0, promised: 15)));
+      await tester
+          .pumpWidget(_wrap(const PipStrip(total: 7, free: 0, promised: 15)));
       final p = _countPips(tester);
       expect(p.free, 0);
       expect(p.promised, 7);
       expect(p.empty, 0);
     });
 
-    testWidgets('negative free (overcommitted) is treated as zero', (tester) async {
-      await tester.pumpWidget(_wrap(const PipStrip(total: 4, free: -3, promised: 7)));
+    testWidgets('negative free (overcommitted) is treated as zero',
+        (tester) async {
+      await tester
+          .pumpWidget(_wrap(const PipStrip(total: 4, free: -3, promised: 7)));
       final p = _countPips(tester);
       expect(p.free, 0);
       expect(p.promised, 4);
@@ -187,7 +195,8 @@ void main() {
       expect(p.empty, 1);
     });
 
-    testWidgets('low stock paints free pips in the alert colour', (tester) async {
+    testWidgets('low stock paints free pips in the alert colour',
+        (tester) async {
       await tester.pumpWidget(_wrap(const PipStrip(
         total: 2,
         free: 2,
@@ -217,8 +226,10 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('zero total renders nothing but does not throw', (tester) async {
-      await tester.pumpWidget(_wrap(const PipStrip(total: 0, free: 0, promised: 0)));
+    testWidgets('zero total renders nothing but does not throw',
+        (tester) async {
+      await tester
+          .pumpWidget(_wrap(const PipStrip(total: 0, free: 0, promised: 0)));
       expect(tester.takeException(), isNull);
       expect(_countPips(tester).pips, 0);
     });
@@ -233,7 +244,8 @@ void main() {
     });
 
     testWidgets('hides optional keys', (tester) async {
-      await tester.pumpWidget(_wrap(const PipLegend(showPromised: false, showAlert: false)));
+      await tester.pumpWidget(
+          _wrap(const PipLegend(showPromised: false, showAlert: false)));
       expect(find.text('free'), findsOneWidget);
       expect(find.text('promised'), findsNothing);
       expect(find.text('reorder level'), findsNothing);

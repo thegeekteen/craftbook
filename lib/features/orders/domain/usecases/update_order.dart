@@ -56,12 +56,14 @@ class UpdateOrder {
     if (order == null) return const Error(NotFoundFailure('Order not found'));
 
     final trimmedNote = note?.trim();
-    final cleanNote = trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote;
+    final cleanNote =
+        trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote;
     final cleanFields = OrderFieldCodec.normalize(fieldValues);
 
     switch (order.status) {
       case OrderStatus.cancelled:
-        return const Error(ValidationFailure('Cancelled orders cannot be edited'));
+        return const Error(
+            ValidationFailure('Cancelled orders cannot be edited'));
       case OrderStatus.shipped:
         // Money and dates are history by now; only the note may change.
         return orderRepository.updateOrder(
@@ -86,13 +88,16 @@ class UpdateOrder {
       return const Error(ValidationFailure('Customer name is required'));
     }
     if (shipByDate.isBefore(orderDate)) {
-      return const Error(ValidationFailure('Ship-by date cannot be before the order date'));
+      return const Error(
+          ValidationFailure('Ship-by date cannot be before the order date'));
     }
 
     if (order.status == OrderStatus.packed) {
-      return _updatePacked(order, customerName, cleanFields, cleanNote, orderDate, shipByDate, channelId);
+      return _updatePacked(order, customerName, cleanFields, cleanNote,
+          orderDate, shipByDate, channelId);
     }
-    return _updatePending(order, customerName, cleanFields, cleanNote, orderDate, shipByDate, channelId, items);
+    return _updatePending(order, customerName, cleanFields, cleanNote,
+        orderDate, shipByDate, channelId, items);
   }
 
   Future<Result<void>> _updatePacked(
@@ -150,8 +155,10 @@ class UpdateOrder {
     final oldProductsResult = await orderRepository.getOrderProducts(orderId);
     if (oldMaterialsResult case Error(:final failure)) return Error(failure);
     if (oldProductsResult case Error(:final failure)) return Error(failure);
-    final oldMaterials = (oldMaterialsResult as Success<List<OrderMaterial>>).value;
-    final oldProducts = (oldProductsResult as Success<List<OrderProduct>>).value;
+    final oldMaterials =
+        (oldMaterialsResult as Success<List<OrderMaterial>>).value;
+    final oldProducts =
+        (oldProductsResult as Success<List<OrderProduct>>).value;
 
     final expanded = await expandOrderItems(productRepository, items);
     // A line that needs the same amount as before keeps its recorded waste
@@ -202,13 +209,16 @@ class UpdateOrder {
 
     // Rows are replaced; now move the reservations from the old plan to the new.
     for (final m in oldMaterials) {
-      await materialRepository.releaseReservedMaterials(m.materialId, m.plannedQuantity);
+      await materialRepository.releaseReservedMaterials(
+          m.materialId, m.plannedQuantity);
     }
     for (final p in oldProducts) {
-      await productRepository.releaseReservedProductStock(p.productId, p.quantity);
+      await productRepository.releaseReservedProductStock(
+          p.productId, p.quantity);
     }
     for (final m in materials) {
-      await materialRepository.reserveMaterials(m.materialId, m.plannedQuantity);
+      await materialRepository.reserveMaterials(
+          m.materialId, m.plannedQuantity);
     }
     for (final p in products) {
       await productRepository.reserveProductStock(p.productId, p.quantity);
@@ -216,9 +226,12 @@ class UpdateOrder {
     return const Success(null);
   }
 
-  OrderMaterialInput? _keepIfUnchanged(OrderMaterialInput fresh, List<OrderMaterial> old) {
+  OrderMaterialInput? _keepIfUnchanged(
+      OrderMaterialInput fresh, List<OrderMaterial> old) {
     final match = old
-        .where((o) => o.materialId == fresh.materialId && o.plannedQuantity == fresh.plannedQuantity)
+        .where((o) =>
+            o.materialId == fresh.materialId &&
+            o.plannedQuantity == fresh.plannedQuantity)
         .firstOrNull;
     if (match == null) return null;
     return OrderMaterialInput(
@@ -232,9 +245,11 @@ class UpdateOrder {
     );
   }
 
-  OrderProductInput? _keepProductIfUnchanged(OrderProductInput fresh, List<OrderProduct> old) {
+  OrderProductInput? _keepProductIfUnchanged(
+      OrderProductInput fresh, List<OrderProduct> old) {
     final match = old
-        .where((o) => o.productId == fresh.productId && o.quantity == fresh.quantity)
+        .where((o) =>
+            o.productId == fresh.productId && o.quantity == fresh.quantity)
         .firstOrNull;
     if (match == null) return null;
     return OrderProductInput(

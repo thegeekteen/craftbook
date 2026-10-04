@@ -80,7 +80,8 @@ class _OrderFieldInputState extends State<OrderFieldInput> {
           },
           onChanged: (v) {
             final text = v.trim();
-            _emit(text.isEmpty ? '' : OrderFieldCodec.encodeNumber(text) ?? text);
+            _emit(
+                text.isEmpty ? '' : OrderFieldCodec.encodeNumber(text) ?? text);
           },
         ),
       OrderFieldType.date => DateField(

@@ -5,7 +5,8 @@ import 'package:craftbook/database/daos/order_field_dao.dart';
 import 'package:craftbook/features/order_fields/data/repositories/order_field_repository_impl.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
 import 'package:craftbook/features/orders/data/repositories/order_repository_impl.dart';
-import 'package:craftbook/features/orders/domain/entities/order.dart' show OrderStatus;
+import 'package:craftbook/features/orders/domain/entities/order.dart'
+    show OrderStatus;
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,11 +34,16 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<int> field(String name, {OrderFieldType type = OrderFieldType.text, List<String> options = const []}) async =>
-      ok(await fields.createField(OrderField(name: name, type: type, options: options)));
+  Future<int> field(String name,
+          {OrderFieldType type = OrderFieldType.text,
+          List<String> options = const []}) async =>
+      ok(await fields
+          .createField(OrderField(name: name, type: type, options: options)));
 
   Future<int> order({Map<int, String> values = const {}}) async {
-    final product = await db.into(db.products).insert(ProductsCompanion.insert(name: 'Tulip', sellPrice: 450));
+    final product = await db
+        .into(db.products)
+        .insert(ProductsCompanion.insert(name: 'Tulip', sellPrice: 450));
     return ok(await orders.createOrder(
       customerName: 'Maria',
       orderDate: DateTime(2026, 9, 1),
@@ -48,17 +54,25 @@ void main() {
       channelFees: 10,
       shippingCost: 0,
       profit: 0,
-      items: [OrderItemInput(productId: product, productName: 'Tulip', quantity: 1, unitPrice: 450)],
+      items: [
+        OrderItemInput(
+            productId: product,
+            productName: 'Tulip',
+            quantity: 1,
+            unitPrice: 450)
+      ],
       materials: const [],
       fieldValues: values,
     ));
   }
 
   Future<Map<String, String>> valuesOf(int orderId) async => {
-        for (final e in ok(await orders.getOrderFieldValues(orderId))) e.field.name: e.value,
+        for (final e in ok(await orders.getOrderFieldValues(orderId)))
+          e.field.name: e.value,
       };
 
-  Future<void> update(int id, Map<int, String>? values) async => ok(await orders.updateOrder(
+  Future<void> update(int id, Map<int, String>? values) async =>
+      ok(await orders.updateOrder(
         id: id,
         customerName: 'Maria',
         orderDate: DateTime(2026, 9, 1),
@@ -75,7 +89,8 @@ void main() {
   group('definitions', () {
     test('new fields go to the end, with options kept in order', () async {
       await field('Address');
-      await field('Wrap', type: OrderFieldType.choice, options: ['Kraft', 'Floral']);
+      await field('Wrap',
+          type: OrderFieldType.choice, options: ['Kraft', 'Floral']);
       final all = ok(await fields.getFields());
       expect(all.map((f) => f.name), ['Address', 'Wrap']);
       expect(all.map((f) => f.position), [0, 1]);
@@ -84,9 +99,14 @@ void main() {
     });
 
     test('updateField rewrites name, type and options', () async {
-      final id = await field('Wrap', type: OrderFieldType.choice, options: ['Kraft']);
+      final id =
+          await field('Wrap', type: OrderFieldType.choice, options: ['Kraft']);
       ok(await fields.updateField(
-        OrderField(id: id, name: 'Wrapping', type: OrderFieldType.choice, options: const ['Kraft', 'None']),
+        OrderField(
+            id: id,
+            name: 'Wrapping',
+            type: OrderFieldType.choice,
+            options: const ['Kraft', 'None']),
       ));
       final f = ok(await fields.getField(id))!;
       expect(f.name, 'Wrapping');
@@ -94,7 +114,8 @@ void main() {
     });
 
     test('updateField on a missing id fails', () async {
-      final result = await fields.updateField(const OrderField(id: 99, name: 'X', type: OrderFieldType.text));
+      final result = await fields.updateField(
+          const OrderField(id: 99, name: 'X', type: OrderFieldType.text));
       expect(result, isA<Error<void>>());
     });
 
@@ -105,7 +126,8 @@ void main() {
       await order(values: {address: 'Pasig', size: 'M'});
       await order();
       final all = ok(await fields.getFields());
-      expect({for (final f in all) f.name: f.usageCount}, {'Address': 2, 'Size': 1});
+      expect({for (final f in all) f.name: f.usageCount},
+          {'Address': 2, 'Size': 1});
     });
 
     test('reorder sets positions in list order', () async {
@@ -116,12 +138,17 @@ void main() {
       expect(ok(await fields.getFields()).map((f) => f.name), ['C', 'A', 'B']);
     });
 
-    test('archived fields are left out on request; restoring moves to the end', () async {
+    test('archived fields are left out on request; restoring moves to the end',
+        () async {
       final a = await field('A');
       await field('B');
       ok(await fields.setArchived(a, true));
-      expect(ok(await fields.getFields(includeArchived: false)).map((f) => f.name), ['B']);
-      expect(ok(await fields.getFields()).firstWhere((f) => f.id == a).isArchived, isTrue);
+      expect(
+          ok(await fields.getFields(includeArchived: false)).map((f) => f.name),
+          ['B']);
+      expect(
+          ok(await fields.getFields()).firstWhere((f) => f.id == a).isArchived,
+          isTrue);
 
       ok(await fields.setArchived(a, false));
       expect(ok(await fields.getFields()).map((f) => f.name), ['B', 'A']);
@@ -198,7 +225,10 @@ void main() {
         channelFees: 0,
         shippingCost: 0,
         profit: 0,
-        items: const [OrderItemInput(productId: 999, productName: 'X', quantity: 1, unitPrice: 1)],
+        items: const [
+          OrderItemInput(
+              productId: 999, productName: 'X', quantity: 1, unitPrice: 1)
+        ],
         materials: const [],
         fieldValues: {address: 'Cebu'},
       );

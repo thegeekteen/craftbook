@@ -8,6 +8,7 @@ class GetProductOrderLines {
 
   GetProductOrderLines(this.repository);
 
-  Future<Result<List<ProductOrderLine>>> call(int productId, DateTime start, DateTime end) =>
+  Future<Result<List<ProductOrderLine>>> call(
+          int productId, DateTime start, DateTime end) =>
       repository.getProductOrderLines(productId, start, end);
 }

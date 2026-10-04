@@ -45,7 +45,7 @@ void main() {
     expect(await db.select(db.notes).get(), isEmpty);
     expect(await db.select(db.orders).get(), hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 5);
+    expect(version.data.values.single, AppDatabase.currentSchemaVersion);
   });
 
   test('the migrated table takes notes like a fresh one', () async {
@@ -56,10 +56,12 @@ void main() {
     final id = await db.into(db.notes).insert(
           const NotesCompanion(body: Value('[{"insert":"Hi\\n"}]')),
         );
-    final note = await (db.select(db.notes)..where((t) => t.id.equals(id))).getSingle();
+    final note =
+        await (db.select(db.notes)..where((t) => t.id.equals(id))).getSingle();
     expect(note.title, '');
     expect(note.isPinned, isFalse);
     expect(note.body, '[{"insert":"Hi\\n"}]');
-    expect(note.updatedAt.difference(DateTime.now()).inMinutes.abs(), lessThan(1));
+    expect(
+        note.updatedAt.difference(DateTime.now()).inMinutes.abs(), lessThan(1));
   });
 }

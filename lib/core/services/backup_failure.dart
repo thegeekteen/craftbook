@@ -12,10 +12,12 @@ enum BackupProblem {
   wrongApp('This file belongs to a different app, not Craftbook.'),
 
   /// Made by a later Craftbook than this one; we can't read its schema.
-  newerVersion('This backup was made with a newer Craftbook. Update the app first.'),
+  newerVersion(
+      'This backup was made with a newer Craftbook. Update the app first.'),
 
   /// From an older Craftbook, but upgrading it failed.
-  upgradeFailed('This backup couldn\'t be upgraded to this version of Craftbook.'),
+  upgradeFailed(
+      'This backup couldn\'t be upgraded to this version of Craftbook.'),
 
   /// Opens and upgrades, but tables or columns the app needs are missing.
   schemaMismatch('This backup is missing data Craftbook needs.');

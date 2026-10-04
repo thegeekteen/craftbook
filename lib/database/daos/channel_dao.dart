@@ -22,8 +22,7 @@ class ChannelDao extends DatabaseAccessor<AppDatabase> with _$ChannelDaoMixin {
 
   /// Get channel by ID
   Future<Channel?> getChannelById(int id) {
-    return (select(channels)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(channels)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Create new channel

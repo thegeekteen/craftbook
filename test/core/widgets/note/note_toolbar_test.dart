@@ -34,13 +34,16 @@ void main() {
 
   /// Every tool's tooltip, scrolled into view or not.
   Set<String> tools(WidgetTester tester) => {
-        for (final b in tester.widgetList<IconButton>(find.byType(IconButton, skipOffstage: false)))
+        for (final b in tester.widgetList<IconButton>(
+            find.byType(IconButton, skipOffstage: false)))
           if (b.tooltip != null) b.tooltip!,
       };
 
-  testWidgets('the compact toolbar keeps to the order-note set', (tester) async {
+  testWidgets('the compact toolbar keeps to the order-note set',
+      (tester) async {
     await pump(tester, full: false);
-    expect(tools(tester), containsAll(['Bold', 'Heading', 'Checklist', 'Clear formatting']));
+    expect(tools(tester),
+        containsAll(['Bold', 'Heading', 'Checklist', 'Clear formatting']));
     expect(tools(tester).intersection(fullOnly.toSet()), isEmpty);
   });
 
@@ -56,13 +59,15 @@ void main() {
         scrollable: find.byType(Scrollable));
     await tester.tap(find.byTooltip('Quote'));
     await tester.pump();
-    expect(controller.getSelectionStyle().attributes[Attribute.blockQuote.key], Attribute.blockQuote);
+    expect(controller.getSelectionStyle().attributes[Attribute.blockQuote.key],
+        Attribute.blockQuote);
   });
 
   testWidgets('a highlight is stored by palette name', (tester) async {
     controller
       ..replaceText(0, 0, 'Hello', null)
-      ..updateSelection(const TextSelection(baseOffset: 0, extentOffset: 5), ChangeSource.local);
+      ..updateSelection(const TextSelection(baseOffset: 0, extentOffset: 5),
+          ChangeSource.local);
     await pump(tester, full: true);
     await tester.tap(find.byTooltip('Highlight'));
     await tester.pumpAndSettle();
@@ -70,10 +75,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final ops = controller.document.toDelta().toJson();
-    expect(ops.first, {'insert': 'Hello', 'attributes': {'background': 'go'}});
+    expect(ops.first, {
+      'insert': 'Hello',
+      'attributes': {'background': 'go'}
+    });
   });
 
-  testWidgets('a link with nothing selected inserts the address', (tester) async {
+  testWidgets('a link with nothing selected inserts the address',
+      (tester) async {
     await pump(tester, full: true);
     await tester.scrollUntilVisible(find.byTooltip('Link'), 100,
         scrollable: find.byType(Scrollable));

@@ -60,8 +60,8 @@ class _ProductsListViewState extends State<_ProductsListView> {
               builder: (context, state) {
                 return switch (state) {
                   ProductsLoaded() => _buildList(state),
-                  ProductsError(:final message) =>
-                    Center(child: ErrorState(message: message, onRetry: _reload)),
+                  ProductsError(:final message) => Center(
+                      child: ErrorState(message: message, onRetry: _reload)),
                   _ => const Center(child: CircularProgressIndicator()),
                 };
               },
@@ -97,7 +97,10 @@ class _ProductsListViewState extends State<_ProductsListView> {
                 actionLabel: 'Add product',
                 onAction: () => _open(RouteNames.newProduct),
               )
-            : EmptyState(icon: Icons.search_off_rounded, title: 'No matches', message: 'Nothing matches "$_query".'),
+            : EmptyState(
+                icon: Icons.search_off_rounded,
+                title: 'No matches',
+                message: 'Nothing matches "$_query".'),
       ]);
     }
 

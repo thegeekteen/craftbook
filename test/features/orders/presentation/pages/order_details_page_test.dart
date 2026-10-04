@@ -17,7 +17,8 @@ import '../../../../support/sqlite.dart';
 void main() {
   setUpAll(useHostSqlite);
 
-  testWidgets('the order total is the headline and profit is the bottom line', (tester) async {
+  testWidgets('the order total is the headline and profit is the bottom line',
+      (tester) async {
     // Tall enough to show the whole page without scrolling.
     tester.view.physicalSize = const Size(1080, 4800);
     tester.view.devicePixelRatio = 2.75;
@@ -26,23 +27,31 @@ void main() {
     late Order order;
     await tester.runAsync(() async {
       await getIt.reset();
-      await configureDependencies(database: AppDatabase.forTesting(NativeDatabase.memory()));
+      await configureDependencies(
+          database: AppDatabase.forTesting(NativeDatabase.memory()));
       await seedSampleShop();
-      order = (await getIt<OrderRepository>().getOrderById(8) as Success<Order?>).value!;
+      order =
+          (await getIt<OrderRepository>().getOrderById(8) as Success<Order?>)
+              .value!;
     });
-    await tester.pumpWidget(CraftbookApp(initialLocation: RouteNames.orderPath(8)));
+    await tester
+        .pumpWidget(CraftbookApp(initialLocation: RouteNames.orderPath(8)));
     await _settle(tester);
 
-    final totalRow = find.ancestor(of: find.text('ORDER TOTAL'), matching: find.byType(Row));
+    final totalRow =
+        find.ancestor(of: find.text('ORDER TOTAL'), matching: find.byType(Row));
     expect(
-      find.descendant(of: totalRow, matching: find.text(CurrencyFormatter.format(order.totalSales))),
+      find.descendant(
+          of: totalRow,
+          matching: find.text(CurrencyFormatter.format(order.totalSales))),
       findsOneWidget,
     );
     expect(find.text('PROFIT'), findsNothing);
 
     final profit = find.textContaining('Profit · ');
     expect(profit, findsOneWidget);
-    expect(find.text(CurrencyFormatter.format(order.liveProfit)), findsOneWidget);
+    expect(
+        find.text(CurrencyFormatter.format(order.liveProfit)), findsOneWidget);
     expect(
       tester.getTopLeft(profit).dy,
       greaterThan(tester.getTopLeft(find.text('Shipping')).dy),
@@ -59,7 +68,8 @@ void main() {
 
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 12; i++) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump(const Duration(milliseconds: 100));
   }
 }

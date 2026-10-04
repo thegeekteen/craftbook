@@ -60,8 +60,7 @@ void main() {
 
     test('blocks deletion when has BOM items', () async {
       when(() => mockRepo.getBomItems(1))
-          .thenAnswer(
-              (_) async => Success<List<BomItem>>([testBomItem]));
+          .thenAnswer((_) async => Success<List<BomItem>>([testBomItem]));
 
       final result = await deleteProduct(1);
 

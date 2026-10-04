@@ -16,6 +16,7 @@ import '../../../../core/widgets/section_label.dart';
 import '../../../notes/domain/repositories/note_repository.dart';
 import '../../../order_fields/domain/repositories/order_field_repository.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
+import '../../../social_links/domain/repositories/social_link_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../widgets/appearance_card.dart';
@@ -35,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _orderFieldsHint;
   String? _buyListHint;
   String? _notesHint;
+  String? _socialHint;
   bool _canUndoRestore = false;
 
   @override
@@ -50,13 +52,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final buyList = await getIt<MaterialRepository>().getBuyList();
     final orderFields = await getIt<OrderFieldRepository>().getFields();
     final notes = await getIt<NoteRepository>().getNotes();
+    final social = await getIt<SocialLinkRepository>().getLinks();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
     setState(() {
       _canUndoRestore = canUndoRestore;
       if (products case Success(:final value)) {
         final low = value.where((p) => p.isLowStock).length;
-        _productsHint = '${value.length} ${value.length == 1 ? 'product' : 'products'}'
+        _productsHint =
+            '${value.length} ${value.length == 1 ? 'product' : 'products'}'
             '${low > 0 ? ' · $low low' : ''}';
       }
       if (channels case Success(:final value)) {
@@ -85,6 +89,12 @@ class _SettingsPageState extends State<SettingsPage> {
             : '${value.length} ${value.length == 1 ? 'note' : 'notes'}'
                 '${pinned > 0 ? ' · $pinned pinned' : ''}';
       }
+      if (social case Success(:final value)) {
+        _socialHint = value.isEmpty
+            ? null
+            : '${value.length} ${value.length == 1 ? 'shortcut' : 'shortcuts'} · '
+                '${value.take(3).map((l) => l.label).join(', ')}';
+      }
     });
   }
 
@@ -101,26 +111,30 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: AppSpacing.page,
         children: [
-          const SectionLabel('Catalogue', padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
+          const SectionLabel('Catalogue',
+              padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
               _MoreRow(
                 icon: Icons.sell_outlined,
                 title: 'Products',
-                subtitle: _productsHint ?? 'What you sell and what goes into it',
+                subtitle:
+                    _productsHint ?? 'What you sell and what goes into it',
                 onTap: () => _open(RouteNames.products),
               ),
               _MoreRow(
                 icon: Icons.storefront_outlined,
                 title: 'Channels & fees',
-                subtitle: _channelsHint ?? 'Where you sell and what they charge',
+                subtitle:
+                    _channelsHint ?? 'Where you sell and what they charge',
                 onTap: () => _open(RouteNames.channels),
               ),
               _MoreRow(
                 icon: Icons.dashboard_customize_outlined,
                 title: 'Order fields',
-                subtitle: _orderFieldsHint ?? 'Extra details to note on each order',
+                subtitle:
+                    _orderFieldsHint ?? 'Extra details to note on each order',
                 onTap: () => _open(RouteNames.orderFields),
               ),
               _MoreRow(
@@ -131,7 +145,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
-          const SectionLabel('Notebook', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Notebook',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -143,10 +158,25 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
-          const SectionLabel('Appearance', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Your shop online',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SizedBox(height: 8),
+          AppCard.flush(
+            child: CardList(children: [
+              _MoreRow(
+                icon: Icons.share_outlined,
+                title: 'Social shortcuts',
+                subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
+                onTap: () => _open(RouteNames.socialLinks),
+              ),
+            ]),
+          ),
+          const SectionLabel('Appearance',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           const AppearanceCard(),
-          const SectionLabel('Your data', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Your data',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -172,7 +202,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
             ]),
           ),
-          const SectionLabel('About', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('About',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -192,7 +223,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 10),
                 Text(
                   AppConstants.appName,
-                  style: AppTextStyles.displaySmall.copyWith(color: c.ink, fontSize: 17),
+                  style: AppTextStyles.displaySmall
+                      .copyWith(color: c.ink, fontSize: 17),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -231,7 +263,8 @@ class _MoreRow extends StatelessWidget {
       leading: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
+        decoration:
+            BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
         child: Icon(icon, size: 20, color: iconColor ?? c.ink),
       ),
       title: Text(title),

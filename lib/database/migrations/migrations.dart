@@ -104,7 +104,8 @@ Future<void> runMigrations(
         'FROM orders o JOIN order_field_definitions d '
         "ON d.name = 'Address' WHERE TRIM(o.customer_address) <> ''",
       );
-      await db.customStatement('ALTER TABLE orders DROP COLUMN customer_address');
+      await db
+          .customStatement('ALTER TABLE orders DROP COLUMN customer_address');
     });
   }
 
@@ -120,6 +121,20 @@ Future<void> runMigrations(
       "(CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "
       '"updated_at" INTEGER NOT NULL DEFAULT '
       "(CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER))"
+      ')',
+    );
+  }
+
+  // Version 6: social shortcuts.
+  if (from < 6) {
+    await db.customStatement(
+      'CREATE TABLE "social_links" ('
+      '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      '"platform" TEXT NOT NULL, '
+      '"label" TEXT NOT NULL, '
+      '"url" TEXT NOT NULL, '
+      '"color_value" INTEGER NULL, '
+      '"position" INTEGER NOT NULL DEFAULT 0'
       ')',
     );
   }

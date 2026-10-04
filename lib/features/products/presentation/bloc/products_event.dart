@@ -37,7 +37,14 @@ class CreateProductEvent extends ProductsEvent {
   });
 
   @override
-  List<Object?> get props => [name, description, sellPrice, isStandalone, initialQuantity, initialUnitCost];
+  List<Object?> get props => [
+        name,
+        description,
+        sellPrice,
+        isStandalone,
+        initialQuantity,
+        initialUnitCost
+      ];
 }
 
 /// Update an existing product
@@ -63,8 +70,16 @@ class UpdateProductEvent extends ProductsEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [id, name, description, sellPrice, unitCost, isActive, isStandalone, alertLevel];
+  List<Object?> get props => [
+        id,
+        name,
+        description,
+        sellPrice,
+        unitCost,
+        isActive,
+        isStandalone,
+        alertLevel
+      ];
 }
 
 /// Delete a product

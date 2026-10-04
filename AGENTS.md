@@ -69,6 +69,7 @@ lib/
 | **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
 | **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields |
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
+| **Social links** | `/social-links` | Shortcuts to the shop's Facebook, TikTok, Shopee, Lazada… pages: brand-tile grid, add/edit sheet, drag to reorder. Links open outside the app via `LinkLauncher` |
 
 ---
 

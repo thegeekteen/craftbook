@@ -52,8 +52,7 @@ void main() {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
           .thenAnswer((_) async => const Success<List<Product>>([]));
       when(() => mockMaterialRepo.getStockMovements(1))
-          .thenAnswer(
-              (_) async => const Success<List<StockMovement>>([]));
+          .thenAnswer((_) async => const Success<List<StockMovement>>([]));
       when(() => mockMaterialRepo.deleteMaterial(1))
           .thenAnswer((_) async => const Success<void>(null));
 
@@ -65,8 +64,7 @@ void main() {
 
     test('blocks deletion when used in products (BOM)', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
-          .thenAnswer(
-              (_) async => Success<List<Product>>([testProduct]));
+          .thenAnswer((_) async => Success<List<Product>>([testProduct]));
 
       final result = await deleteMaterial(1);
 
@@ -84,9 +82,8 @@ void main() {
     test('blocks deletion when has stock movement history', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
           .thenAnswer((_) async => const Success<List<Product>>([]));
-      when(() => mockMaterialRepo.getStockMovements(1))
-          .thenAnswer((_) async =>
-              Success<List<StockMovement>>([testMovement]));
+      when(() => mockMaterialRepo.getStockMovements(1)).thenAnswer(
+          (_) async => Success<List<StockMovement>>([testMovement]));
 
       final result = await deleteMaterial(1);
 

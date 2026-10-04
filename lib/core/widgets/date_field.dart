@@ -33,7 +33,9 @@ class DateField extends StatelessWidget {
     final first = firstDate ?? DateTime(2020);
     final last = lastDate ?? DateTime(2100);
     final current = value ?? DateUtils.dateOnly(DateTime.now());
-    final initial = current.isBefore(first) ? first : (current.isAfter(last) ? last : current);
+    final initial = current.isBefore(first)
+        ? first
+        : (current.isAfter(last) ? last : current);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -67,20 +69,24 @@ class DateField extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 11.5),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: c.muted, fontSize: 11.5),
                     ),
                     const SizedBox(height: 1),
                     if (value == null)
                       Text(
                         placeholder,
-                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
+                        style:
+                            AppTextStyles.bodyMedium.copyWith(color: c.muted),
                       )
                     else
                       Text(
-                        DateFormat(value.year == DateTime.now().year ? 'EEE, MMM d' : 'MMM d, y')
+                        DateFormat(value.year == DateTime.now().year
+                                ? 'EEE, MMM d'
+                                : 'MMM d, y')
                             .format(value),
-                        style: AppTextStyles.bodyMedium
-                            .copyWith(color: c.ink, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                            color: c.ink, fontWeight: FontWeight.w600),
                       ),
                   ],
                 ),

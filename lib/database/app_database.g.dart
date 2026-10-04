@@ -5941,6 +5941,348 @@ class NotesCompanion extends UpdateCompanion<Note> {
   }
 }
 
+class $SocialLinksTable extends SocialLinks
+    with TableInfo<$SocialLinksTable, SocialLink> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SocialLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _platformMeta =
+      const VerificationMeta('platform');
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+      'platform', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+      'label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+      'url', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _colorValueMeta =
+      const VerificationMeta('colorValue');
+  @override
+  late final GeneratedColumn<int> colorValue = GeneratedColumn<int>(
+      'color_value', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+      'position', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, platform, label, url, colorValue, position];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'social_links';
+  @override
+  VerificationContext validateIntegrity(Insertable<SocialLink> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('platform')) {
+      context.handle(_platformMeta,
+          platform.isAcceptableOrUnknown(data['platform']!, _platformMeta));
+    } else if (isInserting) {
+      context.missing(_platformMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+          _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+          _urlMeta, url.isAcceptableOrUnknown(data['url']!, _urlMeta));
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('color_value')) {
+      context.handle(
+          _colorValueMeta,
+          colorValue.isAcceptableOrUnknown(
+              data['color_value']!, _colorValueMeta));
+    }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SocialLink map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SocialLink(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      platform: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}platform'])!,
+      label: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label'])!,
+      url: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}url'])!,
+      colorValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}color_value']),
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
+    );
+  }
+
+  @override
+  $SocialLinksTable createAlias(String alias) {
+    return $SocialLinksTable(attachedDatabase, alias);
+  }
+}
+
+class SocialLink extends DataClass implements Insertable<SocialLink> {
+  final int id;
+
+  /// A preset key (`facebook`, `shopee`…) or `custom`.
+  final String platform;
+  final String label;
+  final String url;
+
+  /// ARGB tile colour, only for `custom` links; presets carry their own.
+  final int? colorValue;
+  final int position;
+  const SocialLink(
+      {required this.id,
+      required this.platform,
+      required this.label,
+      required this.url,
+      this.colorValue,
+      required this.position});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['platform'] = Variable<String>(platform);
+    map['label'] = Variable<String>(label);
+    map['url'] = Variable<String>(url);
+    if (!nullToAbsent || colorValue != null) {
+      map['color_value'] = Variable<int>(colorValue);
+    }
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  SocialLinksCompanion toCompanion(bool nullToAbsent) {
+    return SocialLinksCompanion(
+      id: Value(id),
+      platform: Value(platform),
+      label: Value(label),
+      url: Value(url),
+      colorValue: colorValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(colorValue),
+      position: Value(position),
+    );
+  }
+
+  factory SocialLink.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SocialLink(
+      id: serializer.fromJson<int>(json['id']),
+      platform: serializer.fromJson<String>(json['platform']),
+      label: serializer.fromJson<String>(json['label']),
+      url: serializer.fromJson<String>(json['url']),
+      colorValue: serializer.fromJson<int?>(json['colorValue']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'platform': serializer.toJson<String>(platform),
+      'label': serializer.toJson<String>(label),
+      'url': serializer.toJson<String>(url),
+      'colorValue': serializer.toJson<int?>(colorValue),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  SocialLink copyWith(
+          {int? id,
+          String? platform,
+          String? label,
+          String? url,
+          Value<int?> colorValue = const Value.absent(),
+          int? position}) =>
+      SocialLink(
+        id: id ?? this.id,
+        platform: platform ?? this.platform,
+        label: label ?? this.label,
+        url: url ?? this.url,
+        colorValue: colorValue.present ? colorValue.value : this.colorValue,
+        position: position ?? this.position,
+      );
+  SocialLink copyWithCompanion(SocialLinksCompanion data) {
+    return SocialLink(
+      id: data.id.present ? data.id.value : this.id,
+      platform: data.platform.present ? data.platform.value : this.platform,
+      label: data.label.present ? data.label.value : this.label,
+      url: data.url.present ? data.url.value : this.url,
+      colorValue:
+          data.colorValue.present ? data.colorValue.value : this.colorValue,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SocialLink(')
+          ..write('id: $id, ')
+          ..write('platform: $platform, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('colorValue: $colorValue, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, platform, label, url, colorValue, position);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SocialLink &&
+          other.id == this.id &&
+          other.platform == this.platform &&
+          other.label == this.label &&
+          other.url == this.url &&
+          other.colorValue == this.colorValue &&
+          other.position == this.position);
+}
+
+class SocialLinksCompanion extends UpdateCompanion<SocialLink> {
+  final Value<int> id;
+  final Value<String> platform;
+  final Value<String> label;
+  final Value<String> url;
+  final Value<int?> colorValue;
+  final Value<int> position;
+  const SocialLinksCompanion({
+    this.id = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.label = const Value.absent(),
+    this.url = const Value.absent(),
+    this.colorValue = const Value.absent(),
+    this.position = const Value.absent(),
+  });
+  SocialLinksCompanion.insert({
+    this.id = const Value.absent(),
+    required String platform,
+    required String label,
+    required String url,
+    this.colorValue = const Value.absent(),
+    this.position = const Value.absent(),
+  })  : platform = Value(platform),
+        label = Value(label),
+        url = Value(url);
+  static Insertable<SocialLink> custom({
+    Expression<int>? id,
+    Expression<String>? platform,
+    Expression<String>? label,
+    Expression<String>? url,
+    Expression<int>? colorValue,
+    Expression<int>? position,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (platform != null) 'platform': platform,
+      if (label != null) 'label': label,
+      if (url != null) 'url': url,
+      if (colorValue != null) 'color_value': colorValue,
+      if (position != null) 'position': position,
+    });
+  }
+
+  SocialLinksCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? platform,
+      Value<String>? label,
+      Value<String>? url,
+      Value<int?>? colorValue,
+      Value<int>? position}) {
+    return SocialLinksCompanion(
+      id: id ?? this.id,
+      platform: platform ?? this.platform,
+      label: label ?? this.label,
+      url: url ?? this.url,
+      colorValue: colorValue ?? this.colorValue,
+      position: position ?? this.position,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (colorValue.present) {
+      map['color_value'] = Variable<int>(colorValue.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SocialLinksCompanion(')
+          ..write('id: $id, ')
+          ..write('platform: $platform, ')
+          ..write('label: $label, ')
+          ..write('url: $url, ')
+          ..write('colorValue: $colorValue, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5961,6 +6303,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $OrderFieldValuesTable orderFieldValues =
       $OrderFieldValuesTable(this);
   late final $NotesTable notes = $NotesTable(this);
+  late final $SocialLinksTable socialLinks = $SocialLinksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5979,7 +6322,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         settings,
         orderFieldDefinitions,
         orderFieldValues,
-        notes
+        notes,
+        socialLinks
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -9307,6 +9651,182 @@ typedef $$NotesTableProcessedTableManager = ProcessedTableManager<
     (Note, BaseReferences<_$AppDatabase, $NotesTable, Note>),
     Note,
     PrefetchHooks Function()>;
+typedef $$SocialLinksTableCreateCompanionBuilder = SocialLinksCompanion
+    Function({
+  Value<int> id,
+  required String platform,
+  required String label,
+  required String url,
+  Value<int?> colorValue,
+  Value<int> position,
+});
+typedef $$SocialLinksTableUpdateCompanionBuilder = SocialLinksCompanion
+    Function({
+  Value<int> id,
+  Value<String> platform,
+  Value<String> label,
+  Value<String> url,
+  Value<int?> colorValue,
+  Value<int> position,
+});
+
+class $$SocialLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $SocialLinksTable> {
+  $$SocialLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get platform => $composableBuilder(
+      column: $table.platform, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get colorValue => $composableBuilder(
+      column: $table.colorValue, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnFilters(column));
+}
+
+class $$SocialLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $SocialLinksTable> {
+  $$SocialLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get platform => $composableBuilder(
+      column: $table.platform, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get label => $composableBuilder(
+      column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get colorValue => $composableBuilder(
+      column: $table.colorValue, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SocialLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SocialLinksTable> {
+  $$SocialLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<int> get colorValue => $composableBuilder(
+      column: $table.colorValue, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$SocialLinksTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SocialLinksTable,
+    SocialLink,
+    $$SocialLinksTableFilterComposer,
+    $$SocialLinksTableOrderingComposer,
+    $$SocialLinksTableAnnotationComposer,
+    $$SocialLinksTableCreateCompanionBuilder,
+    $$SocialLinksTableUpdateCompanionBuilder,
+    (SocialLink, BaseReferences<_$AppDatabase, $SocialLinksTable, SocialLink>),
+    SocialLink,
+    PrefetchHooks Function()> {
+  $$SocialLinksTableTableManager(_$AppDatabase db, $SocialLinksTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SocialLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SocialLinksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SocialLinksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> platform = const Value.absent(),
+            Value<String> label = const Value.absent(),
+            Value<String> url = const Value.absent(),
+            Value<int?> colorValue = const Value.absent(),
+            Value<int> position = const Value.absent(),
+          }) =>
+              SocialLinksCompanion(
+            id: id,
+            platform: platform,
+            label: label,
+            url: url,
+            colorValue: colorValue,
+            position: position,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String platform,
+            required String label,
+            required String url,
+            Value<int?> colorValue = const Value.absent(),
+            Value<int> position = const Value.absent(),
+          }) =>
+              SocialLinksCompanion.insert(
+            id: id,
+            platform: platform,
+            label: label,
+            url: url,
+            colorValue: colorValue,
+            position: position,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SocialLinksTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SocialLinksTable,
+    SocialLink,
+    $$SocialLinksTableFilterComposer,
+    $$SocialLinksTableOrderingComposer,
+    $$SocialLinksTableAnnotationComposer,
+    $$SocialLinksTableCreateCompanionBuilder,
+    $$SocialLinksTableUpdateCompanionBuilder,
+    (SocialLink, BaseReferences<_$AppDatabase, $SocialLinksTable, SocialLink>),
+    SocialLink,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9339,4 +9859,6 @@ class $AppDatabaseManager {
       $$OrderFieldValuesTableTableManager(_db, _db.orderFieldValues);
   $$NotesTableTableManager get notes =>
       $$NotesTableTableManager(_db, _db.notes);
+  $$SocialLinksTableTableManager get socialLinks =>
+      $$SocialLinksTableTableManager(_db, _db.socialLinks);
 }

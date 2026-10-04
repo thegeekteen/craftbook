@@ -58,7 +58,8 @@ void main() {
   const orderId = 7;
   final now = DateTime(2026, 9, 1);
 
-  Order order({OrderStatus status = OrderStatus.pending, String? note}) => Order(
+  Order order({OrderStatus status = OrderStatus.pending, String? note}) =>
+      Order(
         id: orderId,
         customerName: 'Jessa Ramos',
         note: note,
@@ -248,12 +249,12 @@ void main() {
       'channel and products failures are not fatal',
       setUp: () {
         stubLoad();
-        when(() => channelRepository.getChannelById(1))
-            .thenAnswer((_) async => const Error(DatabaseFailure('no channel')));
-        when(() => orderRepository.getOrderProducts(orderId))
-            .thenAnswer((_) async => const Error(DatabaseFailure('no products')));
-        when(() => materialRepository.getMaterialById(100))
-            .thenAnswer((_) async => const Error(DatabaseFailure('no material')));
+        when(() => channelRepository.getChannelById(1)).thenAnswer(
+            (_) async => const Error(DatabaseFailure('no channel')));
+        when(() => orderRepository.getOrderProducts(orderId)).thenAnswer(
+            (_) async => const Error(DatabaseFailure('no products')));
+        when(() => materialRepository.getMaterialById(100)).thenAnswer(
+            (_) async => const Error(DatabaseFailure('no material')));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
@@ -272,18 +273,21 @@ void main() {
       'loads the order\'s field values',
       setUp: () {
         stubLoad();
-        when(() => orderRepository.getOrderFieldValues(orderId)).thenAnswer((_) async => const Success([
-              OrderFieldEntry(
-                field: OrderField(id: 1, name: 'Address', type: OrderFieldType.text),
-                value: 'Cebu City',
-              ),
-            ]));
+        when(() => orderRepository.getOrderFieldValues(orderId))
+            .thenAnswer((_) async => const Success([
+                  OrderFieldEntry(
+                    field: OrderField(
+                        id: 1, name: 'Address', type: OrderFieldType.text),
+                    value: 'Cebu City',
+                  ),
+                ]));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
       expect: () => [
         isA<OrderDetailLoading>(),
-        isA<OrderDetailLoaded>().having((s) => s.fieldValues.single.value, 'value', 'Cebu City'),
+        isA<OrderDetailLoaded>()
+            .having((s) => s.fieldValues.single.value, 'value', 'Cebu City'),
       ],
     );
 
@@ -314,7 +318,8 @@ void main() {
           .thenAnswer((_) async => const Error(DatabaseFailure('db error'))),
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
-      expect: () => [isA<OrderDetailLoading>(), const OrderDetailError('db error')],
+      expect: () =>
+          [isA<OrderDetailLoading>(), const OrderDetailError('db error')],
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(
@@ -323,31 +328,38 @@ void main() {
           .thenAnswer((_) async => const Success(null)),
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
-      expect: () => [isA<OrderDetailLoading>(), const OrderDetailError('Order not found')],
+      expect: () => [
+        isA<OrderDetailLoading>(),
+        const OrderDetailError('Order not found')
+      ],
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'emits Error when items fail to load',
       setUp: () {
         stubLoad();
-        when(() => orderRepository.getOrderItems(orderId))
-            .thenAnswer((_) async => const Error(DatabaseFailure('items failed')));
+        when(() => orderRepository.getOrderItems(orderId)).thenAnswer(
+            (_) async => const Error(DatabaseFailure('items failed')));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
-      expect: () => [isA<OrderDetailLoading>(), const OrderDetailError('items failed')],
+      expect: () =>
+          [isA<OrderDetailLoading>(), const OrderDetailError('items failed')],
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'emits Error when materials fail to load',
       setUp: () {
         stubLoad();
-        when(() => orderRepository.getOrderMaterials(orderId))
-            .thenAnswer((_) async => const Error(DatabaseFailure('materials failed')));
+        when(() => orderRepository.getOrderMaterials(orderId)).thenAnswer(
+            (_) async => const Error(DatabaseFailure('materials failed')));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
-      expect: () => [isA<OrderDetailLoading>(), const OrderDetailError('materials failed')],
+      expect: () => [
+        isA<OrderDetailLoading>(),
+        const OrderDetailError('materials failed')
+      ],
     );
   });
 
@@ -356,7 +368,8 @@ void main() {
       'success: busy, message, idle, then reloaded state',
       setUp: () {
         stubLoad(status: OrderStatus.packed);
-        when(() => packOrder(orderId)).thenAnswer((_) async => const Success(null));
+        when(() => packOrder(orderId))
+            .thenAnswer((_) async => const Success(null));
       },
       build: build,
       seed: () => loaded(),
@@ -377,8 +390,8 @@ void main() {
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'failure: busy, error message, idle; no reload',
-      setUp: () => when(() => packOrder(orderId))
-          .thenAnswer((_) async => const Error(ValidationFailure('Not enough yarn'))),
+      setUp: () => when(() => packOrder(orderId)).thenAnswer(
+          (_) async => const Error(ValidationFailure('Not enough yarn'))),
       build: build,
       seed: () => loaded(),
       act: (bloc) => bloc.add(const PackOrderDetail(orderId)),
@@ -394,8 +407,8 @@ void main() {
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'two identical failures in a row are both delivered (serial differs)',
-      setUp: () => when(() => packOrder(orderId))
-          .thenAnswer((_) async => const Error(ValidationFailure('Not enough yarn'))),
+      setUp: () => when(() => packOrder(orderId)).thenAnswer(
+          (_) async => const Error(ValidationFailure('Not enough yarn'))),
       build: build,
       seed: () => loaded(),
       act: (bloc) async {
@@ -428,7 +441,8 @@ void main() {
       'success: busy, message, idle, then reloaded state',
       setUp: () {
         stubLoad(status: OrderStatus.shipped);
-        when(() => shipOrder(orderId)).thenAnswer((_) async => const Success(null));
+        when(() => shipOrder(orderId))
+            .thenAnswer((_) async => const Success(null));
       },
       build: build,
       seed: () => loaded(status: OrderStatus.packed),
@@ -445,8 +459,8 @@ void main() {
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'failure: busy, error message, idle',
-      setUp: () => when(() => shipOrder(orderId))
-          .thenAnswer((_) async => const Error(ValidationFailure('Not packed yet'))),
+      setUp: () => when(() => shipOrder(orderId)).thenAnswer(
+          (_) async => const Error(ValidationFailure('Not packed yet'))),
       build: build,
       seed: () => loaded(),
       act: (bloc) => bloc.add(const ShipOrderDetail(orderId)),
@@ -470,10 +484,12 @@ void main() {
       },
       build: build,
       seed: () => loaded(status: OrderStatus.shipped),
-      act: (bloc) => bloc.add(const SaveOrderNote(orderId: orderId, note: 'Ring twice')),
+      act: (bloc) =>
+          bloc.add(const SaveOrderNote(orderId: orderId, note: 'Ring twice')),
       // No busy flag and no snackbar: ticking a to-do should feel instant.
       expect: () => [loaded(status: OrderStatus.shipped, note: 'Ring twice')],
-      verify: (_) => verify(() => updateOrderNote(orderId, 'Ring twice')).called(1),
+      verify: (_) =>
+          verify(() => updateOrderNote(orderId, 'Ring twice')).called(1),
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(
@@ -485,7 +501,8 @@ void main() {
       },
       build: build,
       seed: () => loaded(note: 'Ring twice'),
-      act: (bloc) => bloc.add(const SaveOrderNote(orderId: orderId, note: 'Changed')),
+      act: (bloc) =>
+          bloc.add(const SaveOrderNote(orderId: orderId, note: 'Changed')),
       expect: () => [
         isA<OrderDetailMessage>()
             .having((m) => m.message, 'message', 'disk full')
@@ -525,13 +542,14 @@ void main() {
         loaded(),
         loaded(status: OrderStatus.packed),
       ],
-      verify: (_) => verify(() => adjustMaterialsUsed(orderId, inputs)).called(1),
+      verify: (_) =>
+          verify(() => adjustMaterialsUsed(orderId, inputs)).called(1),
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'failure: busy, error message, idle',
-      setUp: () => when(() => adjustMaterialsUsed(orderId, any()))
-          .thenAnswer((_) async => const Error(DatabaseFailure('write failed'))),
+      setUp: () => when(() => adjustMaterialsUsed(orderId, any())).thenAnswer(
+          (_) async => const Error(DatabaseFailure('write failed'))),
       build: build,
       seed: () => loaded(),
       act: (bloc) =>
@@ -557,15 +575,16 @@ void main() {
 
     blocTest<OrderDetailBloc, OrderDetailState>(
       'failure: busy, error message, idle',
-      setUp: () => when(() => deleteOrder(orderId)).thenAnswer(
-          (_) async => const Error(ValidationFailure('Shipped orders cannot be deleted'))),
+      setUp: () => when(() => deleteOrder(orderId)).thenAnswer((_) async =>
+          const Error(ValidationFailure('Shipped orders cannot be deleted'))),
       build: build,
       seed: () => loaded(status: OrderStatus.shipped),
       act: (bloc) => bloc.add(const DeleteOrderEvent(orderId)),
       expect: () => [
         loaded(status: OrderStatus.shipped, isBusy: true),
         isA<OrderDetailMessage>()
-            .having((m) => m.message, 'message', 'Shipped orders cannot be deleted')
+            .having(
+                (m) => m.message, 'message', 'Shipped orders cannot be deleted')
             .having((m) => m.isError, 'isError', true),
         loaded(status: OrderStatus.shipped),
       ],

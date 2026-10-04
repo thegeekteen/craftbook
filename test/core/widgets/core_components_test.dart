@@ -34,7 +34,8 @@ void main() {
     testWidgets('renders for every type', (tester) async {
       await tester.pumpWidget(_wrap(Column(
         children: [
-          for (final t in StatusPillType.values) StatusPill(text: t.name, type: t),
+          for (final t in StatusPillType.values)
+            StatusPill(text: t.name, type: t),
         ],
       )));
       expect(tester.takeException(), isNull);
@@ -57,7 +58,8 @@ void main() {
     });
 
     testWidgets('outline type keeps its casing', (tester) async {
-      await tester.pumpWidget(_wrap(const AppTag('Shopee', type: AppTagType.outline)));
+      await tester
+          .pumpWidget(_wrap(const AppTag('Shopee', type: AppTagType.outline)));
       expect(find.text('Shopee'), findsOneWidget);
       expect(find.text('SHOPEE'), findsNothing);
     });
@@ -161,12 +163,19 @@ void main() {
 
     testWidgets('shows All plus a chip per status', (tester) async {
       await pump(tester, all);
-      for (final label in ['All', 'To pack', 'Packed', 'Shipped', 'Cancelled']) {
+      for (final label in [
+        'All',
+        'To pack',
+        'Packed',
+        'Shipped',
+        'Cancelled'
+      ]) {
         expect(find.text(label), findsOneWidget);
       }
     });
 
-    testWidgets('All is selected when every status is selected', (tester) async {
+    testWidgets('All is selected when every status is selected',
+        (tester) async {
       await pump(tester, all);
       final chips = tester.widgetList<AppChip>(find.byType(AppChip)).toList();
       expect(chips.first.selected, isTrue);
@@ -179,7 +188,8 @@ void main() {
       expect(changes.single, {OrderStatus.packed});
     });
 
-    testWidgets('tapping the only selected status goes back to all', (tester) async {
+    testWidgets('tapping the only selected status goes back to all',
+        (tester) async {
       final changes = await pump(tester, {OrderStatus.packed});
       await tester.tap(find.text('Packed'));
       expect(changes.single, all);
@@ -290,7 +300,8 @@ void main() {
       expect(find.byType(OutlinedButton), findsNothing);
     });
 
-    testWidgets('action shows and fires with label and callback', (tester) async {
+    testWidgets('action shows and fires with label and callback',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(EmptyState(
         icon: Icons.inbox,
@@ -348,7 +359,8 @@ void main() {
       await tester.pumpWidget(_wrap(Align(
         alignment: Alignment.bottomCenter,
         child: BottomActionBar(children: [
-          const BarTotal(label: 'Total', value: '₱935', trailing: Text('3 items')),
+          const BarTotal(
+              label: 'Total', value: '₱935', trailing: Text('3 items')),
           FilledButton(onPressed: () => saved++, child: const Text('Save')),
         ]),
       )));
@@ -361,7 +373,8 @@ void main() {
   });
 
   group('InlineBanner', () {
-    testWidgets('shows title, message, action and fires on tap', (tester) async {
+    testWidgets('shows title, message, action and fires on tap',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(InlineBanner(
         icon: Icons.warning_amber_rounded,
@@ -422,7 +435,8 @@ void main() {
       expect(find.byType(Divider), findsNothing);
     });
 
-    testWidgets('CardRow shows leading, subtitle, trailing and taps', (tester) async {
+    testWidgets('CardRow shows leading, subtitle, trailing and taps',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(CardRow(
         leading: const Icon(Icons.star),
@@ -449,7 +463,8 @@ void main() {
       var taps = 0;
       await tester.pumpWidget(_wrap(SectionLabel(
         'Items',
-        trailing: SectionAction(label: 'Add', icon: Icons.add, onTap: () => taps++),
+        trailing:
+            SectionAction(label: 'Add', icon: Icons.add, onTap: () => taps++),
       )));
       expect(find.text('Add'), findsOneWidget);
       expect(find.byIcon(Icons.add), findsOneWidget);
@@ -478,7 +493,8 @@ void main() {
         value: value,
         onChanged: (_) {},
       )));
-      final expected = DateTime.now().year == 2026 ? 'Wed, Oct 7' : 'Oct 7, 2026';
+      final expected =
+          DateTime.now().year == 2026 ? 'Wed, Oct 7' : 'Oct 7, 2026';
       expect(find.text(expected), findsOneWidget);
     });
 
@@ -492,7 +508,8 @@ void main() {
       expect(find.text('Mar 5, ${value.year}'), findsOneWidget);
     });
 
-    testWidgets('tapping opens a date picker and returns the pick', (tester) async {
+    testWidgets('tapping opens a date picker and returns the pick',
+        (tester) async {
       final value = DateTime(DateTime.now().year, 6, 15);
       DateTime? picked;
       await tester.pumpWidget(_wrap(DateField(
@@ -510,7 +527,8 @@ void main() {
       expect(picked, DateTime(value.year, 6, 20));
     });
 
-    testWidgets('cancelling the picker does not call onChanged', (tester) async {
+    testWidgets('cancelling the picker does not call onChanged',
+        (tester) async {
       var calls = 0;
       await tester.pumpWidget(_wrap(DateField(
         label: 'Ship by',
@@ -541,7 +559,8 @@ void main() {
       expect(picked, isNotNull);
     });
 
-    testWidgets('a set date with onCleared shows a clear button', (tester) async {
+    testWidgets('a set date with onCleared shows a clear button',
+        (tester) async {
       var cleared = 0;
       await tester.pumpWidget(_wrap(DateField(
         label: 'Event date',
@@ -568,14 +587,17 @@ void main() {
 
   group('AppSearchField', () {
     testWidgets('shows hint and no clear button when empty', (tester) async {
-      await tester.pumpWidget(_wrap(AppSearchField(hint: 'Search orders', onChanged: (_) {})));
+      await tester.pumpWidget(
+          _wrap(AppSearchField(hint: 'Search orders', onChanged: (_) {})));
       expect(find.text('Search orders'), findsOneWidget);
       expect(find.byIcon(Icons.close_rounded), findsNothing);
     });
 
-    testWidgets('typing calls onChanged and shows clear, which clears', (tester) async {
+    testWidgets('typing calls onChanged and shows clear, which clears',
+        (tester) async {
       final values = <String>[];
-      await tester.pumpWidget(_wrap(AppSearchField(hint: 'Search', onChanged: values.add)));
+      await tester.pumpWidget(
+          _wrap(AppSearchField(hint: 'Search', onChanged: values.add)));
       await tester.enterText(find.byType(TextField), 'tulip');
       await tester.pump();
       expect(values.last, 'tulip');
@@ -584,7 +606,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.close_rounded));
       await tester.pump();
       expect(values.last, '');
-      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '');
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          '');
       expect(find.byIcon(Icons.close_rounded), findsNothing);
     });
 
@@ -608,32 +631,38 @@ void main() {
     });
 
     testWidgets('short drops .00 on whole amounts', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: 1200, short: true)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: 1200, short: true)));
       expect(find.text('₱1,200'), findsOneWidget);
     });
 
     testWidgets('short keeps real centavos', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: 12.5, short: true)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: 12.5, short: true)));
       expect(find.text('₱12.50'), findsOneWidget);
     });
 
     testWidgets('signed adds + to positive amounts', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: 25, signed: true)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: 25, signed: true)));
       expect(find.text('+₱25.00'), findsOneWidget);
     });
 
     testWidgets('signed zero has no sign', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: 0, signed: true)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: 0, signed: true)));
       expect(find.text('₱0.00'), findsOneWidget);
     });
 
     testWidgets('showSymbol false drops the peso sign', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: -8, showSymbol: false)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: -8, showSymbol: false)));
       expect(find.text('−8.00'), findsOneWidget);
     });
 
     testWidgets('compact shortens thousands', (tester) async {
-      await tester.pumpWidget(_wrap(const CurrencyText(amount: -12500, compact: true)));
+      await tester
+          .pumpWidget(_wrap(const CurrencyText(amount: -12500, compact: true)));
       expect(find.text('−₱12.5K'), findsOneWidget);
     });
   });

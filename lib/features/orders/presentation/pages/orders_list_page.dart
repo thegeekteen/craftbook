@@ -135,8 +135,8 @@ class _OrdersListViewState extends State<_OrdersListView> {
                         for (final e in group.entries)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: BlocBuilder<OrderAmountCubit,
-                                OrderAmountShown>(
+                            child:
+                                BlocBuilder<OrderAmountCubit, OrderAmountShown>(
                               bloc: getIt(),
                               builder: (context, shown) => OrderCard(
                                 entry: e,

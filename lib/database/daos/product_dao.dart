@@ -12,7 +12,15 @@ import '../tables/order_items_table.dart';
 part 'product_dao.g.dart';
 
 /// Data Access Object for products
-@DriftAccessor(tables: [Products, BomItems, Materials, ProductStockMovements, OrderProducts, Orders, OrderItems])
+@DriftAccessor(tables: [
+  Products,
+  BomItems,
+  Materials,
+  ProductStockMovements,
+  OrderProducts,
+  Orders,
+  OrderItems
+])
 class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   ProductDao(super.db);
 
@@ -28,8 +36,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Get product by ID
   Future<Product?> getProductById(int id) {
-    return (select(products)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(products)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Create new product
@@ -116,8 +123,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Get material by ID (helper)
   Future<Material?> getMaterialById(int id) {
-    return (select(materials)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(materials)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get low-stock standalone products
@@ -131,7 +137,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// Update product stock quantities
-  Future<int> updateProductStock(int id, int quantityOnHand, int quantityPromised) {
+  Future<int> updateProductStock(
+      int id, int quantityOnHand, int quantityPromised) {
     return (update(products)..where((t) => t.id.equals(id))).write(
       ProductsCompanion(
         quantityOnHand: Value(quantityOnHand),
@@ -151,14 +158,18 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Every order line for [productId] with its order, any status, newest
   /// order first.
-  Future<List<(OrderItem, Order)>> getOrderLinesForProduct(int productId) async {
+  Future<List<(OrderItem, Order)>> getOrderLinesForProduct(
+      int productId) async {
     final query = select(orderItems).join([
       innerJoin(orders, orders.id.equalsExp(orderItems.orderId)),
     ])
       ..where(orderItems.productId.equals(productId))
-      ..orderBy([OrderingTerm.desc(orders.orderDate), OrderingTerm.desc(orders.id)]);
+      ..orderBy(
+          [OrderingTerm.desc(orders.orderDate), OrderingTerm.desc(orders.id)]);
     final rows = await query.get();
-    return [for (final r in rows) (r.readTable(orderItems), r.readTable(orders))];
+    return [
+      for (final r in rows) (r.readTable(orderItems), r.readTable(orders))
+    ];
   }
 
   /// Add a product stock movement
@@ -189,7 +200,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Delete all order products for a given order
   Future<int> deleteOrderProductsByOrderId(int orderId) {
-    return (delete(orderProducts)..where((t) => t.orderId.equals(orderId))).go();
+    return (delete(orderProducts)..where((t) => t.orderId.equals(orderId)))
+        .go();
   }
 
   /// Delete product stock movements referencing a given order

@@ -96,19 +96,24 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
           materialId: widget.materialId,
           packsReceived: _packs,
           pricePerPack: _pricePerPack,
-          supplier: _supplier.text.trim().isEmpty ? null : _supplier.text.trim(),
+          supplier:
+              _supplier.text.trim().isEmpty ? null : _supplier.text.trim(),
         ));
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_material == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: ErrorState(message: _error ?? 'Material not found', onRetry: _load)),
+        body: Center(
+            child: ErrorState(
+                message: _error ?? 'Material not found', onRetry: _load)),
       );
     }
 
@@ -134,7 +139,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('RECEIVE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+              Text('RECEIVE',
+                  style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               Text(m.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
@@ -152,17 +158,21 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('PACKS RECEIVED', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                            Text('PACKS RECEIVED',
+                                style: AppTextStyles.monoLabel
+                                    .copyWith(color: c.muted)),
                             const SizedBox(height: 2),
                             Text.rich(
                               TextSpan(children: [
                                 TextSpan(text: '${m.packSize} pcs per pack · '),
                                 TextSpan(
                                   text: '+$_pieces pcs',
-                                  style: TextStyle(color: c.go, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      color: c.go, fontWeight: FontWeight.w600),
                                 ),
                               ]),
-                              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                              style: AppTextStyles.bodySmall
+                                  .copyWith(color: c.muted),
                             ),
                           ],
                         ),
@@ -178,15 +188,21 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _price,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                    decoration: const InputDecoration(labelText: 'Price per pack', prefixText: '₱ '),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'))
+                    ],
+                    decoration: const InputDecoration(
+                        labelText: 'Price per pack', prefixText: '₱ '),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _supplier,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Supplier (optional)'),
+                    decoration:
+                        const InputDecoration(labelText: 'Supplier (optional)'),
                   ),
                 ],
               ),
@@ -196,23 +212,30 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('AFTER RECEIVING', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                  Text('AFTER RECEIVING',
+                      style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
                   const SizedBox(height: 6),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('${m.quantityOnHand}', style: AppTextStyles.amount.copyWith(color: c.muted, fontSize: 20)),
+                      Text('${m.quantityOnHand}',
+                          style: AppTextStyles.amount
+                              .copyWith(color: c.muted, fontSize: 20)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Icon(Icons.arrow_forward_rounded, size: 18, color: c.muted),
+                        child: Icon(Icons.arrow_forward_rounded,
+                            size: 18, color: c.muted),
                       ),
                       Text(
                         '${m.quantityOnHand + _pieces}',
-                        style: AppTextStyles.displayMedium.copyWith(color: c.go, fontSize: 32),
+                        style: AppTextStyles.displayMedium
+                            .copyWith(color: c.go, fontSize: 32),
                       ),
                       const SizedBox(width: 6),
-                      Text('PCS', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                      Text('PCS',
+                          style:
+                              AppTextStyles.monoLabel.copyWith(color: c.muted)),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -229,15 +252,19 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('Unit cost (weighted)', style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+                        child: Text('Unit cost (weighted)',
+                            style: AppTextStyles.bodyMedium
+                                .copyWith(color: c.ink)),
                       ),
                       Text(
                         '${CurrencyFormatter.format(m.unitCost)} → ',
-                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
+                        style:
+                            AppTextStyles.bodyMedium.copyWith(color: c.muted),
                       ),
                       Text(
                         CurrencyFormatter.format(_newUnitCost),
-                        style: AppTextStyles.amount.copyWith(color: costUp ? c.alert : c.coin, fontSize: 16),
+                        style: AppTextStyles.amount.copyWith(
+                            color: costUp ? c.alert : c.coin, fontSize: 16),
                       ),
                     ],
                   ),

@@ -73,8 +73,7 @@ void main() {
       when(() => mockRepo.adjustProductStock(
             productId: any(named: 'productId'),
             newQuantityOnHand: any(named: 'newQuantityOnHand'),
-          )).thenAnswer(
-          (_) async => const Error(DatabaseFailure('DB error')));
+          )).thenAnswer((_) async => const Error(DatabaseFailure('DB error')));
 
       final result = await adjustProductStock(
         productId: 1,

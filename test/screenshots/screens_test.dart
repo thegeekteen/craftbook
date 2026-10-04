@@ -28,7 +28,8 @@ void main() {
 
   final now = DateTime.now();
   final weekStart = DateTime(now.year, now.month, now.day - (now.weekday - 1));
-  final weekEnd = DateTime(weekStart.year, weekStart.month, weekStart.day + 6, 23, 59, 59);
+  final weekEnd =
+      DateTime(weekStart.year, weekStart.month, weekStart.day + 6, 23, 59, 59);
 
   final screens = <(String, String)>[
     ('today', RouteNames.today),
@@ -55,8 +56,13 @@ void main() {
     ('product_resell', RouteNames.productEditorPath(4)),
     ('channels', RouteNames.channels),
     ('order_fields', RouteNames.orderFields),
+    ('social_shortcuts', RouteNames.socialLinks),
     ('money', RouteNames.earnings),
-    ('product_earnings', RouteNames.productEarningsPath(1, weekStart.subtract(const Duration(days: 28)), weekEnd)),
+    (
+      'product_earnings',
+      RouteNames.productEarningsPath(
+          1, weekStart.subtract(const Duration(days: 28)), weekEnd)
+    ),
     ('more', RouteNames.settings),
     ('notes', RouteNames.notes),
     ('note_edit', RouteNames.notePath(1)),
@@ -69,7 +75,8 @@ void main() {
         // rootBundle caches, so reading the README outside the fake-async
         // zone lets the About page resolve instantly once it asks for it.
         if (name == 'about') {
-          await tester.runAsync(() => rootBundle.loadString(AboutPage.readmeAsset));
+          await tester
+              .runAsync(() => rootBundle.loadString(AboutPage.readmeAsset));
         }
         await _boot(tester, route, dark);
         await expectLater(
@@ -82,7 +89,8 @@ void main() {
   }
 
   // The other colour schemes, on the screens that show the most colour.
-  for (final palette in AppPalette.values.where((p) => p != AppPalette.forest)) {
+  for (final palette
+      in AppPalette.values.where((p) => p != AppPalette.forest)) {
     for (final (name, route) in [
       ('today', RouteNames.today),
       ('orders', RouteNames.orders),
@@ -93,7 +101,8 @@ void main() {
         final file = '${name}_${palette.name}_${dark ? 'dark' : 'light'}';
         testWidgets(file, (tester) async {
           await _boot(tester, route, dark, palette);
-          await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/$file.png'));
+          await expectLater(find.byType(CraftbookApp),
+              matchesGoldenFile('goldens/$file.png'));
           await _teardown(tester);
         });
       }
@@ -101,12 +110,17 @@ void main() {
   }
 
   // The history sits at the bottom of the product page, so scroll down to it.
-  for (final (name, id) in [('product_history', 1), ('product_resell_history', 4)]) {
+  for (final (name, id) in [
+    ('product_history', 1),
+    ('product_resell_history', 4)
+  ]) {
     for (final dark in [false, true]) {
       testWidgets('$name ${dark ? 'dark' : 'light'}', (tester) async {
         await _boot(tester, RouteNames.productPath(id), dark);
-        await tester.scrollUntilVisible(find.text('HISTORY'), 300, scrollable: find.byType(Scrollable).first);
-        await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+        await tester.scrollUntilVisible(find.text('HISTORY'), 300,
+            scrollable: find.byType(Scrollable).first);
+        await tester.drag(
+            find.byType(Scrollable).first, const Offset(0, -2000));
         await _settle(tester);
         await expectLater(
           find.byType(CraftbookApp),
@@ -121,7 +135,8 @@ void main() {
     await _boot(tester, RouteNames.orderPath(8), false);
     await tester.tap(find.text('Pack order'));
     await _settle(tester);
-    await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/pack_sheet_light.png'));
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/pack_sheet_light.png'));
     await _teardown(tester);
   });
 
@@ -134,10 +149,12 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('Crochet tulip bouquet'));
     await _settle(tester);
-    await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/new_order_items_light.png'));
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/new_order_items_light.png'));
     await tester.tap(find.text('Review'));
     await _settle(tester);
-    await expectLater(find.byType(CraftbookApp), matchesGoldenFile('goldens/new_order_review_light.png'));
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/new_order_review_light.png'));
     await _teardown(tester);
   });
 
@@ -171,7 +188,8 @@ Future<void> _boot(
   debugDisableShadows = false;
   await tester.runAsync(() async {
     await getIt.reset();
-    await configureDependencies(database: AppDatabase.forTesting(NativeDatabase.memory()));
+    await configureDependencies(
+        database: AppDatabase.forTesting(NativeDatabase.memory()));
     await seedSampleShop();
   });
   await tester.pumpWidget(CraftbookApp(
@@ -185,7 +203,8 @@ Future<void> _boot(
 /// Lets real database futures finish, then draws frames.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 12; i++) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
@@ -198,8 +217,17 @@ Future<void> _teardown(WidgetTester tester) async {
 
 Future<void> _loadFonts() async {
   const families = {
-    'Bricolage': ['BricolageGrotesque-Medium', 'BricolageGrotesque-SemiBold', 'BricolageGrotesque-Bold'],
-    'IBMPlexSans': ['IBMPlexSans-Regular', 'IBMPlexSans-Medium', 'IBMPlexSans-SemiBold', 'IBMPlexSans-Bold'],
+    'Bricolage': [
+      'BricolageGrotesque-Medium',
+      'BricolageGrotesque-SemiBold',
+      'BricolageGrotesque-Bold'
+    ],
+    'IBMPlexSans': [
+      'IBMPlexSans-Regular',
+      'IBMPlexSans-Medium',
+      'IBMPlexSans-SemiBold',
+      'IBMPlexSans-Bold'
+    ],
     'IBMPlexMono': ['IBMPlexMono-Medium', 'IBMPlexMono-SemiBold'],
   };
   for (final entry in families.entries) {
@@ -210,7 +238,8 @@ Future<void> _loadFonts() async {
     await loader.load();
   }
   final flutterRoot = Platform.environment['FLUTTER_ROOT']!;
-  final icons = File('$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+  final icons = File(
+      '$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
   final iconLoader = FontLoader('MaterialIcons')
     ..addFont(Future.value(ByteData.view(icons.readAsBytesSync().buffer)));
   await iconLoader.load();

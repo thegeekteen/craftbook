@@ -29,7 +29,8 @@ class ProductCard extends StatelessWidget {
     final c = context.colors;
     final p = product;
     final cost = unitCost ?? 0;
-    final parts = MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0);
+    final parts =
+        MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0);
     final margin = (parts.margin * 100).round();
     final marginColor = margin >= 50 ? c.go : (margin >= 20 ? c.warn : c.alert);
     final qty = available ?? 0;
@@ -51,7 +52,9 @@ class ProductCard extends StatelessWidget {
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(p.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                      Text(p.name,
+                          style:
+                              AppTextStyles.bodyLarge.copyWith(color: c.ink)),
                       if (p.isStandalone) const AppTag('Resell'),
                       if (!p.isActive) const AppTag('Hidden'),
                     ],
@@ -72,10 +75,13 @@ class ProductCard extends StatelessWidget {
                 Expanded(
                   child: Text.rich(
                     TextSpan(children: [
-                      TextSpan(text: 'Cost ${CurrencyFormatter.formatShort(cost)} · '),
+                      TextSpan(
+                          text:
+                              'Cost ${CurrencyFormatter.formatShort(cost)} · '),
                       TextSpan(
                         text: '${margin < 0 ? '−${-margin}' : margin}% margin',
-                        style: TextStyle(color: marginColor, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: marginColor, fontWeight: FontWeight.w600),
                       ),
                     ]),
                     style: AppTextStyles.bodySmall.copyWith(color: c.muted),
@@ -84,7 +90,8 @@ class ProductCard extends StatelessWidget {
                 if (available != null) ...[
                   Text.rich(
                     TextSpan(children: [
-                      TextSpan(text: p.isStandalone ? 'In stock ' : 'Can build '),
+                      TextSpan(
+                          text: p.isStandalone ? 'In stock ' : 'Can build '),
                       TextSpan(
                         text: '$qty',
                         style: TextStyle(
@@ -93,9 +100,13 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ]),
-                    style: AppTextStyles.bodySmall.copyWith(color: qty == 0 ? c.alert : c.muted),
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: qty == 0 ? c.alert : c.muted),
                   ),
-                  if (lowStock) ...[const SizedBox(width: 6), const AppTag.low()],
+                  if (lowStock) ...[
+                    const SizedBox(width: 6),
+                    const AppTag.low()
+                  ],
                 ],
               ],
             ),

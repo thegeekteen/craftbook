@@ -16,20 +16,23 @@ void main() {
   setUpAll(useHostSqlite);
 
   late Directory dir;
-  setUp(() async => dir = await Directory.systemTemp.createTemp('backup_validator_'));
+  setUp(() async =>
+      dir = await Directory.systemTemp.createTemp('backup_validator_'));
   tearDown(() => dir.delete(recursive: true));
 
   File fileNamed(String name) => File('${dir.path}/$name');
 
   /// A Craftbook database at the current schema with a bit of everything.
-  Future<File> craftbookDb({String name = 'backup.sqlite', int orders = 2}) async {
+  Future<File> craftbookDb(
+      {String name = 'backup.sqlite', int orders = 2}) async {
     final file = fileNamed(name);
     final db = AppDatabase.file(file);
     await db.customStatement(
       "INSERT INTO materials (name, pack_size, pack_price, unit_cost, alert_level) "
       "VALUES ('Yarn', 10, 100, 10, 5)",
     );
-    await db.customStatement("INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)");
+    await db.customStatement(
+        "INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)");
     for (var i = 0; i < orders; i++) {
       await db.customStatement(
         "INSERT INTO orders (customer_name, order_date, ship_by_date, status, total_sales) "
@@ -50,7 +53,8 @@ void main() {
     }
   }
 
-  Future<BackupProblem?> problemWith(File file) async => switch (await BackupValidator.validate(file)) {
+  Future<BackupProblem?> problemWith(File file) async =>
+      switch (await BackupValidator.validate(file)) {
         Success() => null,
         Error(:final failure) => (failure as BackupFailure).problem,
       };
@@ -69,12 +73,14 @@ void main() {
     });
 
     test('a text file renamed .sqlite', () async {
-      final file = fileNamed('notes.sqlite')..writeAsStringSync('Shopping list\n' * 50);
+      final file = fileNamed('notes.sqlite')
+        ..writeAsStringSync('Shopping list\n' * 50);
       expect(await problemWith(file), BackupProblem.notSqlite);
     });
 
     test('a file that does not exist', () async {
-      expect(await problemWith(fileNamed('missing.sqlite')), BackupProblem.notSqlite);
+      expect(await problemWith(fileNamed('missing.sqlite')),
+          BackupProblem.notSqlite);
     });
   });
 
@@ -92,7 +98,10 @@ void main() {
   group('rejects other apps\' databases', () {
     test('unrelated tables', () async {
       final file = fileNamed('photos.db');
-      edit(file, (db) => db.execute('CREATE TABLE photos (id INTEGER PRIMARY KEY, path TEXT)'));
+      edit(
+          file,
+          (db) => db.execute(
+              'CREATE TABLE photos (id INTEGER PRIMARY KEY, path TEXT)'));
       expect(await problemWith(file), BackupProblem.wrongApp);
     });
 
@@ -126,7 +135,10 @@ void main() {
     expect(
       await BackupValidator.validate(file),
       const Success(BackupSummary(
-          schemaVersion: AppDatabase.currentSchemaVersion, orders: 3, materials: 1, products: 1)),
+          schemaVersion: AppDatabase.currentSchemaVersion,
+          orders: 3,
+          materials: 1,
+          products: 1)),
     );
   });
 
@@ -142,7 +154,13 @@ void main() {
       downgradeToV3(db);
       db.execute('DROP TABLE product_stock_movements');
       db.execute('DROP TABLE order_products');
-      for (final column in ['is_standalone', 'quantity_on_hand', 'quantity_promised', 'unit_cost', 'alert_level']) {
+      for (final column in [
+        'is_standalone',
+        'quantity_on_hand',
+        'quantity_promised',
+        'unit_cost',
+        'alert_level'
+      ]) {
         db.execute('ALTER TABLE products DROP COLUMN $column');
       }
       db.execute('PRAGMA user_version = 1');
@@ -151,11 +169,14 @@ void main() {
 
     expect(
       await BackupValidator.validate(file),
-      const Success(BackupSummary(schemaVersion: 1, orders: 2, materials: 1, products: 1)),
+      const Success(BackupSummary(
+          schemaVersion: 1, orders: 2, materials: 1, products: 1)),
     );
     edit(file, (db) {
-      expect(db.select('PRAGMA user_version').first.columnAt(0), AppDatabase.currentSchemaVersion);
-      expect(db.select('PRAGMA application_id').first.columnAt(0), craftbookAppId);
+      expect(db.select('PRAGMA user_version').first.columnAt(0),
+          AppDatabase.currentSchemaVersion);
+      expect(
+          db.select('PRAGMA application_id').first.columnAt(0), craftbookAppId);
       expect(db.select('SELECT is_standalone FROM products'), hasLength(1));
       expect(db.select('SELECT * FROM order_products'), isEmpty);
     });
@@ -174,11 +195,16 @@ void main() {
 
     expect(await problemWith(file), isNull);
     edit(file, (db) {
-      expect(db.select('SELECT quantity FROM product_stock_movements').first['quantity'], -3);
+      expect(
+          db
+              .select('SELECT quantity FROM product_stock_movements')
+              .first['quantity'],
+          -3);
     });
   });
 
-  test('upgrades a schema 3 backup and moves its addresses into a field', () async {
+  test('upgrades a schema 3 backup and moves its addresses into a field',
+      () async {
     final file = await craftbookDb();
     edit(file, (db) {
       downgradeToV3(db);
@@ -187,12 +213,17 @@ void main() {
 
     expect(
       await BackupValidator.validate(file),
-      const Success(BackupSummary(schemaVersion: 3, orders: 2, materials: 1, products: 1)),
+      const Success(BackupSummary(
+          schemaVersion: 3, orders: 2, materials: 1, products: 1)),
     );
     edit(file, (db) {
-      expect(db.select('SELECT name FROM order_field_definitions').single['name'], 'Address');
       expect(
-        db.select('SELECT value FROM order_field_values ORDER BY order_id').map((r) => r['value']),
+          db.select('SELECT name FROM order_field_definitions').single['name'],
+          'Address');
+      expect(
+        db
+            .select('SELECT value FROM order_field_values ORDER BY order_id')
+            .map((r) => r['value']),
         ['Street 1', 'Street 2'],
       );
     });
@@ -209,14 +240,18 @@ void main() {
     test('lists what the backup holds', () {
       expect(
         BackupService.describe(const BackupSummary(
-            schemaVersion: AppDatabase.currentSchemaVersion, orders: 1, materials: 2, products: 0)),
+            schemaVersion: AppDatabase.currentSchemaVersion,
+            orders: 1,
+            materials: 2,
+            products: 0)),
         '1 order, 2 materials and 0 products.',
       );
     });
 
     test('says when an older backup was upgraded', () {
       expect(
-        BackupService.describe(const BackupSummary(schemaVersion: 1, orders: 4, materials: 1, products: 3)),
+        BackupService.describe(const BackupSummary(
+            schemaVersion: 1, orders: 4, materials: 1, products: 3)),
         '4 orders, 1 material and 3 products. It was made with an older Craftbook and has been upgraded.',
       );
     });

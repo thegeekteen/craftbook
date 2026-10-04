@@ -27,7 +27,8 @@ class BackupService {
       // VACUUM INTO writes a consistent copy even if a write is in flight;
       // reading the live file's bytes could catch one half-done.
       snapshot = await _store.scratchFile('export.sqlite');
-      await getIt<AppDatabase>().customStatement('VACUUM INTO ?', [snapshot.path]);
+      await getIt<AppDatabase>()
+          .customStatement('VACUUM INTO ?', [snapshot.path]);
 
       final bytes = await snapshot.readAsBytes();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
@@ -48,7 +49,8 @@ class BackupService {
         await snapshot.copy(outputPath);
       }
 
-      messenger.showSnackBar(const SnackBar(content: Text('Backup saved successfully')));
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Backup saved successfully')));
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
@@ -79,7 +81,8 @@ class BackupService {
         // SAF on Android — no path, only bytes
         candidate = await _store.stageBytes(picked.bytes!);
       } else {
-        messenger.showSnackBar(const SnackBar(content: Text('Could not read the selected file')));
+        messenger.showSnackBar(
+            const SnackBar(content: Text('Could not read the selected file')));
         return false;
       }
 
@@ -132,8 +135,10 @@ class BackupService {
       // It was our own live file, but check it anyway: it has sat on disk
       // since, and the app may have been updated in between.
       final candidate = await _store.stagePreRestore();
-      if (await BackupValidator.validate(candidate) case Error(:final failure)) {
-        messenger.showSnackBar(SnackBar(content: Text('Can\'t undo: ${failure.message}')));
+      if (await BackupValidator.validate(candidate)
+          case Error(:final failure)) {
+        messenger.showSnackBar(
+            SnackBar(content: Text('Can\'t undo: ${failure.message}')));
         return false;
       }
 
@@ -188,12 +193,14 @@ class BackupService {
       error = e;
     }
 
-    final message = error == null ? done : 'Restore failed, nothing was changed: $error';
+    final message =
+        error == null ? done : 'Restore failed, nothing was changed: $error';
     if (restarter != null) {
       await restarter.restart(message: message);
     } else {
       // Only without an AppRestarter above the app (tests).
-      messenger.showSnackBar(SnackBar(content: Text('$message. Restart the app.')));
+      messenger
+          .showSnackBar(SnackBar(content: Text('$message. Restart the app.')));
     }
     return error == null;
   }

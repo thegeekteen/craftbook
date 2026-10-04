@@ -28,9 +28,11 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.runAsync(() async {
       await getIt.reset();
-      await configureDependencies(database: AppDatabase.forTesting(NativeDatabase.memory()));
+      await configureDependencies(
+          database: AppDatabase.forTesting(NativeDatabase.memory()));
       getIt.unregister<BackupStore>();
-      getIt.registerSingleton(BackupStore(dataDir: () async => dir, scratchDir: () async => dir));
+      getIt.registerSingleton(
+          BackupStore(dataDir: () async => dir, scratchDir: () async => dir));
     });
     await tester.pumpWidget(CraftbookApp(initialLocation: RouteNames.settings));
     await _settle(tester);
@@ -41,7 +43,8 @@ void main() {
     await tester.runAsync(() => getIt<AppDatabase>().close());
   }
 
-  testWidgets('hides "Undo last restore" when nothing was restored', (tester) async {
+  testWidgets('hides "Undo last restore" when nothing was restored',
+      (tester) async {
     await boot(tester);
     expect(find.text('Restore from backup'), findsOneWidget);
     expect(find.text('Undo last restore'), findsNothing);
@@ -56,7 +59,8 @@ void main() {
   });
 
   testWidgets('offers "Undo last restore" after a restore', (tester) async {
-    File('${dir.path}/craftbook.pre-restore.sqlite').writeAsStringSync('old data');
+    File('${dir.path}/craftbook.pre-restore.sqlite')
+        .writeAsStringSync('old data');
     await boot(tester);
     expect(find.text('Undo last restore'), findsOneWidget);
     await teardown(tester);
@@ -66,7 +70,8 @@ void main() {
 /// Lets real database and file futures finish, then draws frames.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump(const Duration(milliseconds: 100));
   }
 }

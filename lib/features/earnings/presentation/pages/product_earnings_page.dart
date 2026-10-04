@@ -35,9 +35,10 @@ class ProductEarningsPage extends StatefulWidget {
 }
 
 class _ProductEarningsPageState extends State<ProductEarningsPage> {
-  late final DateTime _start = widget.startDate ?? DateTime(DateTime.now().year, DateTime.now().month);
-  late final DateTime _end =
-      widget.endDate ?? DateTime(DateTime.now().year, DateTime.now().month + 1, 0, 23, 59, 59);
+  late final DateTime _start =
+      widget.startDate ?? DateTime(DateTime.now().year, DateTime.now().month);
+  late final DateTime _end = widget.endDate ??
+      DateTime(DateTime.now().year, DateTime.now().month + 1, 0, 23, 59, 59);
 
   List<ProductOrderLine> _lines = [];
   String? _productName;
@@ -51,7 +52,8 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
   }
 
   Future<void> _load() async {
-    final result = await getIt<GetProductOrderLines>()(widget.productId, _start, _end);
+    final result =
+        await getIt<GetProductOrderLines>()(widget.productId, _start, _end);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -67,7 +69,8 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
 
   Future<void> _loadName() async {
     // Name comes from the product itself so it shows even with no sales.
-    final result = await getIt<ProductRepository>().getProductById(widget.productId);
+    final result =
+        await getIt<ProductRepository>().getProductById(widget.productId);
     if (!mounted) return;
     if (result case Success(:final value) when value != null) {
       setState(() => _productName = value.name);
@@ -94,7 +97,8 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_periodText.toUpperCase(), style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+            Text(_periodText.toUpperCase(),
+                style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
             Text(
               _productName ?? (_lines.isEmpty ? 'Product' : 'Product earnings'),
               maxLines: 1,
@@ -114,7 +118,9 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('PROFIT', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                          Text('PROFIT',
+                              style: AppTextStyles.monoLabel
+                                  .copyWith(color: c.muted)),
                           const SizedBox(height: 4),
                           Text(
                             CurrencyFormatter.formatShort(profit),
@@ -126,10 +132,15 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                           const SizedBox(height: 14),
                           StatRow(children: [
                             StatTile(label: 'Sold', value: '$sold'),
-                            StatTile(label: 'Sales', value: CurrencyFormatter.formatCompact(sales)),
+                            StatTile(
+                                label: 'Sales',
+                                value: CurrencyFormatter.formatCompact(sales)),
                             StatTile(
                               label: 'Per piece',
-                              value: sold == 0 ? '—' : CurrencyFormatter.formatShort(profit / sold),
+                              value: sold == 0
+                                  ? '—'
+                                  : CurrencyFormatter.formatShort(
+                                      profit / sold),
                               valueColor: c.go,
                             ),
                           ]),
@@ -161,7 +172,8 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                                   color: l.profit >= 0 ? c.go : c.alert,
                                 ),
                               ),
-                              onTap: () => context.push(RouteNames.orderPath(l.orderId)),
+                              onTap: () =>
+                                  context.push(RouteNames.orderPath(l.orderId)),
                             ),
                         ]),
                       ),

@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Base failure class for error handling
 abstract class Failure extends Equatable {
   final String message;
-  
+
   const Failure(this.message);
 
   @override

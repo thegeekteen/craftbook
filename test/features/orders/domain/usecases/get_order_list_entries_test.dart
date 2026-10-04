@@ -38,13 +38,18 @@ void main() {
   setUp(() {
     orders = MockOrderRepository();
     channels = MockChannelRepository();
-    useCase = GetOrderListEntries(orderRepository: orders, channelRepository: channels);
+    useCase = GetOrderListEntries(
+        orderRepository: orders, channelRepository: channels);
   });
 
   test('joins channel names and product lines', () async {
-    when(() => orders.getOrderLines([1, 2])).thenAnswer((_) async => const Success({
-          1: [OrderLine(productName: 'Tulip', quantity: 2), OrderLine(productName: 'Box', quantity: 1)],
-        }));
+    when(() => orders.getOrderLines([1, 2]))
+        .thenAnswer((_) async => const Success({
+              1: [
+                OrderLine(productName: 'Tulip', quantity: 2),
+                OrderLine(productName: 'Box', quantity: 1)
+              ],
+            }));
     when(() => channels.getAllChannels()).thenAnswer((_) async => Success([
           Channel(
             id: 7,
@@ -76,7 +81,8 @@ void main() {
   });
 
   test('passes failures through', () async {
-    when(() => orders.getOrderLines(any())).thenAnswer((_) async => const Error(DatabaseFailure('x')));
+    when(() => orders.getOrderLines(any()))
+        .thenAnswer((_) async => const Error(DatabaseFailure('x')));
     final result = await useCase([order(1)]);
     expect(result, isA<Error<List<OrderListEntry>>>());
   });

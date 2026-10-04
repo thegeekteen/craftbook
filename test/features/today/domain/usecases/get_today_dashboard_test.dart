@@ -24,7 +24,11 @@ void main() {
   final now = DateTime(2026, 10, 4, 15);
   final today = DateTime(2026, 10, 4);
 
-  Order order(int id, {required DateTime shipBy, OrderStatus status = OrderStatus.pending, DateTime? placed}) => Order(
+  Order order(int id,
+          {required DateTime shipBy,
+          OrderStatus status = OrderStatus.pending,
+          DateTime? placed}) =>
+      Order(
         id: id,
         customerName: 'C$id',
         orderDate: placed ?? today.subtract(const Duration(days: 3)),
@@ -58,31 +62,37 @@ void main() {
       getAlertSummary: GetAlertSummary(materials),
       getOrderListEntries: entries,
     );
-    when(() => materials.getLowStockMaterials()).thenAnswer((_) async => const Success([]));
+    when(() => materials.getLowStockMaterials())
+        .thenAnswer((_) async => const Success([]));
     when(() => entries(any())).thenAnswer((inv) async => Success([
-          for (final o in inv.positionalArguments.first as List<Order>) OrderListEntry(order: o),
+          for (final o in inv.positionalArguments.first as List<Order>)
+            OrderListEntry(order: o),
         ]));
   });
 
-  test('counts due, overdue and placed orders, and recomputes week profit', () async {
+  test('counts due, overdue and placed orders, and recomputes week profit',
+      () async {
     final overdue = order(1, shipBy: today.subtract(const Duration(days: 1)));
     final dueToday = order(2, shipBy: today);
     final packedToday = order(3, shipBy: today, status: OrderStatus.packed);
-    final placedToday = order(4, shipBy: today.add(const Duration(days: 3)), placed: today);
+    final placedToday =
+        order(4, shipBy: today.add(const Duration(days: 3)), placed: today);
 
     when(() => orders.getOpenOrdersDueBefore(DateTime(2026, 10, 5)))
         .thenAnswer((_) async => Success([overdue, dueToday, packedToday]));
-    when(() => orders.getOrdersForDate(today)).thenAnswer((_) async => Success([placedToday, dueToday]));
-    when(() => earnings.getEarningsSummary(DateTime(2026, 9, 28), any())).thenAnswer((_) async => const Success(
-          EarningsSummary(
-            totalSales: 1000,
-            totalMaterialCost: 300,
-            totalChannelFees: 100,
-            totalShippingCost: 50,
-            totalProfit: 9999, // stale on purpose
-            orderCount: 4,
-          ),
-        ));
+    when(() => orders.getOrdersForDate(today))
+        .thenAnswer((_) async => Success([placedToday, dueToday]));
+    when(() => earnings.getEarningsSummary(DateTime(2026, 9, 28), any()))
+        .thenAnswer((_) async => const Success(
+              EarningsSummary(
+                totalSales: 1000,
+                totalMaterialCost: 300,
+                totalChannelFees: 100,
+                totalShippingCost: 50,
+                totalProfit: 9999, // stale on purpose
+                orderCount: 4,
+              ),
+            ));
 
     final result = await useCase(now);
 
@@ -93,13 +103,15 @@ void main() {
     expect(d.overdueCount, 1);
     expect(d.weekProfit, 550);
     // One lookup for both lists, without duplicates.
-    final passed = verify(() => entries(captureAny())).captured.single as List<Order>;
+    final passed =
+        verify(() => entries(captureAny())).captured.single as List<Order>;
     expect(passed.map((o) => o.id).toSet(), {1, 2, 3, 4});
     expect(passed, hasLength(4));
   });
 
   test('fails when due orders cannot be loaded', () async {
-    when(() => orders.getOpenOrdersDueBefore(any())).thenAnswer((_) async => const Error(DatabaseFailure('x')));
+    when(() => orders.getOpenOrdersDueBefore(any()))
+        .thenAnswer((_) async => const Error(DatabaseFailure('x')));
     final result = await useCase(now);
     expect(result, isA<Error<TodayDashboard>>());
   });

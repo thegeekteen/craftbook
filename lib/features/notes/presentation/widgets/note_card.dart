@@ -54,7 +54,8 @@ class NoteCard extends StatelessWidget {
                   note.displayTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyLarge.copyWith(color: c.ink, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodyLarge
+                      .copyWith(color: c.ink, fontWeight: FontWeight.w600),
                 ),
                 if (showPreview) ...[
                   const SizedBox(height: 2),
@@ -72,7 +73,9 @@ class NoteCard extends StatelessWidget {
                       if (checklist.total > 0) ...[
                         AppTag(
                           '${checklist.done}/${checklist.total} done',
-                          type: checklist.done == checklist.total ? AppTagType.ok : AppTagType.neutral,
+                          type: checklist.done == checklist.total
+                              ? AppTagType.ok
+                              : AppTagType.neutral,
                         ),
                         const SizedBox(width: AppSpacing.sm),
                       ],
@@ -93,7 +96,9 @@ class NoteCard extends StatelessWidget {
               onPressed: onTogglePin,
               visualDensity: VisualDensity.compact,
               icon: Icon(
-                note.isPinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+                note.isPinned
+                    ? Icons.push_pin_rounded
+                    : Icons.push_pin_outlined,
                 size: 20,
                 color: note.isPinned ? c.go : c.muted,
               ),
@@ -101,7 +106,8 @@ class NoteCard extends StatelessWidget {
           else if (note.isPinned)
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
-              child: Icon(Icons.push_pin_rounded, size: 16, color: c.go, semanticLabel: 'Pinned'),
+              child: Icon(Icons.push_pin_rounded,
+                  size: 16, color: c.go, semanticLabel: 'Pinned'),
             ),
         ],
       ),

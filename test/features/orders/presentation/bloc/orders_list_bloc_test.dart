@@ -86,11 +86,12 @@ void main() {
 
   blocTest<OrdersListBloc, OrdersListState>(
     'emits [Loading, Error] when getOrders fails and skips decoration',
-    setUp: () => when(() => getOrders()).thenAnswer(
-        (_) async => const Error(DatabaseFailure('read failed'))),
+    setUp: () => when(() => getOrders())
+        .thenAnswer((_) async => const Error(DatabaseFailure('read failed'))),
     build: build,
     act: (bloc) => bloc.add(const LoadOrders()),
-    expect: () => [isA<OrdersListLoading>(), const OrdersListError('read failed')],
+    expect: () =>
+        [isA<OrdersListLoading>(), const OrdersListError('read failed')],
     verify: (_) => verifyNever(() => getOrderListEntries(any())),
   );
 
@@ -128,8 +129,8 @@ void main() {
     });
 
     test('completes after a failed load', () async {
-      when(() => getOrders()).thenAnswer(
-          (_) async => const Error(DatabaseFailure('x')));
+      when(() => getOrders())
+          .thenAnswer((_) async => const Error(DatabaseFailure('x')));
       final bloc = build();
       final done = Completer<void>();
       bloc.add(LoadOrders(done: done));

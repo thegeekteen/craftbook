@@ -18,7 +18,10 @@ class GetOrderListEntries {
   Future<Result<List<OrderListEntry>>> call(List<Order> orders) async {
     if (orders.isEmpty) return const Success([]);
 
-    final ids = [for (final o in orders) if (o.id != null) o.id!];
+    final ids = [
+      for (final o in orders)
+        if (o.id != null) o.id!
+    ];
     final linesResult = await orderRepository.getOrderLines(ids);
     final Map<int, List<OrderLine>> lines;
     switch (linesResult) {

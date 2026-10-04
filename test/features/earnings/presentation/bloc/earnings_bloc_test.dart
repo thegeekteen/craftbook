@@ -56,11 +56,23 @@ void main() {
   final trend = [TrendBucket(start: DateTime(2026, 9, 1), profit: 650)];
 
   const low = ProductEarnings(
-      productId: 1, productName: 'Keychain', quantitySold: 3, totalSales: 360, totalProfit: 100);
+      productId: 1,
+      productName: 'Keychain',
+      quantitySold: 3,
+      totalSales: 360,
+      totalProfit: 100);
   const high = ProductEarnings(
-      productId: 2, productName: 'Tulip', quantitySold: 2, totalSales: 900, totalProfit: 500);
+      productId: 2,
+      productName: 'Tulip',
+      quantitySold: 2,
+      totalSales: 900,
+      totalProfit: 500);
   const mid = ProductEarnings(
-      productId: 3, productName: 'Strap', quantitySold: 1, totalSales: 180, totalProfit: 120);
+      productId: 3,
+      productName: 'Strap',
+      quantitySold: 1,
+      totalSales: 180,
+      totalProfit: 120);
 
   setUpAll(() {
     registerFallbackValue(DateTime(2000));
@@ -84,10 +96,12 @@ void main() {
   /// Stubs every use case to succeed. The product list is growable because
   /// the bloc sorts it in place.
   void stubAll({EarningsSummary s = summary}) {
-    when(() => getEarningsSummary(any(), any())).thenAnswer((_) async => Success(s));
+    when(() => getEarningsSummary(any(), any()))
+        .thenAnswer((_) async => Success(s));
     when(() => getProductEarnings(any(), any()))
         .thenAnswer((_) async => Success(List.of(const [low, high, mid])));
-    when(() => getWasteSummary(any(), any())).thenAnswer((_) async => const Success(waste));
+    when(() => getWasteSummary(any(), any()))
+        .thenAnswer((_) async => const Success(waste));
     when(() => getProfitTrend(
           start: any(named: 'start'),
           end: any(named: 'end'),
@@ -95,7 +109,8 @@ void main() {
         )).thenAnswer((_) async => Success(trend));
   }
 
-  EarningsLoaded loadedFor(DateTime s, DateTime e, EarningsSummary sum) => EarningsLoaded(
+  EarningsLoaded loadedFor(DateTime s, DateTime e, EarningsSummary sum) =>
+      EarningsLoaded(
         startDate: s,
         endDate: e,
         summary: sum,
@@ -146,36 +161,39 @@ void main() {
       'summary fails',
       setUp: () {
         stubAll();
-        when(() => getEarningsSummary(any(), any()))
-            .thenAnswer((_) async => const Error(DatabaseFailure('summary failed')));
+        when(() => getEarningsSummary(any(), any())).thenAnswer(
+            (_) async => const Error(DatabaseFailure('summary failed')));
       },
       build: build,
       act: (bloc) => bloc.add(LoadEarnings(startDate: start, endDate: end)),
-      expect: () => [isA<EarningsLoading>(), const EarningsError('summary failed')],
+      expect: () =>
+          [isA<EarningsLoading>(), const EarningsError('summary failed')],
     );
 
     blocTest<EarningsBloc, EarningsState>(
       'product earnings fails',
       setUp: () {
         stubAll();
-        when(() => getProductEarnings(any(), any()))
-            .thenAnswer((_) async => const Error(DatabaseFailure('products failed')));
+        when(() => getProductEarnings(any(), any())).thenAnswer(
+            (_) async => const Error(DatabaseFailure('products failed')));
       },
       build: build,
       act: (bloc) => bloc.add(LoadEarnings(startDate: start, endDate: end)),
-      expect: () => [isA<EarningsLoading>(), const EarningsError('products failed')],
+      expect: () =>
+          [isA<EarningsLoading>(), const EarningsError('products failed')],
     );
 
     blocTest<EarningsBloc, EarningsState>(
       'waste fails',
       setUp: () {
         stubAll();
-        when(() => getWasteSummary(any(), any()))
-            .thenAnswer((_) async => const Error(DatabaseFailure('waste failed')));
+        when(() => getWasteSummary(any(), any())).thenAnswer(
+            (_) async => const Error(DatabaseFailure('waste failed')));
       },
       build: build,
       act: (bloc) => bloc.add(LoadEarnings(startDate: start, endDate: end)),
-      expect: () => [isA<EarningsLoading>(), const EarningsError('waste failed')],
+      expect: () =>
+          [isA<EarningsLoading>(), const EarningsError('waste failed')],
     );
 
     blocTest<EarningsBloc, EarningsState>(
@@ -183,14 +201,17 @@ void main() {
       setUp: () {
         stubAll();
         when(() => getProfitTrend(
-              start: any(named: 'start'),
-              end: any(named: 'end'),
-              granularity: any(named: 'granularity'),
-            )).thenAnswer((_) async => const Error(DatabaseFailure('trend failed')));
+                  start: any(named: 'start'),
+                  end: any(named: 'end'),
+                  granularity: any(named: 'granularity'),
+                ))
+            .thenAnswer(
+                (_) async => const Error(DatabaseFailure('trend failed')));
       },
       build: build,
       act: (bloc) => bloc.add(LoadEarnings(startDate: start, endDate: end)),
-      expect: () => [isA<EarningsLoading>(), const EarningsError('trend failed')],
+      expect: () =>
+          [isA<EarningsLoading>(), const EarningsError('trend failed')],
     );
   });
 
@@ -199,7 +220,8 @@ void main() {
     setUp: () => stubAll(s: otherSummary),
     build: build,
     seed: () => loadedFor(start, end, summary),
-    act: (bloc) => bloc.add(LoadEarnings(startDate: otherStart, endDate: otherEnd)),
+    act: (bloc) =>
+        bloc.add(LoadEarnings(startDate: otherStart, endDate: otherEnd)),
     expect: () => [
       loadedFor(start, end, summary).refreshing(),
       loadedFor(otherStart, otherEnd, otherSummary),

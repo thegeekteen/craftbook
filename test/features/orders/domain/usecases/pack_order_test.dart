@@ -24,11 +24,17 @@ void main() {
     orders = MockOrderRepository();
     materials = MockMaterialRepository();
     products = MockProductRepository();
-    pack = PackOrder(orderRepository: orders, materialRepository: materials, productRepository: products);
-    when(() => materials.deductMaterials(any(), any(), reserved: any(named: 'reserved')))
+    pack = PackOrder(
+        orderRepository: orders,
+        materialRepository: materials,
+        productRepository: products);
+    when(() => materials.deductMaterials(any(), any(),
+            reserved: any(named: 'reserved')))
         .thenAnswer((_) async => const Success(null));
-    when(() => products.deductProductStock(any(), any())).thenAnswer((_) async => const Success(null));
-    when(() => orders.packOrder(1)).thenAnswer((_) async => const Success(null));
+    when(() => products.deductProductStock(any(), any()))
+        .thenAnswer((_) async => const Success(null));
+    when(() => orders.packOrder(1))
+        .thenAnswer((_) async => const Success(null));
   });
 
   test('deducts what was used but releases only what was reserved', () async {
@@ -44,9 +50,15 @@ void main() {
             createdAt: DateTime(2026, 10, 1),
           ),
         ]));
-    when(() => orders.getOrderProducts(1)).thenAnswer((_) async => const Success([
-          OrderProduct(orderId: 1, productId: 5, productName: 'Box', quantity: 1, unitCost: 28),
-        ]));
+    when(() => orders.getOrderProducts(1))
+        .thenAnswer((_) async => const Success([
+              OrderProduct(
+                  orderId: 1,
+                  productId: 5,
+                  productName: 'Box',
+                  quantity: 1,
+                  unitCost: 28),
+            ]));
 
     final result = await pack(1);
 

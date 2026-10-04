@@ -27,9 +27,12 @@ void main() {
 
   setUp(() async {
     repo = _MockSettings();
-    when(() => repo.setThemeMode(any())).thenAnswer((_) async => const Success(null));
-    when(() => repo.setPalette(any())).thenAnswer((_) async => const Success(null));
-    when(() => repo.setOrderAmountShown(any())).thenAnswer((_) async => const Success(null));
+    when(() => repo.setThemeMode(any()))
+        .thenAnswer((_) async => const Success(null));
+    when(() => repo.setPalette(any()))
+        .thenAnswer((_) async => const Success(null));
+    when(() => repo.setOrderAmountShown(any()))
+        .thenAnswer((_) async => const Success(null));
     cubit = ThemeCubit(repo);
     amountCubit = OrderAmountCubit(repo);
     await getIt.reset();
@@ -40,10 +43,12 @@ void main() {
 
   Future<void> pump(WidgetTester tester) => tester.pumpWidget(MaterialApp(
         theme: AppTheme.lightTheme,
-        home: const Scaffold(body: SingleChildScrollView(child: AppearanceCard())),
+        home: const Scaffold(
+            body: SingleChildScrollView(child: AppearanceCard())),
       ));
 
-  testWidgets('shows every colour scheme and the dark mode options', (tester) async {
+  testWidgets('shows every colour scheme and the dark mode options',
+      (tester) async {
     await pump(tester);
     for (final p in AppPalette.values) {
       expect(find.text(p.label), findsOneWidget);
@@ -58,9 +63,11 @@ void main() {
     final handle = tester.ensureSemantics();
     await pump(tester);
     final forest = find.widgetWithText(PaletteSwatch, 'Forest');
-    expect(tester.getSemantics(forest).flagsCollection.isSelected, Tristate.isTrue);
+    expect(tester.getSemantics(forest).flagsCollection.isSelected,
+        Tristate.isTrue);
     final berry = find.widgetWithText(PaletteSwatch, 'Berry');
-    expect(tester.getSemantics(berry).flagsCollection.isSelected, isNot(Tristate.isTrue));
+    expect(tester.getSemantics(berry).flagsCollection.isSelected,
+        isNot(Tristate.isTrue));
     handle.dispose();
   });
 

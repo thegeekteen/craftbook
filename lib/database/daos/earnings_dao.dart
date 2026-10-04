@@ -10,16 +10,19 @@ import '../tables/materials_table.dart';
 part 'earnings_dao.g.dart';
 
 /// Data Access Object for earnings calculations
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
-class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin {
+@DriftAccessor(
+    tables: [Orders, OrderItems, OrderMaterials, Products, Materials])
+class EarningsDao extends DatabaseAccessor<AppDatabase>
+    with _$EarningsDaoMixin {
   EarningsDao(super.db);
 
   /// Get completed orders (packed or shipped) whose completion date falls within the range.
   /// Uses packedAt for packed orders, shippedAt for shipped orders.
-  Future<List<Order>> _getCompletedOrders(DateTime startDate, DateTime endDate) async {
+  Future<List<Order>> _getCompletedOrders(
+      DateTime startDate, DateTime endDate) async {
     final allCompleted = await (select(orders)
-          ..where((t) =>
-              t.status.equals('packed') | t.status.equals('shipped')))
+          ..where(
+              (t) => t.status.equals('packed') | t.status.equals('shipped')))
         .get();
 
     return allCompleted.where((o) {
@@ -31,17 +34,23 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
   }
 
   /// Get total earnings for date range
-  Future<Map<String, dynamic>> getEarningsSummary(DateTime startDate, DateTime endDate) async {
+  Future<Map<String, dynamic>> getEarningsSummary(
+      DateTime startDate, DateTime endDate) async {
     final completedOrders = await _getCompletedOrders(startDate, endDate);
 
-    final totalSales = completedOrders.fold<double>(0, (sum, o) => sum + o.totalSales);
-    final totalMaterialCost = completedOrders.fold<double>(0, (sum, o) => sum + o.totalMaterialCost);
-    final totalChannelFees = completedOrders.fold<double>(0, (sum, o) => sum + o.channelFees);
-    final totalShippingCost = completedOrders.fold<double>(0, (sum, o) => sum + o.shippingCost);
+    final totalSales =
+        completedOrders.fold<double>(0, (sum, o) => sum + o.totalSales);
+    final totalMaterialCost =
+        completedOrders.fold<double>(0, (sum, o) => sum + o.totalMaterialCost);
+    final totalChannelFees =
+        completedOrders.fold<double>(0, (sum, o) => sum + o.channelFees);
+    final totalShippingCost =
+        completedOrders.fold<double>(0, (sum, o) => sum + o.shippingCost);
 
     // Recalculate profit from components — don't trust stored order.profit
     // which may be stale if materials were adjusted after creation.
-    final totalProfit = totalSales - totalMaterialCost - totalChannelFees - totalShippingCost;
+    final totalProfit =
+        totalSales - totalMaterialCost - totalChannelFees - totalShippingCost;
 
     return {
       'totalSales': totalSales,
@@ -54,13 +63,16 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
   }
 
   /// Get earnings by product for date range
-  Future<List<Map<String, dynamic>>> getEarningsByProduct(DateTime startDate, DateTime endDate) async {
+  Future<List<Map<String, dynamic>>> getEarningsByProduct(
+      DateTime startDate, DateTime endDate) async {
     final completedOrders = await _getCompletedOrders(startDate, endDate);
 
     final Map<int, Map<String, dynamic>> productEarnings = {};
 
     for (final order in completedOrders) {
-      final items = await (select(orderItems)..where((t) => t.orderId.equals(order.id))).get();
+      final items = await (select(orderItems)
+            ..where((t) => t.orderId.equals(order.id)))
+          .get();
       if (items.isEmpty) continue;
 
       // Recalculate this order's profit from components
@@ -84,15 +96,16 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
         }
 
         // Allocate profit proportional to this item's share of order sales
-        final salesShare = order.totalSales > 0
-            ? item.subtotal / order.totalSales
-            : 0.0;
+        final salesShare =
+            order.totalSales > 0 ? item.subtotal / order.totalSales : 0.0;
         final itemProfit = orderProfit * salesShare;
 
         productEarnings[item.productId]!['quantity'] =
-            (productEarnings[item.productId]!['quantity'] as int) + item.quantity;
+            (productEarnings[item.productId]!['quantity'] as int) +
+                item.quantity;
         productEarnings[item.productId]!['sales'] =
-            (productEarnings[item.productId]!['sales'] as double) + item.subtotal;
+            (productEarnings[item.productId]!['sales'] as double) +
+                item.subtotal;
         productEarnings[item.productId]!['profit'] =
             (productEarnings[item.productId]!['profit'] as double) + itemProfit;
       }
@@ -103,7 +116,8 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
 
   /// Get waste summary for date range, with per-material breakdown.
   /// Only counts waste from packed or shipped orders.
-  Future<Map<String, dynamic>> getWasteSummary(DateTime startDate, DateTime endDate) async {
+  Future<Map<String, dynamic>> getWasteSummary(
+      DateTime startDate, DateTime endDate) async {
     final completedOrders = await _getCompletedOrders(startDate, endDate);
     final completedOrderIds = completedOrders.map((o) => o.id).toSet();
 
@@ -116,21 +130,25 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
             .get();
 
     final totalWaste = filtered.fold<int>(0, (sum, m) => sum + m.wasteQuantity);
-    final wasteCost = filtered.fold<double>(0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
+    final wasteCost = filtered.fold<double>(
+        0, (sum, m) => sum + (m.wasteQuantity * m.unitCost));
 
     // Group waste by materialId
     final Map<int, Map<String, dynamic>> byMaterial = {};
     for (final m in filtered) {
       if (m.wasteQuantity <= 0) continue;
-      byMaterial.putIfAbsent(m.materialId, () => {
-        'materialId': m.materialId,
-        'quantity': 0,
-        'cost': 0.0,
-      });
+      byMaterial.putIfAbsent(
+          m.materialId,
+          () => {
+                'materialId': m.materialId,
+                'quantity': 0,
+                'cost': 0.0,
+              });
       byMaterial[m.materialId]!['quantity'] =
           (byMaterial[m.materialId]!['quantity'] as int) + m.wasteQuantity;
       byMaterial[m.materialId]!['cost'] =
-          (byMaterial[m.materialId]!['cost'] as double) + (m.wasteQuantity * m.unitCost);
+          (byMaterial[m.materialId]!['cost'] as double) +
+              (m.wasteQuantity * m.unitCost);
     }
 
     // Resolve material names
@@ -147,7 +165,8 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
     }
 
     // Sort by cost descending
-    wasteItems.sort((a, b) => (b['cost'] as double).compareTo(a['cost'] as double));
+    wasteItems
+        .sort((a, b) => (b['cost'] as double).compareTo(a['cost'] as double));
 
     return {
       'totalWasteQuantity': totalWaste,
@@ -179,8 +198,8 @@ class EarningsDao extends DatabaseAccessor<AppDatabase> with _$EarningsDaoMixin 
     if (completed.isEmpty) return const [];
     final byId = {for (final o in completed) o.id: o};
     final items = await (select(orderItems)
-          ..where((t) =>
-              t.productId.equals(productId) & t.orderId.isIn(byId.keys)))
+          ..where(
+              (t) => t.productId.equals(productId) & t.orderId.isIn(byId.keys)))
         .get();
 
     final lines = <Map<String, dynamic>>[];

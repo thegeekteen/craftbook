@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 /// The CraftBook launcher icon, for in-app places like the About footer.
 ///
 /// Reuses the launcher artwork so the app looks the same on the home screen

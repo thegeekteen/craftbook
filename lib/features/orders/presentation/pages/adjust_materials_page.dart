@@ -38,11 +38,13 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
     for (final m in widget.materials) m.materialId: m.wasteReason,
   };
 
-  double get _plannedCost =>
-      widget.materials.fold(0, (sum, m) => sum + m.plannedQuantity * m.unitCost);
+  double get _plannedCost => widget.materials
+      .fold(0, (sum, m) => sum + m.plannedQuantity * m.unitCost);
 
-  double get _actualCost => widget.materials
-      .fold(0, (sum, m) => sum + (_actual[m.materialId] ?? m.actualQuantity) * m.unitCost);
+  double get _actualCost => widget.materials.fold(
+      0,
+      (sum, m) =>
+          sum + (_actual[m.materialId] ?? m.actualQuantity) * m.unitCost);
 
   void _save() {
     final updated = [
@@ -81,7 +83,8 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
             child: Text(
               'Record what you actually used. Anything over plan counts as waste '
               'and comes out of this order\'s profit.',
-              style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: c.muted, fontSize: 13),
             ),
           ),
           for (final m in widget.materials) ...[
@@ -91,7 +94,8 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
               reason: _reasons[m.materialId],
               reasons: _wasteReasons,
               onActualChanged: (v) => setState(() => _actual[m.materialId] = v),
-              onReasonChanged: (r) => setState(() => _reasons[m.materialId] = r),
+              onReasonChanged: (r) =>
+                  setState(() => _reasons[m.materialId] = r),
             ),
             const SizedBox(height: 10),
           ],
@@ -177,11 +181,14 @@ class _MaterialAdjustCard extends StatelessWidget {
               children: [
                 Text(
                   '+$waste waste · ${CurrencyFormatter.format(waste * material.unitCost)}',
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: c.alert, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: AppTextStyles.bodySmall.copyWith(
+                      color: c.alert,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13),
                 ),
                 const Spacer(),
-                Text('Why?', style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
+                Text('Why?',
+                    style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
               ],
             ),
             const SizedBox(height: 8),
@@ -197,8 +204,8 @@ class _MaterialAdjustCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '$saved fewer than planned',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: c.go, fontWeight: FontWeight.w600, fontSize: 13),
+              style: AppTextStyles.bodySmall.copyWith(
+                  color: c.go, fontWeight: FontWeight.w600, fontSize: 13),
             ),
           ],
         ],

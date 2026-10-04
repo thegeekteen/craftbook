@@ -39,7 +39,11 @@ class ProductSummaryCard extends StatelessWidget {
     // Matches the low rule on ProductCard so the list and page agree.
     final low = p.isStandalone ? p.isLowStock : qty > 0 && qty < 5;
     final alertQty = low || qty == 0;
-    final margin = (MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0).margin * 100).round();
+    final margin =
+        (MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0)
+                    .margin *
+                100)
+            .round();
     final marginColor = margin >= 50 ? c.go : (margin >= 20 ? c.warn : c.alert);
 
     return AppCard(
@@ -53,7 +57,8 @@ class ProductSummaryCard extends StatelessWidget {
             children: [
               Text(
                 '$qty',
-                style: AppTextStyles.displayLarge.copyWith(color: alertQty ? c.alert : c.ink, fontSize: 44),
+                style: AppTextStyles.displayLarge
+                    .copyWith(color: alertQty ? c.alert : c.ink, fontSize: 44),
               ),
               const SizedBox(width: 8),
               Text(
@@ -86,8 +91,14 @@ class ProductSummaryCard extends StatelessWidget {
             const SizedBox(height: 14),
             StatRow(children: [
               p.quantityFree < 0
-                  ? StatTile(label: 'Short', value: '${-p.quantityFree}', valueColor: c.alert)
-                  : StatTile(label: 'Free', value: '${p.quantityFree}', valueColor: c.go),
+                  ? StatTile(
+                      label: 'Short',
+                      value: '${-p.quantityFree}',
+                      valueColor: c.alert)
+                  : StatTile(
+                      label: 'Free',
+                      value: '${p.quantityFree}',
+                      valueColor: c.go),
               StatTile(
                 label: 'Promised',
                 value: '${p.quantityPromised}',
@@ -100,8 +111,14 @@ class ProductSummaryCard extends StatelessWidget {
           Divider(color: c.hair),
           const SizedBox(height: 12),
           StatRow(children: [
-            StatTile(label: 'Sell price', value: CurrencyFormatter.format(p.sellPrice), compact: true),
-            StatTile(label: 'Cost', value: CurrencyFormatter.format(cost), compact: true),
+            StatTile(
+                label: 'Sell price',
+                value: CurrencyFormatter.format(p.sellPrice),
+                compact: true),
+            StatTile(
+                label: 'Cost',
+                value: CurrencyFormatter.format(cost),
+                compact: true),
             StatTile(
               label: 'Margin',
               value: '${margin < 0 ? '−${-margin}' : margin}%',
@@ -111,7 +128,9 @@ class ProductSummaryCard extends StatelessWidget {
           ]),
           if (p.description?.trim().isNotEmpty == true) ...[
             const SizedBox(height: 12),
-            Text(p.description!.trim(), style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13)),
+            Text(p.description!.trim(),
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: c.muted, fontSize: 13)),
           ],
         ],
       ),

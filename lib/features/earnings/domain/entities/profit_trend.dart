@@ -43,5 +43,6 @@ class ProductOrderLine extends Equatable {
   });
 
   @override
-  List<Object?> get props => [orderId, customerName, quantity, sales, profit, completedAt];
+  List<Object?> get props =>
+      [orderId, customerName, quantity, sales, profit, completedAt];
 }

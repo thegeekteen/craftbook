@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // Narrow import: the full barrel exports Document/Node/Attribute and friends,
 // which would collide with the names this file already uses.
-import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
+import 'package:flutter_quill/flutter_quill.dart'
+    show FlutterQuillLocalizations;
 import 'package:go_router/go_router.dart';
 
 import 'core/di/injection.dart';
@@ -36,6 +37,7 @@ import 'features/earnings/presentation/pages/product_earnings_page.dart';
 import 'features/notes/presentation/pages/note_edit_page.dart';
 import 'features/notes/presentation/pages/notes_page.dart';
 import 'features/settings/presentation/pages/about_page.dart';
+import 'features/social_links/presentation/pages/social_links_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
 class CraftbookApp extends StatelessWidget {
@@ -60,22 +62,22 @@ class CraftbookApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget app(ThemeSettings look) => MaterialApp.router(
-      title: 'CraftBook',
-      theme: AppTheme.light(look.palette),
-      darkTheme: AppTheme.dark(look.palette),
-      themeMode: look.mode,
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      // Quill looks its toolbar strings up through these; without them the
-      // note editor throws while building.
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        FlutterQuillLocalizations.delegate,
-      ],
-      routerConfig: _router,
-    );
+          title: 'CraftBook',
+          theme: AppTheme.light(look.palette),
+          darkTheme: AppTheme.dark(look.palette),
+          themeMode: look.mode,
+          debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: scaffoldMessengerKey,
+          // Quill looks its toolbar strings up through these; without them the
+          // note editor throws while building.
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            FlutterQuillLocalizations.delegate,
+          ],
+          routerConfig: _router,
+        );
 
     final fixedMode = themeMode;
     final fixedPalette = palette;
@@ -94,169 +96,175 @@ class CraftbookApp extends StatelessWidget {
   }
 
   static GoRouter _buildRouter(String initialLocation) => GoRouter(
-    initialLocation: initialLocation,
-    routes: [
-      ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
+        initialLocation: initialLocation,
         routes: [
+          ShellRoute(
+            builder: (context, state, child) => AppShell(child: child),
+            routes: [
+              GoRoute(
+                path: RouteNames.today,
+                builder: (context, state) => const TodayPage(),
+              ),
+              GoRoute(
+                path: RouteNames.orders,
+                builder: (context, state) => const OrdersListPage(),
+              ),
+              GoRoute(
+                path: RouteNames.materials,
+                builder: (context, state) => const MaterialsListPage(),
+              ),
+              GoRoute(
+                path: RouteNames.earnings,
+                builder: (context, state) => const EarningsPage(),
+              ),
+              GoRoute(
+                path: RouteNames.settings,
+                builder: (context, state) => const SettingsPage(),
+              ),
+              GoRoute(
+                path: RouteNames.about,
+                builder: (context, state) => const AboutPage(),
+              ),
+              // Catalogue pages keep the bottom nav (they belong to More/Stock).
+              GoRoute(
+                path: RouteNames.products,
+                builder: (context, state) => const ProductsListPage(),
+              ),
+              GoRoute(
+                path: RouteNames.buyList,
+                builder: (context, state) => const BuyListPage(),
+              ),
+              GoRoute(
+                path: RouteNames.notes,
+                builder: (context, state) => const NotesPage(),
+              ),
+            ],
+          ),
+          // Top-level (no shell): these are pushed from the order wizard, and a
+          // shell child there would mount a second AppShell and duplicate its
+          // GlobalKey.
           GoRoute(
-            path: RouteNames.today,
-            builder: (context, state) => const TodayPage(),
+            path: RouteNames.channels,
+            builder: (context, state) => const ChannelsPage(),
           ),
           GoRoute(
-            path: RouteNames.orders,
-            builder: (context, state) => const OrdersListPage(),
+            path: RouteNames.orderFields,
+            builder: (context, state) => const OrderFieldsPage(),
           ),
           GoRoute(
-            path: RouteNames.materials,
-            builder: (context, state) => const MaterialsListPage(),
+            path: RouteNames.socialLinks,
+            builder: (context, state) => const SocialLinksPage(),
+          ),
+          // The note editor takes the whole screen, keyboard and toolbar included.
+          GoRoute(
+            path: RouteNames.newNote,
+            builder: (context, state) => const NoteEditPage(),
           ),
           GoRoute(
-            path: RouteNames.earnings,
-            builder: (context, state) => const EarningsPage(),
+            path: RouteNames.noteDetail,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return NoteEditPage(noteId: id);
+            },
           ),
           GoRoute(
-            path: RouteNames.settings,
-            builder: (context, state) => const SettingsPage(),
+            path: RouteNames.calendarWeek,
+            builder: (context, state) => const CalendarPage(),
           ),
           GoRoute(
-            path: RouteNames.about,
-            builder: (context, state) => const AboutPage(),
-          ),
-          // Catalogue pages keep the bottom nav (they belong to More/Stock).
-          GoRoute(
-            path: RouteNames.products,
-            builder: (context, state) => const ProductsListPage(),
+            path: RouteNames.calendarMonth,
+            builder: (context, state) =>
+                const CalendarPage(initialMode: CalendarMode.month),
           ),
           GoRoute(
-            path: RouteNames.buyList,
-            builder: (context, state) => const BuyListPage(),
+            path: RouteNames.newOrder,
+            builder: (context, state) => const NewOrderPage(),
           ),
           GoRoute(
-            path: RouteNames.notes,
-            builder: (context, state) => const NotesPage(),
+            path: RouteNames.editOrder,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return NewOrderPage(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.orderDetail,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return OrderDetailsPage(orderId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.newMaterial,
+            builder: (context, state) => const NewMaterialPage(),
+          ),
+          GoRoute(
+            path: RouteNames.editMaterial,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return NewMaterialPage(materialId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.materialDetail,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return MaterialDetailPage(materialId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.receiveStock,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return BlocProvider(
+                create: (_) => getIt<MaterialsBloc>(),
+                child: ReceiveStockPage(materialId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: RouteNames.newProduct,
+            builder: (context, state) => const ProductEditorPage(),
+          ),
+          GoRoute(
+            path: RouteNames.productDetail,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return ProductDetailPage(productId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.productEditor,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return ProductEditorPage(productId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.receiveProductStock,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return ReceiveProductStockPage(productId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.productEarnings,
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['productId']!);
+              DateTime? at(String key) {
+                final ms = int.tryParse(state.uri.queryParameters[key] ?? '');
+                return ms == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(ms);
+              }
+
+              return ProductEarningsPage(
+                productId: id,
+                startDate: at('start'),
+                endDate: at('end'),
+              );
+            },
           ),
         ],
-      ),
-      // Top-level (no shell): these are pushed from the order wizard, and a
-      // shell child there would mount a second AppShell and duplicate its
-      // GlobalKey.
-      GoRoute(
-        path: RouteNames.channels,
-        builder: (context, state) => const ChannelsPage(),
-      ),
-      GoRoute(
-        path: RouteNames.orderFields,
-        builder: (context, state) => const OrderFieldsPage(),
-      ),
-      // The note editor takes the whole screen, keyboard and toolbar included.
-      GoRoute(
-        path: RouteNames.newNote,
-        builder: (context, state) => const NoteEditPage(),
-      ),
-      GoRoute(
-        path: RouteNames.noteDetail,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return NoteEditPage(noteId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.calendarWeek,
-        builder: (context, state) => const CalendarPage(),
-      ),
-      GoRoute(
-        path: RouteNames.calendarMonth,
-        builder: (context, state) =>
-            const CalendarPage(initialMode: CalendarMode.month),
-      ),
-      GoRoute(
-        path: RouteNames.newOrder,
-        builder: (context, state) => const NewOrderPage(),
-      ),
-      GoRoute(
-        path: RouteNames.editOrder,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return NewOrderPage(orderId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.orderDetail,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return OrderDetailsPage(orderId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.newMaterial,
-        builder: (context, state) => const NewMaterialPage(),
-      ),
-      GoRoute(
-        path: RouteNames.editMaterial,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return NewMaterialPage(materialId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.materialDetail,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return MaterialDetailPage(materialId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.receiveStock,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return BlocProvider(
-            create: (_) => getIt<MaterialsBloc>(),
-            child: ReceiveStockPage(materialId: id),
-          );
-        },
-      ),
-      GoRoute(
-        path: RouteNames.newProduct,
-        builder: (context, state) => const ProductEditorPage(),
-      ),
-      GoRoute(
-        path: RouteNames.productDetail,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return ProductDetailPage(productId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.productEditor,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return ProductEditorPage(productId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.receiveProductStock,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['id']!);
-          return ReceiveProductStockPage(productId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.productEarnings,
-        builder: (context, state) {
-          final id = int.parse(state.pathParameters['productId']!);
-          DateTime? at(String key) {
-            final ms = int.tryParse(state.uri.queryParameters[key] ?? '');
-            return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
-          }
-
-          return ProductEarningsPage(
-            productId: id,
-            startDate: at('start'),
-            endDate: at('end'),
-          );
-        },
-      ),
-    ],
-  );
+      );
 }

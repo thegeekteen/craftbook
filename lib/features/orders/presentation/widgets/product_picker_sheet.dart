@@ -94,8 +94,8 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         if (!mounted) return;
         // Buildable products first, then alphabetical.
         value.sort((a, b) {
-          final byStock =
-              ((buildable[b.id] ?? 0) > 0 ? 1 : 0) - ((buildable[a.id] ?? 0) > 0 ? 1 : 0);
+          final byStock = ((buildable[b.id] ?? 0) > 0 ? 1 : 0) -
+              ((buildable[a.id] ?? 0) > 0 ? 1 : 0);
           return byStock != 0 ? byStock : a.name.compareTo(b.name);
         });
         setState(() {
@@ -111,7 +111,9 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
     final c = context.colors;
     final visible = _query.isEmpty
         ? _products
-        : _products.where((p) => p.name.toLowerCase().contains(_query)).toList();
+        : _products
+            .where((p) => p.name.toLowerCase().contains(_query))
+            .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,11 +123,13 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Add product', style: AppTextStyles.displaySmall.copyWith(color: c.ink)),
+              Text('Add product',
+                  style: AppTextStyles.displaySmall.copyWith(color: c.ink)),
               const SizedBox(height: 12),
               AppSearchField(
                 hint: 'Search products',
-                onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                onChanged: (v) =>
+                    setState(() => _query = v.trim().toLowerCase()),
               ),
             ],
           ),
@@ -164,7 +168,9 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         final added = widget.addedProductIds.contains(p.id);
         final available = qty > 0;
         final stockText = !available
-            ? (p.isStandalone ? 'Out of stock' : "Can't build: not enough materials")
+            ? (p.isStandalone
+                ? 'Out of stock'
+                : "Can't build: not enough materials")
             : (p.isStandalone ? 'In stock $qty' : 'Can build $qty');
         return Opacity(
           opacity: available ? 1 : 0.45,
@@ -190,15 +196,19 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                           runSpacing: 4,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Text(p.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                            Text(p.name,
+                                style: AppTextStyles.bodyLarge
+                                    .copyWith(color: c.ink)),
                             if (available && qty < 5) const AppTag.low(),
-                            if (added) const AppTag('Added', type: AppTagType.ok),
+                            if (added)
+                              const AppTag('Added', type: AppTagType.ok),
                           ],
                         ),
                         const SizedBox(height: 2),
                         Text(
                           stockText,
-                          style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                          style:
+                              AppTextStyles.bodySmall.copyWith(color: c.muted),
                         ),
                       ],
                     ),
@@ -206,11 +216,13 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                   const SizedBox(width: 12),
                   Text(
                     CurrencyFormatter.formatShort(p.sellPrice),
-                    style: AppTextStyles.amount.copyWith(color: c.coin, fontSize: 16),
+                    style: AppTextStyles.amount
+                        .copyWith(color: c.coin, fontSize: 16),
                   ),
                   if (available) ...[
                     const SizedBox(width: 6),
-                    Icon(Icons.add_circle_outline_rounded, color: c.go, size: 22),
+                    Icon(Icons.add_circle_outline_rounded,
+                        color: c.go, size: 22),
                   ],
                 ],
               ),

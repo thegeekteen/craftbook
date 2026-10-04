@@ -52,7 +52,8 @@ class PipStrip extends StatelessWidget {
     final promisedCount = promised.clamp(0, room < 0 ? 0 : room);
     final filled = freeCount + promisedCount + incoming + removed;
     // Pad with empty pips up to the reorder level (or [total], if larger).
-    final empty = ((alertLevel > total ? alertLevel : total) - filled).clamp(0, 1 << 30);
+    final empty =
+        ((alertLevel > total ? alertLevel : total) - filled).clamp(0, 1 << 30);
     final pieces = filled + empty;
     final perPip = pieces <= maxPips ? 1 : (pieces / maxPips).ceil();
 
@@ -74,7 +75,8 @@ class PipStrip extends StatelessWidget {
     Widget pip(_Pip kind) {
       final radius = BorderRadius.circular(1.5);
       return switch (kind) {
-        _Pip.free => _box(w, h, BoxDecoration(color: freeColor, borderRadius: radius)),
+        _Pip.free =>
+          _box(w, h, BoxDecoration(color: freeColor, borderRadius: radius)),
         _Pip.promised => _box(
             w,
             h,
@@ -105,7 +107,8 @@ class PipStrip extends StatelessWidget {
               border: Border.all(color: c.hair, width: 1),
             ),
           ),
-        _Pip.empty => _box(w, h, BoxDecoration(color: c.pipEmpty, borderRadius: radius)),
+        _Pip.empty =>
+          _box(w, h, BoxDecoration(color: c.pipEmpty, borderRadius: radius)),
       };
     }
 
@@ -114,7 +117,9 @@ class PipStrip extends StatelessWidget {
       if (i == markerAt) children.add(_marker(h, c.ink));
       children.add(pip(kinds[i]));
     }
-    if (markerAt == kinds.length && markerAt > 0) children.add(_marker(h, c.ink));
+    if (markerAt == kinds.length && markerAt > 0) {
+      children.add(_marker(h, c.ink));
+    }
 
     return Semantics(
       label: '$freeCount free, $promisedCount promised'
@@ -155,7 +160,11 @@ class PipLegend extends StatelessWidget {
     final style = Theme.of(context).textTheme.bodySmall;
     Widget item(Widget swatch, String text) => Row(
           mainAxisSize: MainAxisSize.min,
-          children: [swatch, const SizedBox(width: 5), Text(text, style: style)],
+          children: [
+            swatch,
+            const SizedBox(width: 5),
+            Text(text, style: style)
+          ],
         );
     Widget sw(Color color) => Container(
           width: 7,

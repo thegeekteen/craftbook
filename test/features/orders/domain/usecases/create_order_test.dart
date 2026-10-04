@@ -12,7 +12,9 @@ import 'package:craftbook/features/orders/domain/repositories/order_repository.d
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 
 class MockOrderRepository extends Mock implements OrderRepository {}
+
 class MockProductRepository extends Mock implements ProductRepository {}
+
 class MockMaterialRepository extends Mock implements MaterialRepository {}
 
 void main() {
@@ -132,8 +134,10 @@ void main() {
       verify(() => mockProductRepo.getBomItems(1)).called(1);
 
       // Verify materials were reserved
-      verify(() => mockMaterialRepo.reserveMaterials(1, 2)).called(1); // 2 magnet sheets
-      verify(() => mockMaterialRepo.reserveMaterials(2, 2)).called(1); // 2 photo tops
+      verify(() => mockMaterialRepo.reserveMaterials(1, 2))
+          .called(1); // 2 magnet sheets
+      verify(() => mockMaterialRepo.reserveMaterials(2, 2))
+          .called(1); // 2 photo tops
     });
 
     test('returns validation failure for empty customer name', () async {
@@ -180,8 +184,16 @@ void main() {
 
     test('combines materials from multiple items', () async {
       final multiItems = [
-        const OrderItemInput(productId: 1, productName: 'Magnets', quantity: 2, unitPrice: 249.0),
-        const OrderItemInput(productId: 2, productName: 'Keychain', quantity: 1, unitPrice: 249.0),
+        const OrderItemInput(
+            productId: 1,
+            productName: 'Magnets',
+            quantity: 2,
+            unitPrice: 249.0),
+        const OrderItemInput(
+            productId: 2,
+            productName: 'Keychain',
+            quantity: 1,
+            unitPrice: 249.0),
       ];
 
       final keychainBom = [

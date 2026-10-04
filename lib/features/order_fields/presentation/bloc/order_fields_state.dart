@@ -34,7 +34,8 @@ class OrderFieldsLoaded extends OrderFieldsState {
 
   bool get isEmpty => active.isEmpty && archived.isEmpty;
 
-  OrderFieldsLoaded withMessage(String message, int serial, {bool isError = false}) =>
+  OrderFieldsLoaded withMessage(String message, int serial,
+          {bool isError = false}) =>
       OrderFieldsLoaded(
         active: active,
         archived: archived,

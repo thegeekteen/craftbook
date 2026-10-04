@@ -63,10 +63,13 @@ class MoneyBreakdownBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (var i = 0; i < segments.length; i++) ...[
-                      if (i > 0) SizedBox(width: 2, child: ColoredBox(color: c.surface)),
+                      if (i > 0)
+                        SizedBox(width: 2, child: ColoredBox(color: c.surface)),
                       Expanded(
                         // Flex needs ints; scale to keep small slices visible.
-                        flex: (segments[i].$1 / total * 1000).round().clamp(1, 1000),
+                        flex: (segments[i].$1 / total * 1000)
+                            .round()
+                            .clamp(1, 1000),
                         child: ColoredBox(color: segments[i].$2),
                       ),
                     ],
@@ -117,7 +120,8 @@ class MoneyBreakdown extends StatelessWidget {
           color: c.alert,
           onTap: onMaterialsTap,
         ),
-        MoneyRow(label: feesLabel, amount: -parts.fees, dot: c.warn, color: c.warn),
+        MoneyRow(
+            label: feesLabel, amount: -parts.fees, dot: c.warn, color: c.warn),
         MoneyRow(
           label: 'Shipping',
           amount: -parts.shipping,

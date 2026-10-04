@@ -29,7 +29,8 @@ Future<T?> showAppSheet<T>({
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: AppTextStyles.displaySmall.copyWith(color: c.ink)),
+            Text(title,
+                style: AppTextStyles.displaySmall.copyWith(color: c.ink)),
             if (subtitle != null) ...[
               const SizedBox(height: 4),
               Text(

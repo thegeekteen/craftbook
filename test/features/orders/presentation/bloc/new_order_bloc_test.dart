@@ -45,8 +45,10 @@ void main() {
     note: 'Gift wrap',
   );
 
-  const tulip = AddItem(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
-  const strap = AddItem(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
+  const tulip =
+      AddItem(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
+  const strap =
+      AddItem(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
 
   const preview = OrderPreview(
     sales: 1080,
@@ -98,8 +100,10 @@ void main() {
         isSaving: isSaving,
       );
 
-  const tulipInput = OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
-  const strapInput = OrderItemInput(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
+  const tulipInput = OrderItemInput(
+      productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450);
+  const strapInput = OrderItemInput(
+      productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
 
   void stubCreate(Result<int> result) {
     when(() => calculateOrderProfit(
@@ -163,11 +167,13 @@ void main() {
     act: (bloc) => bloc
       ..add(details)
       ..add(tulip)
-      ..add(const AddItem(productId: 10, productName: 'Tulip', quantity: 3, unitPrice: 999)),
+      ..add(const AddItem(
+          productId: 10, productName: 'Tulip', quantity: 3, unitPrice: 999)),
     skip: 2,
     expect: () => [
       filled(items: const [
-        OrderItemInput(productId: 10, productName: 'Tulip', quantity: 5, unitPrice: 450),
+        OrderItemInput(
+            productId: 10, productName: 'Tulip', quantity: 5, unitPrice: 450),
       ]),
     ],
   );
@@ -182,7 +188,8 @@ void main() {
     skip: 2,
     expect: () => [
       filled(items: const [
-        OrderItemInput(productId: 10, productName: 'Tulip', quantity: 4, unitPrice: 450),
+        OrderItemInput(
+            productId: 10, productName: 'Tulip', quantity: 4, unitPrice: 450),
       ]),
     ],
   );
@@ -196,7 +203,9 @@ void main() {
       ..add(const UpdateItemQuantity(productId: 99, quantity: 4)),
     skip: 1,
     // Same state re-emitted is de-duplicated, so only one emission shows.
-    expect: () => [filled(items: const [tulipInput])],
+    expect: () => [
+      filled(items: const [tulipInput])
+    ],
   );
 
   blocTest<NewOrderBloc, NewOrderState>(
@@ -208,7 +217,9 @@ void main() {
       ..add(strap)
       ..add(const RemoveItem(10)),
     skip: 3,
-    expect: () => [filled(items: const [strapInput])],
+    expect: () => [
+      filled(items: const [strapInput])
+    ],
   );
 
   group('RequestPreview', () {
@@ -229,16 +240,19 @@ void main() {
         filled(items: const [tulipInput], isPreviewing: true),
         filled(items: const [tulipInput], preview: preview),
       ],
-      verify: (_) => verify(() => previewOrder(items: [tulipInput], channelId: 2, excludeOrderId: null)).called(1),
+      verify: (_) => verify(() => previewOrder(
+          items: [tulipInput], channelId: 2, excludeOrderId: null)).called(1),
     );
 
     blocTest<NewOrderBloc, NewOrderState>(
       'failure sets previewError and no preview',
       setUp: () => when(() => previewOrder(
-            items: any(named: 'items'),
-            channelId: any(named: 'channelId'),
-            excludeOrderId: any(named: 'excludeOrderId'),
-          )).thenAnswer((_) async => const Error(NotFoundFailure('Channel not found'))),
+                items: any(named: 'items'),
+                channelId: any(named: 'channelId'),
+                excludeOrderId: any(named: 'excludeOrderId'),
+              ))
+          .thenAnswer(
+              (_) async => const Error(NotFoundFailure('Channel not found'))),
       build: build,
       act: (bloc) => bloc
         ..add(details)
@@ -299,7 +313,9 @@ void main() {
         bloc.add(strap);
       },
       skip: 4,
-      expect: () => [filled(items: const [tulipInput, strapInput])],
+      expect: () => [
+        filled(items: const [tulipInput, strapInput])
+      ],
     );
   });
 
@@ -378,13 +394,15 @@ void main() {
         shipByDate: shipBy,
       )),
       expect: () => [
-        isA<NewOrderDetailsFilled>().having((s) => s.fieldValues, 'fieldValues', {1: 'Cebu City'}),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.fieldValues, 'fieldValues', {1: 'Cebu City'}),
       ],
     );
 
     blocTest<NewOrderBloc, NewOrderState>(
       'failure emits NewOrderError then returns to DetailsFilled',
-      setUp: () => stubCreate(const Error(ValidationFailure('At least one item is required'))),
+      setUp: () => stubCreate(
+          const Error(ValidationFailure('At least one item is required'))),
       build: build,
       act: (bloc) => bloc
         ..add(details)
@@ -402,11 +420,13 @@ void main() {
       setUp: () {
         stubCreate(const Success(5));
         when(() => calculateOrderProfit(
-              totalSales: any(named: 'totalSales'),
-              totalMaterialCost: any(named: 'totalMaterialCost'),
-              channelId: any(named: 'channelId'),
-              shippingCost: any(named: 'shippingCost'),
-            )).thenAnswer((_) async => const Error(NotFoundFailure('Channel not found')));
+                  totalSales: any(named: 'totalSales'),
+                  totalMaterialCost: any(named: 'totalMaterialCost'),
+                  channelId: any(named: 'channelId'),
+                  shippingCost: any(named: 'shippingCost'),
+                ))
+            .thenAnswer(
+                (_) async => const Error(NotFoundFailure('Channel not found')));
       },
       build: build,
       act: (bloc) => bloc
@@ -416,7 +436,8 @@ void main() {
       skip: 3,
       expect: () => [
         const NewOrderError('Channel not found'),
-        isA<NewOrderDetailsFilled>().having((s) => s.isSaving, 'isSaving', false),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.isSaving, 'isSaving', false),
       ],
       verify: (_) => verifyNever(() => createOrder(
             customerName: any(named: 'customerName'),
@@ -483,17 +504,22 @@ void main() {
       ),
     ];
 
-    const address = OrderField(id: 1, name: 'Address', type: OrderFieldType.text);
-    const card = OrderField(id: 2, name: 'Card', type: OrderFieldType.text, isArchived: true);
+    const address =
+        OrderField(id: 1, name: 'Address', type: OrderFieldType.text);
+    const card = OrderField(
+        id: 2, name: 'Card', type: OrderFieldType.text, isArchived: true);
 
     void stubLoad({
       Order? order,
       Result<List<OrderItem>>? items,
       List<OrderFieldEntry> fields = const [],
     }) {
-      when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => Success(order ?? existing));
-      when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => items ?? Success(lines));
-      when(() => orderRepository.getOrderFieldValues(7)).thenAnswer((_) async => Success(fields));
+      when(() => orderRepository.getOrderById(7))
+          .thenAnswer((_) async => Success(order ?? existing));
+      when(() => orderRepository.getOrderItems(7))
+          .thenAnswer((_) async => items ?? Success(lines));
+      when(() => orderRepository.getOrderFieldValues(7))
+          .thenAnswer((_) async => Success(fields));
     }
 
     void stubUpdate() => when(() => updateOrder(
@@ -516,8 +542,8 @@ void main() {
       build: build,
       act: (bloc) => bloc.add(const LoadExistingOrder(7)),
       expect: () => [
-        isA<NewOrderDetailsFilled>()
-            .having((s) => s.fieldValues, 'fieldValues', {1: 'Cebu City', 2: 'Happy birthday'}),
+        isA<NewOrderDetailsFilled>().having((s) => s.fieldValues, 'fieldValues',
+            {1: 'Cebu City', 2: 'Happy birthday'}),
       ],
     );
 
@@ -577,23 +603,27 @@ void main() {
       expect: () => [
         isA<NewOrderDetailsFilled>()
             .having((s) => s.editingOrderId, 'editingOrderId', 7)
-            .having((s) => s.editingStatus, 'editingStatus', OrderStatus.pending)
+            .having(
+                (s) => s.editingStatus, 'editingStatus', OrderStatus.pending)
             .having((s) => s.customerName, 'customerName', 'Jessa Ramos')
             .having((s) => s.channelId, 'channelId', 2)
             .having((s) => s.note, 'note', 'Gift wrap')
             .having((s) => s.items, 'items', const [
-              OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450),
-            ])
-            .having((s) => s.totalSales, 'totalSales', 900),
+          OrderItemInput(
+              productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450),
+        ]).having((s) => s.totalSales, 'totalSales', 900),
       ],
     );
 
     blocTest<NewOrderBloc, NewOrderState>(
       'LoadExistingOrder emits an error when the order is missing',
       setUp: () {
-        when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => const Success(null));
-        when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => const Success([]));
-        when(() => orderRepository.getOrderFieldValues(7)).thenAnswer((_) async => const Success([]));
+        when(() => orderRepository.getOrderById(7))
+            .thenAnswer((_) async => const Success(null));
+        when(() => orderRepository.getOrderItems(7))
+            .thenAnswer((_) async => const Success([]));
+        when(() => orderRepository.getOrderFieldValues(7))
+            .thenAnswer((_) async => const Success([]));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadExistingOrder(7)),
@@ -633,7 +663,11 @@ void main() {
               shipByDate: shipBy,
               channelId: 2,
               items: const [
-                OrderItemInput(productId: 10, productName: 'Tulip', quantity: 2, unitPrice: 450),
+                OrderItemInput(
+                    productId: 10,
+                    productName: 'Tulip',
+                    quantity: 2,
+                    unitPrice: 450),
               ],
             )).called(1);
         verifyNever(() => createOrder(
@@ -656,15 +690,17 @@ void main() {
       setUp: () {
         stubLoad();
         when(() => updateOrder(
-              orderId: any(named: 'orderId'),
-              customerName: any(named: 'customerName'),
-              fieldValues: any(named: 'fieldValues'),
-              note: any(named: 'note'),
-              orderDate: any(named: 'orderDate'),
-              shipByDate: any(named: 'shipByDate'),
-              channelId: any(named: 'channelId'),
-              items: any(named: 'items'),
-            )).thenAnswer((_) async => const Error(ValidationFailure('Customer name is required')));
+                  orderId: any(named: 'orderId'),
+                  customerName: any(named: 'customerName'),
+                  fieldValues: any(named: 'fieldValues'),
+                  note: any(named: 'note'),
+                  orderDate: any(named: 'orderDate'),
+                  shipByDate: any(named: 'shipByDate'),
+                  channelId: any(named: 'channelId'),
+                  items: any(named: 'items'),
+                ))
+            .thenAnswer((_) async =>
+                const Error(ValidationFailure('Customer name is required')));
       },
       build: build,
       act: (bloc) async {
@@ -674,7 +710,8 @@ void main() {
       },
       skip: 1,
       expect: () => [
-        isA<NewOrderDetailsFilled>().having((s) => s.isSaving, 'isSaving', true),
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.isSaving, 'isSaving', true),
         const NewOrderError('Customer name is required'),
         isA<NewOrderDetailsFilled>()
             .having((s) => s.isSaving, 'isSaving', false)

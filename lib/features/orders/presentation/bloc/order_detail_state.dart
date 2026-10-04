@@ -109,7 +109,8 @@ class OrderDetailMessage extends OrderDetailState {
   /// Guarantees two identical messages in a row are both delivered.
   final int serial;
 
-  const OrderDetailMessage(this.message, {this.isError = false, this.serial = 0});
+  const OrderDetailMessage(this.message,
+      {this.isError = false, this.serial = 0});
 
   @override
   List<Object?> get props => [message, isError, serial];

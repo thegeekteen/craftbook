@@ -16,7 +16,8 @@ class Product extends Equatable {
   final DateTime updatedAt;
 
   int get quantityFree => quantityOnHand - quantityPromised;
-  bool get isLowStock => isStandalone && alertLevel > 0 && quantityOnHand <= alertLevel;
+  bool get isLowStock =>
+      isStandalone && alertLevel > 0 && quantityOnHand <= alertLevel;
 
   const Product({
     this.id,

@@ -57,7 +57,8 @@ Order _order({
   );
 }
 
-OrderListEntry _entry(Order order, {String? channel = 'Shopee'}) => OrderListEntry(
+OrderListEntry _entry(Order order, {String? channel = 'Shopee'}) =>
+    OrderListEntry(
       order: order,
       channelName: channel,
       lines: const [
@@ -82,9 +83,12 @@ void main() {
       expect(_order(shipInDays: -10).isOverdue, isTrue);
       expect(_order(shipInDays: 0).isOverdue, isFalse);
       expect(_order(shipInDays: 2).isOverdue, isFalse);
-      expect(_order(shipInDays: -1, status: OrderStatus.packed).isOverdue, isFalse);
-      expect(_order(shipInDays: -1, status: OrderStatus.shipped).isOverdue, isFalse);
-      expect(_order(shipInDays: -1, status: OrderStatus.cancelled).isOverdue, isFalse);
+      expect(_order(shipInDays: -1, status: OrderStatus.packed).isOverdue,
+          isFalse);
+      expect(_order(shipInDays: -1, status: OrderStatus.shipped).isOverdue,
+          isFalse);
+      expect(_order(shipInDays: -1, status: OrderStatus.cancelled).isOverdue,
+          isFalse);
     });
 
     test('isOverdue ignores time of day on today', () {
@@ -96,12 +100,15 @@ void main() {
     });
 
     test('liveProfit is computed from components, not stored profit', () {
-      final o = _order(sales: 500, materials: 100, fees: 50, shipping: 40, profit: 999);
+      final o = _order(
+          sales: 500, materials: 100, fees: 50, shipping: 40, profit: 999);
       expect(o.liveProfit, 310);
     });
 
     test('liveProfit can be negative', () {
-      expect(_order(sales: 100, materials: 150, fees: 0, shipping: 0).liveProfit, -50);
+      expect(
+          _order(sales: 100, materials: 150, fees: 0, shipping: 0).liveProfit,
+          -50);
     });
   });
 
@@ -120,12 +127,15 @@ void main() {
     });
 
     testWidgets('overdue pending order shows OVERDUE', (tester) async {
-      await tester.pumpWidget(_wrap(OrderStatusPill.of(_order(shipInDays: -2))));
+      await tester
+          .pumpWidget(_wrap(OrderStatusPill.of(_order(shipInDays: -2))));
       expect(find.text('OVERDUE'), findsOneWidget);
-      expect(tester.widget<StatusPill>(find.byType(StatusPill)).type, StatusPillType.alert);
+      expect(tester.widget<StatusPill>(find.byType(StatusPill)).type,
+          StatusPillType.alert);
     });
 
-    testWidgets('overdue flag is ignored for non-pending orders', (tester) async {
+    testWidgets('overdue flag is ignored for non-pending orders',
+        (tester) async {
       await tester.pumpWidget(_wrap(const OrderStatusPill(
         status: OrderStatus.packed,
         overdue: true,
@@ -157,7 +167,8 @@ void main() {
   });
 
   group('OrderCard', () {
-    testWidgets('renders customer, items, id, channel and the order total', (tester) async {
+    testWidgets('renders customer, items, id, channel and the order total',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(OrderCard(
         entry: _entry(_order()),
@@ -167,7 +178,8 @@ void main() {
       expect(find.text('2× Tulip bouquet · 1× Gift box'), findsOneWidget);
       expect(find.text('#42'), findsOneWidget);
       expect(find.text('Shopee'), findsOneWidget);
-      expect(tester.widget<AppTag>(find.byType(AppTag)).type, AppTagType.outline);
+      expect(
+          tester.widget<AppTag>(find.byType(AppTag)).type, AppTagType.outline);
       expect(find.text('TO PACK'), findsOneWidget);
       // What the customer pays, not the profit
       expect(find.text('₱500'), findsOneWidget);
@@ -195,7 +207,8 @@ void main() {
 
     testWidgets('negative profit shows the formatted loss', (tester) async {
       await tester.pumpWidget(_wrap(OrderCard(
-        entry: _entry(_order(sales: 100, materials: 150, fees: 0, shipping: 0, profit: 50)),
+        entry: _entry(_order(
+            sales: 100, materials: 150, fees: 0, shipping: 0, profit: 50)),
         amountShown: OrderAmountShown.profit,
       )));
       // Formatted with NumberFormat's ASCII hyphen, unlike CurrencyText's '−'.
@@ -211,7 +224,8 @@ void main() {
       expect(find.textContaining('×'), findsNothing);
     });
 
-    testWidgets('cancelled orders hide the amount in either mode', (tester) async {
+    testWidgets('cancelled orders hide the amount in either mode',
+        (tester) async {
       await tester.pumpWidget(_wrap(OrderCard(
         entry: _entry(_order(status: OrderStatus.cancelled)),
       )));
@@ -226,12 +240,14 @@ void main() {
     });
 
     testWidgets('unsaved order shows a dash for id', (tester) async {
-      await tester.pumpWidget(_wrap(OrderCard(entry: _entry(_order(id: null)))));
+      await tester
+          .pumpWidget(_wrap(OrderCard(entry: _entry(_order(id: null)))));
       expect(find.text('#–'), findsOneWidget);
     });
 
     testWidgets('overdue order shows OVERDUE and due text', (tester) async {
-      await tester.pumpWidget(_wrap(OrderCard(entry: _entry(_order(shipInDays: -3)))));
+      await tester
+          .pumpWidget(_wrap(OrderCard(entry: _entry(_order(shipInDays: -3)))));
       expect(find.text('OVERDUE'), findsOneWidget);
       expect(find.text('Due 3 days ago'), findsOneWidget);
     });
@@ -239,8 +255,10 @@ void main() {
 
   group('OrderCard.whenLabel', () {
     test('overdue pending orders are urgent', () {
-      expect(OrderCard.whenLabel(_order(shipInDays: -1)), ('Due yesterday', true));
-      expect(OrderCard.whenLabel(_order(shipInDays: -4)), ('Due 4 days ago', true));
+      expect(
+          OrderCard.whenLabel(_order(shipInDays: -1)), ('Due yesterday', true));
+      expect(OrderCard.whenLabel(_order(shipInDays: -4)),
+          ('Due 4 days ago', true));
     });
 
     test('ships today is urgent only while pending', () {
@@ -252,14 +270,15 @@ void main() {
     });
 
     test('packed orders past ship-by are not shown as due', () {
-      final (text, urgent) =
-          OrderCard.whenLabel(_order(shipInDays: -2, status: OrderStatus.packed));
+      final (text, urgent) = OrderCard.whenLabel(
+          _order(shipInDays: -2, status: OrderStatus.packed));
       expect(text, 'Ships ${app_date.DateUtils.friendly(_day(-2))}');
       expect(urgent, isFalse);
     });
 
     test('future orders show the friendly date', () {
-      expect(OrderCard.whenLabel(_order(shipInDays: 1)), ('Ships Tomorrow', false));
+      expect(OrderCard.whenLabel(_order(shipInDays: 1)),
+          ('Ships Tomorrow', false));
       expect(
         OrderCard.whenLabel(_order(shipInDays: 5)),
         ('Ships ${app_date.DateUtils.friendly(_day(5))}', false),
@@ -268,7 +287,8 @@ void main() {
 
     test('shipped orders show when they shipped', () {
       expect(
-        OrderCard.whenLabel(_order(status: OrderStatus.shipped, shippedAt: _day(-1))),
+        OrderCard.whenLabel(
+            _order(status: OrderStatus.shipped, shippedAt: _day(-1))),
         ('Shipped Yesterday', false),
       );
       expect(
@@ -279,14 +299,16 @@ void main() {
 
     test('cancelled orders', () {
       expect(
-        OrderCard.whenLabel(_order(status: OrderStatus.cancelled, shipInDays: -5)),
+        OrderCard.whenLabel(
+            _order(status: OrderStatus.cancelled, shipInDays: -5)),
         ('Cancelled', false),
       );
     });
   });
 
   group('OrderMiniRow', () {
-    testWidgets('shows name, id, piece count, order total and pill', (tester) async {
+    testWidgets('shows name, id, piece count, order total and pill',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(OrderMiniRow(
         entry: _entry(_order(status: OrderStatus.packed)),
@@ -380,10 +402,17 @@ void main() {
   });
 
   group('PackConfirmSheet', () {
-    testWidgets('shows lines with before/after, LOW tag and pips', (tester) async {
+    testWidgets('shows lines with before/after, LOW tag and pips',
+        (tester) async {
       await tester.pumpWidget(_wrap(const PackConfirmSheet(lines: [
-        PackLine(name: 'Beads', quantity: 4, stock: StockLevel(onHand: 10, alertLevel: 3)),
-        PackLine(name: 'Clasp', quantity: 2, stock: StockLevel(onHand: 4, alertLevel: 2)),
+        PackLine(
+            name: 'Beads',
+            quantity: 4,
+            stock: StockLevel(onHand: 10, alertLevel: 3)),
+        PackLine(
+            name: 'Clasp',
+            quantity: 2,
+            stock: StockLevel(onHand: 4, alertLevel: 2)),
         PackLine(name: 'Ribbon', quantity: 2),
       ])));
       expect(find.text('Pack this order?'), findsOneWidget);
@@ -399,7 +428,10 @@ void main() {
 
     testWidgets('warns about short lines', (tester) async {
       await tester.pumpWidget(_wrap(const PackConfirmSheet(lines: [
-        PackLine(name: 'Wire', quantity: 8, stock: StockLevel(onHand: 3, alertLevel: 1)),
+        PackLine(
+            name: 'Wire',
+            quantity: 8,
+            stock: StockLevel(onHand: 3, alertLevel: 1)),
       ])));
       expect(find.text('3 → 0'), findsOneWidget);
       expect(find.text('Short on Wire. Stock will stop at 0.'), findsOneWidget);
@@ -407,7 +439,8 @@ void main() {
 
     testWidgets('empty sheet says nothing to take', (tester) async {
       await tester.pumpWidget(_wrap(const PackConfirmSheet(lines: [])));
-      expect(find.text('Nothing to take from stock for this order.'), findsOneWidget);
+      expect(find.text('Nothing to take from stock for this order.'),
+          findsOneWidget);
     });
 
     Future<List<bool>> pumpLauncher(WidgetTester tester) async {
@@ -451,7 +484,8 @@ void main() {
       return results;
     }
 
-    testWidgets('show builds lines and returns true on Pack & deduct', (tester) async {
+    testWidgets('show builds lines and returns true on Pack & deduct',
+        (tester) async {
       final results = await pumpLauncher(tester);
       expect(find.byType(PackConfirmSheet), findsOneWidget);
       // actual quantity (with waste) is used, not planned

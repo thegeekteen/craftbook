@@ -71,7 +71,8 @@ class BarTotal extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     value,
-                    style: AppTextStyles.amount.copyWith(color: c.ink, fontSize: 20),
+                    style: AppTextStyles.amount
+                        .copyWith(color: c.ink, fontSize: 20),
                   ),
                 ),
               ),

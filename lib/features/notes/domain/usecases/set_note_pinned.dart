@@ -6,5 +6,6 @@ class SetNotePinned {
 
   SetNotePinned(this.repository);
 
-  Future<Result<void>> call(int id, bool pinned) => repository.setPinned(id, pinned);
+  Future<Result<void>> call(int id, bool pinned) =>
+      repository.setPinned(id, pinned);
 }

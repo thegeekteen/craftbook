@@ -54,6 +54,15 @@ import '../../features/orders/domain/usecases/delete_order.dart';
 import '../../features/orders/domain/usecases/get_order_list_entries.dart';
 import '../../features/orders/domain/usecases/preview_order.dart';
 
+import '../../database/daos/social_link_dao.dart';
+import '../../features/social_links/data/repositories/social_link_repository_impl.dart';
+import '../../features/social_links/domain/repositories/social_link_repository.dart';
+import '../../features/social_links/domain/usecases/delete_social_link.dart';
+import '../../features/social_links/domain/usecases/get_social_links.dart';
+import '../../features/social_links/domain/usecases/reorder_social_links.dart';
+import '../../features/social_links/domain/usecases/save_social_link.dart';
+import '../../features/social_links/presentation/bloc/social_links_bloc.dart';
+import '../services/link_launcher.dart';
 import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
 import '../../features/earnings/domain/repositories/earnings_repository.dart';
 import '../../features/earnings/domain/usecases/get_earnings_summary.dart';
@@ -114,6 +123,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(EarningsDao(db));
   getIt.registerSingleton(OrderFieldDao(db));
   getIt.registerSingleton(NoteDao(db));
+  getIt.registerSingleton(SocialLinkDao(db));
+  getIt.registerLazySingleton<LinkLauncher>(() => const LinkLauncher());
 
   // Repositories
   getIt.registerLazySingleton<ChannelRepository>(
@@ -134,6 +145,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<NoteRepository>(
     () => NoteRepositoryImpl(getIt<NoteDao>()),
   );
+  getIt.registerLazySingleton<SocialLinkRepository>(
+    () => SocialLinkRepositoryImpl(getIt<SocialLinkDao>()),
+  );
   getIt.registerLazySingleton<EarningsRepository>(
     () => EarningsRepositoryImpl(getIt<EarningsDao>()),
   );
@@ -148,6 +162,12 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => RemoveOrderField(getIt()));
   getIt.registerFactory(() => RestoreOrderField(getIt()));
   getIt.registerFactory(() => ReorderOrderFields(getIt()));
+
+  // Use Cases - Social links
+  getIt.registerFactory(() => GetSocialLinks(getIt()));
+  getIt.registerFactory(() => SaveSocialLink(getIt()));
+  getIt.registerFactory(() => DeleteSocialLink(getIt()));
+  getIt.registerFactory(() => ReorderSocialLinks(getIt()));
 
   // Use Cases - Notes
   getIt.registerFactory(() => GetNotes(getIt()));
@@ -171,9 +191,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => AdjustProductStock(getIt()));
   getIt.registerFactory(() => GetProductHistory(getIt()));
   getIt.registerFactory(() => DeleteChannel(
-    channelRepository: getIt(),
-    orderRepository: getIt(),
-  ));
+        channelRepository: getIt(),
+        orderRepository: getIt(),
+      ));
 
   // Use Cases - Stock
   getIt.registerFactory(() => GetMaterials(getIt()));
@@ -184,47 +204,47 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => GetBuyList(getIt()));
   getIt.registerFactory(() => GetBlockedProducts(getIt()));
   getIt.registerFactory(() => DeleteMaterial(
-    materialRepository: getIt(),
-    productRepository: getIt(),
-  ));
+        materialRepository: getIt(),
+        productRepository: getIt(),
+      ));
 
   // Use Cases - Orders
   getIt.registerFactory(() => GetOrders(getIt()));
   getIt.registerFactory(() => CreateOrder(
-    orderRepository: getIt(),
-    productRepository: getIt(),
-    materialRepository: getIt(),
-  ));
+        orderRepository: getIt(),
+        productRepository: getIt(),
+        materialRepository: getIt(),
+      ));
   getIt.registerFactory(() => PackOrder(
-    orderRepository: getIt(),
-    materialRepository: getIt(),
-    productRepository: getIt(),
-  ));
+        orderRepository: getIt(),
+        materialRepository: getIt(),
+        productRepository: getIt(),
+      ));
   getIt.registerFactory(() => ShipOrder(getIt()));
   getIt.registerFactory(() => UpdateOrderNote(getIt()));
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
   getIt.registerFactory(() => PreviewOrder(
-    productRepository: getIt(),
-    materialRepository: getIt(),
-    calculateOrderProfit: getIt(),
-    orderRepository: getIt(),
-  ));
+        productRepository: getIt(),
+        materialRepository: getIt(),
+        calculateOrderProfit: getIt(),
+        orderRepository: getIt(),
+      ));
   getIt.registerFactory(() => UpdateOrder(
-    orderRepository: getIt(),
-    productRepository: getIt(),
-    materialRepository: getIt(),
-    calculateOrderProfit: getIt(),
-  ));
+        orderRepository: getIt(),
+        productRepository: getIt(),
+        materialRepository: getIt(),
+        calculateOrderProfit: getIt(),
+      ));
   getIt.registerFactory(() => GetOrderListEntries(
-    orderRepository: getIt(),
-    channelRepository: getIt(),
-  ));
+        orderRepository: getIt(),
+        channelRepository: getIt(),
+      ));
   getIt.registerFactory(() => DeleteOrder(
-    orderRepository: getIt(),
-    materialRepository: getIt(),
-    productRepository: getIt(),
-  ));
+        orderRepository: getIt(),
+        materialRepository: getIt(),
+        productRepository: getIt(),
+      ));
 
   // Use Cases - Earnings
   getIt.registerFactory(() => GetEarningsSummary(getIt()));
@@ -236,86 +256,94 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   // Use Cases - Today
   getIt.registerFactory(() => GetAlertSummary(getIt()));
   getIt.registerFactory(() => GetTodayDashboard(
-    orderRepository: getIt(),
-    earningsRepository: getIt(),
-    getAlertSummary: getIt(),
-    getOrderListEntries: getIt(),
-  ));
+        orderRepository: getIt(),
+        earningsRepository: getIt(),
+        getAlertSummary: getIt(),
+        getOrderListEntries: getIt(),
+      ));
 
   // BLoCs
   getIt.registerFactory(() => ProductsBloc(
-    getProducts: getIt(),
-    createProduct: getIt(),
-    updateProduct: getIt(),
-    deleteProduct: getIt(),
-    calculateBomCost: getIt(),
-    calculateBuildableQuantity: getIt(),
-  ));
+        getProducts: getIt(),
+        createProduct: getIt(),
+        updateProduct: getIt(),
+        deleteProduct: getIt(),
+        calculateBomCost: getIt(),
+        calculateBuildableQuantity: getIt(),
+      ));
   getIt.registerFactory(() => OrderFieldsBloc(
-    getOrderFields: getIt(),
-    saveOrderField: getIt(),
-    removeOrderField: getIt(),
-    restoreOrderField: getIt(),
-    reorderOrderFields: getIt(),
-  ));
+        getOrderFields: getIt(),
+        saveOrderField: getIt(),
+        removeOrderField: getIt(),
+        restoreOrderField: getIt(),
+        reorderOrderFields: getIt(),
+      ));
+  getIt.registerFactory(() => SocialLinksBloc(
+        getSocialLinks: getIt(),
+        saveSocialLink: getIt(),
+        deleteSocialLink: getIt(),
+        reorderSocialLinks: getIt(),
+      ));
   getIt.registerFactory(() => NotesBloc(
-    getNotes: getIt(),
-    setNotePinned: getIt(),
-    deleteNote: getIt(),
-    restoreNote: getIt(),
-  ));
+        getNotes: getIt(),
+        setNotePinned: getIt(),
+        deleteNote: getIt(),
+        restoreNote: getIt(),
+      ));
   getIt.registerFactory(() => NoteEditCubit(
-    getNote: getIt(),
-    saveNote: getIt(),
-    deleteNote: getIt(),
-  ));
+        getNote: getIt(),
+        saveNote: getIt(),
+        deleteNote: getIt(),
+      ));
   getIt.registerFactory(() => ChannelsBloc(
-    getChannels: getIt(),
-    updateChannel: getIt(),
-    deleteChannel: getIt(),
-    channelRepository: getIt(),
-  ));
+        getChannels: getIt(),
+        updateChannel: getIt(),
+        deleteChannel: getIt(),
+        channelRepository: getIt(),
+      ));
   getIt.registerFactory(() => MaterialsBloc(
-    getMaterials: getIt(),
-    getBuyList: getIt(),
-    receiveStock: getIt(),
-    deleteMaterial: getIt(),
-    updateMaterial: getIt(),
-    materialRepository: getIt(),
-  ));
+        getMaterials: getIt(),
+        getBuyList: getIt(),
+        receiveStock: getIt(),
+        deleteMaterial: getIt(),
+        updateMaterial: getIt(),
+        materialRepository: getIt(),
+      ));
   getIt.registerFactory(() => OrdersListBloc(
-    getOrders: getIt(),
-    getOrderListEntries: getIt(),
-  ));
+        getOrders: getIt(),
+        getOrderListEntries: getIt(),
+      ));
   getIt.registerFactory(() => NewOrderBloc(
-    createOrder: getIt(),
-    updateOrder: getIt(),
-    orderRepository: getIt(),
-    calculateOrderProfit: getIt(),
-    previewOrder: getIt(),
-  ));
+        createOrder: getIt(),
+        updateOrder: getIt(),
+        orderRepository: getIt(),
+        calculateOrderProfit: getIt(),
+        previewOrder: getIt(),
+      ));
   getIt.registerFactory(() => OrderDetailBloc(
-    orderRepository: getIt(),
-    channelRepository: getIt(),
-    materialRepository: getIt(),
-    productRepository: getIt(),
-    adjustMaterialsUsed: getIt(),
-    packOrder: getIt(),
-    shipOrder: getIt(),
-    deleteOrder: getIt(),
-    updateOrderNote: getIt(),
-  ));
+        orderRepository: getIt(),
+        channelRepository: getIt(),
+        materialRepository: getIt(),
+        productRepository: getIt(),
+        adjustMaterialsUsed: getIt(),
+        packOrder: getIt(),
+        shipOrder: getIt(),
+        deleteOrder: getIt(),
+        updateOrderNote: getIt(),
+      ));
   // App-wide: lives above the router, so a singleton.
-  getIt.registerSingleton(ThemeCubit(getIt()), dispose: (cubit) => cubit.close());
-  getIt.registerSingleton(OrderAmountCubit(getIt()), dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(ThemeCubit(getIt()),
+      dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(OrderAmountCubit(getIt()),
+      dispose: (cubit) => cubit.close());
   getIt.registerFactory(() => TodayBloc(
-    getTodayDashboard: getIt(),
-    getPinnedNotes: getIt(),
-  ));
+        getTodayDashboard: getIt(),
+        getPinnedNotes: getIt(),
+      ));
   getIt.registerFactory(() => EarningsBloc(
-    getEarningsSummary: getIt(),
-    getProductEarnings: getIt(),
-    getWasteSummary: getIt(),
-    getProfitTrend: getIt(),
-  ));
+        getEarningsSummary: getIt(),
+        getProductEarnings: getIt(),
+        getWasteSummary: getIt(),
+        getProfitTrend: getIt(),
+      ));
 }

@@ -7,17 +7,19 @@ import '../../../../support/note_bodies.dart';
 import '../../../../support/note_harness.dart';
 
 void main() {
-  Future<void> pump(WidgetTester tester, NoteCard card) =>
-      tester.pumpWidget(wrapWithTheme(Padding(padding: const EdgeInsets.all(16), child: card)));
+  Future<void> pump(WidgetTester tester, NoteCard card) => tester.pumpWidget(
+      wrapWithTheme(Padding(padding: const EdgeInsets.all(16), child: card)));
 
-  testWidgets('shows the title, a preview and checklist progress', (tester) async {
+  testWidgets('shows the title, a preview and checklist progress',
+      (tester) async {
     await pump(
       tester,
       NoteCard(
         note: Note(
           id: 1,
           title: 'Packing',
-          body: noteBody(['Before posting', '[x] Ribbon', '[ ] Thank-you card']),
+          body:
+              noteBody(['Before posting', '[x] Ribbon', '[ ] Thank-you card']),
           updatedAt: DateTime.now(),
         ),
       ),
@@ -28,13 +30,17 @@ void main() {
     expect(find.text('Today'), findsOneWidget);
   });
 
-  testWidgets('an untitled note does not repeat its first line', (tester) async {
-    await pump(tester, NoteCard(note: Note(id: 1, body: noteBody(['Ribbon shop']))));
+  testWidgets('an untitled note does not repeat its first line',
+      (tester) async {
+    await pump(
+        tester, NoteCard(note: Note(id: 1, body: noteBody(['Ribbon shop']))));
     expect(find.text('Ribbon shop'), findsOneWidget);
   });
 
-  testWidgets('without a pin action, a pinned note just shows the pin', (tester) async {
-    await pump(tester, const NoteCard(note: Note(id: 1, title: 'A', isPinned: true)));
+  testWidgets('without a pin action, a pinned note just shows the pin',
+      (tester) async {
+    await pump(
+        tester, const NoteCard(note: Note(id: 1, title: 'A', isPinned: true)));
     expect(find.byIcon(Icons.push_pin_rounded), findsOneWidget);
     expect(find.byType(IconButton), findsNothing);
   });

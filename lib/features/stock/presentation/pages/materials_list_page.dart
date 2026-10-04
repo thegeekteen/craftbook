@@ -65,9 +65,11 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 38),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                textStyle: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                textStyle: AppTextStyles.bodySmall
+                    .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
               ),
-              icon: Icon(Icons.shopping_basket_outlined, size: 17, color: lowCount > 0 ? c.alert : c.muted),
+              icon: Icon(Icons.shopping_basket_outlined,
+                  size: 17, color: lowCount > 0 ? c.alert : c.muted),
               label: Text(lowCount > 0 ? 'Buy list · $lowCount' : 'Buy list'),
             ),
           ),
@@ -76,7 +78,8 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
       body: BlocConsumer<MaterialsBloc, MaterialsState>(
         listener: (context, state) {
           if (state is MaterialsError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -86,7 +89,8 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is MaterialsError && _materials.isEmpty) {
-            return Center(child: ErrorState(message: state.message, onRetry: _reload));
+            return Center(
+                child: ErrorState(message: state.message, onRetry: _reload));
           }
           return _buildList();
         },
@@ -102,7 +106,9 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
   Widget _buildList() {
     final searched = _query.isEmpty
         ? _materials
-        : _materials.where((m) => m.name.toLowerCase().contains(_query)).toList();
+        : _materials
+            .where((m) => m.name.toLowerCase().contains(_query))
+            .toList();
     bool passes(Material m) => switch (_filter) {
           _StockFilter.all => true,
           _StockFilter.low => m.isLowStock,
@@ -145,12 +151,14 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
             child: visible.isEmpty
                 ? ListView(children: [_empty()])
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, AppSpacing.fabClearance),
+                    padding: const EdgeInsets.fromLTRB(
+                        16, 4, 16, AppSpacing.fabClearance),
                     itemCount: visible.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) => MaterialCard(
                       material: visible[i],
-                      onTap: () => _open(RouteNames.materialPath(visible[i].id!)),
+                      onTap: () =>
+                          _open(RouteNames.materialPath(visible[i].id!)),
                     ),
                   ),
           ),
@@ -170,7 +178,10 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
       );
     }
     if (_query.isNotEmpty) {
-      return EmptyState(icon: Icons.search_off_rounded, title: 'No matches', message: 'Nothing matches "$_query".');
+      return EmptyState(
+          icon: Icons.search_off_rounded,
+          title: 'No matches',
+          message: 'Nothing matches "$_query".');
     }
     return switch (_filter) {
       _StockFilter.low => const EmptyState(

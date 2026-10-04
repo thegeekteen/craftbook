@@ -191,7 +191,10 @@ class _TodayViewState extends State<_TodayView> {
             for (final note in pinnedNotes.take(_pinnedNotesShown))
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: NoteCard(note: note, compact: true, onTap: () => _openNote(note.id!)),
+                child: NoteCard(
+                    note: note,
+                    compact: true,
+                    onTap: () => _openNote(note.id!)),
               ),
           ],
           const SizedBox(height: 16),

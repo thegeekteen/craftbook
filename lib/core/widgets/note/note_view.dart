@@ -67,7 +67,8 @@ class _NoteViewState extends State<NoteView> {
       readOnly: true,
     );
     // A checkbox tap is the only way a read-only document changes.
-    _changes = _controller.document.changes.listen((_) => widget.onChanged?.call(_shown));
+    _changes = _controller.document.changes
+        .listen((_) => widget.onChanged?.call(_shown));
   }
 
   @override

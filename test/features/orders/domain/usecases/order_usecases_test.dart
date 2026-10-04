@@ -67,12 +67,13 @@ void main() {
         case Error():
           fail('Should not return error');
       }
-      verify(() => mockRepository.getOrdersByStatus(OrderStatus.pending)).called(1);
+      verify(() => mockRepository.getOrdersByStatus(OrderStatus.pending))
+          .called(1);
     });
 
     test('returns failure on repository error', () async {
-      when(() => mockRepository.getAllOrders())
-          .thenAnswer((_) async => const Error<List<Order>>(DatabaseFailure('error')));
+      when(() => mockRepository.getAllOrders()).thenAnswer(
+          (_) async => const Error<List<Order>>(DatabaseFailure('error')));
 
       final result = await getOrders();
 

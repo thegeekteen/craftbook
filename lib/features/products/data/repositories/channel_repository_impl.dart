@@ -76,7 +76,9 @@ class ChannelRepositoryImpl implements ChannelRepository {
   }) async {
     try {
       final existing = await dao.getChannelById(id);
-      if (existing == null) return const Error(NotFoundFailure('Channel not found'));
+      if (existing == null) {
+        return const Error(NotFoundFailure('Channel not found'));
+      }
 
       await dao.updateChannel(db.Channel(
         id: existing.id,
