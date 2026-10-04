@@ -18,6 +18,7 @@ import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/product_photo.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../order_fields/domain/entities/order_field.dart';
 import '../../../order_fields/domain/entities/order_field_entry.dart';
@@ -192,6 +193,16 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       ),
                       for (final item in state.items)
                         CardRow(
+                          leading: ProductPhoto(
+                            bytes: item.productPhoto,
+                            name: item.productName,
+                            size: 56,
+                            onTap: () => showPhotoViewer(
+                              context,
+                              bytes: item.productPhoto!,
+                              title: item.productName,
+                            ),
+                          ),
                           title: Text(item.productName),
                           subtitle: Text(
                             '${item.quantity} × ${CurrencyFormatter.formatShort(item.unitPrice)}',

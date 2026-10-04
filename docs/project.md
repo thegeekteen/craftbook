@@ -97,6 +97,7 @@ The app is built around 6 main user flows:
 | Order fields | ✅ | Text, number, date and choice fields; drag to reorder; used fields archive instead of deleting. Replaced the built-in address (migrated in schema v4) |
 | Notes | ✅ | Shop notebook with title and rich-text body (headings, checklists, lists, quote, code, links, highlight, alignment); pin to Today; search; delete with Undo. Added in schema v5 |
 | Social shortcuts | ✅ | Configurable links to Facebook, TikTok, Shopee, Lazada and more (presets with brand colours, or a custom name and colour); tap to open in the browser or app; drag to reorder. Opens through the phone's own browser, so the app still makes no network calls. Added in schema v6 |
+| Product photos | ✅ | One photo per product, from the camera or gallery, resized to 800px JPEG and stored in the database so backups carry it. Shown in the product list, product page, the order wizard's picker and items, and order details (tap to enlarge). Added in schema v7 |
 | Earnings report | ✅ | Period navigation, summary, per-product, waste |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |

@@ -2615,6 +2615,11 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _photoMeta = const VerificationMeta('photo');
+  @override
+  late final GeneratedColumn<Uint8List> photo = GeneratedColumn<Uint8List>(
+      'photo', aliasedName, true,
+      type: DriftSqlType.blob, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -2643,6 +2648,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         quantityPromised,
         unitCost,
         alertLevel,
+        photo,
         createdAt,
         updatedAt
       ];
@@ -2709,6 +2715,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           alertLevel.isAcceptableOrUnknown(
               data['alert_level']!, _alertLevelMeta));
     }
+    if (data.containsKey('photo')) {
+      context.handle(
+          _photoMeta, photo.isAcceptableOrUnknown(data['photo']!, _photoMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -2746,6 +2756,8 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
       alertLevel: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}alert_level'])!,
+      photo: attachedDatabase.typeMapping
+          .read(DriftSqlType.blob, data['${effectivePrefix}photo']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -2770,6 +2782,9 @@ class Product extends DataClass implements Insertable<Product> {
   final int quantityPromised;
   final double unitCost;
   final int alertLevel;
+
+  /// Resized JPEG. Kept in the database so a raw sqlite backup carries it.
+  final Uint8List? photo;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Product(
@@ -2783,6 +2798,7 @@ class Product extends DataClass implements Insertable<Product> {
       required this.quantityPromised,
       required this.unitCost,
       required this.alertLevel,
+      this.photo,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -2800,6 +2816,9 @@ class Product extends DataClass implements Insertable<Product> {
     map['quantity_promised'] = Variable<int>(quantityPromised);
     map['unit_cost'] = Variable<double>(unitCost);
     map['alert_level'] = Variable<int>(alertLevel);
+    if (!nullToAbsent || photo != null) {
+      map['photo'] = Variable<Uint8List>(photo);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2819,6 +2838,8 @@ class Product extends DataClass implements Insertable<Product> {
       quantityPromised: Value(quantityPromised),
       unitCost: Value(unitCost),
       alertLevel: Value(alertLevel),
+      photo:
+          photo == null && nullToAbsent ? const Value.absent() : Value(photo),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2838,6 +2859,7 @@ class Product extends DataClass implements Insertable<Product> {
       quantityPromised: serializer.fromJson<int>(json['quantityPromised']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
       alertLevel: serializer.fromJson<int>(json['alertLevel']),
+      photo: serializer.fromJson<Uint8List?>(json['photo']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2856,6 +2878,7 @@ class Product extends DataClass implements Insertable<Product> {
       'quantityPromised': serializer.toJson<int>(quantityPromised),
       'unitCost': serializer.toJson<double>(unitCost),
       'alertLevel': serializer.toJson<int>(alertLevel),
+      'photo': serializer.toJson<Uint8List?>(photo),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2872,6 +2895,7 @@ class Product extends DataClass implements Insertable<Product> {
           int? quantityPromised,
           double? unitCost,
           int? alertLevel,
+          Value<Uint8List?> photo = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Product(
@@ -2885,6 +2909,7 @@ class Product extends DataClass implements Insertable<Product> {
         quantityPromised: quantityPromised ?? this.quantityPromised,
         unitCost: unitCost ?? this.unitCost,
         alertLevel: alertLevel ?? this.alertLevel,
+        photo: photo.present ? photo.value : this.photo,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -2908,6 +2933,7 @@ class Product extends DataClass implements Insertable<Product> {
       unitCost: data.unitCost.present ? data.unitCost.value : this.unitCost,
       alertLevel:
           data.alertLevel.present ? data.alertLevel.value : this.alertLevel,
+      photo: data.photo.present ? data.photo.value : this.photo,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2926,6 +2952,7 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('quantityPromised: $quantityPromised, ')
           ..write('unitCost: $unitCost, ')
           ..write('alertLevel: $alertLevel, ')
+          ..write('photo: $photo, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2944,6 +2971,7 @@ class Product extends DataClass implements Insertable<Product> {
       quantityPromised,
       unitCost,
       alertLevel,
+      $driftBlobEquality.hash(photo),
       createdAt,
       updatedAt);
   @override
@@ -2960,6 +2988,7 @@ class Product extends DataClass implements Insertable<Product> {
           other.quantityPromised == this.quantityPromised &&
           other.unitCost == this.unitCost &&
           other.alertLevel == this.alertLevel &&
+          $driftBlobEquality.equals(other.photo, this.photo) &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2975,6 +3004,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<int> quantityPromised;
   final Value<double> unitCost;
   final Value<int> alertLevel;
+  final Value<Uint8List?> photo;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const ProductsCompanion({
@@ -2988,6 +3018,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.quantityPromised = const Value.absent(),
     this.unitCost = const Value.absent(),
     this.alertLevel = const Value.absent(),
+    this.photo = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -3002,6 +3033,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.quantityPromised = const Value.absent(),
     this.unitCost = const Value.absent(),
     this.alertLevel = const Value.absent(),
+    this.photo = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   })  : name = Value(name),
@@ -3017,6 +3049,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<int>? quantityPromised,
     Expression<double>? unitCost,
     Expression<int>? alertLevel,
+    Expression<Uint8List>? photo,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -3031,6 +3064,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (quantityPromised != null) 'quantity_promised': quantityPromised,
       if (unitCost != null) 'unit_cost': unitCost,
       if (alertLevel != null) 'alert_level': alertLevel,
+      if (photo != null) 'photo': photo,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -3047,6 +3081,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       Value<int>? quantityPromised,
       Value<double>? unitCost,
       Value<int>? alertLevel,
+      Value<Uint8List?>? photo,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt}) {
     return ProductsCompanion(
@@ -3060,6 +3095,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       quantityPromised: quantityPromised ?? this.quantityPromised,
       unitCost: unitCost ?? this.unitCost,
       alertLevel: alertLevel ?? this.alertLevel,
+      photo: photo ?? this.photo,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -3098,6 +3134,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (alertLevel.present) {
       map['alert_level'] = Variable<int>(alertLevel.value);
     }
+    if (photo.present) {
+      map['photo'] = Variable<Uint8List>(photo.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3120,6 +3159,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('quantityPromised: $quantityPromised, ')
           ..write('unitCost: $unitCost, ')
           ..write('alertLevel: $alertLevel, ')
+          ..write('photo: $photo, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -7642,6 +7682,7 @@ typedef $$ProductsTableCreateCompanionBuilder = ProductsCompanion Function({
   Value<int> quantityPromised,
   Value<double> unitCost,
   Value<int> alertLevel,
+  Value<Uint8List?> photo,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -7656,6 +7697,7 @@ typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<int> quantityPromised,
   Value<double> unitCost,
   Value<int> alertLevel,
+  Value<Uint8List?> photo,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -7700,6 +7742,9 @@ class $$ProductsTableFilterComposer
 
   ColumnFilters<int> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<Uint8List> get photo => $composableBuilder(
+      column: $table.photo, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -7750,6 +7795,9 @@ class $$ProductsTableOrderingComposer
   ColumnOrderings<int> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<Uint8List> get photo => $composableBuilder(
+      column: $table.photo, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -7796,6 +7844,9 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<int> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => column);
 
+  GeneratedColumn<Uint8List> get photo =>
+      $composableBuilder(column: $table.photo, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -7836,6 +7887,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<int> quantityPromised = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<int> alertLevel = const Value.absent(),
+            Value<Uint8List?> photo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
           }) =>
@@ -7850,6 +7902,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             quantityPromised: quantityPromised,
             unitCost: unitCost,
             alertLevel: alertLevel,
+            photo: photo,
             createdAt: createdAt,
             updatedAt: updatedAt,
           ),
@@ -7864,6 +7917,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<int> quantityPromised = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<int> alertLevel = const Value.absent(),
+            Value<Uint8List?> photo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
           }) =>
@@ -7878,6 +7932,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             quantityPromised: quantityPromised,
             unitCost: unitCost,
             alertLevel: alertLevel,
+            photo: photo,
             createdAt: createdAt,
             updatedAt: updatedAt,
           ),

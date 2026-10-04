@@ -1,7 +1,14 @@
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+/// Turns a current database back into schema 6, from before product photos.
+void downgradeToV6(raw.Database db) {
+  db.execute('ALTER TABLE products DROP COLUMN photo');
+  db.execute('PRAGMA user_version = 6');
+}
+
 /// Turns a current database back into schema 5, from before social shortcuts.
 void downgradeToV5(raw.Database db) {
+  downgradeToV6(db);
   db.execute('DROP TABLE social_links');
   db.execute('PRAGMA user_version = 5');
 }

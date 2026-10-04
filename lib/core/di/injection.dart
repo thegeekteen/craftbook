@@ -21,6 +21,7 @@ import '../../features/products/domain/usecases/update_channel.dart';
 import '../../features/products/domain/usecases/get_products.dart';
 import '../../features/products/domain/usecases/create_product.dart';
 import '../../features/products/domain/usecases/update_product.dart';
+import '../../features/products/domain/usecases/set_product_photo.dart';
 import '../../features/products/domain/usecases/delete_product.dart';
 import '../../features/products/domain/usecases/delete_channel.dart';
 import '../../features/products/domain/usecases/calculate_bom_cost.dart';
@@ -63,6 +64,7 @@ import '../../features/social_links/domain/usecases/reorder_social_links.dart';
 import '../../features/social_links/domain/usecases/save_social_link.dart';
 import '../../features/social_links/presentation/bloc/social_links_bloc.dart';
 import '../services/link_launcher.dart';
+import '../services/photo_picker.dart';
 import '../../features/earnings/data/repositories/earnings_repository_impl.dart';
 import '../../features/earnings/domain/repositories/earnings_repository.dart';
 import '../../features/earnings/domain/usecases/get_earnings_summary.dart';
@@ -125,6 +127,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(NoteDao(db));
   getIt.registerSingleton(SocialLinkDao(db));
   getIt.registerLazySingleton<LinkLauncher>(() => const LinkLauncher());
+  getIt.registerLazySingleton<PhotoPicker>(() => PhotoPicker());
 
   // Repositories
   getIt.registerLazySingleton<ChannelRepository>(
@@ -184,6 +187,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => GetProducts(getIt()));
   getIt.registerFactory(() => CreateProduct(getIt()));
   getIt.registerFactory(() => UpdateProduct(getIt()));
+  getIt.registerFactory(() => SetProductPhoto(getIt()));
   getIt.registerFactory(() => CalculateBomCost(getIt()));
   getIt.registerFactory(() => CalculateBuildableQuantity(getIt()));
   getIt.registerFactory(() => DeleteProduct(productRepository: getIt()));

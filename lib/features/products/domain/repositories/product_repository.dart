@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:craftbook/core/error/result.dart';
 
 import '../entities/product.dart';
@@ -31,6 +33,9 @@ abstract class ProductRepository {
     bool? isStandalone,
     int? alertLevel,
   });
+
+  /// Sets the product photo, or clears it when [photo] is null.
+  Future<Result<void>> setProductPhoto(int id, Uint8List? photo);
   Future<Result<void>> saveBomItems(int productId, List<BomItemInput> items);
   Future<Result<int>> calculateBuildableQuantity(int productId);
   Future<Result<double>> calculateBomCost(int productId);

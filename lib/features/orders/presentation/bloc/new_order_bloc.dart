@@ -97,6 +97,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
           productName: i.productName,
           quantity: i.quantity,
           unitPrice: i.unitPrice,
+          photo: i.productPhoto,
         ),
     ];
     _emitDetailsFilled(emit);
@@ -121,12 +122,8 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     if (existingIndex >= 0) {
       // Update quantity if item already exists
       final existing = _items[existingIndex];
-      _items[existingIndex] = OrderItemInput(
-        productId: existing.productId,
-        productName: existing.productName,
-        quantity: existing.quantity + event.quantity,
-        unitPrice: existing.unitPrice,
-      );
+      _items[existingIndex] =
+          existing.copyWith(quantity: existing.quantity + event.quantity);
     } else {
       _items = List.from(_items)
         ..add(OrderItemInput(
@@ -134,6 +131,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
           productName: event.productName,
           quantity: event.quantity,
           unitPrice: event.unitPrice,
+          photo: event.photo,
         ));
     }
     _emitDetailsFilled(emit);
@@ -152,12 +150,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
         _items.indexWhere((item) => item.productId == event.productId);
     if (index >= 0) {
       final existing = _items[index];
-      _items[index] = OrderItemInput(
-        productId: existing.productId,
-        productName: existing.productName,
-        quantity: event.quantity,
-        unitPrice: existing.unitPrice,
-      );
+      _items[index] = existing.copyWith(quantity: event.quantity);
     }
     _emitDetailsFilled(emit);
   }

@@ -148,6 +148,16 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     );
   }
 
+  /// Sets or clears (null) the product photo without touching other columns.
+  Future<int> setProductPhoto(int id, Uint8List? photo) {
+    return (update(products)..where((t) => t.id.equals(id))).write(
+      ProductsCompanion(
+        photo: Value(photo),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   /// Get stock movements for a product
   Future<List<ProductStockMovement>> getProductStockMovements(int productId) {
     return (select(productStockMovements)

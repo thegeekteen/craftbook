@@ -8,6 +8,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/product_photo.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/usecases/calculate_buildable_quantity.dart';
 import '../../../products/domain/usecases/get_products.dart';
@@ -182,11 +183,14 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                       productName: p.name,
                       quantity: 1,
                       unitPrice: p.sellPrice,
+                      photo: p.photo,
                     )),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 children: [
+                  ProductPhoto(bytes: p.photo, name: p.name),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

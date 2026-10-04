@@ -57,7 +57,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Readable without opening a database, so a backup's version can be
   /// checked before anything touches it.
-  static const currentSchemaVersion = 6;
+  static const currentSchemaVersion = 7;
 
   @override
   int get schemaVersion => currentSchemaVersion;

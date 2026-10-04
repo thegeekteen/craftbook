@@ -21,7 +21,9 @@ import '../../../stock/domain/usecases/get_materials.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../../domain/usecases/set_product_photo.dart';
 import '../../domain/usecases/update_product.dart';
+import '../widgets/product_photo_field.dart';
 import '../widgets/product_profit_card.dart';
 
 /// Create or edit a product. Handmade products list the materials one piece
@@ -50,6 +52,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   Product? _product;
   bool _isStandalone = false;
   bool _isActive = true;
+  Uint8List? _photo;
+
+  /// Only write the photo when it changed; it is the largest column.
+  bool _photoDirty = false;
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -124,6 +130,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           _price.text = _money(p.sellPrice);
           _isStandalone = p.isStandalone;
           _isActive = p.isActive;
+          _photo = p.photo;
           _unitCost.text = p.unitCost > 0 ? _money(p.unitCost) : '';
           _alertLevel.text = p.alertLevel > 0 ? '${p.alertLevel}' : '';
           _bom = switch (bomResult) {
@@ -265,6 +272,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           outcome = _isStandalone || bomInputs.isEmpty
               ? const Success(null)
               : await repo.saveBomItems(id, bomInputs);
+          if (outcome is Success && _photoDirty) {
+            outcome = await getIt<SetProductPhoto>()(id, _photo);
+          }
       }
     } else {
       final updated = await getIt<UpdateProduct>()(
@@ -283,6 +293,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             ? updated
             : await repo.saveBomItems(widget.productId!, bomInputs),
       };
+      if (outcome is Success && _photoDirty) {
+        outcome = await getIt<SetProductPhoto>()(widget.productId!, _photo);
+      }
     }
 
     if (!mounted) return;
@@ -325,6 +338,18 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         child: ListView(
           padding: AppSpacing.page.copyWith(top: 8),
           children: [
+            ListenableBuilder(
+              listenable: _name,
+              builder: (_, __) => ProductPhotoField(
+                photo: _photo,
+                name: _name.text,
+                onChanged: (bytes) => setState(() {
+                  _photo = bytes;
+                  _photoDirty = true;
+                }),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _name,
               autofocus: _isNew,

@@ -44,7 +44,7 @@ void main() {
     expect(await db.select(db.socialLinks).get(), isEmpty);
     expect(await db.select(db.orders).get(), hasLength(1));
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 6);
+    expect(version.data.values.single, AppDatabase.currentSchemaVersion);
   });
 
   test('the migrated table takes links like a fresh one', () async {

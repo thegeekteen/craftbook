@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 
 /// Base class for new order events
@@ -45,16 +47,19 @@ class AddItem extends NewOrderEvent {
   final String productName;
   final int quantity;
   final double unitPrice;
+  final Uint8List? photo;
 
   const AddItem({
     required this.productId,
     required this.productName,
     required this.quantity,
     required this.unitPrice,
+    this.photo,
   });
 
   @override
-  List<Object?> get props => [productId, productName, quantity, unitPrice];
+  List<Object?> get props =>
+      [productId, productName, quantity, unitPrice, photo];
 }
 
 /// Remove an item from the order by product ID

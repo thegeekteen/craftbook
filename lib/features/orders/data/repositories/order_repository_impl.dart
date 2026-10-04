@@ -104,8 +104,9 @@ class OrderRepositoryImpl implements OrderRepository {
       final rows = await dao.getOrderItems(orderId);
       final items = <OrderItem>[];
       for (final row in rows) {
-        final productName = await dao.getProductName(row.productId);
-        items.add(_itemToEntity(row, productName));
+        final (productName, photo) =
+            await dao.getProductNameAndPhoto(row.productId);
+        items.add(_itemToEntity(row, productName, photo));
       }
       return Success(items);
     } catch (e) {
@@ -505,11 +506,17 @@ class OrderRepositoryImpl implements OrderRepository {
         updatedAt: row.updatedAt,
       );
 
-  OrderItem _itemToEntity(db.OrderItem row, String productName) => OrderItem(
+  OrderItem _itemToEntity(
+    db.OrderItem row,
+    String productName,
+    Uint8List? productPhoto,
+  ) =>
+      OrderItem(
         id: row.id,
         orderId: row.orderId,
         productId: row.productId,
         productName: productName,
+        productPhoto: productPhoto,
         quantity: row.quantity,
         unitPrice: row.unitPrice,
         subtotal: row.subtotal,

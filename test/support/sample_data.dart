@@ -21,6 +21,8 @@ import 'package:craftbook/features/stock/domain/repositories/material_repository
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:drift/drift.dart' hide isNull;
 
+import 'sample_photo.dart';
+
 T _ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -113,6 +115,8 @@ Future<void> seedSampleShop() async {
 
   final tulip =
       await product('Crochet tulip bouquet', 450, {yarn: 3, wire: 7, wrap: 1});
+  // One product with a photo, the rest show their initial.
+  _ok(await products.setProductPhoto(tulip, await drawSamplePhoto()));
   final strap = await product(
       'Beaded phone strap', 180, {beads: 3, rings: 2, clasp: 1, cord: 1});
   final keychain = await product('Resin keychain', 120, {resin: 1, rings: 1});

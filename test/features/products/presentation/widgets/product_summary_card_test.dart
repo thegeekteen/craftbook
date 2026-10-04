@@ -7,6 +7,8 @@ import 'package:craftbook/features/products/presentation/widgets/product_summary
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/sample_photo.dart';
+
 Widget _wrap(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
       home: Scaffold(body: SingleChildScrollView(child: child)),
@@ -127,5 +129,32 @@ void main() {
 
     expect(find.text('−25%'), findsOneWidget);
     expect(_colorOf(tester, '−25%'), _colors(tester).alert);
+  });
+
+  group('ProductSummaryCard photo', () {
+    testWidgets('shows nothing extra without a photo', (tester) async {
+      await tester.pumpWidget(_wrap(
+          ProductSummaryCard(product: _product(), cost: 100, buildable: 3)));
+      expect(find.byType(Image), findsNothing);
+    });
+
+    testWidgets('shows the photo and enlarges it on tap', (tester) async {
+      final product = Product(
+        id: 1,
+        name: 'Tulip bouquet',
+        sellPrice: 400,
+        isActive: true,
+        photo: tinyPng,
+        createdAt: _now,
+        updatedAt: _now,
+      );
+      await tester.pumpWidget(
+          _wrap(ProductSummaryCard(product: product, cost: 100, buildable: 3)));
+      expect(find.byType(Image), findsOneWidget);
+
+      await tester.tap(find.byType(Image));
+      await tester.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+    });
   });
 }

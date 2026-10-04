@@ -6,6 +6,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/product_photo.dart';
 import '../../domain/entities/product.dart';
 
 /// Product in the catalogue: price, cost/profit bar, margin and how many
@@ -46,6 +47,8 @@ class ProductCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                ProductPhoto(bytes: p.photo, name: p.name),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Wrap(
                     spacing: 6,

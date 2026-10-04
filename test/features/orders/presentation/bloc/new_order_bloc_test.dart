@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -207,6 +209,70 @@ void main() {
       filled(items: const [tulipInput])
     ],
   );
+
+  group('item photos', () {
+    final photo = Uint8List.fromList([1, 2, 3]);
+    List<OrderItemInput> itemsOf(NewOrderBloc bloc) =>
+        (bloc.state as NewOrderDetailsFilled).items;
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'AddItem keeps the photo through merges and quantity changes',
+      build: build,
+      act: (bloc) => bloc
+        ..add(details)
+        ..add(AddItem(
+            productId: 10,
+            productName: 'Tulip',
+            quantity: 1,
+            unitPrice: 450,
+            photo: photo))
+        ..add(tulip)
+        ..add(const UpdateItemQuantity(productId: 10, quantity: 7)),
+      verify: (bloc) {
+        expect(itemsOf(bloc).single.quantity, 7);
+        expect(itemsOf(bloc).single.photo, photo);
+      },
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'LoadExistingOrder carries each line\'s product photo',
+      setUp: () {
+        when(() => orderRepository.getOrderById(7))
+            .thenAnswer((_) async => Success(Order(
+                  id: 7,
+                  customerName: 'Jessa Ramos',
+                  orderDate: orderDate,
+                  shipByDate: shipBy,
+                  status: OrderStatus.pending,
+                  channelId: 2,
+                  totalSales: 900,
+                  totalMaterialCost: 0,
+                  channelFees: 0,
+                  shippingCost: 0,
+                  profit: 900,
+                  createdAt: orderDate,
+                  updatedAt: orderDate,
+                )));
+        when(() => orderRepository.getOrderItems(7))
+            .thenAnswer((_) async => Success([
+                  OrderItem(
+                    orderId: 7,
+                    productId: 10,
+                    productName: 'Tulip',
+                    productPhoto: photo,
+                    quantity: 2,
+                    unitPrice: 450,
+                    subtotal: 900,
+                  ),
+                ]));
+        when(() => orderRepository.getOrderFieldValues(7))
+            .thenAnswer((_) async => const Success([]));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadExistingOrder(7)),
+      verify: (bloc) => expect(itemsOf(bloc).single.photo, photo),
+    );
+  });
 
   blocTest<NewOrderBloc, NewOrderState>(
     'RemoveItem removes the line',
