@@ -25,5 +25,4 @@ class AppConstants {
 
   // App info
   static const String appName = 'CraftBook';
-  static const String appVersion = '1.0.0';
 }

@@ -47,6 +47,7 @@ dependencies:
   flutter_markdown_plus: ^1.0.12
   # Product photos: camera capture and the system photo picker.
   image_picker: ^1.2.3
+  github_release_apk_updater: ^1.0.11
 
 dev_dependencies:
   flutter_test:

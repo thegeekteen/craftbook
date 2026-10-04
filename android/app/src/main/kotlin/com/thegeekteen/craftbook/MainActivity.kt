@@ -1,4 +1,4 @@
-package com.craftbook.craftbook
+package com.thegeekteen.craftbook
 
 import io.flutter.embedding.android.FlutterActivity
 

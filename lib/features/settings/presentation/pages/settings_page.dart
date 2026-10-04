@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -19,6 +20,9 @@ import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../social_links/domain/repositories/social_link_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
+import '../../../updates/presentation/bloc/update_cubit.dart';
+import '../../../updates/presentation/bloc/update_state.dart';
+import '../../../updates/presentation/widgets/update_row.dart';
 import '../widgets/appearance_card.dart';
 
 /// More: the catalogue (products, channels, order fields, buy list), the
@@ -108,135 +112,143 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView(
-        padding: AppSpacing.page,
-        children: [
-          const SectionLabel('Catalogue',
-              padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
-          const SizedBox(height: 8),
-          AppCard.flush(
-            child: CardList(children: [
-              _MoreRow(
-                icon: Icons.sell_outlined,
-                title: 'Products',
-                subtitle:
-                    _productsHint ?? 'What you sell and what goes into it',
-                onTap: () => _open(RouteNames.products),
-              ),
-              _MoreRow(
-                icon: Icons.storefront_outlined,
-                title: 'Channels & fees',
-                subtitle:
-                    _channelsHint ?? 'Where you sell and what they charge',
-                onTap: () => _open(RouteNames.channels),
-              ),
-              _MoreRow(
-                icon: Icons.dashboard_customize_outlined,
-                title: 'Order fields',
-                subtitle:
-                    _orderFieldsHint ?? 'Extra details to note on each order',
-                onTap: () => _open(RouteNames.orderFields),
-              ),
-              _MoreRow(
-                icon: Icons.shopping_basket_outlined,
-                title: 'Buy list',
-                subtitle: _buyListHint ?? 'Things to restock',
-                onTap: () => _open(RouteNames.buyList),
-              ),
-            ]),
-          ),
-          const SectionLabel('Notebook',
-              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-          const SizedBox(height: 8),
-          AppCard.flush(
-            child: CardList(children: [
-              _MoreRow(
-                icon: Icons.sticky_note_2_outlined,
-                title: 'Notes',
-                subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
-                onTap: () => _open(RouteNames.notes),
-              ),
-            ]),
-          ),
-          const SectionLabel('Your shop online',
-              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-          const SizedBox(height: 8),
-          AppCard.flush(
-            child: CardList(children: [
-              _MoreRow(
-                icon: Icons.share_outlined,
-                title: 'Social shortcuts',
-                subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
-                onTap: () => _open(RouteNames.socialLinks),
-              ),
-            ]),
-          ),
-          const SectionLabel('Appearance',
-              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-          const SizedBox(height: 8),
-          const AppearanceCard(),
-          const SectionLabel('Your data',
-              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-          const SizedBox(height: 8),
-          AppCard.flush(
-            child: CardList(children: [
-              _MoreRow(
-                icon: Icons.upload_rounded,
-                title: 'Export backup',
-                subtitle: 'Save a copy of everything to a file',
-                onTap: () => BackupService.exportDatabase(context),
-              ),
-              _MoreRow(
-                icon: Icons.download_rounded,
-                iconColor: c.alert,
-                title: 'Restore from backup',
-                subtitle: 'Replaces everything on this phone',
-                onTap: () => BackupService.importDatabase(context),
-              ),
-              if (_canUndoRestore)
+    return BlocProvider(
+      create: (_) => getIt<UpdateCubit>()..load(),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('More')),
+        body: ListView(
+          padding: AppSpacing.page,
+          children: [
+            const SectionLabel('Catalogue',
+                padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
                 _MoreRow(
-                  icon: Icons.undo_rounded,
-                  title: 'Undo last restore',
-                  subtitle: 'Go back to the data from before it',
-                  onTap: () => BackupService.undoRestore(context),
+                  icon: Icons.sell_outlined,
+                  title: 'Products',
+                  subtitle:
+                      _productsHint ?? 'What you sell and what goes into it',
+                  onTap: () => _open(RouteNames.products),
                 ),
-            ]),
-          ),
-          const SectionLabel('About',
-              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-          const SizedBox(height: 8),
-          AppCard.flush(
-            child: CardList(children: [
-              _MoreRow(
-                icon: Icons.info_outline_rounded,
-                title: 'About Craftbook',
-                subtitle: 'What it does and how to use it',
-                onTap: () => _open(RouteNames.about),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Column(
-              children: [
-                const AppLogo(size: 64),
-                const SizedBox(height: 10),
-                Text(
-                  AppConstants.appName,
-                  style: AppTextStyles.displaySmall
-                      .copyWith(color: c.ink, fontSize: 17),
+                _MoreRow(
+                  icon: Icons.storefront_outlined,
+                  title: 'Channels & fees',
+                  subtitle:
+                      _channelsHint ?? 'Where you sell and what they charge',
+                  onTap: () => _open(RouteNames.channels),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Version ${AppConstants.appVersion} · all data stays on this phone',
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                _MoreRow(
+                  icon: Icons.dashboard_customize_outlined,
+                  title: 'Order fields',
+                  subtitle:
+                      _orderFieldsHint ?? 'Extra details to note on each order',
+                  onTap: () => _open(RouteNames.orderFields),
                 ),
-              ],
+                _MoreRow(
+                  icon: Icons.shopping_basket_outlined,
+                  title: 'Buy list',
+                  subtitle: _buyListHint ?? 'Things to restock',
+                  onTap: () => _open(RouteNames.buyList),
+                ),
+              ]),
             ),
-          ),
-        ],
+            const SectionLabel('Notebook',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                _MoreRow(
+                  icon: Icons.sticky_note_2_outlined,
+                  title: 'Notes',
+                  subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
+                  onTap: () => _open(RouteNames.notes),
+                ),
+              ]),
+            ),
+            const SectionLabel('Your shop online',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                _MoreRow(
+                  icon: Icons.share_outlined,
+                  title: 'Social shortcuts',
+                  subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
+                  onTap: () => _open(RouteNames.socialLinks),
+                ),
+              ]),
+            ),
+            const SectionLabel('Appearance',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            const AppearanceCard(),
+            const SectionLabel('Your data',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                _MoreRow(
+                  icon: Icons.upload_rounded,
+                  title: 'Export backup',
+                  subtitle: 'Save a copy of everything to a file',
+                  onTap: () => BackupService.exportDatabase(context),
+                ),
+                _MoreRow(
+                  icon: Icons.download_rounded,
+                  iconColor: c.alert,
+                  title: 'Restore from backup',
+                  subtitle: 'Replaces everything on this phone',
+                  onTap: () => BackupService.importDatabase(context),
+                ),
+                if (_canUndoRestore)
+                  _MoreRow(
+                    icon: Icons.undo_rounded,
+                    title: 'Undo last restore',
+                    subtitle: 'Go back to the data from before it',
+                    onTap: () => BackupService.undoRestore(context),
+                  ),
+              ]),
+            ),
+            const SectionLabel('About',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                _MoreRow(
+                  icon: Icons.info_outline_rounded,
+                  title: 'About Craftbook',
+                  subtitle: 'What it does and how to use it',
+                  onTap: () => _open(RouteNames.about),
+                ),
+                const UpdateRow(),
+              ]),
+            ),
+            const SizedBox(height: 32),
+            Center(
+              child: Column(
+                children: [
+                  const AppLogo(size: 64),
+                  const SizedBox(height: 10),
+                  Text(
+                    AppConstants.appName,
+                    style: AppTextStyles.displaySmall
+                        .copyWith(color: c.ink, fontSize: 17),
+                  ),
+                  const SizedBox(height: 2),
+                  BlocSelector<UpdateCubit, UpdateState, String?>(
+                    selector: (state) => state.currentVersion,
+                    builder: (context, version) => Text(
+                      '${version == null ? '' : 'Version $version · '}'
+                      'all data stays on this phone',
+                      style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,7 +5,7 @@
 Craftbook is an offline-first Android application designed for small craft businesses to manage orders, track materials (BOM - Bill of Materials), and calculate real profit. The app treats every order as a material consumer — when you save an order, it reserves pieces; when you pack, it deducts them.
 
 ### Core Value Proposition
-- **Offline-first**: No accounts, no sync, no network calls. All data lives on-device
+- **Offline-first**: No accounts, no sync. All data lives on-device. The only network call is the user-triggered update check against GitHub releases
 - **BOM-aware orders**: Orders are created with products, but the app expands them into materials behind the scenes
 - **Real profit tracking**: Profit = Sales − Materials (actual, including waste) − Channel fees − Shipping
 - **Stock as pips**: Visual representation of stock levels showing free vs. promised pieces
@@ -104,6 +104,7 @@ The app is built around 6 main user flows:
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |
 | Backup/Restore | ✅ | Raw SQLite file copy (Android SAF compatible) |
+| In-app updates | ✅ | More → Check for updates installs the latest GitHub release APK. A workflow publishes a signed release on every push to `main` |
 
 ### ✅ Infrastructure
 

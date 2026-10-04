@@ -5,14 +5,14 @@
 **Craftbook** is an offline-first Android application for small craft businesses to track orders, manage materials (BOM), and calculate real profit. It treats every order as a material consumer — when you save an order, it reserves pieces; when you pack, it deducts them.
 
 ### Core Value Proposition
-- **Offline-first**: No accounts, no sync, no network calls. All data lives on-device.
+- **Offline-first**: No accounts, no sync. All data lives on-device. The one network call is the user-triggered update check (`features/updates`), which only reads public GitHub releases.
 - **BOM-aware orders**: Orders are created with products, but the app expands them into materials behind the scenes.
 - **Real profit tracking**: Profit = Sales − Materials (actual, including waste) − Channel fees − Shipping.
 - **Stock as pips**: Visual representation of stock levels showing free vs. promised pieces.
 
 ### Target Platform
 - **Android only** (Flutter)
-- **Minimum SDK**: API 21 (Android 5.0) — set by `flutter.minSdkVersion`
+- **Minimum SDK**: API 24 (Android 7.0) — set by `flutter.minSdkVersion`
 - **Target SDK**: API 36 (Android 16) — set by `flutter.targetSdkVersion`
 - **Compile SDK**: API 36 — set by `flutter.compileSdkVersion`
 
@@ -30,6 +30,7 @@
 | Date/Time | intl | Date formatting and localization |
 | Charts | fl_chart | Simple charts for earnings visualization |
 | File Picker | file_picker | SQLite backup export/import |
+| Updates | github_release_apk_updater | In-app updates from GitHub releases |
 | Testing | mocktail + bloc_test | Unit and widget testing |
 
 ---
@@ -69,6 +70,7 @@ lib/
 | **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
 | **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields |
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
+| **Updates** | (row on `/settings`) | "Check for updates": finds the latest GitHub release, shows its notes, downloads the APK and opens Android's installer. Only runs when tapped |
 | **Social links** | `/social-links` | Shortcuts to the shop's Facebook, TikTok, Shopee, Lazada… pages: brand-tile grid, add/edit sheet, drag to reorder. Links open outside the app via `LinkLauncher` |
 
 ---
@@ -304,6 +306,15 @@ Every schema change must:
 Raw SQLite file copy via `file_picker` (`lib/core/services/backup_service.dart`):
 - **Export**: Reads `craftbook.sqlite` as bytes, passes to `FilePicker.saveFile()` (Android SAF compatible)
 - **Import**: Picks a file, copies over current DB (or writes bytes), prompts restart
+
+---
+
+## Releases
+
+`.github/workflows/release.yml` runs on every push to `main`: analyze, test, build a signed APK, publish a GitHub release tagged `v<major>.<minor>.<commit count>`. The in-app updater compares that tag with the installed `versionName`, so never publish an APK whose version doesn't match its tag.
+
+- Release signing reads `android/key.properties` (written by CI from repo secrets). Without it, release builds fall back to the debug key, which is fine locally but can't update an installed release.
+- The updater plugin declares its own FileProvider. Don't add another one for it in `AndroidManifest.xml`.
 
 ---
 
