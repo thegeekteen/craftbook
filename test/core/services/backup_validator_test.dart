@@ -10,11 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
 import '../../support/legacy_schema.dart';
-import '../../support/sqlite.dart';
 
 void main() {
-  setUpAll(useHostSqlite);
-
   late Directory dir;
   setUp(() async =>
       dir = await Directory.systemTemp.createTemp('backup_validator_'));
@@ -49,7 +46,7 @@ void main() {
     try {
       change(db);
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 

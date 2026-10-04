@@ -11,8 +11,6 @@ import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../support/sqlite.dart';
-
 T ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -20,8 +18,6 @@ T ok<T>(Result<T> r) => switch (r) {
 
 /// Field definitions and order values against a real (in-memory) database.
 void main() {
-  setUpAll(useHostSqlite);
-
   late AppDatabase db;
   late OrderFieldRepositoryImpl fields;
   late OrderRepositoryImpl orders;

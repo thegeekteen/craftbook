@@ -19,8 +19,6 @@ import 'package:craftbook/features/stock/data/repositories/material_repository_i
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/sqlite.dart';
-
 T ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -29,8 +27,6 @@ T ok<T>(Result<T> r) => switch (r) {
 /// UpdateOrder against real repositories, so reservations are checked for
 /// real rather than through mocks.
 void main() {
-  setUpAll(useHostSqlite);
-
   late AppDatabase db;
   late OrderRepositoryImpl orders;
   late MaterialRepositoryImpl materials;

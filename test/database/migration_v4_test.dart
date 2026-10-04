@@ -5,12 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
 import '../support/legacy_schema.dart';
-import '../support/sqlite.dart';
 
 /// The v4 step: the built-in address becomes an "Address" order field.
 void main() {
-  setUpAll(useHostSqlite);
-
   late Directory dir;
   late File file;
   setUp(() async {
@@ -35,7 +32,7 @@ void main() {
         );
       }
     } finally {
-      raw3.dispose();
+      raw3.close();
     }
   }
 

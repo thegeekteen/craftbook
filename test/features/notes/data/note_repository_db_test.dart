@@ -9,7 +9,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/note_bodies.dart';
-import '../../../support/sqlite.dart';
 
 T ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
@@ -18,8 +17,6 @@ T ok<T>(Result<T> r) => switch (r) {
 
 /// The notebook against a real (in-memory) database.
 void main() {
-  setUpAll(useHostSqlite);
-
   late AppDatabase db;
   late NoteRepositoryImpl notes;
 

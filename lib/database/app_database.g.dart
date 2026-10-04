@@ -6423,8 +6423,7 @@ final class $$OrdersTableReferences
   static MultiTypedResultKey<$OrderFieldValuesTable, List<OrderFieldValue>>
       _orderFieldValuesRefsTable(_$AppDatabase db) =>
           MultiTypedResultKey.fromTable(db.orderFieldValues,
-              aliasName: $_aliasNameGenerator(
-                  db.orders.id, db.orderFieldValues.orderId));
+              aliasName: 'orders__id__order_field_values__order_id');
 
   $$OrderFieldValuesTableProcessedTableManager get orderFieldValuesRefs {
     final manager =
@@ -6753,8 +6752,10 @@ class $$OrdersTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) =>
-                  (e.readTable(table), $$OrdersTableReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$OrdersTable, Order>(table),
+                    $$OrdersTableReferences(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: ({orderFieldValuesRefs = false}) {
             return PrefetchHooks(
@@ -6968,7 +6969,11 @@ class $$OrderItemsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$OrderItemsTable, OrderItem>(table),
+                    BaseReferences<_$AppDatabase, $OrderItemsTable, OrderItem>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -7198,7 +7203,11 @@ class $$OrderMaterialsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$OrderMaterialsTable, OrderMaterial>(table),
+                    BaseReferences<_$AppDatabase, $OrderMaterialsTable,
+                        OrderMaterial>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -7380,7 +7389,11 @@ class $$OrderProductsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$OrderProductsTable, OrderProduct>(table),
+                    BaseReferences<_$AppDatabase, $OrderProductsTable,
+                        OrderProduct>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -7653,7 +7666,11 @@ class $$MaterialsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$MaterialsTable, Material>(table),
+                    BaseReferences<_$AppDatabase, $MaterialsTable, Material>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -7937,7 +7954,11 @@ class $$ProductsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ProductsTable, Product>(table),
+                    BaseReferences<_$AppDatabase, $ProductsTable, Product>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8098,7 +8119,11 @@ class $$BomItemsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$BomItemsTable, BomItem>(table),
+                    BaseReferences<_$AppDatabase, $BomItemsTable, BomItem>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8308,7 +8333,11 @@ class $$ChannelsTableTableManager extends RootTableManager<
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ChannelsTable, Channel>(table),
+                    BaseReferences<_$AppDatabase, $ChannelsTable, Channel>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8518,7 +8547,11 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             reference: reference,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$StockMovementsTable, StockMovement>(table),
+                    BaseReferences<_$AppDatabase, $StockMovementsTable,
+                        StockMovement>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8735,7 +8768,12 @@ class $$ProductStockMovementsTableTableManager extends RootTableManager<
             reference: reference,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$ProductStockMovementsTable,
+                        ProductStockMovement>(table),
+                    BaseReferences<_$AppDatabase, $ProductStockMovementsTable,
+                        ProductStockMovement>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8884,7 +8922,11 @@ class $$SettingsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SettingsTable, Setting>(table),
+                    BaseReferences<_$AppDatabase, $SettingsTable, Setting>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -8933,8 +8975,8 @@ final class $$OrderFieldDefinitionsTableReferences extends BaseReferences<
   static MultiTypedResultKey<$OrderFieldValuesTable, List<OrderFieldValue>>
       _orderFieldValuesRefsTable(_$AppDatabase db) =>
           MultiTypedResultKey.fromTable(db.orderFieldValues,
-              aliasName: $_aliasNameGenerator(
-                  db.orderFieldDefinitions.id, db.orderFieldValues.fieldId));
+              aliasName:
+                  'order_field_definitions__id__order_field_values__field_id');
 
   $$OrderFieldValuesTableProcessedTableManager get orderFieldValuesRefs {
     final manager =
@@ -9160,7 +9202,8 @@ class $$OrderFieldDefinitionsTableTableManager extends RootTableManager<
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
-                    e.readTable(table),
+                    e.readTable<$OrderFieldDefinitionsTable,
+                        OrderFieldDefinition>(table),
                     $$OrderFieldDefinitionsTableReferences(db, table, e)
                   ))
               .toList(),
@@ -9227,8 +9270,8 @@ final class $$OrderFieldValuesTableReferences extends BaseReferences<
   $$OrderFieldValuesTableReferences(
       super.$_db, super.$_table, super.$_typedResult);
 
-  static $OrdersTable _orderIdTable(_$AppDatabase db) => db.orders.createAlias(
-      $_aliasNameGenerator(db.orderFieldValues.orderId, db.orders.id));
+  static $OrdersTable _orderIdTable(_$AppDatabase db) =>
+      db.orders.createAlias('order_field_values__order_id__orders__id');
 
   $$OrdersTableProcessedTableManager get orderId {
     final $_column = $_itemColumn<int>('order_id')!;
@@ -9241,9 +9284,9 @@ final class $$OrderFieldValuesTableReferences extends BaseReferences<
         manager.$state.copyWith(prefetchedData: [item]));
   }
 
-  static $OrderFieldDefinitionsTable _fieldIdTable(_$AppDatabase db) =>
-      db.orderFieldDefinitions.createAlias($_aliasNameGenerator(
-          db.orderFieldValues.fieldId, db.orderFieldDefinitions.id));
+  static $OrderFieldDefinitionsTable _fieldIdTable(_$AppDatabase db) => db
+      .orderFieldDefinitions
+      .createAlias('order_field_values__field_id__order_field_definitions__id');
 
   $$OrderFieldDefinitionsTableProcessedTableManager get fieldId {
     final $_column = $_itemColumn<int>('field_id')!;
@@ -9469,7 +9512,7 @@ class $$OrderFieldValuesTableTableManager extends RootTableManager<
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
-                    e.readTable(table),
+                    e.readTable<$OrderFieldValuesTable, OrderFieldValue>(table),
                     $$OrderFieldValuesTableReferences(db, table, e)
                   ))
               .toList(),
@@ -9688,7 +9731,11 @@ class $$NotesTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$NotesTable, Note>(table),
+                    BaseReferences<_$AppDatabase, $NotesTable, Note>(
+                        db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -9864,7 +9911,11 @@ class $$SocialLinksTableTableManager extends RootTableManager<
             position: position,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable<$SocialLinksTable, SocialLink>(table),
+                    BaseReferences<_$AppDatabase, $SocialLinksTable,
+                        SocialLink>(db, table, e)
+                  ))
               .toList(),
           prefetchHooksCallback: null,
         ));

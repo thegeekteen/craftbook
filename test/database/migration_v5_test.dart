@@ -6,12 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
 import '../support/legacy_schema.dart';
-import '../support/sqlite.dart';
 
 /// The v5 step: the notebook table.
 void main() {
-  setUpAll(useHostSqlite);
-
   late Directory dir;
   late File file;
   setUp(() async {
@@ -33,7 +30,7 @@ void main() {
         "VALUES ('Ana', 0, 0, 'pending', 450)",
       );
     } finally {
-      raw4.dispose();
+      raw4.close();
     }
   }
 

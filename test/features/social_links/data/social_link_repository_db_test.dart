@@ -6,8 +6,6 @@ import 'package:craftbook/features/social_links/domain/entities/social_link.dart
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../support/sqlite.dart';
-
 T ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -15,8 +13,6 @@ T ok<T>(Result<T> r) => switch (r) {
 
 /// Shortcuts against a real (in-memory) database.
 void main() {
-  setUpAll(useHostSqlite);
-
   late AppDatabase db;
   late SocialLinkRepositoryImpl repo;
 

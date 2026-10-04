@@ -13,8 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../../support/sqlite.dart';
-
 T _ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -22,8 +20,6 @@ T _ok<T>(Result<T> r) => switch (r) {
 
 /// Order fields end to end: settings page, order form and order detail.
 void main() {
-  setUpAll(useHostSqlite);
-
   Future<void> start(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.75;

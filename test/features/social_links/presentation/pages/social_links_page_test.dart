@@ -10,8 +10,6 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../../support/sqlite.dart';
-
 class FakeLauncher implements LinkLauncher {
   final opened = <String>[];
   bool succeeds = true;
@@ -30,8 +28,6 @@ T _ok<T>(Result<T> r) => switch (r) {
 
 /// Social shortcuts end to end: the More row, the grid, the sheet.
 void main() {
-  setUpAll(useHostSqlite);
-
   late FakeLauncher launcher;
 
   Future<void> start(WidgetTester tester) async {

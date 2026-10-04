@@ -17,12 +17,9 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/app_harness.dart';
-import '../../../../support/sqlite.dart';
 
 /// The order long-press menu and cancelling, end to end.
 void main() {
-  setUpAll(useHostSqlite);
-
   late int beads;
   late int ana; // pending, 1 bracelet → 2 beads promised
   late int ben; // packed, 1 bracelet → 2 beads used

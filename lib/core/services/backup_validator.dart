@@ -146,7 +146,7 @@ class BackupValidator {
       // "file is not a database", "disk image is malformed" and friends.
       return Error(BackupFailure(BackupProblem.corrupt));
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 
