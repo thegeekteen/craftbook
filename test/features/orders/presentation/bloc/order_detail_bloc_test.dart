@@ -4,6 +4,8 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
+import 'package:craftbook/features/order_fields/domain/entities/order_field_entry.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
@@ -59,7 +61,6 @@ void main() {
   Order order({OrderStatus status = OrderStatus.pending, String? note}) => Order(
         id: orderId,
         customerName: 'Jessa Ramos',
-        customerAddress: 'Cebu City',
         note: note,
         orderDate: now,
         shipByDate: now.add(const Duration(days: 2)),
@@ -221,6 +222,8 @@ void main() {
         .thenAnswer((_) async => const Success(null));
     when(() => productRepository.getProductById(20))
         .thenAnswer((_) async => Success(giftBox));
+    when(() => orderRepository.getOrderFieldValues(orderId))
+        .thenAnswer((_) async => const Success([]));
   }
 
   test('initial state is OrderDetailInitial', () {
@@ -263,6 +266,37 @@ void main() {
             .having((s) => s.productStock, 'productStock', isEmpty)
             .having((s) => s.materials, 'materials', materials),
       ],
+    );
+
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'loads the order\'s field values',
+      setUp: () {
+        stubLoad();
+        when(() => orderRepository.getOrderFieldValues(orderId)).thenAnswer((_) async => const Success([
+              OrderFieldEntry(
+                field: OrderField(id: 1, name: 'Address', type: OrderFieldType.text),
+                value: 'Cebu City',
+              ),
+            ]));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
+      expect: () => [
+        isA<OrderDetailLoading>(),
+        isA<OrderDetailLoaded>().having((s) => s.fieldValues.single.value, 'value', 'Cebu City'),
+      ],
+    );
+
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'a field values failure is not fatal',
+      setUp: () {
+        stubLoad();
+        when(() => orderRepository.getOrderFieldValues(orderId))
+            .thenAnswer((_) async => const Error(DatabaseFailure('no fields')));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadOrderDetail(orderId)),
+      expect: () => [isA<OrderDetailLoading>(), loaded()],
     );
 
     blocTest<OrderDetailBloc, OrderDetailState>(

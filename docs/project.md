@@ -34,6 +34,7 @@ The app is built around 6 main user flows:
 - **Back navigation**: Users can go back to previous steps without losing data
 - **Product picker**: Shows buildable quantity from current stock
 - **Channel selection**: Shopee, TikTok, Lazada, Facebook, Walk-in with fee rates
+- **Order fields**: The shop's own extra details (address, size, wrap, event date…) asked for after the customer name
 - **Auto-calculation**: Materials cost, channel fees, and profit calculated automatically
 
 ### Flow 3: Pack & Ship
@@ -65,7 +66,7 @@ The app is built around 6 main user flows:
 ### Settings
 - **Export backup**: Raw SQLite file export via file picker (Android SAF compatible)
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
-- **Navigation hub**: Links to Products, Channels, Buy List
+- **Navigation hub**: Links to Products, Channels, Order fields, Buy List
 
 ---
 
@@ -93,6 +94,7 @@ The app is built around 6 main user flows:
 | Delete materials | ✅ | Blocked if in BOM or has stock movements |
 | Delete products | ✅ | Blocked if in orders or has BOM items |
 | Delete channels | ✅ | Blocked if orders reference them |
+| Order fields | ✅ | Text, number, date and choice fields; drag to reorder; used fields archive instead of deleting. Replaced the built-in address (migrated in schema v4) |
 | Earnings report | ✅ | Period navigation, summary, per-product, waste |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |
@@ -126,6 +128,9 @@ Required for clear (X) button to work — clearing just the state variable doesn
 
 ### Auto-refresh after operations
 Child pages pop with `true` after successful create/edit/delete. Parent pages await the result and reload.
+
+### Order fields replace the built-in address
+An address made sense for some shops and not others, so it became one of the shop's own fields. Values live in `order_field_values` (TEXT, one row per filled field) and are loaded per order, not on the `Order` entity, so lists and earnings don't pay for them. A field orders use can't be deleted or change type; it is archived and keeps showing on those orders.
 
 ### One calendar page
 Week and month are one screen with a toggle and prev/next navigation, so there is no back-stack juggling between them.

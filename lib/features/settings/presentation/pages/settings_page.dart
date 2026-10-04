@@ -13,12 +13,14 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/section_label.dart';
+import '../../../order_fields/domain/repositories/order_field_repository.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../widgets/appearance_card.dart';
 
-/// More: the catalogue (products, channels, buy list) and your data.
+/// More: the catalogue (products, channels, order fields, buy list) and your
+/// data.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -29,6 +31,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String? _productsHint;
   String? _channelsHint;
+  String? _orderFieldsHint;
   String? _buyListHint;
   bool _canUndoRestore = false;
 
@@ -43,6 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final products = await getIt<ProductRepository>().getAllProducts();
     final channels = await getIt<ChannelRepository>().getAllChannels();
     final buyList = await getIt<MaterialRepository>().getBuyList();
+    final orderFields = await getIt<OrderFieldRepository>().getFields();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
     setState(() {
@@ -56,6 +60,14 @@ class _SettingsPageState extends State<SettingsPage> {
         final on = value.where((c) => c.isActive).length;
         final off = value.length - on;
         _channelsHint = '$on on${off > 0 ? ' · $off off' : ''}';
+      }
+      if (orderFields case Success(:final value)) {
+        final archived = value.where((f) => f.isArchived).length;
+        final active = value.length - archived;
+        _orderFieldsHint = value.isEmpty
+            ? null
+            : '$active ${active == 1 ? 'field' : 'fields'}'
+                '${archived > 0 ? ' · $archived archived' : ''}';
       }
       if (buyList case Success(:final value)) {
         final total = value.fold<double>(0, (s, i) => s + i.totalCost);
@@ -94,6 +106,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Channels & fees',
                 subtitle: _channelsHint ?? 'Where you sell and what they charge',
                 onTap: () => _open(RouteNames.channels),
+              ),
+              _MoreRow(
+                icon: Icons.dashboard_customize_outlined,
+                title: 'Order fields',
+                subtitle: _orderFieldsHint ?? 'Extra details to note on each order',
+                onTap: () => _open(RouteNames.orderFields),
               ),
               _MoreRow(
                 icon: Icons.shopping_basket_outlined,

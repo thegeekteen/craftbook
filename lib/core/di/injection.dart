@@ -72,6 +72,15 @@ import '../../features/orders/presentation/bloc/new_order_bloc.dart';
 import '../../features/orders/presentation/bloc/order_detail_bloc.dart';
 import '../../features/today/presentation/bloc/today_bloc.dart';
 import '../../features/earnings/presentation/bloc/earnings_bloc.dart';
+import '../../database/daos/order_field_dao.dart';
+import '../../features/order_fields/data/repositories/order_field_repository_impl.dart';
+import '../../features/order_fields/domain/repositories/order_field_repository.dart';
+import '../../features/order_fields/domain/usecases/get_order_fields.dart';
+import '../../features/order_fields/domain/usecases/remove_order_field.dart';
+import '../../features/order_fields/domain/usecases/reorder_order_fields.dart';
+import '../../features/order_fields/domain/usecases/restore_order_field.dart';
+import '../../features/order_fields/domain/usecases/save_order_field.dart';
+import '../../features/order_fields/presentation/bloc/order_fields_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -90,6 +99,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(ProductDao(db));
   getIt.registerSingleton(ChannelDao(db));
   getIt.registerSingleton(EarningsDao(db));
+  getIt.registerSingleton(OrderFieldDao(db));
 
   // Repositories
   getIt.registerLazySingleton<ChannelRepository>(
@@ -104,6 +114,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<OrderRepository>(
     () => OrderRepositoryImpl(getIt<OrderDao>()),
   );
+  getIt.registerLazySingleton<OrderFieldRepository>(
+    () => OrderFieldRepositoryImpl(getIt<OrderFieldDao>()),
+  );
   getIt.registerLazySingleton<EarningsRepository>(
     () => EarningsRepositoryImpl(getIt<EarningsDao>()),
   );
@@ -111,6 +124,13 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<SettingsRepository>(
     () => SettingsRepositoryImpl(getIt<AppDatabase>()),
   );
+
+  // Use Cases - Order fields
+  getIt.registerFactory(() => GetOrderFields(getIt()));
+  getIt.registerFactory(() => SaveOrderField(getIt()));
+  getIt.registerFactory(() => RemoveOrderField(getIt()));
+  getIt.registerFactory(() => RestoreOrderField(getIt()));
+  getIt.registerFactory(() => ReorderOrderFields(getIt()));
 
   // Use Cases - Products
   getIt.registerFactory(() => GetChannels(getIt()));
@@ -204,6 +224,13 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     deleteProduct: getIt(),
     calculateBomCost: getIt(),
     calculateBuildableQuantity: getIt(),
+  ));
+  getIt.registerFactory(() => OrderFieldsBloc(
+    getOrderFields: getIt(),
+    saveOrderField: getIt(),
+    removeOrderField: getIt(),
+    restoreOrderField: getIt(),
+    reorderOrderFields: getIt(),
   ));
   getIt.registerFactory(() => ChannelsBloc(
     getChannels: getIt(),

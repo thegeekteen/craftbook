@@ -4,6 +4,8 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/order_dao.dart';
+import '../../../order_fields/data/repositories/order_field_repository_impl.dart';
+import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_list_entry.dart';
@@ -39,8 +41,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<Result<List<Order>>> getOrdersByStatus(
-      OrderStatus status) async {
+  Future<Result<List<Order>>> getOrdersByStatus(OrderStatus status) async {
     try {
       final rows = await dao.getOrdersByStatus(_statusToString(status));
       return Success(rows.map(_toEntity).toList());
@@ -98,8 +99,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<Result<List<OrderItem>>> getOrderItems(
-      int orderId) async {
+  Future<Result<List<OrderItem>>> getOrderItems(int orderId) async {
     try {
       final rows = await dao.getOrderItems(orderId);
       final items = <OrderItem>[];
@@ -114,8 +114,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<Result<List<OrderMaterial>>> getOrderMaterials(
-      int orderId) async {
+  Future<Result<List<OrderMaterial>>> getOrderMaterials(int orderId) async {
     try {
       final rows = await dao.getOrderMaterials(orderId);
       final materials = <OrderMaterial>[];
@@ -130,8 +129,7 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<Result<List<OrderProduct>>> getOrderProducts(
-      int orderId) async {
+  Future<Result<List<OrderProduct>>> getOrderProducts(int orderId) async {
     try {
       final rows = await dao.getOrderProducts(orderId);
       final products = <OrderProduct>[];
@@ -145,12 +143,27 @@ class OrderRepositoryImpl implements OrderRepository {
     }
   }
 
+  @override
+  Future<Result<List<OrderFieldEntry>>> getOrderFieldValues(int orderId) async {
+    try {
+      final rows = await dao.getFieldValues(orderId);
+      return Success([
+        for (final (field, value) in rows)
+          OrderFieldEntry(
+            field: OrderFieldRepositoryImpl.toEntity(field),
+            value: value,
+          ),
+      ]);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
   // ── Commands ─────────────────────────────────────────────────────────
 
   @override
   Future<Result<int>> createOrder({
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -163,68 +176,103 @@ class OrderRepositoryImpl implements OrderRepository {
     required List<OrderItemInput> items,
     required List<OrderMaterialInput> materials,
     List<OrderProductInput> products = const [],
+    Map<int, String> fieldValues = const {},
   }) async {
     try {
-      final orderId = await dao.createOrder(db.OrdersCompanion(
-        customerName: Value(customerName),
-        customerAddress: Value(customerAddress),
-        note: Value(note),
-        orderDate: Value(orderDate),
-        shipByDate: Value(shipByDate),
-        status: Value(_statusToString(OrderStatus.pending)),
-        channelId: Value(channelId),
-        totalSales: Value(totalSales),
-        totalMaterialCost: Value(totalMaterialCost),
-        channelFees: Value(channelFees),
-        shippingCost: Value(shippingCost),
-        profit: Value(profit),
-      ));
-
-      // Insert order items
-      for (final item in items) {
-        await dao.addOrderItem(db.OrderItemsCompanion(
-          orderId: Value(orderId),
-          productId: Value(item.productId),
-          quantity: Value(item.quantity),
-          unitPrice: Value(item.unitPrice),
-          subtotal: Value(item.subtotal),
-        ));
-      }
-
-      // Insert order materials (BOM products)
-      for (final material in materials) {
-        await dao.addOrderMaterial(db.OrderMaterialsCompanion(
-          orderId: Value(orderId),
-          materialId: Value(material.materialId),
-          plannedQuantity: Value(material.plannedQuantity),
-          actualQuantity: Value(material.actualQuantity),
-          wasteQuantity: Value(material.wasteQuantity),
-          wasteReason: Value(material.wasteReason),
-          unitCost: Value(material.unitCost),
-        ));
-      }
-
-      // Insert order products (standalone products)
-      for (final product in products) {
-        await dao.addOrderProduct(db.OrderProductsCompanion(
-          orderId: Value(orderId),
-          productId: Value(product.productId),
-          quantity: Value(product.quantity),
-          unitCost: Value(product.unitCost),
-        ));
-      }
-
+      final orderId = await dao.transaction(() => _insertOrder(
+            customerName: customerName,
+            note: note,
+            orderDate: orderDate,
+            shipByDate: shipByDate,
+            channelId: channelId,
+            totalSales: totalSales,
+            totalMaterialCost: totalMaterialCost,
+            channelFees: channelFees,
+            shippingCost: shippingCost,
+            profit: profit,
+            items: items,
+            materials: materials,
+            products: products,
+            fieldValues: fieldValues,
+          ));
       return Success(orderId);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
   }
 
+  Future<int> _insertOrder({
+    required String customerName,
+    String? note,
+    required DateTime orderDate,
+    required DateTime shipByDate,
+    required int channelId,
+    required double totalSales,
+    required double totalMaterialCost,
+    required double channelFees,
+    required double shippingCost,
+    required double profit,
+    required List<OrderItemInput> items,
+    required List<OrderMaterialInput> materials,
+    required List<OrderProductInput> products,
+    required Map<int, String> fieldValues,
+  }) async {
+    final orderId = await dao.createOrder(db.OrdersCompanion(
+      customerName: Value(customerName),
+      note: Value(note),
+      orderDate: Value(orderDate),
+      shipByDate: Value(shipByDate),
+      status: Value(_statusToString(OrderStatus.pending)),
+      channelId: Value(channelId),
+      totalSales: Value(totalSales),
+      totalMaterialCost: Value(totalMaterialCost),
+      channelFees: Value(channelFees),
+      shippingCost: Value(shippingCost),
+      profit: Value(profit),
+    ));
+
+    // Insert order items
+    for (final item in items) {
+      await dao.addOrderItem(db.OrderItemsCompanion(
+        orderId: Value(orderId),
+        productId: Value(item.productId),
+        quantity: Value(item.quantity),
+        unitPrice: Value(item.unitPrice),
+        subtotal: Value(item.subtotal),
+      ));
+    }
+
+    // Insert order materials (BOM products)
+    for (final material in materials) {
+      await dao.addOrderMaterial(db.OrderMaterialsCompanion(
+        orderId: Value(orderId),
+        materialId: Value(material.materialId),
+        plannedQuantity: Value(material.plannedQuantity),
+        actualQuantity: Value(material.actualQuantity),
+        wasteQuantity: Value(material.wasteQuantity),
+        wasteReason: Value(material.wasteReason),
+        unitCost: Value(material.unitCost),
+      ));
+    }
+
+    // Insert order products (standalone products)
+    for (final product in products) {
+      await dao.addOrderProduct(db.OrderProductsCompanion(
+        orderId: Value(orderId),
+        productId: Value(product.productId),
+        quantity: Value(product.quantity),
+        unitCost: Value(product.unitCost),
+      ));
+    }
+
+    await dao.replaceFieldValues(orderId, fieldValues);
+    return orderId;
+  }
+
   @override
   Future<Result<void>> updateOrder({
     required int id,
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -237,13 +285,13 @@ class OrderRepositoryImpl implements OrderRepository {
     List<OrderItemInput>? items,
     List<OrderMaterialInput>? materials,
     List<OrderProductInput>? products,
+    Map<int, String>? fieldValues,
   }) async {
     try {
       await dao.transaction(() async {
         await (dao.update(dao.orders)..where((t) => t.id.equals(id)))
             .write(db.OrdersCompanion(
           customerName: Value(customerName),
-          customerAddress: Value(customerAddress),
           note: Value(note),
           orderDate: Value(orderDate),
           shipByDate: Value(shipByDate),
@@ -255,6 +303,9 @@ class OrderRepositoryImpl implements OrderRepository {
           profit: Value(profit),
           updatedAt: Value(DateTime.now()),
         ));
+        if (fieldValues != null) {
+          await dao.replaceFieldValues(id, fieldValues);
+        }
 
         if (items == null) return;
         await dao.deleteOrderItemsByOrderId(id);
@@ -314,7 +365,8 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Result<void>> updateOrderNote(int orderId, String? note) async {
     try {
-      final updated = await (dao.update(dao.orders)..where((t) => t.id.equals(orderId)))
+      final updated = await (dao.update(dao.orders)
+            ..where((t) => t.id.equals(orderId)))
           .write(db.OrdersCompanion(
         note: Value(note),
         updatedAt: Value(DateTime.now()),
@@ -385,16 +437,19 @@ class OrderRepositoryImpl implements OrderRepository {
 
       // Recalculate total material cost (materials + standalone products) and profit
       final updatedMaterials = await dao.getOrderMaterials(orderId);
-      final materialCost = updatedMaterials
-          .fold<double>(0.0, (sum, m) => sum + m.actualQuantity * m.unitCost);
+      final materialCost = updatedMaterials.fold<double>(
+          0.0, (sum, m) => sum + m.actualQuantity * m.unitCost);
       final orderProducts = await dao.getOrderProducts(orderId);
-      final productCost = orderProducts
-          .fold<double>(0.0, (sum, p) => sum + p.quantity * p.unitCost);
+      final productCost = orderProducts.fold<double>(
+          0.0, (sum, p) => sum + p.quantity * p.unitCost);
       final totalCost = materialCost + productCost;
 
       final order = await dao.getOrderById(orderId);
       final newProfit = order != null
-          ? order.totalSales - totalCost - order.channelFees - order.shippingCost
+          ? order.totalSales -
+              totalCost -
+              order.channelFees -
+              order.shippingCost
           : 0.0;
 
       final now = DateTime.now();
@@ -414,12 +469,15 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<Result<void>> deleteOrder(int id) async {
     try {
-      await dao.deleteOrderItemsByOrderId(id);
-      await dao.deleteOrderMaterialsByOrderId(id);
-      await dao.deleteOrderProductsByOrderId(id);
-      await dao.deleteStockMovementsByOrderId(id);
-      await dao.deleteProductStockMovementsByOrderId(id);
-      await dao.deleteOrder(id);
+      await dao.transaction(() async {
+        await dao.deleteOrderItemsByOrderId(id);
+        await dao.deleteOrderMaterialsByOrderId(id);
+        await dao.deleteOrderProductsByOrderId(id);
+        await dao.deleteStockMovementsByOrderId(id);
+        await dao.deleteProductStockMovementsByOrderId(id);
+        await dao.deleteFieldValuesByOrderId(id);
+        await dao.deleteOrder(id);
+      });
       return const Success(null);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -431,7 +489,6 @@ class OrderRepositoryImpl implements OrderRepository {
   Order _toEntity(db.Order row) => Order(
         id: row.id,
         customerName: row.customerName,
-        customerAddress: row.customerAddress,
         note: row.note,
         orderDate: row.orderDate,
         shipByDate: row.shipByDate,
@@ -458,8 +515,7 @@ class OrderRepositoryImpl implements OrderRepository {
         subtotal: row.subtotal,
       );
 
-  OrderMaterial _materialToEntity(
-          db.OrderMaterial row, String materialName) =>
+  OrderMaterial _materialToEntity(db.OrderMaterial row, String materialName) =>
       OrderMaterial(
         id: row.id,
         orderId: row.orderId,

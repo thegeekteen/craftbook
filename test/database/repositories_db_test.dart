@@ -68,7 +68,6 @@ void main() {
   }) async =>
       ok(await orders.createOrder(
         customerName: 'Maria',
-        customerAddress: '',
         orderDate: shipBy.subtract(const Duration(days: 2)),
         shipByDate: shipBy,
         channelId: 1,

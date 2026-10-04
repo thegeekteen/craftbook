@@ -22,7 +22,6 @@ void main() {
   Order order(int id, {int? channelId}) => Order(
         id: id,
         customerName: 'C$id',
-        customerAddress: '',
         orderDate: now,
         shipByDate: now,
         status: OrderStatus.pending,

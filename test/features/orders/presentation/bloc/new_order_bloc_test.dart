@@ -4,6 +4,8 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
+import 'package:craftbook/features/order_fields/domain/entities/order_field_entry.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
@@ -37,7 +39,6 @@ void main() {
 
   final details = SetCustomerDetails(
     customerName: 'Jessa Ramos',
-    customerAddress: 'Cebu City',
     channelId: 2,
     orderDate: orderDate,
     shipByDate: shipBy,
@@ -85,7 +86,6 @@ void main() {
   }) =>
       NewOrderDetailsFilled(
         customerName: 'Jessa Ramos',
-        customerAddress: 'Cebu City',
         channelId: 2,
         orderDate: orderDate,
         shipByDate: shipBy,
@@ -116,7 +116,7 @@ void main() {
         )));
     when(() => createOrder(
           customerName: any(named: 'customerName'),
-          customerAddress: any(named: 'customerAddress'),
+          fieldValues: any(named: 'fieldValues'),
           note: any(named: 'note'),
           orderDate: any(named: 'orderDate'),
           shipByDate: any(named: 'shipByDate'),
@@ -327,7 +327,6 @@ void main() {
             )).called(1);
         verify(() => createOrder(
               customerName: 'Jessa Ramos',
-              customerAddress: 'Cebu City',
               note: 'Gift wrap',
               orderDate: orderDate,
               shipByDate: shipBy,
@@ -338,6 +337,49 @@ void main() {
               items: [tulipInput, strapInput],
             )).called(1);
       },
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'passes the form\'s field values to CreateOrder',
+      setUp: () => stubCreate(const Success(42)),
+      build: build,
+      act: (bloc) => bloc
+        ..add(SetCustomerDetails(
+          customerName: 'Jessa Ramos',
+          fieldValues: const {1: 'Cebu City', 3: 'Floral'},
+          channelId: 2,
+          orderDate: orderDate,
+          shipByDate: shipBy,
+        ))
+        ..add(tulip)
+        ..add(SaveOrder()),
+      verify: (_) => verify(() => createOrder(
+            customerName: 'Jessa Ramos',
+            fieldValues: const {1: 'Cebu City', 3: 'Floral'},
+            note: any(named: 'note'),
+            orderDate: any(named: 'orderDate'),
+            shipByDate: any(named: 'shipByDate'),
+            channelId: any(named: 'channelId'),
+            totalSales: any(named: 'totalSales'),
+            channelFees: any(named: 'channelFees'),
+            shippingCost: any(named: 'shippingCost'),
+            items: any(named: 'items'),
+          )).called(1),
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'SetCustomerDetails carries field values into the state',
+      build: build,
+      act: (bloc) => bloc.add(SetCustomerDetails(
+        customerName: 'Jessa Ramos',
+        fieldValues: const {1: 'Cebu City'},
+        channelId: 2,
+        orderDate: orderDate,
+        shipByDate: shipBy,
+      )),
+      expect: () => [
+        isA<NewOrderDetailsFilled>().having((s) => s.fieldValues, 'fieldValues', {1: 'Cebu City'}),
+      ],
     );
 
     blocTest<NewOrderBloc, NewOrderState>(
@@ -378,7 +420,7 @@ void main() {
       ],
       verify: (_) => verifyNever(() => createOrder(
             customerName: any(named: 'customerName'),
-            customerAddress: any(named: 'customerAddress'),
+            fieldValues: any(named: 'fieldValues'),
             note: any(named: 'note'),
             orderDate: any(named: 'orderDate'),
             shipByDate: any(named: 'shipByDate'),
@@ -417,7 +459,6 @@ void main() {
     final existing = Order(
       id: 7,
       customerName: 'Jessa Ramos',
-      customerAddress: 'Cebu City',
       note: 'Gift wrap',
       orderDate: orderDate,
       shipByDate: shipBy,
@@ -442,10 +483,91 @@ void main() {
       ),
     ];
 
-    void stubLoad({Order? order, Result<List<OrderItem>>? items}) {
+    const address = OrderField(id: 1, name: 'Address', type: OrderFieldType.text);
+    const card = OrderField(id: 2, name: 'Card', type: OrderFieldType.text, isArchived: true);
+
+    void stubLoad({
+      Order? order,
+      Result<List<OrderItem>>? items,
+      List<OrderFieldEntry> fields = const [],
+    }) {
       when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => Success(order ?? existing));
       when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => items ?? Success(lines));
+      when(() => orderRepository.getOrderFieldValues(7)).thenAnswer((_) async => Success(fields));
     }
+
+    void stubUpdate() => when(() => updateOrder(
+          orderId: any(named: 'orderId'),
+          customerName: any(named: 'customerName'),
+          fieldValues: any(named: 'fieldValues'),
+          note: any(named: 'note'),
+          orderDate: any(named: 'orderDate'),
+          shipByDate: any(named: 'shipByDate'),
+          channelId: any(named: 'channelId'),
+          items: any(named: 'items'),
+        )).thenAnswer((_) async => const Success(null));
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'LoadExistingOrder fills field values, archived ones included',
+      setUp: () => stubLoad(fields: const [
+        OrderFieldEntry(field: address, value: 'Cebu City'),
+        OrderFieldEntry(field: card, value: 'Happy birthday'),
+      ]),
+      build: build,
+      act: (bloc) => bloc.add(const LoadExistingOrder(7)),
+      expect: () => [
+        isA<NewOrderDetailsFilled>()
+            .having((s) => s.fieldValues, 'fieldValues', {1: 'Cebu City', 2: 'Happy birthday'}),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'LoadExistingOrder emits an error when field values fail to load',
+      setUp: () {
+        stubLoad();
+        when(() => orderRepository.getOrderFieldValues(7))
+            .thenAnswer((_) async => const Error(DatabaseFailure('disk')));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadExistingOrder(7)),
+      expect: () => [const NewOrderError('disk')],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'saving keeps archived values the form does not show',
+      setUp: () {
+        stubLoad(fields: const [
+          OrderFieldEntry(field: address, value: 'Cebu City'),
+          OrderFieldEntry(field: card, value: 'Happy birthday'),
+        ]);
+        stubUpdate();
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(7));
+        await Future<void>.delayed(Duration.zero);
+        // The form only knows the active Address field; it was cleared.
+        bloc.add(SetCustomerDetails(
+          customerName: 'Jessa Ramos',
+          fieldValues: const {1: ''},
+          channelId: 2,
+          orderDate: orderDate,
+          shipByDate: shipBy,
+          note: 'Gift wrap',
+        ));
+        bloc.add(SaveOrder());
+      },
+      verify: (_) => verify(() => updateOrder(
+            orderId: 7,
+            customerName: 'Jessa Ramos',
+            fieldValues: const {1: '', 2: 'Happy birthday'},
+            note: 'Gift wrap',
+            orderDate: orderDate,
+            shipByDate: shipBy,
+            channelId: 2,
+            items: any(named: 'items'),
+          )).called(1),
+    );
 
     blocTest<NewOrderBloc, NewOrderState>(
       'LoadExistingOrder fills the form from the order and its items',
@@ -471,6 +593,7 @@ void main() {
       setUp: () {
         when(() => orderRepository.getOrderById(7)).thenAnswer((_) async => const Success(null));
         when(() => orderRepository.getOrderItems(7)).thenAnswer((_) async => const Success([]));
+        when(() => orderRepository.getOrderFieldValues(7)).thenAnswer((_) async => const Success([]));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadExistingOrder(7)),
@@ -484,7 +607,7 @@ void main() {
         when(() => updateOrder(
               orderId: any(named: 'orderId'),
               customerName: any(named: 'customerName'),
-              customerAddress: any(named: 'customerAddress'),
+              fieldValues: any(named: 'fieldValues'),
               note: any(named: 'note'),
               orderDate: any(named: 'orderDate'),
               shipByDate: any(named: 'shipByDate'),
@@ -504,7 +627,7 @@ void main() {
         verify(() => updateOrder(
               orderId: 7,
               customerName: 'Jessa Ramos',
-              customerAddress: 'Cebu City',
+              fieldValues: const {},
               note: 'Gift wrap',
               orderDate: orderDate,
               shipByDate: shipBy,
@@ -515,7 +638,7 @@ void main() {
             )).called(1);
         verifyNever(() => createOrder(
               customerName: any(named: 'customerName'),
-              customerAddress: any(named: 'customerAddress'),
+              fieldValues: any(named: 'fieldValues'),
               note: any(named: 'note'),
               orderDate: any(named: 'orderDate'),
               shipByDate: any(named: 'shipByDate'),
@@ -535,7 +658,7 @@ void main() {
         when(() => updateOrder(
               orderId: any(named: 'orderId'),
               customerName: any(named: 'customerName'),
-              customerAddress: any(named: 'customerAddress'),
+              fieldValues: any(named: 'fieldValues'),
               note: any(named: 'note'),
               orderDate: any(named: 'orderDate'),
               shipByDate: any(named: 'shipByDate'),

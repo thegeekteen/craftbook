@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/result.dart';
+import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
@@ -129,6 +130,14 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       }
     }
 
+    // Extra details only; the order still shows without them.
+    final fieldsResult =
+        await orderRepository.getOrderFieldValues(event.orderId);
+    final fieldValues = switch (fieldsResult) {
+      Success(:final value) => value,
+      Error() => const <OrderFieldEntry>[],
+    };
+
     if (emit.isDone) return;
 
     emit(OrderDetailLoaded(
@@ -137,6 +146,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       materials: materials.cast(),
       products: products.cast(),
       channel: channel,
+      fieldValues: fieldValues,
       materialStock: materialStock,
       productStock: productStock,
     ));

@@ -27,7 +27,6 @@ void main() {
   Order order(int id, {required DateTime shipBy, OrderStatus status = OrderStatus.pending, DateTime? placed}) => Order(
         id: id,
         customerName: 'C$id',
-        customerAddress: '',
         orderDate: placed ?? today.subtract(const Duration(days: 3)),
         shipByDate: shipBy,
         status: status,

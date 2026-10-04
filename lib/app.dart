@@ -29,6 +29,7 @@ import 'features/products/presentation/pages/products_list_page.dart';
 import 'features/products/presentation/pages/product_detail_page.dart';
 import 'features/products/presentation/pages/product_editor_page.dart';
 import 'features/products/presentation/pages/receive_product_stock_page.dart';
+import 'features/order_fields/presentation/pages/order_fields_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
@@ -131,11 +132,16 @@ class CraftbookApp extends StatelessWidget {
           ),
         ],
       ),
-      // Top-level (no shell): it is pushed from the order wizard, and a shell
-      // child there would mount a second AppShell and duplicate its GlobalKey.
+      // Top-level (no shell): these are pushed from the order wizard, and a
+      // shell child there would mount a second AppShell and duplicate its
+      // GlobalKey.
       GoRoute(
         path: RouteNames.channels,
         builder: (context, state) => const ChannelsPage(),
+      ),
+      GoRoute(
+        path: RouteNames.orderFields,
+        builder: (context, state) => const OrderFieldsPage(),
       ),
       GoRoute(
         path: RouteNames.calendarWeek,

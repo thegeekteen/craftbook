@@ -25,7 +25,6 @@ void main() {
   final pendingOrder = Order(
     id: 1,
     customerName: 'Test',
-    customerAddress: 'Addr',
     orderDate: DateTime(2026, 1, 1),
     shipByDate: DateTime(2026, 1, 5),
     status: OrderStatus.pending,

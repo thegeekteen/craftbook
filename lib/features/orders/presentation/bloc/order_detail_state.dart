@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
@@ -39,6 +40,9 @@ class OrderDetailLoaded extends OrderDetailState {
   final List<OrderProduct> products;
   final Channel? channel;
 
+  /// Custom field values, archived fields included, in field order.
+  final List<OrderFieldEntry> fieldValues;
+
   /// Current stock keyed by material id, for the pack preview.
   final Map<int, StockLevel> materialStock;
 
@@ -54,6 +58,7 @@ class OrderDetailLoaded extends OrderDetailState {
     required this.materials,
     this.products = const [],
     this.channel,
+    this.fieldValues = const [],
     this.materialStock = const {},
     this.productStock = const {},
     this.isBusy = false,
@@ -65,6 +70,7 @@ class OrderDetailLoaded extends OrderDetailState {
         materials: materials,
         products: products,
         channel: channel,
+        fieldValues: fieldValues,
         materialStock: materialStock,
         productStock: productStock,
         isBusy: isBusy ?? this.isBusy,
@@ -77,6 +83,7 @@ class OrderDetailLoaded extends OrderDetailState {
         materials,
         products,
         channel,
+        fieldValues,
         materialStock,
         productStock,
         isBusy,

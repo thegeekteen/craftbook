@@ -4,7 +4,6 @@ import 'package:drift/drift.dart';
 class Orders extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get customerName => text()();
-  TextColumn get customerAddress => text()();
   TextColumn get note => text().nullable()();
   DateTimeColumn get orderDate => dateTime()();
   DateTimeColumn get shipByDate => dateTime()();

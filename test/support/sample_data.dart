@@ -2,6 +2,9 @@ import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/utils/note_codec.dart';
 import 'package:craftbook/database/app_database.dart';
+import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
+import 'package:craftbook/features/order_fields/domain/order_field_codec.dart';
+import 'package:craftbook/features/order_fields/domain/repositories/order_field_repository.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
@@ -20,15 +23,27 @@ T _ok<T>(Result<T> r) => switch (r) {
     };
 
 /// Fills a fresh database with a small craft shop: channels, materials,
-/// products with BOMs, and orders in every status spread over recent days.
+/// products with BOMs, order fields, and orders in every status spread over
+/// recent days.
 /// Requires [configureDependencies] to have run.
 Future<void> seedSampleShop() async {
   final channels = getIt<ChannelRepository>();
   final materials = getIt<MaterialRepository>();
   final products = getIt<ProductRepository>();
   final db = getIt<AppDatabase>();
+  final fields = getIt<OrderFieldRepository>();
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day, 10);
+
+  final addressField = _ok(await fields.createField(
+      const OrderField(name: 'Address', type: OrderFieldType.text, isMultiline: true)));
+  final wrapField = _ok(await fields.createField(const OrderField(
+      name: 'Wrap', type: OrderFieldType.choice, options: ['Kraft', 'Floral', 'None'])));
+  final eventField = _ok(await fields.createField(
+      const OrderField(name: 'Event date', type: OrderFieldType.date)));
+  // Archived once orders have used it, so its value still shows on them.
+  final cardField = _ok(await fields.createField(
+      const OrderField(name: 'Card message', type: OrderFieldType.text)));
 
   final shopee = _ok(await channels.createChannel(
       name: 'Shopee', commissionRate: 8, transactionFeeRate: 2, flatFee: 5, shippingPaidByUs: 40));
@@ -108,6 +123,7 @@ Future<void> seedSampleShop() async {
     required int placedDaysAgo,
     required int shipInDays,
     String address = '',
+    Map<int, String> fields = const {},
     String? note,
     double fees = 0,
     double shipping = 0,
@@ -115,7 +131,7 @@ Future<void> seedSampleShop() async {
     final sales = items.fold<double>(0, (s, i) => s + i.subtotal);
     return _ok(await createOrder(
       customerName: customer,
-      customerAddress: address,
+      fieldValues: {addressField: address, ...fields},
       note: note,
       orderDate: today.subtract(Duration(days: placedDaysAgo)),
       shipByDate: today.add(Duration(days: shipInDays)),
@@ -148,7 +164,8 @@ Future<void> seedSampleShop() async {
   ];
   for (final (name, ch, items, daysAgo, fees, shipping) in history) {
     final id = await order(name, ch, items,
-        placedDaysAgo: daysAgo + 2, shipInDays: -daysAgo, fees: fees, shipping: shipping);
+        placedDaysAgo: daysAgo + 2, shipInDays: -daysAgo, fees: fees, shipping: shipping,
+        fields: name == 'Bea Garcia' ? {cardField: 'Happy anniversary, love!'} : const {});
     if (name == 'Eli Ramos') {
       // Used more yarn than planned: shows waste on Money.
       final mats = _ok(await orderRepo.getOrderMaterials(id));
@@ -171,6 +188,10 @@ Future<void> seedSampleShop() async {
   // Open orders for Today and Orders.
   await order('Maria Santos', shopee, [item(tulip, 'Crochet tulip bouquet', 2, 450), item(box, 'Kraft gift box', 1, 35)],
       placedDaysAgo: 3, shipInDays: -1, address: '22 Rizal Ave, Pasig City',
+      fields: {
+        wrapField: 'Floral',
+        eventField: OrderFieldCodec.encodeDate(today.add(const Duration(days: 4))),
+      },
       note: 'Gift wrap please, birthday on the 5th', fees: 98.5, shipping: 40);
   await order('Jun Reyes', tiktok, [item(strap, 'Beaded phone strap', 3, 180)],
       placedDaysAgo: 2, shipInDays: 0, address: '9 Kalayaan St, Makati', fees: 43.2, shipping: 30);
@@ -186,7 +207,10 @@ Future<void> seedSampleShop() async {
       placedDaysAgo: 4, shipInDays: 0, note: anaNote);
   await completedOn(ana, today, shipped: false);
   await order('Lea Bautista', shopee, [item(keychain, 'Resin keychain', 1, 120), item(tulip, 'Crochet tulip bouquet', 1, 450)],
-      placedDaysAgo: 0, shipInDays: 3, address: '41 Aguinaldo Hwy, Imus', fees: 62, shipping: 40);
+      placedDaysAgo: 0, shipInDays: 3, address: '41 Aguinaldo Hwy, Imus', fees: 62, shipping: 40,
+      fields: {wrapField: 'Kraft'});
   await order('Paolo Lim', tiktok, [item(strap, 'Beaded phone strap', 2, 180)],
       placedDaysAgo: 0, shipInDays: 5, address: '14 Mabini St, Cubao, Quezon City', fees: 28.8, shipping: 30);
+
+  _ok(await fields.setArchived(cardField, true));
 }

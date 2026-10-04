@@ -1,5 +1,6 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order.dart';
@@ -14,7 +15,7 @@ import 'expand_order_items.dart';
 ///
 /// * **pending**: everything. Reservations are released and re-made for the
 ///   new items.
-/// * **packed**: customer, address, note, dates and channel. Items are locked
+/// * **packed**: customer, order fields, note, dates and channel. Items are locked
 ///   because their stock has already been deducted.
 /// * **shipped**: the note only.
 /// * **cancelled**: nothing.
@@ -34,12 +35,15 @@ class UpdateOrder {
   Future<Result<void>> call({
     required int orderId,
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
     required int channelId,
     required List<OrderItemInput> items,
+
+    /// The order's complete set of custom field values by field id; blanks
+    /// clear the field.
+    Map<int, String> fieldValues = const {},
   }) async {
     final orderResult = await orderRepository.getOrderById(orderId);
     final Order? order;
@@ -53,6 +57,7 @@ class UpdateOrder {
 
     final trimmedNote = note?.trim();
     final cleanNote = trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote;
+    final cleanFields = OrderFieldCodec.normalize(fieldValues);
 
     switch (order.status) {
       case OrderStatus.cancelled:
@@ -62,7 +67,6 @@ class UpdateOrder {
         return orderRepository.updateOrder(
           id: orderId,
           customerName: order.customerName,
-          customerAddress: order.customerAddress,
           note: cleanNote,
           orderDate: order.orderDate,
           shipByDate: order.shipByDate,
@@ -86,15 +90,15 @@ class UpdateOrder {
     }
 
     if (order.status == OrderStatus.packed) {
-      return _updatePacked(order, customerName, customerAddress, cleanNote, orderDate, shipByDate, channelId);
+      return _updatePacked(order, customerName, cleanFields, cleanNote, orderDate, shipByDate, channelId);
     }
-    return _updatePending(order, customerName, customerAddress, cleanNote, orderDate, shipByDate, channelId, items);
+    return _updatePending(order, customerName, cleanFields, cleanNote, orderDate, shipByDate, channelId, items);
   }
 
   Future<Result<void>> _updatePacked(
     Order order,
     String customerName,
-    String customerAddress,
+    Map<int, String> fieldValues,
     String? note,
     DateTime orderDate,
     DateTime shipByDate,
@@ -113,7 +117,7 @@ class UpdateOrder {
         return orderRepository.updateOrder(
           id: order.id!,
           customerName: customerName.trim(),
-          customerAddress: customerAddress.trim(),
+          fieldValues: fieldValues,
           note: note,
           orderDate: orderDate,
           shipByDate: shipByDate,
@@ -130,7 +134,7 @@ class UpdateOrder {
   Future<Result<void>> _updatePending(
     Order order,
     String customerName,
-    String customerAddress,
+    Map<int, String> fieldValues,
     String? note,
     DateTime orderDate,
     DateTime shipByDate,
@@ -180,7 +184,7 @@ class UpdateOrder {
     final saved = await orderRepository.updateOrder(
       id: orderId,
       customerName: customerName.trim(),
-      customerAddress: customerAddress.trim(),
+      fieldValues: fieldValues,
       note: note,
       orderDate: orderDate,
       shipByDate: shipByDate,

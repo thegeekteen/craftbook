@@ -19,6 +19,9 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/section_label.dart';
+import '../../../order_fields/domain/entities/order_field.dart';
+import '../../../order_fields/domain/entities/order_field_entry.dart';
+import '../../../order_fields/domain/order_field_codec.dart';
 import '../../domain/entities/order.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
@@ -164,6 +167,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
               _CustomerCard(
                 order: order,
                 channelName: state.channel?.name,
+                fields: state.fieldValues,
                 onEditNote: () => _editNote(order),
                 onNoteChanged: (note) => _saveNote(order, note),
               ),
@@ -527,11 +531,13 @@ class _CustomerCard extends StatelessWidget {
   final Order order;
   final String? channelName;
   final VoidCallback onEditNote;
+  final List<OrderFieldEntry> fields;
   final ValueChanged<String?> onNoteChanged;
 
   const _CustomerCard({
     required this.order,
     this.channelName,
+    this.fields = const [],
     required this.onEditNote,
     required this.onNoteChanged,
   });
@@ -552,26 +558,16 @@ class _CustomerCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(order.customerName, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
-          if (order.customerAddress.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            InkWell(
-              borderRadius: BorderRadius.circular(6),
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: order.customerAddress));
-                context.showSnackBar('Address copied');
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: Text(order.customerAddress, style: muted)),
-                    const SizedBox(width: 8),
-                    Icon(Icons.copy_rounded, size: 15, color: c.muted),
-                  ],
-                ),
-              ),
+          for (final entry in fields) ...[
+            const SizedBox(height: 8),
+            Text(
+              entry.field.name,
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 11.5),
             ),
+            if (entry.field.type == OrderFieldType.text)
+              _CopyableValue(text: entry.value, label: entry.field.name, style: muted)
+            else
+              Text(OrderFieldCodec.display(entry.field, entry.value), style: muted),
           ],
           if (!NoteCodec.isBlank(order.note)) ...[
             const SizedBox(height: 10),
@@ -661,6 +657,39 @@ class _LineDetail extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A value that copies itself when tapped, for pasting into a shipping label
+/// or a message.
+class _CopyableValue extends StatelessWidget {
+  final String text;
+  final String label;
+  final TextStyle style;
+
+  const _CopyableValue({required this.text, required this.label, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: text));
+        context.showSnackBar('$label copied');
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Text(text, style: style)),
+            const SizedBox(width: 8),
+            Icon(Icons.copy_rounded, size: 15, color: c.muted),
+          ],
+        ),
       ),
     );
   }
