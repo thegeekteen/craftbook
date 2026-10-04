@@ -14,11 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/sample_data.dart';
-import '../../../../support/sqlite.dart';
 
 void main() {
-  setUpAll(useHostSqlite);
-
   testWidgets('the order total is the headline and profit is the bottom line',
       (tester) async {
     // Tall enough to show the whole page without scrolling.

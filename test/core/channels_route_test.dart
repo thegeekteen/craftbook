@@ -8,11 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import '../support/sqlite.dart';
-
 void main() {
-  setUpAll(useHostSqlite);
-
   testWidgets(
       '"Add channel" banner in the order wizard opens Channels without a duplicate-key crash',
       (tester) async {

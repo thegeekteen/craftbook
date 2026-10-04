@@ -9,11 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/sample_data.dart';
-import '../../../../support/sqlite.dart';
 
 void main() {
-  setUpAll(useHostSqlite);
-
   testWidgets('rows show product photos and hand the photo to the order',
       (tester) async {
     await tester.runAsync(() async {

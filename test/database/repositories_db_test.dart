@@ -19,8 +19,6 @@ import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/sqlite.dart';
-
 T ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -28,8 +26,6 @@ T ok<T>(Result<T> r) => switch (r) {
 
 /// Repository behaviour against a real (in-memory) SQLite database.
 void main() {
-  setUpAll(useHostSqlite);
-
   late AppDatabase db;
   late MaterialRepositoryImpl materials;
   late OrderRepositoryImpl orders;

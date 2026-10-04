@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/note_bodies.dart';
-import '../../../../support/sqlite.dart';
 
 T _ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
@@ -19,8 +18,6 @@ T _ok<T>(Result<T> r) => switch (r) {
 
 /// The notebook end to end: list, editor, More and Today.
 void main() {
-  setUpAll(useHostSqlite);
-
   Future<void> start(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.75;

@@ -16,13 +16,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/sample_data.dart';
-import '../support/sqlite.dart';
 
 /// Renders the real app, against an in-memory database seeded with a sample
 /// shop, and saves each screen as a PNG under goldens/.
 void main() {
   setUpAll(() async {
-    useHostSqlite();
     await _loadFonts();
   });
 

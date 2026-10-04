@@ -12,8 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../support/sqlite.dart';
-
 T _ok<T>(Result<T> r) => switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
@@ -21,8 +19,6 @@ T _ok<T>(Result<T> r) => switch (r) {
 
 /// Products filters, handmade alert levels and resell on the Buy list.
 void main() {
-  setUpAll(useHostSqlite);
-
   late int tulip;
   late int box;
 

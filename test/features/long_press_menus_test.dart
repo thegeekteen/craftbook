@@ -19,13 +19,10 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/app_harness.dart';
-import '../support/sqlite.dart';
 
 /// The long-press menus on every list, end to end. Orders have their own
 /// file (order_menu_and_cancel_test.dart).
 void main() {
-  setUpAll(useHostSqlite);
-
   /// Yarn goes into the Tulip, which Ana ordered through Walk-in, so Yarn,
   /// Tulip and Walk-in are all protected. Glue, Strap, Etsy and the Address
   /// field are used by nothing. Gift box is resell.

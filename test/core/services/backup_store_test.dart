@@ -6,11 +6,7 @@ import 'package:craftbook/core/services/backup_validator.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../support/sqlite.dart';
-
 void main() {
-  setUpAll(useHostSqlite);
-
   late Directory root;
   late Directory data;
   late Directory scratch;

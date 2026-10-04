@@ -6,12 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
 import '../support/legacy_schema.dart';
-import '../support/sqlite.dart';
 
 /// The v7 step: a photo column on products.
 void main() {
-  setUpAll(useHostSqlite);
-
   late Directory dir;
   late File file;
   setUp(() async {
@@ -32,7 +29,7 @@ void main() {
         "INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)",
       );
     } finally {
-      raw6.dispose();
+      raw6.close();
     }
   }
 

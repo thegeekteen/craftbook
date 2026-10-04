@@ -83,7 +83,7 @@ class ProfitTrendChart extends StatelessWidget {
                   }
                   final current = _isCurrent(buckets[i].start);
                   return SideTitleWidget(
-                    axisSide: meta.axisSide,
+                    meta: meta,
                     space: 4,
                     child: Text(
                       _label(i),
@@ -100,7 +100,7 @@ class ProfitTrendChart extends StatelessWidget {
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => c.surface,
-              tooltipRoundedRadius: 8,
+              tooltipBorderRadius: BorderRadius.circular(8),
               getTooltipItem: (group, _, rod, __) {
                 final b = buckets[group.x];
                 final when = granularity == TrendGranularity.day
