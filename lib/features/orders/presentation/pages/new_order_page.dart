@@ -568,7 +568,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
             onRetry: () => context.read<NewOrderBloc>().add(RequestPreview()),
           )
         else ...[
-          _ProfitPreviewCard(preview: preview!, channelName: _channel?.name),
+          _MoneyPreviewCard(preview: preview!, channelName: _channel?.name),
           const SizedBox(height: 12),
           if (preview.reservations.any((r) => r.isShort)) ...[
             const InlineBanner(
@@ -687,11 +687,11 @@ class _StepHeader extends StatelessWidget {
   }
 }
 
-class _ProfitPreviewCard extends StatelessWidget {
+class _MoneyPreviewCard extends StatelessWidget {
   final OrderPreview preview;
   final String? channelName;
 
-  const _ProfitPreviewCard({required this.preview, this.channelName});
+  const _MoneyPreviewCard({required this.preview, this.channelName});
 
   @override
   Widget build(BuildContext context) {
@@ -702,36 +702,25 @@ class _ProfitPreviewCard extends StatelessWidget {
       fees: preview.channelFees,
       shipping: preview.shippingCost,
     );
-    final positive = parts.profit >= 0;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'PROFIT PREVIEW',
+            'ORDER TOTAL',
             style: AppTextStyles.monoLabel.copyWith(color: c.muted),
           ),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                CurrencyFormatter.formatShort(parts.profit),
-                style: AppTextStyles.displayMedium.copyWith(color: positive ? c.go : c.alert),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${(parts.margin * 100).round()}% margin',
-                style: AppTextStyles.bodySmall.copyWith(color: c.muted),
-              ),
-            ],
+          Text(
+            CurrencyFormatter.format(parts.sales),
+            style: AppTextStyles.displayMedium.copyWith(color: c.ink),
           ),
           const SizedBox(height: 12),
           MoneyBreakdown(
             parts: parts,
             feesLabel: channelName == null ? 'Channel fees' : '$channelName fees',
           ),
+          ProfitRow(parts: parts),
         ],
       ),
     );

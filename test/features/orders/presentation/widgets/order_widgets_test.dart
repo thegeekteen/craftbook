@@ -1,4 +1,5 @@
 import 'package:craftbook/core/theme/app_theme.dart';
+import 'package:craftbook/core/theme/colors.dart';
 import 'package:craftbook/core/utils/date_utils.dart' as app_date;
 import 'package:craftbook/core/widgets/app_tag.dart';
 import 'package:craftbook/core/widgets/inline_banner.dart';
@@ -13,6 +14,7 @@ import 'package:craftbook/features/orders/presentation/widgets/order_card.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_mini_row.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_status_ui.dart';
 import 'package:craftbook/features/orders/presentation/widgets/pack_confirm_sheet.dart';
+import 'package:craftbook/features/settings/domain/entities/order_amount_shown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -155,7 +157,7 @@ void main() {
   });
 
   group('OrderCard', () {
-    testWidgets('renders customer, items, id, channel and live profit', (tester) async {
+    testWidgets('renders customer, items, id, channel and the order total', (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(OrderCard(
         entry: _entry(_order()),
@@ -167,16 +169,34 @@ void main() {
       expect(find.text('Shopee'), findsOneWidget);
       expect(tester.widget<AppTag>(find.byType(AppTag)).type, AppTagType.outline);
       expect(find.text('TO PACK'), findsOneWidget);
+      // What the customer pays, not the profit
+      expect(find.text('₱500'), findsOneWidget);
+      expect(find.text('₱310'), findsNothing);
+      await tester.tap(find.text('Maria Santos'));
+      expect(taps, 1);
+    });
+
+    testWidgets('total is shown in ink, not profit colours', (tester) async {
+      await tester.pumpWidget(_wrap(OrderCard(entry: _entry(_order()))));
+      final ink = AppTheme.lightTheme.extension<CraftColors>()!.ink;
+      expect(tester.widget<Text>(find.text('₱500')).style?.color, ink);
+    });
+
+    testWidgets('profit mode shows live profit', (tester) async {
+      await tester.pumpWidget(_wrap(OrderCard(
+        entry: _entry(_order()),
+        amountShown: OrderAmountShown.profit,
+      )));
       // 500 - 100 - 50 - 40, never the stale stored 999
       expect(find.text('₱310'), findsOneWidget);
       expect(find.text('₱999'), findsNothing);
-      await tester.tap(find.text('Maria Santos'));
-      expect(taps, 1);
+      expect(find.text('₱500'), findsNothing);
     });
 
     testWidgets('negative profit shows the formatted loss', (tester) async {
       await tester.pumpWidget(_wrap(OrderCard(
         entry: _entry(_order(sales: 100, materials: 150, fees: 0, shipping: 0, profit: 50)),
+        amountShown: OrderAmountShown.profit,
       )));
       // Formatted with NumberFormat's ASCII hyphen, unlike CurrencyText's '−'.
       expect(find.text('−₱50'), findsOneWidget);
@@ -191,9 +211,14 @@ void main() {
       expect(find.textContaining('×'), findsNothing);
     });
 
-    testWidgets('cancelled orders hide profit', (tester) async {
+    testWidgets('cancelled orders hide the amount in either mode', (tester) async {
       await tester.pumpWidget(_wrap(OrderCard(
         entry: _entry(_order(status: OrderStatus.cancelled)),
+      )));
+      expect(find.text('₱500'), findsNothing);
+      await tester.pumpWidget(_wrap(OrderCard(
+        entry: _entry(_order(status: OrderStatus.cancelled)),
+        amountShown: OrderAmountShown.profit,
       )));
       expect(find.text('₱310'), findsNothing);
       expect(find.text('CANCELLED'), findsOneWidget);
@@ -261,14 +286,14 @@ void main() {
   });
 
   group('OrderMiniRow', () {
-    testWidgets('shows name, id, piece count, live profit and pill', (tester) async {
+    testWidgets('shows name, id, piece count, order total and pill', (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(OrderMiniRow(
         entry: _entry(_order(status: OrderStatus.packed)),
         onTap: () => taps++,
       )));
       expect(find.text('Maria Santos'), findsOneWidget);
-      expect(find.text('#42 · 3 items · ₱310 profit'), findsOneWidget);
+      expect(find.text('#42 · 3 items · ₱500'), findsOneWidget);
       expect(find.text('PACKED'), findsOneWidget);
       await tester.tap(find.text('Maria Santos'));
       expect(taps, 1);
@@ -281,7 +306,15 @@ void main() {
           lines: const [OrderLine(productName: 'Tulip', quantity: 1)],
         ),
       )));
-      expect(find.text('#42 · 1 item · ₱310 profit'), findsOneWidget);
+      expect(find.text('#42 · 1 item · ₱500'), findsOneWidget);
+    });
+
+    testWidgets('profit mode labels the live profit', (tester) async {
+      await tester.pumpWidget(_wrap(OrderMiniRow(
+        entry: _entry(_order()),
+        amountShown: OrderAmountShown.profit,
+      )));
+      expect(find.text('#42 · 3 items · ₱310 profit'), findsOneWidget);
     });
 
     testWidgets('cancelled hides profit; no lines hides count', (tester) async {

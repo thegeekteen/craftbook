@@ -198,12 +198,13 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                             ),
                           ),
                         ),
+                      _OrderTotalRow(total: order.totalSales),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              _buildProfitCard(state),
+              _buildMoneyCard(state),
             ],
           ),
           if (state.isBusy)
@@ -214,7 +215,9 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
     );
   }
 
-  Widget _buildProfitCard(OrderDetailLoaded state) {
+  /// Where the sale went, with profit as the bottom line. The total to
+  /// charge lives on the items card so it can't be mistaken for profit.
+  Widget _buildMoneyCard(OrderDetailLoaded state) {
     final c = context.colors;
     final order = state.order;
     final parts = MoneyParts(
@@ -230,23 +233,6 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Expanded(
-                child: Text('PROFIT', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
-              ),
-              Text(
-                CurrencyFormatter.format(parts.profit),
-                style: AppTextStyles.displayMedium.copyWith(
-                  fontSize: 26,
-                  color: parts.profit >= 0 ? c.go : c.alert,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           MoneyBreakdown(
             parts: parts,
             materialsLabel: lineCount == 0
@@ -295,6 +281,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                     ),
                   ),
           ),
+          ProfitRow(parts: parts),
         ],
       ),
     );
@@ -690,6 +677,37 @@ class _CopyableValue extends StatelessWidget {
             Icon(Icons.copy_rounded, size: 15, color: c.muted),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The last line of the items card: what the customer pays.
+class _OrderTotalRow extends StatelessWidget {
+  final double total;
+
+  const _OrderTotalRow({required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              'ORDER TOTAL',
+              style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+            ),
+          ),
+          Text(
+            CurrencyFormatter.format(total),
+            style: AppTextStyles.displayMedium.copyWith(fontSize: 26, color: c.ink),
+          ),
+        ],
       ),
     );
   }

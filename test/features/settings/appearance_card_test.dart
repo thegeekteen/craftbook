@@ -3,7 +3,9 @@ import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/theme/app_theme.dart';
 import 'package:craftbook/core/theme/palettes.dart';
+import 'package:craftbook/features/settings/domain/entities/order_amount_shown.dart';
 import 'package:craftbook/features/settings/domain/repositories/settings_repository.dart';
+import 'package:craftbook/features/settings/presentation/bloc/order_amount_cubit.dart';
 import 'package:craftbook/features/settings/presentation/bloc/theme_cubit.dart';
 import 'package:craftbook/features/settings/presentation/widgets/appearance_card.dart';
 import 'package:flutter/material.dart';
@@ -14,19 +16,25 @@ class _MockSettings extends Mock implements SettingsRepository {}
 
 void main() {
   late ThemeCubit cubit;
+  late OrderAmountCubit amountCubit;
+  late _MockSettings repo;
 
   setUpAll(() {
     registerFallbackValue(ThemeMode.system);
     registerFallbackValue(AppPalette.forest);
+    registerFallbackValue(OrderAmountShown.total);
   });
 
   setUp(() async {
-    final repo = _MockSettings();
+    repo = _MockSettings();
     when(() => repo.setThemeMode(any())).thenAnswer((_) async => const Success(null));
     when(() => repo.setPalette(any())).thenAnswer((_) async => const Success(null));
+    when(() => repo.setOrderAmountShown(any())).thenAnswer((_) async => const Success(null));
     cubit = ThemeCubit(repo);
+    amountCubit = OrderAmountCubit(repo);
     await getIt.reset();
     getIt.registerSingleton<ThemeCubit>(cubit);
+    getIt.registerSingleton<OrderAmountCubit>(amountCubit);
   });
   tearDown(() => getIt.reset());
 
@@ -79,5 +87,28 @@ void main() {
     await tester.pump();
     expect(cubit.state.mode, ThemeMode.system);
     expect(cubit.state.palette, AppPalette.forest);
+  });
+
+  testWidgets('order cards show the total by default', (tester) async {
+    await pump(tester);
+    expect(find.text('Order cards show'), findsOneWidget);
+    expect(find.text('Total'), findsOneWidget);
+    expect(find.text('Profit'), findsOneWidget);
+    expect(find.text('What the customer pays'), findsOneWidget);
+  });
+
+  testWidgets('tapping Profit and Total switches and persists', (tester) async {
+    await pump(tester);
+    await tester.ensureVisible(find.text('Profit'));
+    await tester.tap(find.text('Profit'));
+    await tester.pump();
+    expect(amountCubit.state, OrderAmountShown.profit);
+    expect(find.text('What you keep after costs'), findsOneWidget);
+    verify(() => repo.setOrderAmountShown(OrderAmountShown.profit)).called(1);
+
+    await tester.tap(find.text('Total'));
+    await tester.pump();
+    expect(amountCubit.state, OrderAmountShown.total);
+    expect(cubit.state.mode, ThemeMode.system);
   });
 }

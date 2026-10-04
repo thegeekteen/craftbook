@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -18,6 +19,8 @@ import '../../../orders/domain/repositories/order_repository.dart';
 import '../../../orders/domain/usecases/get_order_list_entries.dart';
 import '../../../orders/presentation/widgets/order_mini_row.dart';
 import '../../../orders/presentation/widgets/order_status_ui.dart';
+import '../../../settings/domain/entities/order_amount_shown.dart';
+import '../../../settings/presentation/bloc/order_amount_cubit.dart';
 
 enum CalendarMode { week, month }
 
@@ -145,6 +148,16 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
+  Widget _miniRow(OrderListEntry e) =>
+      BlocBuilder<OrderAmountCubit, OrderAmountShown>(
+        bloc: getIt(),
+        builder: (context, shown) => OrderMiniRow(
+          entry: e,
+          amountShown: shown,
+          onTap: () => _openOrder(e.order),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -246,10 +259,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             for (final e in orders)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 6),
-                                child: OrderMiniRow(
-                                  entry: e,
-                                  onTap: () => _openOrder(e.order),
-                                ),
+                                child: _miniRow(e),
                               ),
                           ],
                         ),
@@ -319,7 +329,7 @@ class _CalendarPageState extends State<CalendarPage> {
         for (final e in selected)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: OrderMiniRow(entry: e, onTap: () => _openOrder(e.order)),
+            child: _miniRow(e),
           ),
     ];
   }

@@ -5,11 +5,13 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/palettes.dart';
 import '../../../../database/app_database.dart';
+import '../../domain/entities/order_amount_shown.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   static const themeModeKey = 'theme_mode';
   static const paletteKey = 'palette';
+  static const orderAmountKey = 'order_amount';
 
   final AppDatabase db;
 
@@ -32,7 +34,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<Result<void>> setPalette(AppPalette palette) =>
       _write(paletteKey, palette.name);
 
-  /// Appearance must never stop the app from starting, so a failed read is
+  @override
+  Future<OrderAmountShown> getOrderAmountShown() async =>
+      OrderAmountShown.values.asNameMap()[await _read(orderAmountKey)] ??
+      OrderAmountShown.total;
+
+  @override
+  Future<Result<void>> setOrderAmountShown(OrderAmountShown shown) =>
+      _write(orderAmountKey, shown.name);
+
+  /// Display preferences must never stop the app from starting, so a failed read is
   /// the same as nothing stored.
   Future<String?> _read(String key) async {
     try {

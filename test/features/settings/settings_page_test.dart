@@ -22,8 +22,8 @@ void main() {
   tearDown(() => dir.delete(recursive: true));
 
   Future<void> boot(WidgetTester tester) async {
-    // Phone-sized, so "Your data" is built without scrolling.
-    tester.view.physicalSize = const Size(1080, 2340);
+    // A tall phone, so "Your data" is built without scrolling.
+    tester.view.physicalSize = const Size(1080, 3200);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
     await tester.runAsync(() async {

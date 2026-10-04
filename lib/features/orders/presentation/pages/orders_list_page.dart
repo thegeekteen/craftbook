@@ -13,6 +13,8 @@ import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
+import '../../../settings/domain/entities/order_amount_shown.dart';
+import '../../../settings/presentation/bloc/order_amount_cubit.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_list_entry.dart';
 import '../bloc/orders_list_bloc.dart';
@@ -133,10 +135,15 @@ class _OrdersListViewState extends State<_OrdersListView> {
                         for (final e in group.entries)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: OrderCard(
-                              entry: e,
-                              onTap: () =>
-                                  _open(RouteNames.orderPath(e.order.id!)),
+                            child: BlocBuilder<OrderAmountCubit,
+                                OrderAmountShown>(
+                              bloc: getIt(),
+                              builder: (context, shown) => OrderCard(
+                                entry: e,
+                                amountShown: shown,
+                                onTap: () =>
+                                    _open(RouteNames.orderPath(e.order.id!)),
+                              ),
                             ),
                           ),
                         const SizedBox(height: 4),

@@ -2,6 +2,7 @@ import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:craftbook/features/settings/domain/entities/order_amount_shown.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,5 +70,23 @@ void main() {
     expect(await db.select(db.settings).get(), hasLength(2));
     expect(await repo.getThemeMode(), ThemeMode.dark);
     expect(await repo.getPalette(), AppPalette.ocean);
+  });
+
+  test('order amount defaults to the total', () async {
+    expect(await repo.getOrderAmountShown(), OrderAmountShown.total);
+  });
+
+  for (final shown in OrderAmountShown.values) {
+    test('round-trips order amount ${shown.name}', () async {
+      expect(await repo.setOrderAmountShown(shown), isA<Success<void>>());
+      expect(await repo.getOrderAmountShown(), shown);
+    });
+  }
+
+  test('an unknown stored order amount falls back to the total', () async {
+    await db.into(db.settings).insert(
+          SettingsCompanion.insert(key: SettingsRepositoryImpl.orderAmountKey, value: 'margin'),
+        );
+    expect(await repo.getOrderAmountShown(), OrderAmountShown.total);
   });
 }
