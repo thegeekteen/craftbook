@@ -10,13 +10,14 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/usecases/cancel_order.dart';
 import '../../domain/usecases/delete_order.dart';
+import '../../domain/usecases/restore_order.dart';
 import '../../domain/usecases/ship_order.dart';
 
-enum _OrderAction { ship, edit, cancel, delete }
+enum _OrderAction { ship, edit, cancel, restore, delete }
 
 /// What an order can do from wherever it's listed. Mirrors the detail
-/// page's menu: shipped orders only take a note, cancelled ones can only
-/// be deleted.
+/// page's menu: shipped orders only take a note, cancelled ones can be
+/// restored or deleted.
 abstract final class OrderActions {
   /// The long-press menu. Returns true when something changed and the
   /// caller should reload.
@@ -42,6 +43,11 @@ abstract final class OrderActions {
               value: _OrderAction.cancel,
               icon: Icons.block_rounded,
               label: 'Cancel order'),
+        if (cancelled)
+          const SheetAction(
+              value: _OrderAction.restore,
+              icon: Icons.restore_rounded,
+              label: 'Restore order'),
         if (!shipped)
           const SheetAction(
               value: _OrderAction.delete,
@@ -63,6 +69,11 @@ abstract final class OrderActions {
         }
         return _run(context, getIt<CancelOrder>()(id),
             'Order cancelled. Stock returned.');
+      case _OrderAction.restore:
+        if (!await confirmRestore(context, order) || !context.mounted) {
+          return false;
+        }
+        return _run(context, getIt<RestoreOrder>()(id), 'Order restored');
       case _OrderAction.delete:
         if (!await confirmDelete(context, order) || !context.mounted) {
           return false;
@@ -85,6 +96,15 @@ abstract final class OrderActions {
       confirmText: 'Cancel order',
       cancelText: 'Keep order',
       isDestructive: true,
+    );
+  }
+
+  static Future<bool> confirmRestore(BuildContext context, Order order) {
+    return ConfirmDialog.show(
+      context,
+      title: 'Restore order #${order.id}?',
+      message: 'It goes back to To pack and reserves its materials again.',
+      confirmText: 'Restore',
     );
   }
 

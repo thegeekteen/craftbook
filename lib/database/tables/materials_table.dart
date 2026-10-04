@@ -12,6 +12,10 @@ class Materials extends Table {
   IntColumn get alertLevel => integer()();
   TextColumn get supplier => text().nullable()();
   DateTimeColumn get lastReceivedAt => dateTime().nullable()();
+
+  /// Archived materials are kept for past orders but left out of lists,
+  /// pickers, alerts and the buy list.
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

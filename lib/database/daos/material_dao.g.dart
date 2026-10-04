@@ -6,6 +6,7 @@ part of 'material_dao.dart';
 mixin _$MaterialDaoMixin on DatabaseAccessor<AppDatabase> {
   $MaterialsTable get materials => attachedDatabase.materials;
   $StockMovementsTable get stockMovements => attachedDatabase.stockMovements;
+  $OrderMaterialsTable get orderMaterials => attachedDatabase.orderMaterials;
   MaterialDaoManager get managers => MaterialDaoManager(this);
 }
 
@@ -17,4 +18,7 @@ class MaterialDaoManager {
   $$StockMovementsTableTableManager get stockMovements =>
       $$StockMovementsTableTableManager(
           _db.attachedDatabase, _db.stockMovements);
+  $$OrderMaterialsTableTableManager get orderMaterials =>
+      $$OrderMaterialsTableTableManager(
+          _db.attachedDatabase, _db.orderMaterials);
 }

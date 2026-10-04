@@ -116,6 +116,31 @@ void main() {
     expect(passed, hasLength(4));
   });
 
+  test('leaves cancelled orders out of placed today', () async {
+    final placed =
+        order(1, shipBy: today.add(const Duration(days: 3)), placed: today);
+    final cancelled = order(2,
+        shipBy: today.add(const Duration(days: 3)),
+        placed: today,
+        status: OrderStatus.cancelled);
+    when(() => orders.getOpenOrdersDueBefore(any()))
+        .thenAnswer((_) async => const Success([]));
+    when(() => orders.getOrdersForDate(today))
+        .thenAnswer((_) async => Success([placed, cancelled]));
+    when(() => earnings.getEarningsSummary(any(), any()))
+        .thenAnswer((_) async => const Success(EarningsSummary(
+              totalSales: 0,
+              totalMaterialCost: 0,
+              totalChannelFees: 0,
+              totalShippingCost: 0,
+              totalProfit: 0,
+              orderCount: 0,
+            )));
+
+    final d = ((await useCase(now)) as Success<TodayDashboard>).value;
+    expect(d.placedToday.map((e) => e.order.id), [1]);
+  });
+
   test('fails when due orders cannot be loaded', () async {
     when(() => orders.getOpenOrdersDueBefore(any()))
         .thenAnswer((_) async => const Error(DatabaseFailure('x')));

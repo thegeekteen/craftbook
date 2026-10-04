@@ -114,6 +114,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         alertLevel: alertLevel,
         supplier: supplier,
         lastReceivedAt: current.lastReceivedAt,
+        isArchived: current.isArchived,
         createdAt: current.createdAt,
         updatedAt: DateTime.now(),
       ));
@@ -165,6 +166,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         alertLevel: current.alertLevel,
         supplier: supplier ?? current.supplier,
         lastReceivedAt: now,
+        isArchived: current.isArchived,
         createdAt: current.createdAt,
         updatedAt: now,
       ));
@@ -178,6 +180,20 @@ class MaterialRepositoryImpl implements MaterialRepository {
         reference: Value('Received $packsReceived packs'),
       ));
 
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void>> setMaterialArchived(
+      int materialId, bool archived) async {
+    try {
+      final updated = await dao.setMaterialArchived(materialId, archived);
+      if (updated == 0) {
+        return const Error(NotFoundFailure('Material not found'));
+      }
       return const Success(null);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -331,7 +347,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   Future<Result<List<BuyListItem>>> getBuyList() async {
     try {
       final lowStockMaterials = await dao.getLowStockMaterials();
-      final allProducts = await productDao.getActiveProducts();
+      final allProducts = await productDao.getUnarchivedProducts();
       final buyList = <BuyListItem>[];
 
       for (final material in lowStockMaterials) {
@@ -409,9 +425,21 @@ class MaterialRepositoryImpl implements MaterialRepository {
   }
 
   @override
+  Future<Result<bool>> isUsedInOrders(int materialId) async {
+    try {
+      return Success(await dao.hasOrderMaterialsForMaterial(materialId));
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> deleteMaterial(int id) async {
     try {
-      await dao.deleteMaterial(id);
+      await dao.transaction(() async {
+        await dao.deleteStockMovementsForMaterial(id);
+        await dao.deleteMaterial(id);
+      });
       return const Success(null);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -447,6 +475,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         alertLevel: row.alertLevel,
         supplier: row.supplier,
         lastReceivedAt: row.lastReceivedAt,
+        isArchived: row.isArchived,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       );

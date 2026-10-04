@@ -19,7 +19,7 @@ final _now = DateTime(2026, 1, 1);
 
 Product _product({
   double price = 400,
-  bool active = true,
+  bool archived = false,
   bool standalone = false,
   int onHand = 0,
   int alertLevel = 0,
@@ -28,7 +28,7 @@ Product _product({
       id: 1,
       name: 'Tulip bouquet',
       sellPrice: price,
-      isActive: active,
+      isArchived: archived,
       isStandalone: standalone,
       quantityOnHand: onHand,
       alertLevel: alertLevel,
@@ -166,10 +166,11 @@ void main() {
       expect(find.text('LOW'), findsOneWidget);
     });
 
-    testWidgets('inactive product shows Hidden and is dimmed', (tester) async {
+    testWidgets('archived product shows Archived and is dimmed',
+        (tester) async {
       await tester
-          .pumpWidget(_wrap(ProductCard(product: _product(active: false))));
-      expect(find.text('HIDDEN'), findsOneWidget);
+          .pumpWidget(_wrap(ProductCard(product: _product(archived: true))));
+      expect(find.text('ARCHIVED'), findsOneWidget);
       final opacity = tester.widget<Opacity>(find
           .ancestor(
             of: find.text('Tulip bouquet'),

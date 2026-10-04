@@ -15,6 +15,7 @@ import 'package:craftbook/features/orders/domain/usecases/adjust_materials_used.
 import 'package:craftbook/features/orders/domain/usecases/cancel_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/restore_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/update_order_note.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_bloc.dart';
@@ -43,6 +44,8 @@ class MockShipOrder extends Mock implements ShipOrder {}
 
 class MockCancelOrder extends Mock implements CancelOrder {}
 
+class MockRestoreOrder extends Mock implements RestoreOrder {}
+
 class MockDeleteOrder extends Mock implements DeleteOrder {}
 
 class MockUpdateOrderNote extends Mock implements UpdateOrderNote {}
@@ -56,6 +59,7 @@ void main() {
   late MockPackOrder packOrder;
   late MockShipOrder shipOrder;
   late MockCancelOrder cancelOrder;
+  late MockRestoreOrder restoreOrder;
   late MockDeleteOrder deleteOrder;
   late MockUpdateOrderNote updateOrderNote;
 
@@ -156,7 +160,6 @@ void main() {
     id: 20,
     name: 'Gift box',
     sellPrice: 35,
-    isActive: true,
     isStandalone: true,
     quantityOnHand: 6,
     alertLevel: 3,
@@ -193,6 +196,7 @@ void main() {
     packOrder = MockPackOrder();
     shipOrder = MockShipOrder();
     cancelOrder = MockCancelOrder();
+    restoreOrder = MockRestoreOrder();
     deleteOrder = MockDeleteOrder();
     updateOrderNote = MockUpdateOrderNote();
   });
@@ -206,6 +210,7 @@ void main() {
         packOrder: packOrder,
         shipOrder: shipOrder,
         cancelOrder: cancelOrder,
+        restoreOrder: restoreOrder,
         deleteOrder: deleteOrder,
         updateOrderNote: updateOrderNote,
       );
@@ -516,6 +521,46 @@ void main() {
                 'Shipped orders cannot be cancelled')
             .having((m) => m.isError, 'isError', true),
         loaded(status: OrderStatus.shipped),
+      ],
+    );
+  });
+
+  group('RestoreOrderDetail', () {
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'success: busy, message, idle, then reloaded as to pack',
+      setUp: () {
+        stubLoad();
+        when(() => restoreOrder(orderId))
+            .thenAnswer((_) async => const Success(null));
+      },
+      build: build,
+      seed: () => loaded(status: OrderStatus.cancelled),
+      act: (bloc) => bloc.add(const RestoreOrderDetail(orderId)),
+      expect: () => [
+        loaded(status: OrderStatus.cancelled, isBusy: true),
+        isA<OrderDetailMessage>()
+            .having((m) => m.message, 'message', 'Order restored')
+            .having((m) => m.isError, 'isError', false),
+        loaded(status: OrderStatus.cancelled),
+        loaded(),
+      ],
+    );
+
+    blocTest<OrderDetailBloc, OrderDetailState>(
+      'failure: busy, error message, idle',
+      setUp: () => when(() => restoreOrder(orderId)).thenAnswer((_) async =>
+          const Error(
+              ValidationFailure('Only cancelled orders can be restored'))),
+      build: build,
+      seed: () => loaded(),
+      act: (bloc) => bloc.add(const RestoreOrderDetail(orderId)),
+      expect: () => [
+        loaded(isBusy: true),
+        isA<OrderDetailMessage>()
+            .having((m) => m.message, 'message',
+                'Only cancelled orders can be restored')
+            .having((m) => m.isError, 'isError', true),
+        loaded(),
       ],
     );
   });

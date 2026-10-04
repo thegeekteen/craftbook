@@ -23,7 +23,7 @@ The app is built around 6 main user flows:
 
 ### Flow 1: Day View (Today)
 - **Today screen**: Shows orders due today ("Ships today") and orders placed today ("New today")
-- **Status filter chips**: Filter by Pending, Packed, Shipped, Cancelled (persistent while mounted)
+- **Status filter chips**: Filter by To pack, Packed, Shipped (persistent while mounted). Cancelled orders don't show on day views
 - **Calendar views**: Week and month views with period navigation, also with status filters
 - **Alert banners**: Visual warnings for materials below alert level
 - **Order cards**: Show customer name, status, ship-by date, channel, and recalculated profit
@@ -85,10 +85,11 @@ The app is built around 6 main user flows:
 | Material adjustment | ✅ | Actual vs planned, waste tracking, profit recalculation |
 | Pack & Ship | ✅ | Stock deduction, status updates |
 | Delete orders | ✅ | Blocked when shipped, stock reversal for pending/packed |
-| Cancel orders | ✅ | Pending or packed orders, from the detail menu or a long press. Reservations are released, packed stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. Cancelled orders can then only be deleted |
-| Long-press menus | ✅ | Long press any product, material, order (list, Today, calendar), channel, social shortcut, order field or note for its actions: edit, delete, plus shortcuts such as Hide, Receive stock, Mark shipped, Cancel, Turn off, Restore |
+| Cancel orders | ✅ | Pending or packed orders, from the detail menu or a long press. Reservations are released, packed stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. The Orders tab's All leaves cancelled orders out; they show under the Cancelled chip. A cancelled order can be restored (back to To pack, reserving its materials again) or deleted |
+| Long-press menus | ✅ | Long press any product, material, order (list, Today, calendar), channel, social shortcut, order field or note for its actions: edit, delete, plus shortcuts such as Archive, Receive stock, Mark shipped, Cancel, Restore order, Turn off, Restore |
 | Materials list | ✅ | Tabbed, search, pip visualization |
 | Material detail | ✅ | Stock overview, movements, receive, adjust, delete |
+| Archive products & materials | ✅ | Long press → Archive. Archived items leave the lists (an Archived chip shows them), pickers, low-stock alerts and the buy list, but stay on past orders and earnings. Replaced the product's "Show in new orders" switch; hidden products were migrated to archived in schema v8. Delete still works when nothing blocks it: a material is blocked only by a BOM or an order, not by its stock history |
 | Receive stock | ✅ | Packs + price, weighted avg cost preview, read-only pack size |
 | Products list | ✅ | Search, margin display |
 | Product/BOM editor | ✅ | Material stepper inputs, BOM management |

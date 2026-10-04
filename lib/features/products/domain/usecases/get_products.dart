@@ -8,9 +8,11 @@ class GetProducts {
 
   GetProducts(this.repository);
 
-  Future<Result<List<Product>>> call({bool activeOnly = false}) async {
-    if (activeOnly) {
-      return repository.getActiveProducts();
+  /// Pickers pass [includeArchived] false; lists load everything and let
+  /// the user choose whether to see archived products.
+  Future<Result<List<Product>>> call({bool includeArchived = true}) async {
+    if (!includeArchived) {
+      return repository.getUnarchivedProducts();
     }
     return repository.getAllProducts();
   }

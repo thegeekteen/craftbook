@@ -484,6 +484,24 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<Result<void>> restoreOrder(int orderId) async {
+    try {
+      final updated = await (dao.update(dao.orders)
+            ..where((t) => t.id.equals(orderId)))
+          .write(db.OrdersCompanion(
+        status: Value(_statusToString(OrderStatus.pending)),
+        packedAt: const Value(null),
+        shippedAt: const Value(null),
+        updatedAt: Value(DateTime.now()),
+      ));
+      if (updated == 0) return const Error(NotFoundFailure('Order not found'));
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> deleteOrder(int id) async {
     try {
       await dao.transaction(() async {

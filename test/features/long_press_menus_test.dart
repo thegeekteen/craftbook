@@ -1,5 +1,6 @@
 import 'package:craftbook/core/constants/route_names.dart';
 import 'package:craftbook/core/di/injection.dart';
+import 'package:craftbook/core/widgets/choice_chip_row.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/notes/domain/entities/note.dart';
 import 'package:craftbook/features/notes/domain/repositories/note_repository.dart';
@@ -126,7 +127,7 @@ void main() {
       await openApp(tester, RouteNames.products);
       await longPress(tester, 'Tulip');
       expect(find.text('Edit product'), findsOneWidget);
-      expect(find.text('Hide from new orders'), findsOneWidget);
+      expect(find.text('Archive'), findsOneWidget);
       expect(find.text('Receive stock'), findsNothing);
       await tester.tapAt(const Offset(10, 10));
       await settle(tester);
@@ -164,22 +165,28 @@ void main() {
       await closeApp(tester);
     });
 
-    testWidgets('hides and shows again', (tester) async {
+    testWidgets('archives, shows under Archived, and unarchives',
+        (tester) async {
       await startApp(tester, seed: seed);
       await openApp(tester, RouteNames.products);
       await longPress(tester, 'Tulip');
-      await tester.tap(find.text('Hide from new orders'));
+      await tester.tap(find.text('Archive'));
       await settle(tester);
 
-      expect(find.text('Tulip hidden from new orders'), findsOneWidget);
+      expect(find.text('Tulip archived'), findsOneWidget);
       var tulip = (await products(tester)).firstWhere((p) => p.name == 'Tulip');
-      expect(tulip.isActive, isFalse);
+      expect(tulip.isArchived, isTrue);
+      expect(find.text('Tulip'), findsNothing);
 
+      final chip = find.widgetWithText(AppChip, 'Archived');
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
+      await settle(tester);
       await longPress(tester, 'Tulip');
-      await tester.tap(find.text('Show again'));
+      await tester.tap(find.text('Unarchive'));
       await settle(tester);
       tulip = (await products(tester)).firstWhere((p) => p.name == 'Tulip');
-      expect(tulip.isActive, isTrue);
+      expect(tulip.isArchived, isFalse);
       await closeApp(tester);
     });
   });
@@ -199,6 +206,49 @@ void main() {
       await closeApp(tester);
     });
 
+    testWidgets('stock history alone does not block a delete', (tester) async {
+      await startApp(tester, seed: seed);
+      final glue =
+          (await materials(tester)).firstWhere((m) => m.name == 'Glue');
+      await db<Result<void>>(
+          tester,
+          () => getIt<MaterialRepository>().receiveStock(
+              materialId: glue.id!, packsReceived: 2, pricePerPack: 30));
+      await openApp(tester, RouteNames.materials);
+      await longPress(tester, 'Glue');
+      await tester.tap(find.text('Delete material'));
+      await settle(tester);
+      expect(find.textContaining('You still have 2 on hand'), findsOneWidget);
+      await confirm(tester, 'Delete');
+
+      expect(find.text('Glue deleted'), findsOneWidget);
+      expect((await materials(tester)).map((m) => m.name), ['Yarn']);
+      await closeApp(tester);
+    });
+
+    testWidgets('archives, shows under Archived, and unarchives',
+        (tester) async {
+      await startApp(tester, seed: seed);
+      await openApp(tester, RouteNames.materials);
+      await longPress(tester, 'Yarn');
+      await tester.tap(find.text('Archive'));
+      await settle(tester);
+
+      expect(find.text('Yarn archived'), findsOneWidget);
+      expect(_matNamed(await materials(tester), 'Yarn').isArchived, isTrue);
+      expect(find.text('Yarn'), findsNothing);
+
+      final chip = find.widgetWithText(AppChip, 'Archived');
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
+      await settle(tester);
+      await longPress(tester, 'Yarn');
+      await tester.tap(find.text('Unarchive'));
+      await settle(tester);
+      expect(_matNamed(await materials(tester), 'Yarn').isArchived, isFalse);
+      await closeApp(tester);
+    });
+
     testWidgets('a material in a product says why and stays', (tester) async {
       await startApp(tester, seed: seed);
       await openApp(tester, RouteNames.materials);
@@ -209,6 +259,50 @@ void main() {
 
       expect(find.textContaining('Cannot delete material'), findsOneWidget);
       expect(find.text('Yarn'), findsOneWidget);
+      await closeApp(tester);
+    });
+  });
+
+  group('Detail page menus', () {
+    Future<void> archiveFromMenu(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.more_vert_rounded));
+      await settle(tester);
+      await tester.tap(find.text('Archive'));
+      await settle(tester);
+    }
+
+    testWidgets('a product archives from its page and shows the tag',
+        (tester) async {
+      await startApp(tester, seed: seed);
+      final strap =
+          (await products(tester)).firstWhere((p) => p.name == 'Strap');
+      await openApp(tester, RouteNames.productPath(strap.id!));
+      await archiveFromMenu(tester);
+
+      expect(find.text('Strap archived'), findsOneWidget);
+      expect(find.text('ARCHIVED'), findsOneWidget);
+      expect(
+          (await products(tester))
+              .firstWhere((p) => p.name == 'Strap')
+              .isArchived,
+          isTrue);
+
+      await tester.tap(find.byIcon(Icons.more_vert_rounded));
+      await settle(tester);
+      expect(find.text('Unarchive'), findsOneWidget);
+      await closeApp(tester);
+    });
+
+    testWidgets('a material archives from its page and shows the tag',
+        (tester) async {
+      await startApp(tester, seed: seed);
+      final glue = _matNamed(await materials(tester), 'Glue');
+      await openApp(tester, RouteNames.materialPath(glue.id!));
+      await archiveFromMenu(tester);
+
+      expect(find.text('Glue archived'), findsOneWidget);
+      expect(find.text('ARCHIVED'), findsOneWidget);
+      expect(_matNamed(await materials(tester), 'Glue').isArchived, isTrue);
       await closeApp(tester);
     });
   });
@@ -310,3 +404,6 @@ void main() {
 
 Channel _named(List<Channel> all, String name) =>
     all.firstWhere((c) => c.name == name);
+
+Material _matNamed(List<Material> all, String name) =>
+    all.firstWhere((m) => m.name == name);

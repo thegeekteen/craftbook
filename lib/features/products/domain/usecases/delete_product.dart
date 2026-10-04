@@ -54,7 +54,7 @@ class DeleteProduct {
           case Success(:final value):
             if (value) {
               return const Error(ValidationFailure(
-                'Cannot delete product: referenced by existing orders',
+                'Cannot delete product: referenced by existing orders. Archive it instead.',
               ));
             }
             return productRepository.deleteProduct(productId);

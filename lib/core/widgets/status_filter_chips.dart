@@ -6,27 +6,29 @@ import 'choice_chip_row.dart';
 
 /// Status filter for Today and the calendars.
 ///
-/// "All" selects every status; tapping a status shows only that status
-/// (tap it again to go back to All). Counts are optional.
+/// "All" selects every status in [statuses]; tapping a status shows only
+/// that status (tap it again to go back to All). Counts are optional.
 class StatusFilterChips extends StatelessWidget {
   final Set<OrderStatus> selected;
   final ValueChanged<Set<OrderStatus>> onChanged;
   final Map<OrderStatus, int>? counts;
 
-  /// Statuses offered as chips. Cancelled is hidden by default on day views.
+  /// Statuses offered as chips. Cancelled orders are left off day views:
+  /// they no longer need doing, and the Orders tab still lists them.
   final List<OrderStatus> statuses;
+
+  static const dayViewStatuses = [
+    OrderStatus.pending,
+    OrderStatus.packed,
+    OrderStatus.shipped,
+  ];
 
   const StatusFilterChips({
     super.key,
     required this.selected,
     required this.onChanged,
     this.counts,
-    this.statuses = const [
-      OrderStatus.pending,
-      OrderStatus.packed,
-      OrderStatus.shipped,
-      OrderStatus.cancelled,
-    ],
+    this.statuses = dayViewStatuses,
   });
 
   bool get _isAll => statuses.every(selected.contains);
@@ -44,7 +46,7 @@ class StatusFilterChips extends StatelessWidget {
       onTap: (s) {
         if (s == null ||
             (!_isAll && selected.length == 1 && selected.contains(s))) {
-          onChanged(Set<OrderStatus>.from(OrderStatus.values));
+          onChanged(Set<OrderStatus>.from(statuses));
         } else {
           onChanged({s});
         }

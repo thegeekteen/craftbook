@@ -2009,6 +2009,16 @@ class $MaterialsTable extends Materials
   late final GeneratedColumn<DateTime> lastReceivedAt =
       GeneratedColumn<DateTime>('last_received_at', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _isArchivedMeta =
+      const VerificationMeta('isArchived');
+  @override
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+      'is_archived', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -2037,6 +2047,7 @@ class $MaterialsTable extends Materials
         alertLevel,
         supplier,
         lastReceivedAt,
+        isArchived,
         createdAt,
         updatedAt
       ];
@@ -2107,6 +2118,12 @@ class $MaterialsTable extends Materials
           lastReceivedAt.isAcceptableOrUnknown(
               data['last_received_at']!, _lastReceivedAtMeta));
     }
+    if (data.containsKey('is_archived')) {
+      context.handle(
+          _isArchivedMeta,
+          isArchived.isAcceptableOrUnknown(
+              data['is_archived']!, _isArchivedMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -2144,6 +2161,8 @@ class $MaterialsTable extends Materials
           .read(DriftSqlType.string, data['${effectivePrefix}supplier']),
       lastReceivedAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}last_received_at']),
+      isArchived: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -2168,6 +2187,10 @@ class Material extends DataClass implements Insertable<Material> {
   final int alertLevel;
   final String? supplier;
   final DateTime? lastReceivedAt;
+
+  /// Archived materials are kept for past orders but left out of lists,
+  /// pickers, alerts and the buy list.
+  final bool isArchived;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Material(
@@ -2181,6 +2204,7 @@ class Material extends DataClass implements Insertable<Material> {
       required this.alertLevel,
       this.supplier,
       this.lastReceivedAt,
+      required this.isArchived,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -2200,6 +2224,7 @@ class Material extends DataClass implements Insertable<Material> {
     if (!nullToAbsent || lastReceivedAt != null) {
       map['last_received_at'] = Variable<DateTime>(lastReceivedAt);
     }
+    map['is_archived'] = Variable<bool>(isArchived);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2221,6 +2246,7 @@ class Material extends DataClass implements Insertable<Material> {
       lastReceivedAt: lastReceivedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastReceivedAt),
+      isArchived: Value(isArchived),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2240,6 +2266,7 @@ class Material extends DataClass implements Insertable<Material> {
       alertLevel: serializer.fromJson<int>(json['alertLevel']),
       supplier: serializer.fromJson<String?>(json['supplier']),
       lastReceivedAt: serializer.fromJson<DateTime?>(json['lastReceivedAt']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2258,6 +2285,7 @@ class Material extends DataClass implements Insertable<Material> {
       'alertLevel': serializer.toJson<int>(alertLevel),
       'supplier': serializer.toJson<String?>(supplier),
       'lastReceivedAt': serializer.toJson<DateTime?>(lastReceivedAt),
+      'isArchived': serializer.toJson<bool>(isArchived),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2274,6 +2302,7 @@ class Material extends DataClass implements Insertable<Material> {
           int? alertLevel,
           Value<String?> supplier = const Value.absent(),
           Value<DateTime?> lastReceivedAt = const Value.absent(),
+          bool? isArchived,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Material(
@@ -2288,6 +2317,7 @@ class Material extends DataClass implements Insertable<Material> {
         supplier: supplier.present ? supplier.value : this.supplier,
         lastReceivedAt:
             lastReceivedAt.present ? lastReceivedAt.value : this.lastReceivedAt,
+        isArchived: isArchived ?? this.isArchived,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -2310,6 +2340,8 @@ class Material extends DataClass implements Insertable<Material> {
       lastReceivedAt: data.lastReceivedAt.present
           ? data.lastReceivedAt.value
           : this.lastReceivedAt,
+      isArchived:
+          data.isArchived.present ? data.isArchived.value : this.isArchived,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2328,6 +2360,7 @@ class Material extends DataClass implements Insertable<Material> {
           ..write('alertLevel: $alertLevel, ')
           ..write('supplier: $supplier, ')
           ..write('lastReceivedAt: $lastReceivedAt, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2346,6 +2379,7 @@ class Material extends DataClass implements Insertable<Material> {
       alertLevel,
       supplier,
       lastReceivedAt,
+      isArchived,
       createdAt,
       updatedAt);
   @override
@@ -2362,6 +2396,7 @@ class Material extends DataClass implements Insertable<Material> {
           other.alertLevel == this.alertLevel &&
           other.supplier == this.supplier &&
           other.lastReceivedAt == this.lastReceivedAt &&
+          other.isArchived == this.isArchived &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2377,6 +2412,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   final Value<int> alertLevel;
   final Value<String?> supplier;
   final Value<DateTime?> lastReceivedAt;
+  final Value<bool> isArchived;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const MaterialsCompanion({
@@ -2390,6 +2426,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     this.alertLevel = const Value.absent(),
     this.supplier = const Value.absent(),
     this.lastReceivedAt = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -2404,6 +2441,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     required int alertLevel,
     this.supplier = const Value.absent(),
     this.lastReceivedAt = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   })  : name = Value(name),
@@ -2422,6 +2460,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     Expression<int>? alertLevel,
     Expression<String>? supplier,
     Expression<DateTime>? lastReceivedAt,
+    Expression<bool>? isArchived,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -2436,6 +2475,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       if (alertLevel != null) 'alert_level': alertLevel,
       if (supplier != null) 'supplier': supplier,
       if (lastReceivedAt != null) 'last_received_at': lastReceivedAt,
+      if (isArchived != null) 'is_archived': isArchived,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -2452,6 +2492,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       Value<int>? alertLevel,
       Value<String?>? supplier,
       Value<DateTime?>? lastReceivedAt,
+      Value<bool>? isArchived,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt}) {
     return MaterialsCompanion(
@@ -2465,6 +2506,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       alertLevel: alertLevel ?? this.alertLevel,
       supplier: supplier ?? this.supplier,
       lastReceivedAt: lastReceivedAt ?? this.lastReceivedAt,
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -2503,6 +2545,9 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     if (lastReceivedAt.present) {
       map['last_received_at'] = Variable<DateTime>(lastReceivedAt.value);
     }
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2525,6 +2570,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
           ..write('alertLevel: $alertLevel, ')
           ..write('supplier: $supplier, ')
           ..write('lastReceivedAt: $lastReceivedAt, ')
+          ..write('isArchived: $isArchived, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2563,16 +2609,16 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   late final GeneratedColumn<double> sellPrice = GeneratedColumn<double>(
       'sell_price', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
-  static const VerificationMeta _isActiveMeta =
-      const VerificationMeta('isActive');
+  static const VerificationMeta _isArchivedMeta =
+      const VerificationMeta('isArchived');
   @override
-  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
-      'is_active', aliasedName, false,
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+      'is_archived', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
-      defaultValue: const Constant(true));
+          GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _isStandaloneMeta =
       const VerificationMeta('isStandalone');
   @override
@@ -2642,7 +2688,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         name,
         description,
         sellPrice,
-        isActive,
+        isArchived,
         isStandalone,
         quantityOnHand,
         quantityPromised,
@@ -2683,9 +2729,11 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_sellPriceMeta);
     }
-    if (data.containsKey('is_active')) {
-      context.handle(_isActiveMeta,
-          isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
+    if (data.containsKey('is_archived')) {
+      context.handle(
+          _isArchivedMeta,
+          isArchived.isAcceptableOrUnknown(
+              data['is_archived']!, _isArchivedMeta));
     }
     if (data.containsKey('is_standalone')) {
       context.handle(
@@ -2744,8 +2792,8 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           .read(DriftSqlType.string, data['${effectivePrefix}description']),
       sellPrice: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}sell_price'])!,
-      isActive: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
+      isArchived: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
       isStandalone: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_standalone'])!,
       quantityOnHand: attachedDatabase.typeMapping
@@ -2776,7 +2824,10 @@ class Product extends DataClass implements Insertable<Product> {
   final String name;
   final String? description;
   final double sellPrice;
-  final bool isActive;
+
+  /// Archived products are kept for past orders but left out of lists,
+  /// pickers, alerts and the buy list.
+  final bool isArchived;
   final bool isStandalone;
   final int quantityOnHand;
   final int quantityPromised;
@@ -2792,7 +2843,7 @@ class Product extends DataClass implements Insertable<Product> {
       required this.name,
       this.description,
       required this.sellPrice,
-      required this.isActive,
+      required this.isArchived,
       required this.isStandalone,
       required this.quantityOnHand,
       required this.quantityPromised,
@@ -2810,7 +2861,7 @@ class Product extends DataClass implements Insertable<Product> {
       map['description'] = Variable<String>(description);
     }
     map['sell_price'] = Variable<double>(sellPrice);
-    map['is_active'] = Variable<bool>(isActive);
+    map['is_archived'] = Variable<bool>(isArchived);
     map['is_standalone'] = Variable<bool>(isStandalone);
     map['quantity_on_hand'] = Variable<int>(quantityOnHand);
     map['quantity_promised'] = Variable<int>(quantityPromised);
@@ -2832,7 +2883,7 @@ class Product extends DataClass implements Insertable<Product> {
           ? const Value.absent()
           : Value(description),
       sellPrice: Value(sellPrice),
-      isActive: Value(isActive),
+      isArchived: Value(isArchived),
       isStandalone: Value(isStandalone),
       quantityOnHand: Value(quantityOnHand),
       quantityPromised: Value(quantityPromised),
@@ -2853,7 +2904,7 @@ class Product extends DataClass implements Insertable<Product> {
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
       sellPrice: serializer.fromJson<double>(json['sellPrice']),
-      isActive: serializer.fromJson<bool>(json['isActive']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
       isStandalone: serializer.fromJson<bool>(json['isStandalone']),
       quantityOnHand: serializer.fromJson<int>(json['quantityOnHand']),
       quantityPromised: serializer.fromJson<int>(json['quantityPromised']),
@@ -2872,7 +2923,7 @@ class Product extends DataClass implements Insertable<Product> {
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
       'sellPrice': serializer.toJson<double>(sellPrice),
-      'isActive': serializer.toJson<bool>(isActive),
+      'isArchived': serializer.toJson<bool>(isArchived),
       'isStandalone': serializer.toJson<bool>(isStandalone),
       'quantityOnHand': serializer.toJson<int>(quantityOnHand),
       'quantityPromised': serializer.toJson<int>(quantityPromised),
@@ -2889,7 +2940,7 @@ class Product extends DataClass implements Insertable<Product> {
           String? name,
           Value<String?> description = const Value.absent(),
           double? sellPrice,
-          bool? isActive,
+          bool? isArchived,
           bool? isStandalone,
           int? quantityOnHand,
           int? quantityPromised,
@@ -2903,7 +2954,7 @@ class Product extends DataClass implements Insertable<Product> {
         name: name ?? this.name,
         description: description.present ? description.value : this.description,
         sellPrice: sellPrice ?? this.sellPrice,
-        isActive: isActive ?? this.isActive,
+        isArchived: isArchived ?? this.isArchived,
         isStandalone: isStandalone ?? this.isStandalone,
         quantityOnHand: quantityOnHand ?? this.quantityOnHand,
         quantityPromised: quantityPromised ?? this.quantityPromised,
@@ -2920,7 +2971,8 @@ class Product extends DataClass implements Insertable<Product> {
       description:
           data.description.present ? data.description.value : this.description,
       sellPrice: data.sellPrice.present ? data.sellPrice.value : this.sellPrice,
-      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      isArchived:
+          data.isArchived.present ? data.isArchived.value : this.isArchived,
       isStandalone: data.isStandalone.present
           ? data.isStandalone.value
           : this.isStandalone,
@@ -2946,7 +2998,7 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('sellPrice: $sellPrice, ')
-          ..write('isActive: $isActive, ')
+          ..write('isArchived: $isArchived, ')
           ..write('isStandalone: $isStandalone, ')
           ..write('quantityOnHand: $quantityOnHand, ')
           ..write('quantityPromised: $quantityPromised, ')
@@ -2965,7 +3017,7 @@ class Product extends DataClass implements Insertable<Product> {
       name,
       description,
       sellPrice,
-      isActive,
+      isArchived,
       isStandalone,
       quantityOnHand,
       quantityPromised,
@@ -2982,7 +3034,7 @@ class Product extends DataClass implements Insertable<Product> {
           other.name == this.name &&
           other.description == this.description &&
           other.sellPrice == this.sellPrice &&
-          other.isActive == this.isActive &&
+          other.isArchived == this.isArchived &&
           other.isStandalone == this.isStandalone &&
           other.quantityOnHand == this.quantityOnHand &&
           other.quantityPromised == this.quantityPromised &&
@@ -2998,7 +3050,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<String> name;
   final Value<String?> description;
   final Value<double> sellPrice;
-  final Value<bool> isActive;
+  final Value<bool> isArchived;
   final Value<bool> isStandalone;
   final Value<int> quantityOnHand;
   final Value<int> quantityPromised;
@@ -3012,7 +3064,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.sellPrice = const Value.absent(),
-    this.isActive = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.isStandalone = const Value.absent(),
     this.quantityOnHand = const Value.absent(),
     this.quantityPromised = const Value.absent(),
@@ -3027,7 +3079,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     required String name,
     this.description = const Value.absent(),
     required double sellPrice,
-    this.isActive = const Value.absent(),
+    this.isArchived = const Value.absent(),
     this.isStandalone = const Value.absent(),
     this.quantityOnHand = const Value.absent(),
     this.quantityPromised = const Value.absent(),
@@ -3043,7 +3095,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<String>? name,
     Expression<String>? description,
     Expression<double>? sellPrice,
-    Expression<bool>? isActive,
+    Expression<bool>? isArchived,
     Expression<bool>? isStandalone,
     Expression<int>? quantityOnHand,
     Expression<int>? quantityPromised,
@@ -3058,7 +3110,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (sellPrice != null) 'sell_price': sellPrice,
-      if (isActive != null) 'is_active': isActive,
+      if (isArchived != null) 'is_archived': isArchived,
       if (isStandalone != null) 'is_standalone': isStandalone,
       if (quantityOnHand != null) 'quantity_on_hand': quantityOnHand,
       if (quantityPromised != null) 'quantity_promised': quantityPromised,
@@ -3075,7 +3127,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       Value<String>? name,
       Value<String?>? description,
       Value<double>? sellPrice,
-      Value<bool>? isActive,
+      Value<bool>? isArchived,
       Value<bool>? isStandalone,
       Value<int>? quantityOnHand,
       Value<int>? quantityPromised,
@@ -3089,7 +3141,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       name: name ?? this.name,
       description: description ?? this.description,
       sellPrice: sellPrice ?? this.sellPrice,
-      isActive: isActive ?? this.isActive,
+      isArchived: isArchived ?? this.isArchived,
       isStandalone: isStandalone ?? this.isStandalone,
       quantityOnHand: quantityOnHand ?? this.quantityOnHand,
       quantityPromised: quantityPromised ?? this.quantityPromised,
@@ -3116,8 +3168,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (sellPrice.present) {
       map['sell_price'] = Variable<double>(sellPrice.value);
     }
-    if (isActive.present) {
-      map['is_active'] = Variable<bool>(isActive.value);
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
     }
     if (isStandalone.present) {
       map['is_standalone'] = Variable<bool>(isStandalone.value);
@@ -3153,7 +3205,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('sellPrice: $sellPrice, ')
-          ..write('isActive: $isActive, ')
+          ..write('isArchived: $isArchived, ')
           ..write('isStandalone: $isStandalone, ')
           ..write('quantityOnHand: $quantityOnHand, ')
           ..write('quantityPromised: $quantityPromised, ')
@@ -7425,6 +7477,7 @@ typedef $$MaterialsTableCreateCompanionBuilder = MaterialsCompanion Function({
   required int alertLevel,
   Value<String?> supplier,
   Value<DateTime?> lastReceivedAt,
+  Value<bool> isArchived,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -7439,6 +7492,7 @@ typedef $$MaterialsTableUpdateCompanionBuilder = MaterialsCompanion Function({
   Value<int> alertLevel,
   Value<String?> supplier,
   Value<DateTime?> lastReceivedAt,
+  Value<bool> isArchived,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -7484,6 +7538,9 @@ class $$MaterialsTableFilterComposer
   ColumnFilters<DateTime> get lastReceivedAt => $composableBuilder(
       column: $table.lastReceivedAt,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -7534,6 +7591,9 @@ class $$MaterialsTableOrderingComposer
       column: $table.lastReceivedAt,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -7580,6 +7640,9 @@ class $$MaterialsTableAnnotationComposer
   GeneratedColumn<DateTime> get lastReceivedAt => $composableBuilder(
       column: $table.lastReceivedAt, builder: (column) => column);
 
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -7620,6 +7683,7 @@ class $$MaterialsTableTableManager extends RootTableManager<
             Value<int> alertLevel = const Value.absent(),
             Value<String?> supplier = const Value.absent(),
             Value<DateTime?> lastReceivedAt = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
           }) =>
@@ -7634,6 +7698,7 @@ class $$MaterialsTableTableManager extends RootTableManager<
             alertLevel: alertLevel,
             supplier: supplier,
             lastReceivedAt: lastReceivedAt,
+            isArchived: isArchived,
             createdAt: createdAt,
             updatedAt: updatedAt,
           ),
@@ -7648,6 +7713,7 @@ class $$MaterialsTableTableManager extends RootTableManager<
             required int alertLevel,
             Value<String?> supplier = const Value.absent(),
             Value<DateTime?> lastReceivedAt = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
           }) =>
@@ -7662,6 +7728,7 @@ class $$MaterialsTableTableManager extends RootTableManager<
             alertLevel: alertLevel,
             supplier: supplier,
             lastReceivedAt: lastReceivedAt,
+            isArchived: isArchived,
             createdAt: createdAt,
             updatedAt: updatedAt,
           ),
@@ -7693,7 +7760,7 @@ typedef $$ProductsTableCreateCompanionBuilder = ProductsCompanion Function({
   required String name,
   Value<String?> description,
   required double sellPrice,
-  Value<bool> isActive,
+  Value<bool> isArchived,
   Value<bool> isStandalone,
   Value<int> quantityOnHand,
   Value<int> quantityPromised,
@@ -7708,7 +7775,7 @@ typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<String> name,
   Value<String?> description,
   Value<double> sellPrice,
-  Value<bool> isActive,
+  Value<bool> isArchived,
   Value<bool> isStandalone,
   Value<int> quantityOnHand,
   Value<int> quantityPromised,
@@ -7740,8 +7807,8 @@ class $$ProductsTableFilterComposer
   ColumnFilters<double> get sellPrice => $composableBuilder(
       column: $table.sellPrice, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isStandalone => $composableBuilder(
       column: $table.isStandalone, builder: (column) => ColumnFilters(column));
@@ -7791,8 +7858,8 @@ class $$ProductsTableOrderingComposer
   ColumnOrderings<double> get sellPrice => $composableBuilder(
       column: $table.sellPrice, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get isStandalone => $composableBuilder(
       column: $table.isStandalone,
@@ -7843,8 +7910,8 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<double> get sellPrice =>
       $composableBuilder(column: $table.sellPrice, builder: (column) => column);
 
-  GeneratedColumn<bool> get isActive =>
-      $composableBuilder(column: $table.isActive, builder: (column) => column);
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => column);
 
   GeneratedColumn<bool> get isStandalone => $composableBuilder(
       column: $table.isStandalone, builder: (column) => column);
@@ -7898,7 +7965,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String?> description = const Value.absent(),
             Value<double> sellPrice = const Value.absent(),
-            Value<bool> isActive = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<bool> isStandalone = const Value.absent(),
             Value<int> quantityOnHand = const Value.absent(),
             Value<int> quantityPromised = const Value.absent(),
@@ -7913,7 +7980,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             name: name,
             description: description,
             sellPrice: sellPrice,
-            isActive: isActive,
+            isArchived: isArchived,
             isStandalone: isStandalone,
             quantityOnHand: quantityOnHand,
             quantityPromised: quantityPromised,
@@ -7928,7 +7995,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             required String name,
             Value<String?> description = const Value.absent(),
             required double sellPrice,
-            Value<bool> isActive = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
             Value<bool> isStandalone = const Value.absent(),
             Value<int> quantityOnHand = const Value.absent(),
             Value<int> quantityPromised = const Value.absent(),
@@ -7943,7 +8010,7 @@ class $$ProductsTableTableManager extends RootTableManager<
             name: name,
             description: description,
             sellPrice: sellPrice,
-            isActive: isActive,
+            isArchived: isArchived,
             isStandalone: isStandalone,
             quantityOnHand: quantityOnHand,
             quantityPromised: quantityPromised,

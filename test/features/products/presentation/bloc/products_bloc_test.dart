@@ -41,7 +41,6 @@ void main() {
         id: id,
         name: 'P$id',
         sellPrice: 100,
-        isActive: true,
         isStandalone: standalone,
         quantityOnHand: onHand,
         createdAt: now,
@@ -62,7 +61,7 @@ void main() {
     bomCost = MockCalculateBomCost();
     buildable = MockCalculateBuildableQuantity();
     pending = MockGetPendingOrderCounts();
-    when(() => getProducts(activeOnly: any(named: 'activeOnly')))
+    when(() => getProducts(includeArchived: any(named: 'includeArchived')))
         .thenAnswer((_) async => Success(products));
     when(() => bomCost(any())).thenAnswer((_) async => const Success(30.0));
     when(() => buildable(1)).thenAnswer((_) async => const Success(4));
@@ -113,8 +112,9 @@ void main() {
 
   blocTest<ProductsBloc, ProductsState>(
     'emits ProductsError when products fail to load',
-    setUp: () => when(() => getProducts(activeOnly: any(named: 'activeOnly')))
-        .thenAnswer((_) async => const Error(DatabaseFailure('boom'))),
+    setUp: () =>
+        when(() => getProducts(includeArchived: any(named: 'includeArchived')))
+            .thenAnswer((_) async => const Error(DatabaseFailure('boom'))),
     build: build,
     act: (bloc) => bloc.add(const LoadProducts()),
     expect: () => [isA<ProductsLoading>(), const ProductsError('boom')],

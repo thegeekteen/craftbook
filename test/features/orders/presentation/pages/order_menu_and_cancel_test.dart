@@ -91,14 +91,16 @@ void main() {
     return o?.status;
   }
 
-  /// Orders opens on To pack; most tests want every order.
-  Future<void> openAll(WidgetTester tester) async {
+  /// Orders opens on To pack; most tests want another chip.
+  Future<void> openChip(WidgetTester tester, String label) async {
     await openApp(tester, RouteNames.orders);
-    final chip = find.widgetWithText(AppChip, 'All');
+    final chip = find.widgetWithText(AppChip, label);
     await tester.ensureVisible(chip);
     await tester.tap(chip);
     await settle(tester);
   }
+
+  Future<void> openAll(WidgetTester tester) => openChip(tester, 'All');
 
   Future<void> longPress(WidgetTester tester, String customer) async {
     final card = find.text(customer);
@@ -176,14 +178,52 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('a cancelled order can only be deleted, and stock stays put',
+  testWidgets('All leaves cancelled orders out; the Cancelled chip has them',
       (tester) async {
     await startApp(tester, seed: seed);
     await openAll(tester);
+    expect(find.text('Ana'), findsOneWidget);
+    expect(find.text('Dee'), findsNothing);
+
+    final chip = find.widgetWithText(AppChip, 'Cancelled');
+    await tester.ensureVisible(chip);
+    await tester.tap(chip);
+    await settle(tester);
+    expect(find.text('Dee'), findsOneWidget);
+    expect(find.text('Ana'), findsNothing);
+    await closeApp(tester);
+  });
+
+  testWidgets('restoring a cancelled order puts it back to pack',
+      (tester) async {
+    await startApp(tester, seed: seed);
+    await openChip(tester, 'Cancelled');
+    await longPress(tester, 'Dee');
+    await tester.tap(find.text('Restore order'));
+    await settle(tester);
+    expect(
+        find.text('It goes back to To pack and reserves its materials again.'),
+        findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Restore'));
+    await settle(tester);
+
+    expect(find.text('Order restored'), findsOneWidget);
+    expect(await status(tester, dee), OrderStatus.pending);
+    final m = await stock(tester);
+    expect((m.quantityOnHand, m.quantityPromised), (6, 4));
+    await closeApp(tester);
+  });
+
+  testWidgets(
+      'a cancelled order can be restored or deleted, and stock stays put',
+      (tester) async {
+    await startApp(tester, seed: seed);
+    await openChip(tester, 'Cancelled');
     await longPress(tester, 'Dee');
 
     expect(find.text('Edit order'), findsNothing);
     expect(find.text('Cancel order'), findsNothing);
+    expect(find.text('Restore order'), findsOneWidget);
     await tester.tap(find.text('Delete order'));
     await settle(tester);
     expect(

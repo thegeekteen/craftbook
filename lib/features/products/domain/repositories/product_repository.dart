@@ -9,7 +9,7 @@ import '../entities/product_stock_movement.dart';
 
 abstract class ProductRepository {
   Future<Result<List<Product>>> getAllProducts();
-  Future<Result<List<Product>>> getActiveProducts();
+  Future<Result<List<Product>>> getUnarchivedProducts();
   Future<Result<Product?>> getProductById(int id);
   Future<Result<List<BomItem>>> getBomItems(int productId);
   Future<Result<int>> createProduct({
@@ -29,7 +29,7 @@ abstract class ProductRepository {
     String? description,
     double? sellPrice,
     double? unitCost,
-    bool? isActive,
+    bool? isArchived,
     bool? isStandalone,
     int? alertLevel,
   });

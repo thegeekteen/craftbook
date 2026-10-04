@@ -64,6 +64,16 @@ class CancelOrderDetail extends OrderDetailEvent {
   List<Object?> get props => [orderId];
 }
 
+/// Bring a cancelled order back to pending and reserve its stock again
+class RestoreOrderDetail extends OrderDetailEvent {
+  final int orderId;
+
+  const RestoreOrderDetail(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
 /// Store a new note for the order (edited, or a to-do ticked)
 class SaveOrderNote extends OrderDetailEvent {
   final int orderId;

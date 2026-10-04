@@ -133,6 +133,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
             onSelected: (value) {
               if (value == 'edit') _edit(order);
               if (value == 'cancel') _confirmCancel(order);
+              if (value == 'restore') _confirmRestore(order);
               if (value == 'delete') _confirmDelete(order);
             },
             itemBuilder: (context) => [
@@ -157,6 +158,17 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       Icon(Icons.block_rounded, size: 20),
                       SizedBox(width: 10),
                       Text('Cancel order'),
+                    ],
+                  ),
+                ),
+              if (order.status == OrderStatus.cancelled)
+                const PopupMenuItem(
+                  value: 'restore',
+                  child: Row(
+                    children: [
+                      Icon(Icons.restore_rounded, size: 20),
+                      SizedBox(width: 10),
+                      Text('Restore order'),
                     ],
                   ),
                 ),
@@ -406,6 +418,14 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
     if (confirmed && mounted) {
       _changed = true;
       _bloc.add(CancelOrderDetail(order.id!));
+    }
+  }
+
+  Future<void> _confirmRestore(Order order) async {
+    final confirmed = await OrderActions.confirmRestore(context, order);
+    if (confirmed && mounted) {
+      _changed = true;
+      _bloc.add(RestoreOrderDetail(order.id!));
     }
   }
 

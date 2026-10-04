@@ -99,11 +99,13 @@ lib/
    min(material.quantity_on_hand / bom_item.quantity_required) for all BOM items
    ```
 
-7. **Safe Deletion**: Orders blocked when shipped. Materials blocked when used in BOM or have stock movements. Products blocked when in orders or have BOM items. Channels blocked when orders reference them.
+7. **Safe Deletion**: Orders blocked when shipped. Materials blocked when used in a BOM or in any order; their stock history goes with them. Products blocked when in orders or have BOM items; their stock history goes with them too. Channels blocked when orders reference them.
 
 8. **Earnings Scope**: Earnings include both **packed and shipped** orders. Waste also only counts from packed/shipped orders.
 
-9. **Cancelling**: Pending and packed orders can be cancelled; shipped ones can't. Cancelling releases a pending order's reservations or restores a packed order's deducted stock (`ReturnOrderStock`, shared with `DeleteOrder`), and the order stays on record as cancelled. Deleting a cancelled order returns nothing, since its stock already came back.
+9. **Cancelling**: Pending and packed orders can be cancelled; shipped ones can't. Cancelling releases a pending order's reservations or restores a packed order's deducted stock (`ReturnOrderStock`, shared with `DeleteOrder`), and the order stays on record as cancelled. Deleting a cancelled order returns nothing, since its stock already came back. A cancelled order can be restored (`RestoreOrder`): it always goes back to pending and reserves its planned materials again, even if it had been packed. Cancelled orders stay off Today and the calendars, and only show under the Orders tab's Cancelled chip.
+
+10. **Archiving**: Products and materials have `isArchived` (schema v8, which replaced the product's "show in new orders" `isActive`). Archived items stay on past orders, earnings and history, but are left out of list pages (except under their Archived chip), the order wizard's product picker, the BOM editor's material picker, low-stock alerts, the buy list and the Settings counts. Archive is what's offered when a delete is blocked.
 
 ---
 

@@ -40,7 +40,6 @@ void main() {
         id: id,
         name: 'P$id',
         sellPrice: 100,
-        isActive: true,
         isStandalone: standalone,
         quantityOnHand: onHand,
         quantityPromised: promised,

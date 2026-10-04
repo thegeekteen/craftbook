@@ -12,6 +12,9 @@ class Material extends Equatable {
   final int alertLevel;
   final String? supplier;
   final DateTime? lastReceivedAt;
+
+  /// Kept for past orders but left out of lists, pickers and alerts.
+  final bool isArchived;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -26,6 +29,7 @@ class Material extends Equatable {
     required this.alertLevel,
     this.supplier,
     this.lastReceivedAt,
+    this.isArchived = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -46,6 +50,7 @@ class Material extends Equatable {
         alertLevel,
         supplier,
         lastReceivedAt,
+        isArchived,
         createdAt,
         updatedAt,
       ];
@@ -61,6 +66,7 @@ class Material extends Equatable {
     int? alertLevel,
     String? supplier,
     DateTime? lastReceivedAt,
+    bool? isArchived,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -75,6 +81,7 @@ class Material extends Equatable {
       alertLevel: alertLevel ?? this.alertLevel,
       supplier: supplier ?? this.supplier,
       lastReceivedAt: lastReceivedAt ?? this.lastReceivedAt,
+      isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

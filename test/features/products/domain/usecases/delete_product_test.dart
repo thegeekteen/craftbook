@@ -18,7 +18,6 @@ void main() {
     id: 1,
     name: 'Test Product',
     sellPrice: 100.0,
-    isActive: true,
     isStandalone: false,
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),

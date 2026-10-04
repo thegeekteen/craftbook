@@ -11,7 +11,7 @@ import '../../domain/entities/product.dart';
 import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/update_product.dart';
 
-enum _ProductAction { edit, receive, toggleActive, delete }
+enum _ProductAction { edit, receive, toggleArchived, delete }
 
 /// What a product can do from wherever it's listed.
 abstract final class ProductActions {
@@ -32,11 +32,11 @@ abstract final class ProductActions {
               icon: Icons.add_rounded,
               label: 'Receive stock'),
         SheetAction(
-          value: _ProductAction.toggleActive,
-          icon: product.isActive
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
-          label: product.isActive ? 'Hide from new orders' : 'Show again',
+          value: _ProductAction.toggleArchived,
+          icon: product.isArchived
+              ? Icons.unarchive_outlined
+              : Icons.archive_outlined,
+          label: product.isArchived ? 'Unarchive' : 'Archive',
         ),
         const SheetAction(
             value: _ProductAction.delete,
@@ -55,26 +55,27 @@ abstract final class ProductActions {
         return await context
                 .push<bool>(RouteNames.receiveProductStockPath(id)) ==
             true;
-      case _ProductAction.toggleActive:
-        return _setActive(context, product, !product.isActive);
+      case _ProductAction.toggleArchived:
+        return setArchived(context, product, !product.isArchived);
       case _ProductAction.delete:
         return delete(context, product);
     }
   }
 
-  static Future<bool> _setActive(
-      BuildContext context, Product product, bool active) async {
+  /// Archives or unarchives. Returns true once it changed.
+  static Future<bool> setArchived(
+      BuildContext context, Product product, bool archived) async {
     final result =
-        await getIt<UpdateProduct>()(id: product.id!, isActive: active);
+        await getIt<UpdateProduct>()(id: product.id!, isArchived: archived);
     if (!context.mounted) return false;
     switch (result) {
       case Error(:final failure):
         context.showSnackBar(failure.message, isError: true);
         return false;
       case Success():
-        context.showSnackBar(active
-            ? '${product.name} shows in new orders'
-            : '${product.name} hidden from new orders');
+        context.showSnackBar(archived
+            ? '${product.name} archived'
+            : '${product.name} is back in your lists');
         return true;
     }
   }
@@ -86,7 +87,7 @@ abstract final class ProductActions {
       context,
       title: 'Delete ${product.name}?',
       message:
-          "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
+          "This can't be undone. Products that appear in orders can't be deleted; archive them instead.",
       confirmText: 'Delete',
       isDestructive: true,
     );

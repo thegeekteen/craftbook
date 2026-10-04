@@ -51,7 +51,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   List<Material> _materials = [];
   Product? _product;
   bool _isStandalone = false;
-  bool _isActive = true;
   Uint8List? _photo;
 
   /// Only write the photo when it changed; it is the largest column.
@@ -129,7 +128,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           _description.text = p.description ?? '';
           _price.text = _money(p.sellPrice);
           _isStandalone = p.isStandalone;
-          _isActive = p.isActive;
           _photo = p.photo;
           _unitCost.text = p.unitCost > 0 ? _money(p.unitCost) : '';
           _alertLevel.text = p.alertLevel > 0 ? '${p.alertLevel}' : '';
@@ -165,7 +163,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   Future<void> _addMaterial() async {
     final taken = _bom.map((b) => b.materialId).toSet();
-    final options = _materials.where((m) => !taken.contains(m.id)).toList()
+    final options = _materials
+        .where((m) => !m.isArchived && !taken.contains(m.id))
+        .toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     var query = '';
     final picked = await showAppSheet<Material>(
@@ -284,7 +284,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         sellPrice: _sellPrice,
         unitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : null,
         isStandalone: _isStandalone,
-        isActive: _isActive,
         alertLevel: alertLevel,
       );
       outcome = switch (updated) {
@@ -418,20 +417,6 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 sellPrice: _sellPrice,
                 cost: _cost,
                 isStandalone: _isStandalone),
-            if (!_isNew) ...[
-              const SizedBox(height: 12),
-              AppCard(
-                padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isActive,
-                  onChanged: (v) => setState(() => _isActive = v),
-                  title: const Text('Show in new orders'),
-                  subtitle: const Text(
-                      'Turn off to retire a product without deleting it.'),
-                ),
-              ),
-            ],
           ],
         ),
       ),

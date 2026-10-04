@@ -68,7 +68,11 @@ class GetTodayDashboard {
 
     final placedResult = await orderRepository.getOrdersForDate(today);
     if (placedResult case Error(:final failure)) return Error(failure);
-    final placedOrders = (placedResult as Success<List<Order>>).value;
+    // A cancelled order needs nothing doing, so it isn't news on Today.
+    final placedOrders = (placedResult as Success<List<Order>>)
+        .value
+        .where((o) => o.status != OrderStatus.cancelled)
+        .toList();
 
     final alertsResult = await getAlertSummary();
     if (alertsResult case Error(:final failure)) return Error(failure);

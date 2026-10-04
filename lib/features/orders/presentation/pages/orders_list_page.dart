@@ -90,8 +90,12 @@ class _OrdersListViewState extends State<_OrdersListView> {
     final searched = all.where(_matches).toList();
     int count(OrderStatus s) =>
         searched.where((e) => e.order.status == s).length;
+    // "All" means everything still in play; cancelled orders only show
+    // under their own chip.
+    final active =
+        searched.where((e) => e.order.status != OrderStatus.cancelled).toList();
     final visible = _status == null
-        ? searched
+        ? active
         : searched.where((e) => e.order.status == _status).toList();
 
     return Column(
@@ -110,7 +114,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
             selected: _status,
             onSelected: (s) => setState(() => _status = s),
             options: [
-              ChipOption(null, 'All', count: searched.length),
+              ChipOption(null, 'All', count: active.length),
               for (final s in OrderStatus.values)
                 ChipOption(s, s.label, count: count(s)),
             ],

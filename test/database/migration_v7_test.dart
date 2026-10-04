@@ -44,7 +44,7 @@ void main() {
     expect(products.single.sellPrice, 450);
     expect(products.single.photo, isNull);
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.data.values.single, 7);
+    expect(version.data.values.single, AppDatabase.currentSchemaVersion);
   });
 
   test('the migrated column stores photo bytes', () async {

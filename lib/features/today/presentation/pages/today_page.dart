@@ -59,7 +59,7 @@ class _TodayViewState extends State<_TodayView> {
   /// Today is about orders; the rest of the pinned notes are a tap away.
   static const _pinnedNotesShown = 3;
 
-  Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
+  Set<OrderStatus> _statusFilter = Set.from(StatusFilterChips.dayViewStatuses);
 
   void _reload() => context.read<TodayBloc>().add(const LoadToday());
 

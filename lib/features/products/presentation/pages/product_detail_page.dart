@@ -158,6 +158,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  Future<void> _toggleArchived(Product p) async {
+    if (await ProductActions.setArchived(context, p, !p.isArchived) &&
+        mounted) {
+      _changed = true;
+      _load();
+    }
+  }
+
   Future<void> _delete(Product p) async {
     if (await ProductActions.delete(context, p) && mounted) context.pop(true);
   }
@@ -203,6 +211,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               if (v == 'edit') {
                 _open(RouteNames.productEditorPath(widget.productId));
               }
+              if (v == 'archive') _toggleArchived(p);
               if (v == 'delete') _delete(p);
             },
             itemBuilder: (_) => [
@@ -212,6 +221,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   Icon(Icons.edit_outlined, size: 20),
                   SizedBox(width: 10),
                   Text('Edit product'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'archive',
+                child: Row(children: [
+                  Icon(
+                      p.isArchived
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                      size: 20),
+                  const SizedBox(width: 10),
+                  Text(p.isArchived ? 'Unarchive' : 'Archive'),
                 ]),
               ),
               PopupMenuItem(

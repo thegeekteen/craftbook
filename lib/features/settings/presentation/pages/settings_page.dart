@@ -64,9 +64,10 @@ class _SettingsPageState extends State<SettingsPage> {
       if (products case Success(:final value)) {
         // Resell only: handmade low needs buildable counts, which are too
         // costly to work out for a hint.
-        final low = value.where((p) => p.isLowStock).length;
+        final listed = value.where((p) => !p.isArchived).toList();
+        final low = listed.where((p) => p.isLowStock).length;
         _productsHint =
-            '${value.length} ${value.length == 1 ? 'product' : 'products'}'
+            '${listed.length} ${listed.length == 1 ? 'product' : 'products'}'
             '${low > 0 ? ' · $low low' : ''}';
       }
       if (channels case Success(:final value)) {

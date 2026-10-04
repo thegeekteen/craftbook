@@ -42,7 +42,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     Emitter<ProductsState> emit,
   ) async {
     if (state is! ProductsLoaded) emit(ProductsLoading());
-    final result = await getProducts(activeOnly: event.activeOnly);
+    final result = await getProducts(includeArchived: event.includeArchived);
     switch (result) {
       case Error(:final failure):
         emit(ProductsError(failure.message));
@@ -105,7 +105,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       description: event.description,
       sellPrice: event.sellPrice,
       unitCost: event.unitCost,
-      isActive: event.isActive,
+      isArchived: event.isArchived,
       isStandalone: event.isStandalone,
       alertLevel: event.alertLevel,
     );

@@ -103,6 +103,90 @@ void main() {
     });
   });
 
+  group('archiving and deleting materials', () {
+    test('deleteMaterial removes its stock history too', () async {
+      final id = await material();
+      await materials.receiveStock(
+          materialId: id, packsReceived: 1, pricePerPack: 100);
+      expect(ok(await materials.getStockMovements(id)), isNotEmpty);
+
+      expect(await materials.deleteMaterial(id), const Success<void>(null));
+      expect(ok(await materials.getMaterialById(id)), isNull);
+      expect(ok(await materials.getStockMovements(id)), isEmpty);
+    });
+
+    test('isUsedInOrders sees any order, cancelled included', () async {
+      final used = await material();
+      final unused = await material();
+      final p = await productId();
+      final id = await order(
+        product: p,
+        shipBy: DateTime(2026, 10, 4),
+        materials: [
+          OrderMaterialInput(
+              materialId: used,
+              materialName: 'Yarn',
+              plannedQuantity: 2,
+              actualQuantity: 2,
+              unitCost: 10),
+        ],
+      );
+      await orders.cancelOrder(id);
+
+      expect(ok(await materials.isUsedInOrders(used)), isTrue);
+      expect(ok(await materials.isUsedInOrders(unused)), isFalse);
+    });
+
+    test('an archived material leaves low stock and survives a receive',
+        () async {
+      final id = await material(onHand: 1, alert: 5);
+      expect(ok(await materials.getLowStockMaterials()), hasLength(1));
+
+      ok(await materials.setMaterialArchived(id, true));
+      expect(ok(await materials.getLowStockMaterials()), isEmpty);
+      await materials.receiveStock(
+          materialId: id, packsReceived: 1, pricePerPack: 100);
+      expect(ok(await materials.getMaterialById(id))!.isArchived, isTrue);
+
+      ok(await materials.setMaterialArchived(id, false));
+      expect(ok(await materials.getMaterialById(id))!.isArchived, isFalse);
+    });
+
+    test('setMaterialArchived reports a missing material', () async {
+      final result = await materials.setMaterialArchived(999, true);
+      expect((result as Error<void>).failure, isA<NotFoundFailure>());
+    });
+  });
+
+  group('archiving and deleting products', () {
+    test('archived products drop out of getUnarchivedProducts', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final kept = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
+      final gone = ok(await repo.createProduct(name: 'Rose', sellPrice: 300));
+      ok(await repo.updateProduct(id: gone, isArchived: true));
+
+      expect(ok(await repo.getUnarchivedProducts()).map((p) => p.id), [kept]);
+      expect(ok(await repo.getAllProducts()), hasLength(2));
+      expect(ok(await repo.getProductById(gone))!.isArchived, isTrue);
+    });
+
+    test('deleteProduct removes its stock history too', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(
+          name: 'Pin',
+          sellPrice: 100,
+          isStandalone: true,
+          initialQuantity: 0,
+          initialUnitCost: 20));
+      ok(await repo.receiveProductStock(
+          productId: id, quantity: 3, pricePerUnit: 20));
+      expect(await ProductDao(db).hasProductStockMovements(id), isTrue);
+
+      ok(await repo.deleteProduct(id));
+      expect(await ProductDao(db).hasProductStockMovements(id), isFalse);
+    });
+  });
+
   group('updateMaterial', () {
     test('edits master data without touching stock counts', () async {
       final id = await material(onHand: 40, promised: 15);
@@ -263,14 +347,14 @@ void main() {
     Future<int> resell({
       int onHand = 1,
       int alert = 3,
-      bool active = true,
+      bool archived = false,
       double unitCost = 25,
     }) =>
         db.into(db.products).insert(ProductsCompanion.insert(
               name: 'Gift box',
               sellPrice: 60,
               isStandalone: const Value(true),
-              isActive: Value(active),
+              isArchived: Value(archived),
               quantityOnHand: Value(onHand),
               alertLevel: Value(alert),
               unitCost: Value(unitCost),
@@ -305,8 +389,8 @@ void main() {
       expect(box.blockingOrders, 1);
     });
 
-    test('skips inactive, above-alert and alert-less products', () async {
-      await resell(onHand: 0, active: false);
+    test('skips archived, above-alert and alert-less products', () async {
+      await resell(onHand: 0, archived: true);
       await resell(onHand: 5, alert: 3);
       await resell(onHand: 0, alert: 0);
       expect(ok(await materials.getBuyList()), isEmpty);
@@ -387,6 +471,25 @@ void main() {
 
       await orders.updateOrderNote(id, null);
       expect(ok(await orders.getOrderById(id))!.note, isNull);
+    });
+
+    test('restoreOrder puts a cancelled packed order back to pending',
+        () async {
+      final p = await productId();
+      final id = await order(product: p, shipBy: DateTime(2026, 10, 4));
+      await orders.packOrder(id);
+      await orders.cancelOrder(id);
+
+      expect(await orders.restoreOrder(id), const Success<void>(null));
+      final restored = ok(await orders.getOrderById(id))!;
+      expect(restored.status, OrderStatus.pending);
+      expect(restored.packedAt, isNull);
+      expect(restored.shippedAt, isNull);
+    });
+
+    test('restoreOrder reports a missing order', () async {
+      final result = await orders.restoreOrder(999);
+      expect((result as Error<void>).failure, isA<NotFoundFailure>());
     });
 
     test('updateOrderNote reports a missing order', () async {

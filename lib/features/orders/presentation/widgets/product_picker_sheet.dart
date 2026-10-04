@@ -73,7 +73,7 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
   }
 
   Future<void> _load() async {
-    final result = await getIt<GetProducts>()(activeOnly: true);
+    final result = await getIt<GetProducts>()(includeArchived: false);
     switch (result) {
       case Error(:final failure):
         if (mounted) {

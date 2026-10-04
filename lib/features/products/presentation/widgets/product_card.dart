@@ -45,7 +45,7 @@ class ProductCard extends StatelessWidget {
     final lowStock = isProductLow(p, available);
 
     return Opacity(
-      opacity: p.isActive ? 1 : 0.6,
+      opacity: p.isArchived ? 0.6 : 1,
       child: AppCard(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -67,7 +67,7 @@ class ProductCard extends StatelessWidget {
                           style:
                               AppTextStyles.bodyLarge.copyWith(color: c.ink)),
                       if (p.isStandalone) const AppTag('Resell'),
-                      if (!p.isActive) const AppTag('Hidden'),
+                      if (p.isArchived) const AppTag('Archived'),
                       if (isShort) const AppTag.low(text: 'Short for orders'),
                     ],
                   ),
