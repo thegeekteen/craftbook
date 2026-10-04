@@ -5,7 +5,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../pages/note_editor_page.dart';
-import 'note_view.dart';
+import '../../../../core/widgets/note/note_view.dart';
 
 /// Tappable note box for the order form, showing the note fully formatted.
 ///

@@ -68,7 +68,13 @@ extension BuildContextExtension on BuildContext {
   Size get screenSize => mediaQuery.size;
 
   /// Show snackbar
-  void showSnackBar(String message, {bool isError = false}) {
+  /// With [onAction], the snackbar carries a button such as Undo.
+  void showSnackBar(
+    String message, {
+    bool isError = false,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     final c = colors;
     ScaffoldMessenger.of(this)
       ..hideCurrentSnackBar()
@@ -86,6 +92,9 @@ extension BuildContextExtension on BuildContext {
             ],
           ),
           behavior: SnackBarBehavior.floating,
+          action: onAction == null
+              ? null
+              : SnackBarAction(label: actionLabel ?? 'Undo', onPressed: onAction),
         ),
       );
   }

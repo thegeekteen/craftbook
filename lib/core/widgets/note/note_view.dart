@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-import '../../../../core/theme/colors.dart';
-import '../../../../core/utils/note_codec.dart';
+import '../../theme/colors.dart';
+import '../../utils/note_codec.dart';
 import 'note_styles.dart';
 
 /// A saved note, rendered but not editable as text.

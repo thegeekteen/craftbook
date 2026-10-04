@@ -58,6 +58,8 @@ void main() {
     ('money', RouteNames.earnings),
     ('product_earnings', RouteNames.productEarningsPath(1, weekStart.subtract(const Duration(days: 28)), weekEnd)),
     ('more', RouteNames.settings),
+    ('notes', RouteNames.notes),
+    ('note_edit', RouteNames.notePath(1)),
     ('about', RouteNames.about),
   ];
 

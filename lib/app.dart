@@ -33,6 +33,8 @@ import 'features/order_fields/presentation/pages/order_fields_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
+import 'features/notes/presentation/pages/note_edit_page.dart';
+import 'features/notes/presentation/pages/notes_page.dart';
 import 'features/settings/presentation/pages/about_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 
@@ -130,6 +132,10 @@ class CraftbookApp extends StatelessWidget {
             path: RouteNames.buyList,
             builder: (context, state) => const BuyListPage(),
           ),
+          GoRoute(
+            path: RouteNames.notes,
+            builder: (context, state) => const NotesPage(),
+          ),
         ],
       ),
       // Top-level (no shell): these are pushed from the order wizard, and a
@@ -142,6 +148,18 @@ class CraftbookApp extends StatelessWidget {
       GoRoute(
         path: RouteNames.orderFields,
         builder: (context, state) => const OrderFieldsPage(),
+      ),
+      // The note editor takes the whole screen, keyboard and toolbar included.
+      GoRoute(
+        path: RouteNames.newNote,
+        builder: (context, state) => const NoteEditPage(),
+      ),
+      GoRoute(
+        path: RouteNames.noteDetail,
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          return NoteEditPage(noteId: id);
+        },
       ),
       GoRoute(
         path: RouteNames.calendarWeek,

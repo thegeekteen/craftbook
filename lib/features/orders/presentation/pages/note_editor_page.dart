@@ -5,8 +5,8 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
-import '../widgets/note_styles.dart';
-import '../widgets/note_toolbar.dart';
+import '../../../../core/widgets/note/note_styles.dart';
+import '../../../../core/widgets/note/note_toolbar.dart';
 
 /// Full-screen rich-text editor for one order note.
 ///

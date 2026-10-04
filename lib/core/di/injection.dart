@@ -82,6 +82,18 @@ import '../../features/order_fields/domain/usecases/reorder_order_fields.dart';
 import '../../features/order_fields/domain/usecases/restore_order_field.dart';
 import '../../features/order_fields/domain/usecases/save_order_field.dart';
 import '../../features/order_fields/presentation/bloc/order_fields_bloc.dart';
+import '../../database/daos/note_dao.dart';
+import '../../features/notes/data/repositories/note_repository_impl.dart';
+import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/notes/domain/usecases/delete_note.dart';
+import '../../features/notes/domain/usecases/get_note.dart';
+import '../../features/notes/domain/usecases/get_notes.dart';
+import '../../features/notes/domain/usecases/get_pinned_notes.dart';
+import '../../features/notes/domain/usecases/restore_note.dart';
+import '../../features/notes/domain/usecases/save_note.dart';
+import '../../features/notes/domain/usecases/set_note_pinned.dart';
+import '../../features/notes/presentation/bloc/note_edit_cubit.dart';
+import '../../features/notes/presentation/bloc/notes_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -101,6 +113,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(ChannelDao(db));
   getIt.registerSingleton(EarningsDao(db));
   getIt.registerSingleton(OrderFieldDao(db));
+  getIt.registerSingleton(NoteDao(db));
 
   // Repositories
   getIt.registerLazySingleton<ChannelRepository>(
@@ -118,6 +131,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<OrderFieldRepository>(
     () => OrderFieldRepositoryImpl(getIt<OrderFieldDao>()),
   );
+  getIt.registerLazySingleton<NoteRepository>(
+    () => NoteRepositoryImpl(getIt<NoteDao>()),
+  );
   getIt.registerLazySingleton<EarningsRepository>(
     () => EarningsRepositoryImpl(getIt<EarningsDao>()),
   );
@@ -132,6 +148,15 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => RemoveOrderField(getIt()));
   getIt.registerFactory(() => RestoreOrderField(getIt()));
   getIt.registerFactory(() => ReorderOrderFields(getIt()));
+
+  // Use Cases - Notes
+  getIt.registerFactory(() => GetNotes(getIt()));
+  getIt.registerFactory(() => GetPinnedNotes(getIt()));
+  getIt.registerFactory(() => GetNote(getIt()));
+  getIt.registerFactory(() => SaveNote(getIt()));
+  getIt.registerFactory(() => SetNotePinned(getIt()));
+  getIt.registerFactory(() => DeleteNote(getIt()));
+  getIt.registerFactory(() => RestoreNote(getIt()));
 
   // Use Cases - Products
   getIt.registerFactory(() => GetChannels(getIt()));
@@ -233,6 +258,17 @@ Future<void> configureDependencies({AppDatabase? database}) async {
     restoreOrderField: getIt(),
     reorderOrderFields: getIt(),
   ));
+  getIt.registerFactory(() => NotesBloc(
+    getNotes: getIt(),
+    setNotePinned: getIt(),
+    deleteNote: getIt(),
+    restoreNote: getIt(),
+  ));
+  getIt.registerFactory(() => NoteEditCubit(
+    getNote: getIt(),
+    saveNote: getIt(),
+    deleteNote: getIt(),
+  ));
   getIt.registerFactory(() => ChannelsBloc(
     getChannels: getIt(),
     updateChannel: getIt(),
@@ -272,7 +308,10 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   // App-wide: lives above the router, so a singleton.
   getIt.registerSingleton(ThemeCubit(getIt()), dispose: (cubit) => cubit.close());
   getIt.registerSingleton(OrderAmountCubit(getIt()), dispose: (cubit) => cubit.close());
-  getIt.registerFactory(() => TodayBloc(getTodayDashboard: getIt()));
+  getIt.registerFactory(() => TodayBloc(
+    getTodayDashboard: getIt(),
+    getPinnedNotes: getIt(),
+  ));
   getIt.registerFactory(() => EarningsBloc(
     getEarningsSummary: getIt(),
     getProductEarnings: getIt(),

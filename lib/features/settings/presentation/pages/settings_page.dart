@@ -13,14 +13,15 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/section_label.dart';
+import '../../../notes/domain/repositories/note_repository.dart';
 import '../../../order_fields/domain/repositories/order_field_repository.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../widgets/appearance_card.dart';
 
-/// More: the catalogue (products, channels, order fields, buy list) and your
-/// data.
+/// More: the catalogue (products, channels, order fields, buy list), the
+/// notebook and your data.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -33,6 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _channelsHint;
   String? _orderFieldsHint;
   String? _buyListHint;
+  String? _notesHint;
   bool _canUndoRestore = false;
 
   @override
@@ -47,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final channels = await getIt<ChannelRepository>().getAllChannels();
     final buyList = await getIt<MaterialRepository>().getBuyList();
     final orderFields = await getIt<OrderFieldRepository>().getFields();
+    final notes = await getIt<NoteRepository>().getNotes();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
     setState(() {
@@ -74,6 +77,13 @@ class _SettingsPageState extends State<SettingsPage> {
         _buyListHint = value.isEmpty
             ? 'Nothing to buy'
             : '${value.length} ${value.length == 1 ? 'item' : 'items'} · ${CurrencyFormatter.format(total)}';
+      }
+      if (notes case Success(:final value)) {
+        final pinned = value.where((n) => n.isPinned).length;
+        _notesHint = value.isEmpty
+            ? null
+            : '${value.length} ${value.length == 1 ? 'note' : 'notes'}'
+                '${pinned > 0 ? ' · $pinned pinned' : ''}';
       }
     });
   }
@@ -118,6 +128,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Buy list',
                 subtitle: _buyListHint ?? 'Materials to restock',
                 onTap: () => _open(RouteNames.buyList),
+              ),
+            ]),
+          ),
+          const SectionLabel('Notebook', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SizedBox(height: 8),
+          AppCard.flush(
+            child: CardList(children: [
+              _MoreRow(
+                icon: Icons.sticky_note_2_outlined,
+                title: 'Notes',
+                subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
+                onTap: () => _open(RouteNames.notes),
               ),
             ]),
           ),

@@ -63,7 +63,7 @@ void main() {
 
     final columns = await rows(db, 'PRAGMA table_info(orders)');
     expect(columns.map((c) => c['name']), isNot(contains('customer_address')));
-    expect((await rows(db, 'PRAGMA user_version')).single.values.single, 4);
+    expect((await rows(db, 'PRAGMA user_version')).single.values.single, AppDatabase.currentSchemaVersion);
   });
 
   test('adds no field when no order has an address', () async {
