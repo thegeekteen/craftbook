@@ -94,6 +94,9 @@ extension BuildContextExtension on BuildContext {
             ],
           ),
           behavior: SnackBarBehavior.floating,
+          // A snackbar with an action never times out by default (Material 3),
+          // which left the Undo toast stuck on screen.
+          persist: false,
           action: onAction == null
               ? null
               : SnackBarAction(
