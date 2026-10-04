@@ -8,11 +8,13 @@ import '../../../../core/theme/palettes.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
+import '../../domain/entities/order_amount_shown.dart';
 import '../../domain/entities/theme_settings.dart';
+import '../bloc/order_amount_cubit.dart';
 import '../bloc/theme_cubit.dart';
 
-/// Colour scheme swatches plus dark mode (Auto follows the phone, On/Off
-/// force it).
+/// Colour scheme swatches, dark mode (Auto follows the phone, On/Off
+/// force it) and which amount order cards show.
 class AppearanceCard extends StatelessWidget {
   const AppearanceCard({super.key});
 
@@ -64,8 +66,46 @@ class AppearanceCard extends StatelessWidget {
               selected: look.mode,
               onSelected: cubit.setMode,
             ),
+            const SizedBox(height: 20),
+            const _OrderAmountSetting(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OrderAmountSetting extends StatelessWidget {
+  const _OrderAmountSetting();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final cubit = getIt<OrderAmountCubit>();
+    return BlocBuilder<OrderAmountCubit, OrderAmountShown>(
+      bloc: cubit,
+      builder: (context, shown) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Order cards show',
+              style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+          const SizedBox(height: 2),
+          Text(
+            shown == OrderAmountShown.total
+                ? 'What the customer pays'
+                : 'What you keep after costs',
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ChoiceChipRow<OrderAmountShown>.single(
+            options: const [
+              ChipOption(OrderAmountShown.total, 'Total'),
+              ChipOption(OrderAmountShown.profit, 'Profit'),
+            ],
+            selected: shown,
+            onSelected: cubit.set,
+          ),
+        ],
       ),
     );
   }

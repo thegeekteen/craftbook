@@ -3,16 +3,26 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_list_entry.dart';
 import 'order_status_ui.dart';
 
 /// Compact order row for calendars: name, "#id · 3 items · ₱412", pill.
+///
+/// The amount is the order total, or "₱310 profit" when [amountShown] asks
+/// for profit.
 class OrderMiniRow extends StatelessWidget {
   final OrderListEntry entry;
   final VoidCallback? onTap;
+  final OrderAmountShown amountShown;
 
-  const OrderMiniRow({super.key, required this.entry, this.onTap});
+  const OrderMiniRow({
+    super.key,
+    required this.entry,
+    this.onTap,
+    this.amountShown = OrderAmountShown.total,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +33,9 @@ class OrderMiniRow extends StatelessWidget {
       '#${o.id ?? '–'}',
       if (pieces > 0) '$pieces ${pieces == 1 ? 'item' : 'items'}',
       if (o.status != OrderStatus.cancelled)
-        '${CurrencyFormatter.formatShort(o.liveProfit)} profit',
+        amountShown == OrderAmountShown.profit
+            ? '${CurrencyFormatter.formatShort(o.liveProfit)} profit'
+            : CurrencyFormatter.formatShort(o.totalSales),
     ];
     return Material(
       color: c.surface,

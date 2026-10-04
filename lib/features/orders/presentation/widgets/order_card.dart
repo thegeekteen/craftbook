@@ -6,25 +6,34 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
+import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_list_entry.dart';
 import 'order_status_ui.dart';
 
-/// The order card used by Today, Orders and the calendars.
+/// The order card used by Today and Orders.
 ///
 /// Name and status, then the items, then id · when · channel and the
-/// profit (always recomputed from components).
+/// amount: the order total, or the profit (always recomputed from
+/// components) when [amountShown] asks for it.
 class OrderCard extends StatelessWidget {
   final OrderListEntry entry;
   final VoidCallback? onTap;
+  final OrderAmountShown amountShown;
 
-  const OrderCard({super.key, required this.entry, this.onTap});
+  const OrderCard({
+    super.key,
+    required this.entry,
+    this.onTap,
+    this.amountShown = OrderAmountShown.total,
+  });
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final order = entry.order;
-    final profit = order.liveProfit;
+    final showProfit = amountShown == OrderAmountShown.profit;
+    final amount = showProfit ? order.liveProfit : order.totalSales;
     final (whenText, whenUrgent) = whenLabel(order);
     final muted = AppTextStyles.bodySmall.copyWith(color: c.muted);
 
@@ -60,36 +69,49 @@ class OrderCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text(
-                '#${order.id ?? '–'}',
-                style: AppTextStyles.monoTag
-                    .copyWith(color: c.muted, fontSize: 11),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                whenText,
-                maxLines: 1,
-                style: muted.copyWith(
-                  color: whenUrgent ? c.alert : c.muted,
-                  fontWeight: whenUrgent ? FontWeight.w600 : FontWeight.w400,
+              // The left side shrinks (tag first) so the amount always sits
+              // on the right edge.
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      '#${order.id ?? '–'}',
+                      style: AppTextStyles.monoTag
+                          .copyWith(color: c.muted, fontSize: 11),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      whenText,
+                      maxLines: 1,
+                      style: muted.copyWith(
+                        color: whenUrgent ? c.alert : c.muted,
+                        fontWeight:
+                            whenUrgent ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                    if (entry.channelName != null) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                          child: AppTag(entry.channelName!,
+                              type: AppTagType.outline)),
+                    ],
+                  ],
                 ),
               ),
-              if (entry.channelName != null) ...[
+              if (order.status != OrderStatus.cancelled) ...[
                 const SizedBox(width: 8),
-                Flexible(
-                    child:
-                        AppTag(entry.channelName!, type: AppTagType.outline)),
-              ],
-              const SizedBox(width: 8),
-              const Spacer(),
-              if (order.status != OrderStatus.cancelled)
                 Text(
-                  CurrencyFormatter.formatShort(profit),
+                  CurrencyFormatter.formatShort(amount),
                   style: AppTextStyles.amount.copyWith(
                     fontSize: 15.5,
-                    color: profit >= 0 ? c.go : c.alert,
+                    color: !showProfit
+                        ? c.ink
+                        : amount >= 0
+                            ? c.go
+                            : c.alert,
                   ),
                 ),
+              ],
             ],
           ),
         ],

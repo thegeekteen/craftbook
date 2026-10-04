@@ -10,6 +10,7 @@ import '../../database/daos/product_dao.dart';
 
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/settings/presentation/bloc/order_amount_cubit.dart';
 import '../../features/settings/presentation/bloc/theme_cubit.dart';
 import '../../features/products/data/repositories/channel_repository_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -270,6 +271,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   ));
   // App-wide: lives above the router, so a singleton.
   getIt.registerSingleton(ThemeCubit(getIt()), dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(OrderAmountCubit(getIt()), dispose: (cubit) => cubit.close());
   getIt.registerFactory(() => TodayBloc(getTodayDashboard: getIt()));
   getIt.registerFactory(() => EarningsBloc(
     getEarningsSummary: getIt(),

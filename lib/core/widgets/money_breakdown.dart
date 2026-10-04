@@ -196,3 +196,31 @@ class MoneyRow extends StatelessWidget {
     );
   }
 }
+
+/// The bottom line under a [MoneyBreakdown]: a hairline, then profit and
+/// margin in green or red.
+class ProfitRow extends StatelessWidget {
+  final MoneyParts parts;
+
+  const ProfitRow({super.key, required this.parts});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final color = parts.profit >= 0 ? c.go : c.alert;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Divider(height: 1, color: c.hair),
+        ),
+        MoneyRow(
+          label: 'Profit · ${(parts.margin * 100).round()}% margin',
+          amount: parts.profit,
+          amountStyle: AppTextStyles.amount.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}

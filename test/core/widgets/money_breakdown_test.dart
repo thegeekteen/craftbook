@@ -1,4 +1,5 @@
 import 'package:craftbook/core/theme/app_theme.dart';
+import 'package:craftbook/core/theme/colors.dart';
 import 'package:craftbook/core/widgets/money_breakdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -173,6 +174,26 @@ void main() {
       await tester.tap(find.text('Tap me'));
       expect(tapped, isTrue);
       expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+    });
+  });
+
+  group('ProfitRow', () {
+    testWidgets('shows profit and margin in green', (tester) async {
+      await tester.pumpWidget(_wrap(const ProfitRow(
+        parts: MoneyParts(sales: 500, materials: 120, fees: 50, shipping: 30),
+      )));
+      expect(find.text('Profit · 60% margin'), findsOneWidget);
+      final amount = tester.widget<Text>(find.text('₱300.00'));
+      expect(amount.style?.color, AppTheme.lightTheme.extension<CraftColors>()!.go);
+    });
+
+    testWidgets('a loss is signed and red', (tester) async {
+      await tester.pumpWidget(_wrap(const ProfitRow(
+        parts: MoneyParts(sales: 100, materials: 150, fees: 0, shipping: 0),
+      )));
+      expect(find.text('Profit · -50% margin'), findsOneWidget);
+      final amount = tester.widget<Text>(find.text('−₱50.00'));
+      expect(amount.style?.color, AppTheme.lightTheme.extension<CraftColors>()!.alert);
     });
   });
 }

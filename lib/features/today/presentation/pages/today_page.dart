@@ -19,6 +19,8 @@ import '../../../../core/widgets/summary_board.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../../orders/domain/entities/order_list_entry.dart';
 import '../../../orders/presentation/widgets/order_card.dart';
+import '../../../settings/domain/entities/order_amount_shown.dart';
+import '../../../settings/presentation/bloc/order_amount_cubit.dart';
 import '../../domain/usecases/get_today_dashboard.dart';
 import '../bloc/today_bloc.dart';
 import '../bloc/today_event.dart';
@@ -198,9 +200,13 @@ class _TodayViewState extends State<_TodayView> {
         for (final e in entries)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: OrderCard(
-              entry: e,
-              onTap: () => _open(RouteNames.orderPath(e.order.id!)),
+            child: BlocBuilder<OrderAmountCubit, OrderAmountShown>(
+              bloc: getIt(),
+              builder: (context, shown) => OrderCard(
+                entry: e,
+                amountShown: shown,
+                onTap: () => _open(RouteNames.orderPath(e.order.id!)),
+              ),
             ),
           ),
       ];
