@@ -1,7 +1,7 @@
 import 'package:craftbook/core/theme/app_theme.dart';
 import 'package:craftbook/core/utils/note_codec.dart';
 import 'package:craftbook/features/orders/presentation/pages/note_editor_page.dart';
-import 'package:craftbook/features/orders/presentation/widgets/note_toolbar.dart';
+import 'package:craftbook/core/widgets/note/note_toolbar.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

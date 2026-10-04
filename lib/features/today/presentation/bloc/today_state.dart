@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../notes/domain/entities/note.dart';
 import '../../domain/usecases/get_today_dashboard.dart';
 
 /// Base class for today states
@@ -20,10 +21,13 @@ class TodayLoading extends TodayState {}
 class TodayLoaded extends TodayState {
   final TodayDashboard dashboard;
 
-  const TodayLoaded(this.dashboard);
+  /// Notes pinned to Today, most recently edited first.
+  final List<Note> pinnedNotes;
+
+  const TodayLoaded(this.dashboard, {this.pinnedNotes = const []});
 
   @override
-  List<Object?> get props => [dashboard];
+  List<Object?> get props => [dashboard, pinnedNotes];
 }
 
 /// Error occurred while loading today's data

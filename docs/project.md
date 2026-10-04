@@ -66,7 +66,7 @@ The app is built around 6 main user flows:
 ### Settings
 - **Export backup**: Raw SQLite file export via file picker (Android SAF compatible)
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
-- **Navigation hub**: Links to Products, Channels, Order fields, Buy List
+- **Navigation hub**: Links to Products, Channels, Order fields, Buy List, Notes
 
 ---
 
@@ -95,6 +95,7 @@ The app is built around 6 main user flows:
 | Delete products | ✅ | Blocked if in orders or has BOM items |
 | Delete channels | ✅ | Blocked if orders reference them |
 | Order fields | ✅ | Text, number, date and choice fields; drag to reorder; used fields archive instead of deleting. Replaced the built-in address (migrated in schema v4) |
+| Notes | ✅ | Shop notebook with title and rich-text body (headings, checklists, lists, quote, code, links, highlight, alignment); pin to Today; search; delete with Undo. Added in schema v5 |
 | Earnings report | ✅ | Period navigation, summary, per-product, waste |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |
@@ -102,7 +103,7 @@ The app is built around 6 main user flows:
 
 ### ✅ Infrastructure
 
-- **Database**: 9 tables, 5 DAOs, Drift ORM with code generation
+- **Database**: 14 tables, 7 DAOs, Drift ORM with code generation
 - **DI**: get_it with manual registration for all repos, use cases, BLoCs
 - **Navigation**: go_router with ShellRoute bottom nav + push detail pages + auto-refresh on return
 - **Theme**: Light and dark themes built from one token set (`CraftColors`), bundled fonts, three radii; follows the system setting

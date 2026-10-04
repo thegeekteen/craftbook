@@ -26,7 +26,7 @@ import '../../domain/entities/order.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
-import '../widgets/note_view.dart';
+import '../../../../core/widgets/note/note_view.dart';
 import '../widgets/order_status_ui.dart';
 import '../widgets/pack_confirm_sheet.dart';
 import 'adjust_materials_page.dart';

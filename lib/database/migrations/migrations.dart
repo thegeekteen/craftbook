@@ -107,4 +107,20 @@ Future<void> runMigrations(
       await db.customStatement('ALTER TABLE orders DROP COLUMN customer_address');
     });
   }
+
+  // Version 5: the shop's notebook.
+  if (from < 5) {
+    await db.customStatement(
+      'CREATE TABLE "notes" ('
+      '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      '"title" TEXT NOT NULL DEFAULT \'\', '
+      '"body" TEXT NULL, '
+      '"is_pinned" INTEGER NOT NULL DEFAULT 0 CHECK ("is_pinned" IN (0, 1)), '
+      '"created_at" INTEGER NOT NULL DEFAULT '
+      "(CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)), "
+      '"updated_at" INTEGER NOT NULL DEFAULT '
+      "(CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER))"
+      ')',
+    );
+  }
 }

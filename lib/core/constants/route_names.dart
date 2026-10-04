@@ -47,6 +47,12 @@ class RouteNames {
       '/earnings/$id?start=${start.millisecondsSinceEpoch}'
       '&end=${end.millisecondsSinceEpoch}';
 
+  // Notes
+  static const String notes = '/notes';
+  static const String newNote = '/notes/new';
+  static const String noteDetail = '/notes/:id';
+  static String notePath(int id) => '/notes/$id';
+
   // Settings
   static const String settings = '/settings';
   static const String about = '/about';

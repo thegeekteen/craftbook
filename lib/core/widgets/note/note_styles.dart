@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-import '../../../../core/theme/colors.dart';
-import '../../../../core/theme/dimens.dart';
-import '../../../../core/theme/text_styles.dart';
+import '../../theme/colors.dart';
+import '../../theme/dimens.dart';
+import '../../theme/text_styles.dart';
 
 /// Quill has its own style vocabulary; this maps it onto [CraftColors] and
 /// [AppTextStyles] so notes read like the rest of the app in both themes.
@@ -18,18 +18,13 @@ abstract final class NoteStyles {
     DefaultTextBlockStyle block(TextStyle style, [VerticalSpacing above = VerticalSpacing.zero]) =>
         DefaultTextBlockStyle(style, flat, above, VerticalSpacing.zero, null);
 
-    // The toolbar only offers one heading; the other levels are kept so a note
-    // that somehow carries them still renders sensibly.
-    final heading = block(
-      AppTextStyles.displaySmall.copyWith(color: c.ink, fontSize: 18, height: 1.3),
-      const VerticalSpacing(10, 4),
-    );
+    final heading = AppTextStyles.displaySmall.copyWith(color: c.ink, height: 1.3);
 
     return DefaultStyles(
       paragraph: block(base),
-      h1: heading,
-      h2: heading,
-      h3: heading,
+      h1: block(heading.copyWith(fontSize: 22), const VerticalSpacing(12, 4)),
+      h2: block(heading.copyWith(fontSize: 18), const VerticalSpacing(10, 4)),
+      h3: block(heading.copyWith(fontSize: 16), const VerticalSpacing(8, 2)),
       h4: block(base.copyWith(fontWeight: FontWeight.w700)),
       h5: block(base.copyWith(fontWeight: FontWeight.w700)),
       h6: block(base.copyWith(fontWeight: FontWeight.w700)),
@@ -84,8 +79,25 @@ abstract final class NoteStyles {
       sizeSmall: const TextStyle(fontSize: 12.5),
       sizeLarge: const TextStyle(fontSize: 17),
       sizeHuge: const TextStyle(fontSize: 21),
+      palette: palette(c),
     );
   }
+
+  /// Highlight colours by the name stored in the note. Names rather than hex,
+  /// so a highlight follows the theme instead of glaring in dark mode.
+  static Map<String, Color> palette(CraftColors c) => {
+        'warn': c.warnSoft,
+        'go': c.goSoft,
+        'coin': c.coinSoft,
+        'alert': c.alertSoft,
+      };
+
+  static const highlightLabels = {
+    'warn': 'Sand',
+    'go': 'Green',
+    'coin': 'Lavender',
+    'alert': 'Rose',
+  };
 
   /// Line-level extras Quill can't express through [DefaultStyles]: a ticked
   /// to-do fades and is struck through, so what's left to do stands out.

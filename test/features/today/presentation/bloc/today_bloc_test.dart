@@ -6,6 +6,8 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/notes/domain/entities/note.dart';
+import 'package:craftbook/features/notes/domain/usecases/get_pinned_notes.dart';
 import 'package:craftbook/features/today/domain/usecases/get_alert_summary.dart';
 import 'package:craftbook/features/today/domain/usecases/get_today_dashboard.dart';
 import 'package:craftbook/features/today/presentation/bloc/today_bloc.dart';
@@ -14,8 +16,11 @@ import 'package:craftbook/features/today/presentation/bloc/today_state.dart';
 
 class MockGetTodayDashboard extends Mock implements GetTodayDashboard {}
 
+class MockGetPinnedNotes extends Mock implements GetPinnedNotes {}
+
 void main() {
   late MockGetTodayDashboard getTodayDashboard;
+  late MockGetPinnedNotes getPinnedNotes;
 
   const alerts = AlertSummary(lowStockCount: 0, materialNames: []);
   const dashboard = TodayDashboard(
@@ -33,9 +38,14 @@ void main() {
 
   setUp(() {
     getTodayDashboard = MockGetTodayDashboard();
+    getPinnedNotes = MockGetPinnedNotes();
+    when(() => getPinnedNotes()).thenAnswer((_) async => const Success(<Note>[]));
   });
 
-  TodayBloc build() => TodayBloc(getTodayDashboard: getTodayDashboard);
+  TodayBloc build() => TodayBloc(
+        getTodayDashboard: getTodayDashboard,
+        getPinnedNotes: getPinnedNotes,
+      );
 
   test('initial state is TodayInitial', () {
     expect(build().state, isA<TodayInitial>());
@@ -79,6 +89,33 @@ void main() {
     act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [const TodayError('oops')],
   );
+
+  group('pinned notes', () {
+    const pinned = [Note(id: 1, title: 'Supplier', isPinned: true)];
+
+    blocTest<TodayBloc, TodayState>(
+      'are loaded alongside the dashboard',
+      setUp: () {
+        when(() => getTodayDashboard()).thenAnswer((_) async => const Success(dashboard));
+        when(() => getPinnedNotes()).thenAnswer((_) async => const Success(pinned));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadToday()),
+      expect: () => [isA<TodayLoading>(), const TodayLoaded(dashboard, pinnedNotes: pinned)],
+    );
+
+    blocTest<TodayBloc, TodayState>(
+      'failing to load them is reported, not hidden',
+      setUp: () {
+        when(() => getTodayDashboard()).thenAnswer((_) async => const Success(dashboard));
+        when(() => getPinnedNotes())
+            .thenAnswer((_) async => const Error(DatabaseFailure('notes down')));
+      },
+      build: build,
+      act: (bloc) => bloc.add(const LoadToday()),
+      expect: () => [isA<TodayLoading>(), const TodayError('notes down')],
+    );
+  });
 
   group('done completer', () {
     test('completes after a successful load', () async {

@@ -1,7 +1,9 @@
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/utils/note_codec.dart';
-import 'package:craftbook/database/app_database.dart';
+import 'package:craftbook/database/app_database.dart' hide Note;
+import 'package:craftbook/features/notes/domain/entities/note.dart';
+import 'package:craftbook/features/notes/domain/repositories/note_repository.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
 import 'package:craftbook/features/order_fields/domain/order_field_codec.dart';
 import 'package:craftbook/features/order_fields/domain/repositories/order_field_repository.dart';
@@ -23,8 +25,8 @@ T _ok<T>(Result<T> r) => switch (r) {
     };
 
 /// Fills a fresh database with a small craft shop: channels, materials,
-/// products with BOMs, order fields, and orders in every status spread over
-/// recent days.
+/// products with BOMs, order fields, orders in every status spread over
+/// recent days, and a few notes.
 /// Requires [configureDependencies] to have run.
 Future<void> seedSampleShop() async {
   final channels = getIt<ChannelRepository>();
@@ -213,4 +215,48 @@ Future<void> seedSampleShop() async {
       placedDaysAgo: 0, shipInDays: 5, address: '14 Mabini St, Cubao, Quezon City', fees: 28.8, shipping: 30);
 
   _ok(await fields.setArchived(cardField, true));
+
+  await _seedNotes();
+}
+
+/// Note 1 is a pinned checklist, so Today and the editor both have one.
+Future<void> _seedNotes() async {
+  final notes = getIt<NoteRepository>();
+  Future<void> add(String title, Delta body, {bool pinned = false}) async =>
+      _ok(await notes.createNote(Note(title: title, body: NoteCodec.encode(body), isPinned: pinned)));
+
+  await add(
+    'Packing checklist',
+    Delta()
+      ..line('Before every parcel', {'header': 2})
+      ..line('Bubble wrap round the bouquet stems', {'list': 'checked'})
+      ..line('Thank-you card with care tips', {'list': 'checked'})
+      ..line('Photo of the parcel for the buyer', {'list': 'unchecked'})
+      ..line('Waybill taped flat', {'list': 'unchecked'})
+      ..insert('Fragile', {'background': 'warn', 'bold': true})
+      ..insert(' sticker on resin orders.\n'),
+    pinned: true,
+  );
+  await add(
+    'Suppliers',
+    Delta()
+      ..line('Yarn: Divisoria, stall 14 (ask for Aling Nena)', {'list': 'bullet'})
+      ..line('Resin & molds: online, ships Tuesdays', {'list': 'bullet'})
+      ..insert('Kraft boxes cheaper by 100s.', {'italic': true})
+      ..insert('\n'),
+  );
+  await add(
+    'Christmas collection ideas',
+    Delta()
+      ..insert('Poinsettia bouquet in red and cream. Mini wreath keychains. '
+          'Bundle a tulip with a strap for gifts.\n')
+      ..line('Price check before November.', {'blockquote': true}),
+  );
+}
+
+extension on Delta {
+  /// One line with a block format, which Quill keeps on the newline only.
+  void line(String text, Map<String, Object?> format) => this
+    ..insert(text)
+    ..insert('\n', format);
 }

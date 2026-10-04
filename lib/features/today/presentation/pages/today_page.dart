@@ -16,6 +16,8 @@ import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/status_filter_chips.dart';
 import '../../../../core/widgets/summary_board.dart';
+import '../../../notes/domain/entities/note.dart';
+import '../../../notes/presentation/widgets/note_card.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../../orders/domain/entities/order_list_entry.dart';
 import '../../../orders/presentation/widgets/order_card.dart';
@@ -47,6 +49,9 @@ class _TodayView extends StatefulWidget {
 }
 
 class _TodayViewState extends State<_TodayView> {
+  /// Today is about orders; the rest of the pinned notes are a tap away.
+  static const _pinnedNotesShown = 3;
+
   Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
 
   void _reload() => context.read<TodayBloc>().add(const LoadToday());
@@ -55,6 +60,18 @@ class _TodayViewState extends State<_TodayView> {
   Future<void> _open(String location) async {
     final changed = await context.push<bool>(location);
     if (changed == true && mounted) _reload();
+  }
+
+  /// The note editor pops with `true` after a save and with the note after a
+  /// delete; either way Today's pinned list may have changed.
+  Future<void> _openNote(int id) async {
+    final result = await context.push<Object?>(RouteNames.notePath(id));
+    if (result != null && mounted) _reload();
+  }
+
+  Future<void> _openNotes() async {
+    await context.push(RouteNames.notes);
+    if (mounted) _reload();
   }
 
   @override
@@ -94,7 +111,8 @@ class _TodayViewState extends State<_TodayView> {
         },
         builder: (context, state) {
           return switch (state) {
-            TodayLoaded(:final dashboard) => _buildDashboard(dashboard),
+            TodayLoaded(:final dashboard, :final pinnedNotes) =>
+              _buildDashboard(dashboard, pinnedNotes),
             TodayError(:final message) =>
               Center(child: ErrorState(message: message, onRetry: _reload)),
             _ => const Center(child: CircularProgressIndicator()),
@@ -109,7 +127,7 @@ class _TodayViewState extends State<_TodayView> {
     );
   }
 
-  Widget _buildDashboard(TodayDashboard d) {
+  Widget _buildDashboard(TodayDashboard d, List<Note> pinnedNotes) {
     final c = context.colors;
     bool shown(OrderListEntry e) => _statusFilter.contains(e.order.status);
     final due = d.due.where(shown).toList();
@@ -162,6 +180,19 @@ class _TodayViewState extends State<_TodayView> {
               actionLabel: 'Buy list',
               onTap: () => _open(RouteNames.buyList),
             ),
+          ],
+          if (pinnedNotes.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SectionLabel(
+              'Pinned notes · ${pinnedNotes.length}',
+              trailing: SectionAction(label: 'All notes', onTap: _openNotes),
+            ),
+            const SizedBox(height: 8),
+            for (final note in pinnedNotes.take(_pinnedNotesShown))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: NoteCard(note: note, compact: true, onTap: () => _openNote(note.id!)),
+              ),
           ],
           const SizedBox(height: 16),
           StatusFilterChips(
