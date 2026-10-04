@@ -109,6 +109,11 @@ import '../../features/notes/domain/usecases/save_note.dart';
 import '../../features/notes/domain/usecases/set_note_pinned.dart';
 import '../../features/notes/presentation/bloc/note_edit_cubit.dart';
 import '../../features/notes/presentation/bloc/notes_bloc.dart';
+import '../../features/updates/data/repositories/github_update_repository.dart';
+import '../../features/updates/domain/repositories/update_repository.dart';
+import '../../features/updates/domain/usecases/check_for_update.dart';
+import '../../features/updates/domain/usecases/install_update.dart';
+import '../../features/updates/presentation/bloc/update_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -162,6 +167,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerLazySingleton<SettingsRepository>(
     () => SettingsRepositoryImpl(getIt<AppDatabase>()),
   );
+  getIt.registerLazySingleton<UpdateRepository>(
+    () => GithubUpdateRepository(),
+  );
 
   // Use Cases - Order fields
   getIt.registerFactory(() => GetOrderFields(getIt()));
@@ -184,6 +192,10 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => SetNotePinned(getIt()));
   getIt.registerFactory(() => DeleteNote(getIt()));
   getIt.registerFactory(() => RestoreNote(getIt()));
+
+  // Use Cases - Updates
+  getIt.registerFactory(() => CheckForUpdate(getIt()));
+  getIt.registerFactory(() => InstallUpdate(getIt()));
 
   // Use Cases - Products
   getIt.registerFactory(() => GetChannels(getIt()));
@@ -357,6 +369,11 @@ Future<void> configureDependencies({AppDatabase? database}) async {
       dispose: (cubit) => cubit.close());
   getIt.registerSingleton(OrderAmountCubit(getIt()),
       dispose: (cubit) => cubit.close());
+  getIt.registerFactory(() => UpdateCubit(
+        repository: getIt(),
+        checkForUpdate: getIt(),
+        installUpdate: getIt(),
+      ));
   getIt.registerFactory(() => TodayBloc(
         getTodayDashboard: getIt(),
         getPinnedNotes: getIt(),

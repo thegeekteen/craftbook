@@ -1,0 +1,126 @@
+# Builds a signed APK and publishes it as a GitHub release on every push to
+# main. The app's "Check for updates" (lib/features/updates) installs the
+# newest of these releases.
+#
+# Version: major.minor come from pubspec.yaml; the patch and the Android
+# versionCode are the number of commits on main, so every release is newer
+# than the one before. Bump pubspec.yaml's major or minor for a bigger jump.
+#
+# Needs these repository secrets (see README "Releases"):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+#   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: Release APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'AGENTS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One release at a time, in push order.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history and tags: the commit count is the version, and the
+          # previous tag bounds the release notes.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.6
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter test
+
+      - name: Work out the version
+        id: version
+        run: |
+          base=$(sed -nE 's/^version: *([0-9]+)\.([0-9]+)\..*/\1.\2/p' pubspec.yaml)
+          code=$(git rev-list --count HEAD)
+          name="$base.$code"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "tag=v$name" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$name" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$name is already released; nothing to do."
+          fi
+
+      - name: Set up signing
+        if: steps.version.outputs.exists != 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # A debug-signed APK can't update an installed release, so refuse
+          # to publish one.
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set. See README, Releases."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks
+          cat > android/key.properties <<EOF
+          storeFile=app/release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build APK
+        if: steps.version.outputs.exists != 'true'
+        run: |
+          flutter build apk --release \
+            --build-name=${{ steps.version.outputs.name }} \
+            --build-number=${{ steps.version.outputs.code }}
+          mv build/app/outputs/flutter-apk/app-release.apk \
+            craftbook-${{ steps.version.outputs.name }}.apk
+
+      - name: Write release notes
+        if: steps.version.outputs.exists != 'true'
+        run: |
+          prev=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          {
+            echo "## What's new"
+            echo
+            git log --no-merges --pretty='- %s' ${prev:+$prev..}HEAD | head -n 30
+          } > notes.md
+          cat notes.md
+
+      - name: Publish release
+        if: steps.version.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ steps.version.outputs.tag }} \
+            craftbook-${{ steps.version.outputs.name }}.apk \
+            --title "Craftbook ${{ steps.version.outputs.name }}" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA"
+
+      - name: Remove signing files
+        if: always()
+        run: rm -f android/app/release.jks android/key.properties

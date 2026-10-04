@@ -8,7 +8,7 @@ It answers three everyday questions:
 - **Do I have enough materials, and what should I buy?**
 - **How much did I actually make,** after materials, waste, platform fees and shipping?
 
-Everything stays on the phone. There are no accounts, no sync and no network calls. You can export the whole database to a file as a backup.
+Everything stays on the phone. There are no accounts and no sync. The app only goes online when you tap **Check for updates**, and then it only asks GitHub for the newest version. You can export the whole database to a file as a backup.
 
 ---
 
@@ -78,6 +78,10 @@ Only **packed and shipped** orders count.
 ### 5. Backups
 
 More → **Export backup** saves the SQLite file wherever you choose. **Restore from backup** replaces everything on the phone with a backup file; restart the app afterwards.
+
+### 6. Updates
+
+More → **Check for updates** looks for a newer version of Craftbook. If there is one, it shows what changed. Tap **Update** to download it and open Android's installer. The first time, Android asks you to allow installs from Craftbook. Your data stays as it is.
 
 ---
 
@@ -154,7 +158,8 @@ lib/
     ├── stock/            # materials, receive, buy list
     ├── products/         # products, BOM editor, channels
     ├── earnings/         # Money tab
-    └── settings/         # More tab, backup/restore
+    ├── settings/         # More tab, backup/restore
+    └── updates/          # check GitHub releases, download and install
 ```
 
 Each feature has `presentation/` (pages, BLoCs, widgets), `domain/` (entities, use cases, repository interfaces) and `data/` (repository implementations). Use cases return a `Result<T>` (`Success` or `Error`) instead of throwing.
@@ -166,7 +171,7 @@ Each feature has `presentation/` (pages, BLoCs, widgets), `domain/` (entities, u
 ### Requirements
 
 - Flutter 3.x (Dart SDK ≥ 3.5)
-- Android SDK (min API 21, target/compile API 36)
+- Android SDK (min API 24, target/compile API 36)
 
 ### Run it
 
@@ -192,6 +197,34 @@ flutter test --run-skipped --tags screenshots --update-goldens
 ```
 
 The PNGs land in `test/screenshots/goldens/`, which is git-ignored.
+
+### Releases
+
+Every push to `main` runs [.github/workflows/release.yml](.github/workflows/release.yml). It runs the checks, builds a signed APK and publishes it as a GitHub release. The app's **Check for updates** installs the newest one.
+
+- **Version:** major and minor come from `pubspec.yaml`. The patch number is the commit count on `main`, so `1.0.73` is the 73rd commit. Bump `pubspec.yaml` for a new minor or major.
+- **Signing:** Android only installs an update that is signed with the same key as the installed app. Every release must use the same keystore, and losing it means users have to uninstall and reinstall. Back it up somewhere safe.
+
+To set up the key once:
+
+```bash
+keytool -genkeypair -v -keystore craftbook-release.jks -alias craftbook \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 craftbook-release.jks   # paste into ANDROID_KEYSTORE_BASE64
+```
+
+Then add these repository secrets (Settings → Secrets and variables → Actions): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`craftbook`) and `ANDROID_KEY_PASSWORD`. The workflow won't publish without them.
+
+To sign a local release build with the same key, create `android/key.properties` (git-ignored):
+
+```properties
+storeFile=/absolute/path/to/craftbook-release.jks
+storePassword=…
+keyAlias=craftbook
+keyPassword=…
+```
+
+Without it, local release builds use the debug key.
 
 ### Further reading
 
