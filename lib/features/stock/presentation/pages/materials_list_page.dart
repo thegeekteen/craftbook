@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
-import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -14,10 +12,11 @@ import '../../domain/entities/material.dart';
 import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
 import '../bloc/materials_state.dart';
+import '../widgets/buy_list_button.dart';
 import '../widgets/material_actions.dart';
 import '../widgets/material_card.dart';
 
-enum _StockFilter { all, low, promised }
+enum _StockFilter { all, low, promised, archived }
 
 /// Every material with its pips; filter by low or promised.
 class MaterialsListPage extends StatelessWidget {
@@ -54,28 +53,15 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     final lowCount =
-        _materials.where((m) => m.isLowStock).length + _lowProducts;
+        _materials.where((m) => m.isLowStock && !m.isArchived).length +
+            _lowProducts;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stock'),
+        title: const Text('Materials'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: OutlinedButton.icon(
-              onPressed: () => _open(RouteNames.buyList),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 38),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                textStyle: AppTextStyles.bodySmall
-                    .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              icon: Icon(Icons.shopping_basket_outlined,
-                  size: 17, color: lowCount > 0 ? c.alert : c.muted),
-              label: Text(lowCount > 0 ? 'Buy list · $lowCount' : 'Buy list'),
-            ),
-          ),
+          BuyListButton(
+              lowCount: lowCount, onPressed: () => _open(RouteNames.buyList)),
         ],
       ),
       body: BlocConsumer<MaterialsBloc, MaterialsState>(
@@ -114,17 +100,27 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
   }
 
   Widget _buildList() {
-    final searched = _query.isEmpty
+    final matching = _query.isEmpty
         ? _materials
         : _materials
             .where((m) => m.name.toLowerCase().contains(_query))
             .toList();
-    bool passes(Material m) => switch (_filter) {
-          _StockFilter.all => true,
+    // Archived materials only show under their own chip.
+    final searched = matching.where((m) => !m.isArchived).toList();
+    final archived = matching.where((m) => m.isArchived).toList();
+    final hasArchived = _materials.any((m) => m.isArchived);
+    // The Archived chip hides when empty; don't strand the user on it.
+    final filter = _filter == _StockFilter.archived && !hasArchived
+        ? _StockFilter.all
+        : _filter;
+    bool passes(Material m) => switch (filter) {
+          _StockFilter.all || _StockFilter.archived => true,
           _StockFilter.low => m.isLowStock,
           _StockFilter.promised => m.quantityPromised > 0,
         };
-    final visible = searched.where(passes).toList()
+    final visible = (filter == _StockFilter.archived ? archived : searched)
+        .where(passes)
+        .toList()
       // Low stock first so problems surface without filtering.
       ..sort((a, b) {
         if (a.isLowStock != b.isLowStock) return a.isLowStock ? -1 : 1;
@@ -144,7 +140,7 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
           padding: const EdgeInsets.only(bottom: 6),
           child: ChoiceChipRow<_StockFilter>.single(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            selected: _filter,
+            selected: filter,
             onSelected: (f) => setState(() => _filter = f),
             options: [
               ChipOption(_StockFilter.all, 'All', count: searched.length),
@@ -152,6 +148,9 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
                   count: searched.where((m) => m.isLowStock).length),
               ChipOption(_StockFilter.promised, 'Promised',
                   count: searched.where((m) => m.quantityPromised > 0).length),
+              if (hasArchived)
+                ChipOption(_StockFilter.archived, 'Archived',
+                    count: archived.length),
             ],
           ),
         ),
@@ -159,7 +158,7 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
           child: RefreshIndicator(
             onRefresh: () async => _reload(),
             child: visible.isEmpty
-                ? ListView(children: [_empty()])
+                ? ListView(children: [_empty(filter)])
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(
                         16, 4, 16, AppSpacing.fabClearance),
@@ -183,7 +182,7 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
     );
   }
 
-  Widget _empty() {
+  Widget _empty(_StockFilter filter) {
     if (_materials.isEmpty) {
       return EmptyState(
         icon: Icons.inventory_2_outlined,
@@ -199,7 +198,12 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
           title: 'No matches',
           message: 'Nothing matches "$_query".');
     }
-    return switch (_filter) {
+    return switch (filter) {
+      _StockFilter.all => const EmptyState(
+          icon: Icons.archive_outlined,
+          title: 'Every material is archived',
+          message: 'Tap Archived to see them.',
+        ),
       _StockFilter.low => const EmptyState(
           icon: Icons.check_circle_outline_rounded,
           title: 'Nothing is low',

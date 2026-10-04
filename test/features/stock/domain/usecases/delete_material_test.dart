@@ -5,7 +5,6 @@ import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
-import 'package:craftbook/features/stock/domain/entities/stock_movement.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:craftbook/features/stock/domain/usecases/delete_material.dart';
 
@@ -22,20 +21,8 @@ void main() {
     id: 1,
     name: 'Test Product',
     sellPrice: 100,
-    isActive: true,
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),
-  );
-
-  final testMovement = StockMovement(
-    id: 1,
-    materialId: 1,
-    orderId: null,
-    type: StockMovementType.received,
-    quantity: 10,
-    unitCost: 5.0,
-    createdAt: DateTime(2026, 1, 1),
-    reference: 'Received',
   );
 
   setUp(() {
@@ -48,11 +35,12 @@ void main() {
   });
 
   group('DeleteMaterial', () {
+    // Stock history alone no longer blocks: the repository deletes it too.
     test('deletes material when not in use', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
           .thenAnswer((_) async => const Success<List<Product>>([]));
-      when(() => mockMaterialRepo.getStockMovements(1))
-          .thenAnswer((_) async => const Success<List<StockMovement>>([]));
+      when(() => mockMaterialRepo.isUsedInOrders(1))
+          .thenAnswer((_) async => const Success(false));
       when(() => mockMaterialRepo.deleteMaterial(1))
           .thenAnswer((_) async => const Success<void>(null));
 
@@ -79,22 +67,30 @@ void main() {
       verifyNever(() => mockMaterialRepo.deleteMaterial(any()));
     });
 
-    test('blocks deletion when has stock movement history', () async {
+    test('blocks deletion when an order used it', () async {
       when(() => mockProductRepo.getProductsUsingMaterial(1))
           .thenAnswer((_) async => const Success<List<Product>>([]));
-      when(() => mockMaterialRepo.getStockMovements(1)).thenAnswer(
-          (_) async => Success<List<StockMovement>>([testMovement]));
+      when(() => mockMaterialRepo.isUsedInOrders(1))
+          .thenAnswer((_) async => const Success(true));
 
       final result = await deleteMaterial(1);
 
-      expect(result, isA<Error<void>>());
-      switch (result) {
-        case Error(:final failure):
-          expect(failure, isA<ValidationFailure>());
-          expect(failure.message, contains('stock movement'));
-        case Success():
-          fail('Should return error');
-      }
+      expect(
+          result,
+          const Error<void>(ValidationFailure(
+              'Cannot delete material: used in past orders. Archive it instead.')));
+      verifyNever(() => mockMaterialRepo.deleteMaterial(any()));
+    });
+
+    test('passes on a failed order lookup', () async {
+      when(() => mockProductRepo.getProductsUsingMaterial(1))
+          .thenAnswer((_) async => const Success<List<Product>>([]));
+      when(() => mockMaterialRepo.isUsedInOrders(1))
+          .thenAnswer((_) async => const Error(DatabaseFailure('locked')));
+
+      final result = await deleteMaterial(1);
+
+      expect(result, const Error<void>(DatabaseFailure('locked')));
       verifyNever(() => mockMaterialRepo.deleteMaterial(any()));
     });
   });

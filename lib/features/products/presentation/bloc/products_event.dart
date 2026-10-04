@@ -8,14 +8,15 @@ abstract class ProductsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load all products from the database
+/// Load products from the database, archived ones too unless
+/// [includeArchived] is false
 class LoadProducts extends ProductsEvent {
-  final bool activeOnly;
+  final bool includeArchived;
 
-  const LoadProducts({this.activeOnly = false});
+  const LoadProducts({this.includeArchived = true});
 
   @override
-  List<Object?> get props => [activeOnly];
+  List<Object?> get props => [includeArchived];
 }
 
 /// Create a new product
@@ -54,7 +55,7 @@ class UpdateProductEvent extends ProductsEvent {
   final String? description;
   final double? sellPrice;
   final double? unitCost;
-  final bool? isActive;
+  final bool? isArchived;
   final bool? isStandalone;
   final int? alertLevel;
 
@@ -64,7 +65,7 @@ class UpdateProductEvent extends ProductsEvent {
     this.description,
     this.sellPrice,
     this.unitCost,
-    this.isActive,
+    this.isArchived,
     this.isStandalone,
     this.alertLevel,
   });
@@ -76,7 +77,7 @@ class UpdateProductEvent extends ProductsEvent {
         description,
         sellPrice,
         unitCost,
-        isActive,
+        isArchived,
         isStandalone,
         alertLevel
       ];

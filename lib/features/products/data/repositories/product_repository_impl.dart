@@ -27,9 +27,9 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Result<List<Product>>> getActiveProducts() async {
+  Future<Result<List<Product>>> getUnarchivedProducts() async {
     try {
-      final rows = await dao.getActiveProducts();
+      final rows = await dao.getUnarchivedProducts();
       return Success(rows.map(_toEntity).toList());
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -119,7 +119,7 @@ class ProductRepositoryImpl implements ProductRepository {
     String? description,
     double? sellPrice,
     double? unitCost,
-    bool? isActive,
+    bool? isArchived,
     bool? isStandalone,
     int? alertLevel,
   }) async {
@@ -136,7 +136,7 @@ class ProductRepositoryImpl implements ProductRepository {
             ? existing.description
             : (description.trim().isEmpty ? null : description.trim()),
         sellPrice: sellPrice ?? existing.sellPrice,
-        isActive: isActive ?? existing.isActive,
+        isArchived: isArchived ?? existing.isArchived,
         isStandalone: isStandalone ?? existing.isStandalone,
         quantityOnHand: existing.quantityOnHand,
         quantityPromised: existing.quantityPromised,
@@ -252,8 +252,11 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> deleteProduct(int id) async {
     try {
-      await dao.deleteBomItemsByProductId(id);
-      await dao.deleteProduct(id);
+      await dao.transaction(() async {
+        await dao.deleteBomItemsByProductId(id);
+        await dao.deleteProductStockMovementsForProduct(id);
+        await dao.deleteProduct(id);
+      });
       return const Success(null);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -510,7 +513,7 @@ class ProductRepositoryImpl implements ProductRepository {
         name: row.name,
         description: row.description,
         sellPrice: row.sellPrice,
-        isActive: row.isActive,
+        isArchived: row.isArchived,
         isStandalone: row.isStandalone,
         quantityOnHand: row.quantityOnHand,
         quantityPromised: row.quantityPromised,

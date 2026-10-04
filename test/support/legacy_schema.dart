@@ -1,7 +1,18 @@
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+/// Turns a current database back into schema 7, from before archiving:
+/// products get their "show in new orders" switch back, all on.
+void downgradeToV7(raw.Database db) {
+  db.execute('ALTER TABLE products DROP COLUMN is_archived');
+  db.execute('ALTER TABLE materials DROP COLUMN is_archived');
+  db.execute('ALTER TABLE products ADD COLUMN "is_active" INTEGER NOT NULL '
+      'DEFAULT 1 CHECK ("is_active" IN (0, 1))');
+  db.execute('PRAGMA user_version = 7');
+}
+
 /// Turns a current database back into schema 6, from before product photos.
 void downgradeToV6(raw.Database db) {
+  downgradeToV7(db);
   db.execute('ALTER TABLE products DROP COLUMN photo');
   db.execute('PRAGMA user_version = 6');
 }

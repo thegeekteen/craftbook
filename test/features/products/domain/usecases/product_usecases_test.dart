@@ -20,7 +20,6 @@ void main() {
     name: 'Custom Magnets',
     description: 'set of 3',
     sellPrice: 249.0,
-    isActive: true,
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),
   );
@@ -106,11 +105,11 @@ void main() {
       }
     });
 
-    test('returns active products only', () async {
-      when(() => mockRepository.getActiveProducts())
+    test('leaves out archived products when asked', () async {
+      when(() => mockRepository.getUnarchivedProducts())
           .thenAnswer((_) async => Success<List<Product>>([testProduct]));
 
-      final result = await getProducts(activeOnly: true);
+      final result = await getProducts(includeArchived: false);
 
       expect(result, isA<Success<List<Product>>>());
       switch (result) {

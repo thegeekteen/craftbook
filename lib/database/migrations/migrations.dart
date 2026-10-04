@@ -143,4 +143,18 @@ Future<void> runMigrations(
   if (from < 7) {
     await db.customStatement('ALTER TABLE products ADD COLUMN photo BLOB');
   }
+
+  // Version 8: archiving replaces the product's "show in new orders" switch,
+  // and materials can be archived too. A hidden product becomes archived.
+  if (from < 8) {
+    await db.transaction(() async {
+      const column = '"is_archived" INTEGER NOT NULL DEFAULT 0 '
+          'CHECK ("is_archived" IN (0, 1))';
+      await db.customStatement('ALTER TABLE products ADD COLUMN $column');
+      await db.customStatement('ALTER TABLE materials ADD COLUMN $column');
+      await db.customStatement(
+          'UPDATE products SET is_archived = 1 WHERE is_active = 0');
+      await db.customStatement('ALTER TABLE products DROP COLUMN is_active');
+    });
+  }
 }

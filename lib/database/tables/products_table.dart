@@ -6,7 +6,10 @@ class Products extends Table {
   TextColumn get name => text()();
   TextColumn get description => text().nullable()();
   RealColumn get sellPrice => real()();
-  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  /// Archived products are kept for past orders but left out of lists,
+  /// pickers, alerts and the buy list.
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   BoolColumn get isStandalone => boolean().withDefault(const Constant(false))();
   IntColumn get quantityOnHand => integer().withDefault(const Constant(0))();
   IntColumn get quantityPromised => integer().withDefault(const Constant(0))();

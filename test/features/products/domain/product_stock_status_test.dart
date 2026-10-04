@@ -14,7 +14,6 @@ Product _product({
       id: 1,
       name: 'Tulip',
       sellPrice: 400,
-      isActive: true,
       isStandalone: standalone,
       quantityOnHand: onHand,
       quantityPromised: promised,

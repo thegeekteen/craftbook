@@ -22,7 +22,8 @@ class MaterialCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final m = material;
-    final low = m.isLowStock;
+    // An archived material isn't restocked, so it never reads as low.
+    final low = m.isLowStock && !m.isArchived;
     final short = m.quantityFree < 0 ? -m.quantityFree : 0;
     final summary = [
       '${m.quantityFree < 0 ? 0 : m.quantityFree} free',
@@ -31,7 +32,7 @@ class MaterialCard extends StatelessWidget {
       '${CurrencyFormatter.format(m.unitCost)}/pc',
     ].join(' · ');
 
-    return AppCard(
+    final card = AppCard(
       onTap: onTap,
       onLongPress: onLongPress,
       borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
@@ -52,6 +53,7 @@ class MaterialCard extends StatelessWidget {
                       style: AppTextStyles.bodyLarge
                           .copyWith(color: low ? c.alert : c.ink),
                     ),
+                    if (m.isArchived) const AppTag('Archived'),
                     if (low) const AppTag.low(),
                   ],
                 ),
@@ -87,5 +89,6 @@ class MaterialCard extends StatelessWidget {
         ],
       ),
     );
+    return m.isArchived ? Opacity(opacity: 0.6, child: card) : card;
   }
 }

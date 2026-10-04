@@ -42,7 +42,7 @@ class _CalendarPageState extends State<CalendarPage> {
   late CalendarMode _mode = widget.initialMode;
   late DateTime _anchor = app_date.DateUtils.startOfDay(DateTime.now());
   late DateTime _selectedDay = _anchor;
-  Set<OrderStatus> _statusFilter = Set.from(OrderStatus.values);
+  Set<OrderStatus> _statusFilter = Set.from(StatusFilterChips.dayViewStatuses);
 
   List<OrderListEntry> _entries = [];
   bool _loading = true;

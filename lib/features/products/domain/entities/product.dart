@@ -8,7 +8,9 @@ class Product extends Equatable {
   final String name;
   final String? description;
   final double sellPrice;
-  final bool isActive;
+
+  /// Kept for past orders but left out of lists, pickers and alerts.
+  final bool isArchived;
   final bool isStandalone;
   final int quantityOnHand;
   final int quantityPromised;
@@ -29,7 +31,7 @@ class Product extends Equatable {
     required this.name,
     this.description,
     required this.sellPrice,
-    required this.isActive,
+    this.isArchived = false,
     this.isStandalone = false,
     this.quantityOnHand = 0,
     this.quantityPromised = 0,
@@ -46,7 +48,7 @@ class Product extends Equatable {
         name,
         description,
         sellPrice,
-        isActive,
+        isArchived,
         isStandalone,
         quantityOnHand,
         quantityPromised,
@@ -62,7 +64,7 @@ class Product extends Equatable {
     String? name,
     String? description,
     double? sellPrice,
-    bool? isActive,
+    bool? isArchived,
     bool? isStandalone,
     int? quantityOnHand,
     int? quantityPromised,
@@ -78,7 +80,7 @@ class Product extends Equatable {
       name: name ?? this.name,
       description: description ?? this.description,
       sellPrice: sellPrice ?? this.sellPrice,
-      isActive: isActive ?? this.isActive,
+      isArchived: isArchived ?? this.isArchived,
       isStandalone: isStandalone ?? this.isStandalone,
       quantityOnHand: quantityOnHand ?? this.quantityOnHand,
       quantityPromised: quantityPromised ?? this.quantityPromised,

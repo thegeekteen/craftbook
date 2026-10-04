@@ -18,7 +18,7 @@ final _now = DateTime(2026, 1, 1);
 
 Product _product({
   bool standalone = false,
-  bool active = true,
+  bool archived = false,
   int onHand = 0,
   int promised = 0,
   int alertLevel = 0,
@@ -29,7 +29,7 @@ Product _product({
       name: 'Tulip bouquet',
       description: description,
       sellPrice: 400,
-      isActive: active,
+      isArchived: archived,
       isStandalone: standalone,
       quantityOnHand: onHand,
       quantityPromised: promised,
@@ -125,10 +125,10 @@ void main() {
     });
   });
 
-  testWidgets('shows price, cost, margin, description and hidden tag',
+  testWidgets('shows price, cost, margin, description and archived tag',
       (tester) async {
     await tester.pumpWidget(_wrap(ProductSummaryCard(
-      product: _product(active: false, description: 'Seven crochet tulips'),
+      product: _product(archived: true, description: 'Seven crochet tulips'),
       cost: 100,
       buildable: 10,
     )));
@@ -138,7 +138,7 @@ void main() {
     expect(find.text('75%'), findsOneWidget);
     expect(_colorOf(tester, '75%'), _colors(tester).go);
     expect(find.text('Seven crochet tulips'), findsOneWidget);
-    expect(find.text('HIDDEN'), findsOneWidget);
+    expect(find.text('ARCHIVED'), findsOneWidget);
   });
 
   testWidgets('shows a negative margin in alert colour', (tester) async {
@@ -161,7 +161,6 @@ void main() {
         id: 1,
         name: 'Tulip bouquet',
         sellPrice: 400,
-        isActive: true,
         photo: tinyPng,
         createdAt: _now,
         updatedAt: _now,

@@ -20,7 +20,7 @@ void main() {
           description: any(named: 'description'),
           sellPrice: any(named: 'sellPrice'),
           unitCost: any(named: 'unitCost'),
-          isActive: any(named: 'isActive'),
+          isArchived: any(named: 'isArchived'),
           isStandalone: any(named: 'isStandalone'),
           alertLevel: any(named: 'alertLevel'),
         )).thenAnswer((_) async => const Success(null));
@@ -42,7 +42,7 @@ void main() {
           description: 'Pink',
           sellPrice: 450,
           unitCost: 12,
-          isActive: null,
+          isArchived: null,
           isStandalone: null,
           alertLevel: 3,
         )).called(1);

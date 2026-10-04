@@ -37,6 +37,7 @@ abstract class MaterialRepository {
     String? supplier,
   });
   Future<Result<void>> adjustStock(int materialId, int newQuantityOnHand);
+  Future<Result<void>> setMaterialArchived(int materialId, bool archived);
   Future<Result<void>> reserveMaterials(int materialId, int quantity);
   Future<Result<void>> releaseReservedMaterials(int materialId, int quantity);
 
@@ -51,5 +52,10 @@ abstract class MaterialRepository {
   Future<Result<void>> restoreDeductedMaterials(int materialId, int quantity,
       {String reference = 'Restored from deleted order'});
   Future<Result<List<BuyListItem>>> getBuyList();
+
+  /// Whether any order, cancelled ones included, used this material.
+  Future<Result<bool>> isUsedInOrders(int materialId);
+
+  /// Removes the material together with its stock history.
   Future<Result<void>> deleteMaterial(int id);
 }

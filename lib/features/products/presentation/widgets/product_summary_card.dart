@@ -97,7 +97,7 @@ class ProductSummaryCard extends StatelessWidget {
                 spacing: 6,
                 children: [
                   if (p.isStandalone) const AppTag('Resell'),
-                  if (!p.isActive) const AppTag('Hidden'),
+                  if (p.isArchived) const AppTag('Archived'),
                   // Resell already shows its shortfall as a stat below.
                   if (isShort && !p.isStandalone)
                     const AppTag.low(text: 'Short'),

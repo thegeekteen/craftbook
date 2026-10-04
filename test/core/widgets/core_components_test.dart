@@ -145,7 +145,7 @@ void main() {
   });
 
   group('StatusFilterChips', () {
-    final all = Set<OrderStatus>.from(OrderStatus.values);
+    final all = Set<OrderStatus>.from(StatusFilterChips.dayViewStatuses);
 
     Future<List<Set<OrderStatus>>> pump(
       WidgetTester tester,
@@ -161,17 +161,14 @@ void main() {
       return changes;
     }
 
-    testWidgets('shows All plus a chip per status', (tester) async {
+    testWidgets('shows All plus a chip per open or shipped status',
+        (tester) async {
       await pump(tester, all);
-      for (final label in [
-        'All',
-        'To pack',
-        'Packed',
-        'Shipped',
-        'Cancelled'
-      ]) {
+      for (final label in ['All', 'To pack', 'Packed', 'Shipped']) {
         expect(find.text(label), findsOneWidget);
       }
+      // Cancelled orders stay off day views.
+      expect(find.text('Cancelled'), findsNothing);
     });
 
     testWidgets('All is selected when every status is selected',

@@ -14,7 +14,7 @@ class UpdateProduct {
     String? description,
     double? sellPrice,
     double? unitCost,
-    bool? isActive,
+    bool? isArchived,
     bool? isStandalone,
     int? alertLevel,
   }) {
@@ -39,7 +39,7 @@ class UpdateProduct {
       description: description,
       sellPrice: sellPrice,
       unitCost: unitCost,
-      isActive: isActive,
+      isArchived: isArchived,
       isStandalone: isStandalone,
       alertLevel: alertLevel,
     );

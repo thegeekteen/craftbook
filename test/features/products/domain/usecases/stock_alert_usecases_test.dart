@@ -16,7 +16,6 @@ void main() {
     id: 4,
     name: 'Kraft gift box',
     sellPrice: 60,
-    isActive: true,
     isStandalone: true,
     quantityOnHand: 2,
     alertLevel: 3,

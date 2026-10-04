@@ -8,6 +8,9 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/error/result.dart';
+import '../../../stock/domain/usecases/get_buy_list.dart';
+import '../../../stock/presentation/widgets/buy_list_button.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/product_stock_status.dart';
 import '../bloc/products_bloc.dart';
@@ -29,7 +32,7 @@ class ProductsListPage extends StatelessWidget {
   }
 }
 
-enum _ProductFilter { all, handmade, resell, low, short }
+enum _ProductFilter { all, handmade, resell, low, short, archived }
 
 class _ProductsListView extends StatefulWidget {
   const _ProductsListView();
@@ -42,7 +45,28 @@ class _ProductsListViewState extends State<_ProductsListView> {
   _ProductFilter _filter = _ProductFilter.all;
   String _query = '';
 
-  void _reload() => context.read<ProductsBloc>().add(const LoadProducts());
+  /// Items on the buy list, for the app-bar shortcut.
+  int _toBuy = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBuyCount();
+  }
+
+  /// A failed count just leaves the shortcut without a number.
+  Future<void> _loadBuyCount() async {
+    final result = await getIt<GetBuyList>()();
+    if (!mounted) return;
+    if (result case Success(:final value)) {
+      setState(() => _toBuy = value.length);
+    }
+  }
+
+  void _reload() {
+    context.read<ProductsBloc>().add(const LoadProducts());
+    _loadBuyCount();
+  }
 
   Future<void> _open(String location) async {
     final changed = await context.push<bool>(location);
@@ -52,7 +76,13 @@ class _ProductsListViewState extends State<_ProductsListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
+      appBar: AppBar(
+        title: const Text('Products'),
+        actions: [
+          BuyListButton(
+              lowCount: _toBuy, onPressed: () => _open(RouteNames.buyList)),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -85,16 +115,21 @@ class _ProductsListViewState extends State<_ProductsListView> {
   }
 
   Widget _buildList(ProductsLoaded state) {
-    final searched = _query.isEmpty
+    final matching = _query.isEmpty
         ? state.products
         : state.products
             .where((p) => p.name.toLowerCase().contains(_query))
             .toList();
+    // Archived products only show under their own chip.
+    final searched = matching.where((p) => !p.isArchived).toList();
+    final archived = matching.where((p) => p.isArchived).toList();
     bool isLow(Product p) => isProductLow(p, state.available[p.id]);
     bool isShort(Product p) => state.shortIds.contains(p.id);
     final shortCount = searched.where(isShort).length;
-    // The Short chip hides when nothing is short; don't strand the user on it.
-    final filter = _filter == _ProductFilter.short && shortCount == 0
+    // The Short and Archived chips hide when empty; don't strand the user.
+    final filter = (_filter == _ProductFilter.short && shortCount == 0) ||
+            (_filter == _ProductFilter.archived &&
+                !state.products.any((p) => p.isArchived))
         ? _ProductFilter.all
         : _filter;
     bool passes(Product p) => switch (filter) {
@@ -103,13 +138,15 @@ class _ProductsListViewState extends State<_ProductsListView> {
           _ProductFilter.resell => p.isStandalone,
           _ProductFilter.low => isLow(p),
           _ProductFilter.short => isShort(p),
+          _ProductFilter.archived => true,
         };
-    final visible = searched.where(passes).toList()
-      // Problems first, then active before hidden, then by name.
+    final visible = (filter == _ProductFilter.archived ? archived : searched)
+        .where(passes)
+        .toList()
+      // Problems first, then by name.
       ..sort((a, b) {
         if (isShort(a) != isShort(b)) return isShort(a) ? -1 : 1;
         if (isLow(a) != isLow(b)) return isLow(a) ? -1 : 1;
-        if (a.isActive != b.isActive) return a.isActive ? -1 : 1;
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
@@ -132,6 +169,9 @@ class _ProductsListViewState extends State<_ProductsListView> {
                     count: searched.where(isLow).length),
                 if (shortCount > 0)
                   ChipOption(_ProductFilter.short, 'Short', count: shortCount),
+                if (state.products.any((p) => p.isArchived))
+                  ChipOption(_ProductFilter.archived, 'Archived',
+                      count: archived.length),
               ],
             ),
           ),
@@ -185,6 +225,11 @@ class _ProductsListViewState extends State<_ProductsListView> {
           message: 'Nothing matches "$_query".');
     }
     return switch (filter) {
+      _ProductFilter.all => const EmptyState(
+          icon: Icons.archive_outlined,
+          title: 'Every product is archived',
+          message: 'Tap Archived to see them.',
+        ),
       _ProductFilter.handmade => const EmptyState(
           icon: Icons.content_cut_rounded,
           title: 'No handmade products',

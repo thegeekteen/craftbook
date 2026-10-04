@@ -7,10 +7,21 @@ class GetMaterials {
 
   GetMaterials(this.repository);
 
-  Future<Result<List<Material>>> call({bool lowStockOnly = false}) async {
+  /// Low stock never includes archived materials. Pickers pass
+  /// [includeArchived] false; lists load everything and filter on screen.
+  Future<Result<List<Material>>> call({
+    bool lowStockOnly = false,
+    bool includeArchived = true,
+  }) async {
     if (lowStockOnly) {
       return repository.getLowStockMaterials();
     }
-    return repository.getAllMaterials();
+    final result = await repository.getAllMaterials();
+    if (includeArchived) return result;
+    return switch (result) {
+      Success(:final value) =>
+        Success(value.where((m) => !m.isArchived).toList()),
+      Error() => result,
+    };
   }
 }

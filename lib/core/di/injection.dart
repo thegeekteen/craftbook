@@ -35,6 +35,7 @@ import '../../features/products/domain/usecases/get_pending_order_counts.dart';
 import '../../features/stock/data/repositories/material_repository_impl.dart';
 import '../../features/stock/domain/repositories/material_repository.dart';
 import '../../features/stock/domain/usecases/get_materials.dart';
+import '../../features/stock/domain/usecases/set_material_archived.dart';
 import '../../features/stock/domain/usecases/get_material_detail.dart';
 import '../../features/stock/domain/usecases/receive_stock.dart';
 import '../../features/stock/domain/usecases/adjust_stock.dart';
@@ -54,6 +55,7 @@ import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/update_order.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
 import '../../features/orders/domain/usecases/cancel_order.dart';
+import '../../features/orders/domain/usecases/restore_order.dart';
 import '../../features/orders/domain/usecases/delete_order.dart';
 import '../../features/orders/domain/usecases/return_order_stock.dart';
 import '../../features/orders/domain/usecases/get_order_list_entries.dart';
@@ -219,6 +221,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
 
   // Use Cases - Stock
   getIt.registerFactory(() => GetMaterials(getIt()));
+  getIt.registerFactory(() => SetMaterialArchived(getIt()));
   getIt.registerFactory(() => GetMaterialDetail(getIt()));
   getIt.registerFactory(() => UpdateMaterial(getIt()));
   getIt.registerFactory(() => ReceiveStock(getIt()));
@@ -274,6 +277,11 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => CancelOrder(
         orderRepository: getIt(),
         returnOrderStock: getIt(),
+      ));
+  getIt.registerFactory(() => RestoreOrder(
+        orderRepository: getIt(),
+        materialRepository: getIt(),
+        productRepository: getIt(),
       ));
 
   // Use Cases - Earnings
@@ -361,6 +369,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         packOrder: getIt(),
         shipOrder: getIt(),
         cancelOrder: getIt(),
+        restoreOrder: getIt(),
         deleteOrder: getIt(),
         updateOrderNote: getIt(),
       ));

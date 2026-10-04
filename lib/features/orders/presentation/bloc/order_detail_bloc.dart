@@ -14,6 +14,7 @@ import '../../domain/usecases/adjust_materials_used.dart';
 import '../../domain/usecases/cancel_order.dart';
 import '../../domain/usecases/delete_order.dart';
 import '../../domain/usecases/pack_order.dart';
+import '../../domain/usecases/restore_order.dart';
 import '../../domain/usecases/ship_order.dart';
 import '../../domain/usecases/update_order_note.dart';
 import 'order_detail_event.dart';
@@ -29,6 +30,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final PackOrder packOrder;
   final ShipOrder shipOrder;
   final CancelOrder cancelOrder;
+  final RestoreOrder restoreOrder;
   final DeleteOrder deleteOrder;
   final UpdateOrderNote updateOrderNote;
 
@@ -41,6 +43,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     required this.packOrder,
     required this.shipOrder,
     required this.cancelOrder,
+    required this.restoreOrder,
     required this.deleteOrder,
     required this.updateOrderNote,
   }) : super(OrderDetailInitial()) {
@@ -49,6 +52,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     on<PackOrderDetail>(_onPackOrder);
     on<ShipOrderDetail>(_onShipOrder);
     on<CancelOrderDetail>(_onCancelOrder);
+    on<RestoreOrderDetail>(_onRestoreOrder);
     on<SaveOrderNote>(_onSaveNote);
     on<DeleteOrderEvent>(_onDeleteOrder);
   }
@@ -215,6 +219,13 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   ) =>
       _runAction(emit, event.orderId, () => cancelOrder(event.orderId),
           'Order cancelled. Stock returned.');
+
+  Future<void> _onRestoreOrder(
+    RestoreOrderDetail event,
+    Emitter<OrderDetailState> emit,
+  ) =>
+      _runAction(emit, event.orderId, () => restoreOrder(event.orderId),
+          'Order restored');
 
   /// Quiet on success: ticking a to-do shouldn't flash a progress bar or a
   /// snackbar. The reload hands the note view back what was stored, which

@@ -73,5 +73,9 @@ abstract class OrderRepository {
   Future<Result<void>> adjustMaterialsUsed(
       int orderId, List<OrderMaterialInput> materials);
   Future<Result<void>> cancelOrder(int orderId);
+
+  /// Puts a cancelled order back to pending, clearing its packed and shipped
+  /// dates. Stock is the caller's job.
+  Future<Result<void>> restoreOrder(int orderId);
   Future<Result<void>> deleteOrder(int id);
 }

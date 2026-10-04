@@ -30,8 +30,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   }
 
   /// Get active products
-  Future<List<Product>> getActiveProducts() {
-    return (select(products)..where((t) => t.isActive.equals(true))).get();
+  Future<List<Product>> getUnarchivedProducts() {
+    return (select(products)..where((t) => t.isArchived.equals(false))).get();
   }
 
   /// Get product by ID
@@ -151,7 +151,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     return (select(products)
           ..where((t) =>
               t.isStandalone.equals(true) &
-              t.isActive.equals(true) &
+              t.isArchived.equals(false) &
               t.quantityOnHand.isSmallerOrEqual(t.alertLevel) &
               t.alertLevel.isBiggerThanValue(0)))
         .get();
@@ -232,6 +232,13 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
   /// Delete all order products for a given order
   Future<int> deleteOrderProductsByOrderId(int orderId) {
     return (delete(orderProducts)..where((t) => t.orderId.equals(orderId)))
+        .go();
+  }
+
+  /// Delete a product's whole stock history
+  Future<int> deleteProductStockMovementsForProduct(int productId) {
+    return (delete(productStockMovements)
+          ..where((t) => t.productId.equals(productId)))
         .go();
   }
 

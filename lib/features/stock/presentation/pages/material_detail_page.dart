@@ -172,6 +172,14 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     }
   }
 
+  Future<void> _toggleArchived(Material m) async {
+    if (await MaterialActions.setArchived(context, m, !m.isArchived) &&
+        mounted) {
+      _changed = true;
+      _load();
+    }
+  }
+
   Future<void> _delete(Material m) async {
     if (await MaterialActions.delete(context, m) && mounted) context.pop(true);
   }
@@ -204,7 +212,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     }
     final c = context.colors;
     final m = _material!;
-    final low = m.isLowStock;
+    final low = m.isLowStock && !m.isArchived;
 
     return Scaffold(
       appBar: AppBar(
@@ -215,6 +223,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (v) {
               if (v == 'edit') _edit();
+              if (v == 'archive') _toggleArchived(m);
               if (v == 'delete') _delete(m);
             },
             itemBuilder: (_) => [
@@ -224,6 +233,18 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   Icon(Icons.edit_outlined, size: 20),
                   SizedBox(width: 10),
                   Text('Edit material'),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'archive',
+                child: Row(children: [
+                  Icon(
+                      m.isArchived
+                          ? Icons.unarchive_outlined
+                          : Icons.archive_outlined,
+                      size: 20),
+                  const SizedBox(width: 10),
+                  Text(m.isArchived ? 'Unarchive' : 'Archive'),
                 ]),
               ),
               PopupMenuItem(
@@ -262,6 +283,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                           style:
                               AppTextStyles.monoLabel.copyWith(color: c.muted)),
                       const Spacer(),
+                      if (m.isArchived) const AppTag('Archived'),
                       if (low) const AppTag.low(),
                     ],
                   ),
