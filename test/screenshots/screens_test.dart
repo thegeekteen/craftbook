@@ -147,6 +147,8 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('Add product').first);
     await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/product_picker_light.png'));
     await tester.tap(find.text('Crochet tulip bouquet'));
     await _settle(tester);
     await expectLater(find.byType(CraftbookApp),

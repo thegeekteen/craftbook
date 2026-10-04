@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/pip_strip.dart';
+import '../../../../core/widgets/product_photo.dart';
 import '../../../../core/widgets/stat_tile.dart';
 import '../../domain/entities/product.dart';
 
@@ -45,12 +47,33 @@ class ProductSummaryCard extends StatelessWidget {
                 100)
             .round();
     final marginColor = margin >= 50 ? c.go : (margin >= 20 ? c.warn : c.alert);
+    final photo = p.photo;
 
     return AppCard(
       borderColor: low ? c.alert.withValues(alpha: 0.55) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (photo != null) ...[
+            Semantics(
+              image: true,
+              label: 'Photo of ${p.name}',
+              button: true,
+              child: GestureDetector(
+                onTap: () =>
+                    showPhotoViewer(context, bytes: photo, title: p.name),
+                child: ClipRRect(
+                  borderRadius: AppRadii.controlAll,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 10,
+                    child: Image.memory(photo,
+                        fit: BoxFit.cover, gaplessPlayback: true),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,

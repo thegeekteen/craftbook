@@ -138,4 +138,9 @@ Future<void> runMigrations(
       ')',
     );
   }
+
+  // Version 7: product photos.
+  if (from < 7) {
+    await db.customStatement('ALTER TABLE products ADD COLUMN photo BLOB');
+  }
 }

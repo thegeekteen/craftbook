@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 
 /// Product entity
@@ -12,6 +14,9 @@ class Product extends Equatable {
   final int quantityPromised;
   final double unitCost;
   final int alertLevel;
+
+  /// Encoded image bytes (JPEG/PNG), or null when no photo is set.
+  final Uint8List? photo;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -30,6 +35,7 @@ class Product extends Equatable {
     this.quantityPromised = 0,
     this.unitCost = 0,
     this.alertLevel = 0,
+    this.photo,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -46,6 +52,7 @@ class Product extends Equatable {
         quantityPromised,
         unitCost,
         alertLevel,
+        photo,
         createdAt,
         updatedAt,
       ];
@@ -61,6 +68,8 @@ class Product extends Equatable {
     int? quantityPromised,
     double? unitCost,
     int? alertLevel,
+    Uint8List? photo,
+    bool clearPhoto = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -75,6 +84,7 @@ class Product extends Equatable {
       quantityPromised: quantityPromised ?? this.quantityPromised,
       unitCost: unitCost ?? this.unitCost,
       alertLevel: alertLevel ?? this.alertLevel,
+      photo: clearPhoto ? null : (photo ?? this.photo),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

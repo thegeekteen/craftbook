@@ -196,6 +196,18 @@ void main() {
       expect((p.unitCost, p.quantityOnHand), (25.0, 5));
     });
 
+    test('keeps the photo when other fields change', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
+      final photo = Uint8List.fromList([1, 2, 3, 4]);
+      ok(await repo.setProductPhoto(id, photo));
+
+      ok(await repo.updateProduct(id: id, name: 'Tulip v2', sellPrice: 500));
+      final p = ok(await repo.getProductById(id))!;
+      expect((p.name, p.sellPrice), ('Tulip v2', 500.0));
+      expect(p.photo, photo);
+    });
+
     test('saveBomItems replaces the previous BOM', () async {
       final repo = ProductRepositoryImpl(ProductDao(db));
       final id = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
@@ -206,6 +218,30 @@ void main() {
           id, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
       final bom = ok(await repo.getBomItems(id));
       expect(bom.map((b) => b.quantityRequired), [5]);
+    });
+  });
+
+  group('setProductPhoto', () {
+    test('stores a photo and clears it again', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final id = ok(await repo.createProduct(name: 'Tulip', sellPrice: 450));
+      expect(ok(await repo.getProductById(id))!.photo, isNull);
+
+      final photo = Uint8List.fromList([0xFF, 0xD8, 0xFF, 9]);
+      expect(await repo.setProductPhoto(id, photo), const Success<void>(null));
+      final withPhoto = ok(await repo.getProductById(id))!;
+      expect(withPhoto.photo, photo);
+      expect(withPhoto.name, 'Tulip');
+
+      ok(await repo.setProductPhoto(id, null));
+      expect(ok(await repo.getProductById(id))!.photo, isNull);
+    });
+
+    test('reports a missing product', () async {
+      final repo = ProductRepositoryImpl(ProductDao(db));
+      final result = await repo.setProductPhoto(999, Uint8List(3));
+      expect(result, isA<Error<void>>());
+      expect((result as Error<void>).failure, isA<NotFoundFailure>());
     });
   });
 
@@ -252,6 +288,17 @@ void main() {
       expect(lines[a]!.single.quantity, 2);
       expect(lines[a]!.single.productName, 'Tulip');
       expect(lines[b]!.single.quantity, 1);
+    });
+
+    test('getOrderItems carries the product photo', () async {
+      final p = await productId();
+      final photo = Uint8List.fromList([7, 8, 9]);
+      await ProductDao(db).setProductPhoto(p, photo);
+      final id = await order(product: p, shipBy: DateTime(2026, 10, 4));
+
+      final item = ok(await orders.getOrderItems(id)).single;
+      expect(item.productName, 'Tulip');
+      expect(item.productPhoto, photo);
     });
 
     test('updateOrderNote changes only the note, even on a shipped order',

@@ -250,6 +250,13 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
     return row?.name ?? '';
   }
 
+  /// Look up product name and photo by ID, for showing order lines.
+  Future<(String, Uint8List?)> getProductNameAndPhoto(int productId) async {
+    final row = await (select(products)..where((t) => t.id.equals(productId)))
+        .getSingleOrNull();
+    return (row?.name ?? '', row?.photo);
+  }
+
   /// Look up material name by ID
   Future<String> getMaterialName(int materialId) async {
     final row = await (select(materials)..where((t) => t.id.equals(materialId)))

@@ -12,6 +12,9 @@ class Products extends Table {
   IntColumn get quantityPromised => integer().withDefault(const Constant(0))();
   RealColumn get unitCost => real().withDefault(const Constant(0.0))();
   IntColumn get alertLevel => integer().withDefault(const Constant(0))();
+
+  /// Resized JPEG. Kept in the database so a raw sqlite backup carries it.
+  BlobColumn get photo => blob().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

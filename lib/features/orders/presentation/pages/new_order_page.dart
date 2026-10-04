@@ -20,6 +20,7 @@ import '../../../../core/widgets/date_field.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/money_breakdown.dart';
+import '../../../../core/widgets/product_photo.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../order_fields/domain/entities/order_field.dart';
@@ -468,6 +469,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
         productName: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        photo: item.photo,
       )),
     );
   }
@@ -493,6 +495,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
             children: [
               for (final item in items)
                 CardRow(
+                  leading:
+                      ProductPhoto(bytes: item.photo, name: item.productName),
                   title: Text(item.productName),
                   subtitle: Text(
                     '${CurrencyFormatter.formatShort(item.unitPrice)} each · '

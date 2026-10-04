@@ -100,6 +100,19 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<Result<void>> setProductPhoto(int id, Uint8List? photo) async {
+    try {
+      final updated = await dao.setProductPhoto(id, photo);
+      if (updated == 0) {
+        return const Error(NotFoundFailure('Product not found'));
+      }
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> updateProduct({
     required int id,
     String? name,
@@ -129,6 +142,7 @@ class ProductRepositoryImpl implements ProductRepository {
         quantityPromised: existing.quantityPromised,
         unitCost: unitCost ?? existing.unitCost,
         alertLevel: alertLevel ?? existing.alertLevel,
+        photo: existing.photo,
         createdAt: existing.createdAt,
         updatedAt: DateTime.now(),
       ));
@@ -492,6 +506,7 @@ class ProductRepositoryImpl implements ProductRepository {
         quantityPromised: row.quantityPromised,
         unitCost: row.unitCost,
         alertLevel: row.alertLevel,
+        photo: row.photo,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       );
