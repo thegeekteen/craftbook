@@ -23,12 +23,6 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
   late final GeneratedColumn<String> customerName = GeneratedColumn<String>(
       'customer_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _customerAddressMeta =
-      const VerificationMeta('customerAddress');
-  @override
-  late final GeneratedColumn<String> customerAddress = GeneratedColumn<String>(
-      'customer_address', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _noteMeta = const VerificationMeta('note');
   @override
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
@@ -126,7 +120,6 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
   List<GeneratedColumn> get $columns => [
         id,
         customerName,
-        customerAddress,
         note,
         orderDate,
         shipByDate,
@@ -162,14 +155,6 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
               data['customer_name']!, _customerNameMeta));
     } else if (isInserting) {
       context.missing(_customerNameMeta);
-    }
-    if (data.containsKey('customer_address')) {
-      context.handle(
-          _customerAddressMeta,
-          customerAddress.isAcceptableOrUnknown(
-              data['customer_address']!, _customerAddressMeta));
-    } else if (isInserting) {
-      context.missing(_customerAddressMeta);
     }
     if (data.containsKey('note')) {
       context.handle(
@@ -258,8 +243,6 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       customerName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}customer_name'])!,
-      customerAddress: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}customer_address'])!,
       note: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
       orderDate: attachedDatabase.typeMapping
@@ -300,7 +283,6 @@ class $OrdersTable extends Orders with TableInfo<$OrdersTable, Order> {
 class Order extends DataClass implements Insertable<Order> {
   final int id;
   final String customerName;
-  final String customerAddress;
   final String? note;
   final DateTime orderDate;
   final DateTime shipByDate;
@@ -318,7 +300,6 @@ class Order extends DataClass implements Insertable<Order> {
   const Order(
       {required this.id,
       required this.customerName,
-      required this.customerAddress,
       this.note,
       required this.orderDate,
       required this.shipByDate,
@@ -338,7 +319,6 @@ class Order extends DataClass implements Insertable<Order> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['customer_name'] = Variable<String>(customerName);
-    map['customer_address'] = Variable<String>(customerAddress);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
@@ -368,7 +348,6 @@ class Order extends DataClass implements Insertable<Order> {
     return OrdersCompanion(
       id: Value(id),
       customerName: Value(customerName),
-      customerAddress: Value(customerAddress),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       orderDate: Value(orderDate),
       shipByDate: Value(shipByDate),
@@ -398,7 +377,6 @@ class Order extends DataClass implements Insertable<Order> {
     return Order(
       id: serializer.fromJson<int>(json['id']),
       customerName: serializer.fromJson<String>(json['customerName']),
-      customerAddress: serializer.fromJson<String>(json['customerAddress']),
       note: serializer.fromJson<String?>(json['note']),
       orderDate: serializer.fromJson<DateTime>(json['orderDate']),
       shipByDate: serializer.fromJson<DateTime>(json['shipByDate']),
@@ -421,7 +399,6 @@ class Order extends DataClass implements Insertable<Order> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'customerName': serializer.toJson<String>(customerName),
-      'customerAddress': serializer.toJson<String>(customerAddress),
       'note': serializer.toJson<String?>(note),
       'orderDate': serializer.toJson<DateTime>(orderDate),
       'shipByDate': serializer.toJson<DateTime>(shipByDate),
@@ -442,7 +419,6 @@ class Order extends DataClass implements Insertable<Order> {
   Order copyWith(
           {int? id,
           String? customerName,
-          String? customerAddress,
           Value<String?> note = const Value.absent(),
           DateTime? orderDate,
           DateTime? shipByDate,
@@ -460,7 +436,6 @@ class Order extends DataClass implements Insertable<Order> {
       Order(
         id: id ?? this.id,
         customerName: customerName ?? this.customerName,
-        customerAddress: customerAddress ?? this.customerAddress,
         note: note.present ? note.value : this.note,
         orderDate: orderDate ?? this.orderDate,
         shipByDate: shipByDate ?? this.shipByDate,
@@ -482,9 +457,6 @@ class Order extends DataClass implements Insertable<Order> {
       customerName: data.customerName.present
           ? data.customerName.value
           : this.customerName,
-      customerAddress: data.customerAddress.present
-          ? data.customerAddress.value
-          : this.customerAddress,
       note: data.note.present ? data.note.value : this.note,
       orderDate: data.orderDate.present ? data.orderDate.value : this.orderDate,
       shipByDate:
@@ -514,7 +486,6 @@ class Order extends DataClass implements Insertable<Order> {
     return (StringBuffer('Order(')
           ..write('id: $id, ')
           ..write('customerName: $customerName, ')
-          ..write('customerAddress: $customerAddress, ')
           ..write('note: $note, ')
           ..write('orderDate: $orderDate, ')
           ..write('shipByDate: $shipByDate, ')
@@ -537,7 +508,6 @@ class Order extends DataClass implements Insertable<Order> {
   int get hashCode => Object.hash(
       id,
       customerName,
-      customerAddress,
       note,
       orderDate,
       shipByDate,
@@ -558,7 +528,6 @@ class Order extends DataClass implements Insertable<Order> {
       (other is Order &&
           other.id == this.id &&
           other.customerName == this.customerName &&
-          other.customerAddress == this.customerAddress &&
           other.note == this.note &&
           other.orderDate == this.orderDate &&
           other.shipByDate == this.shipByDate &&
@@ -578,7 +547,6 @@ class Order extends DataClass implements Insertable<Order> {
 class OrdersCompanion extends UpdateCompanion<Order> {
   final Value<int> id;
   final Value<String> customerName;
-  final Value<String> customerAddress;
   final Value<String?> note;
   final Value<DateTime> orderDate;
   final Value<DateTime> shipByDate;
@@ -596,7 +564,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   const OrdersCompanion({
     this.id = const Value.absent(),
     this.customerName = const Value.absent(),
-    this.customerAddress = const Value.absent(),
     this.note = const Value.absent(),
     this.orderDate = const Value.absent(),
     this.shipByDate = const Value.absent(),
@@ -615,7 +582,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   OrdersCompanion.insert({
     this.id = const Value.absent(),
     required String customerName,
-    required String customerAddress,
     this.note = const Value.absent(),
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -631,7 +597,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   })  : customerName = Value(customerName),
-        customerAddress = Value(customerAddress),
         orderDate = Value(orderDate),
         shipByDate = Value(shipByDate),
         status = Value(status),
@@ -639,7 +604,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   static Insertable<Order> custom({
     Expression<int>? id,
     Expression<String>? customerName,
-    Expression<String>? customerAddress,
     Expression<String>? note,
     Expression<DateTime>? orderDate,
     Expression<DateTime>? shipByDate,
@@ -658,7 +622,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (customerName != null) 'customer_name': customerName,
-      if (customerAddress != null) 'customer_address': customerAddress,
       if (note != null) 'note': note,
       if (orderDate != null) 'order_date': orderDate,
       if (shipByDate != null) 'ship_by_date': shipByDate,
@@ -679,7 +642,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
   OrdersCompanion copyWith(
       {Value<int>? id,
       Value<String>? customerName,
-      Value<String>? customerAddress,
       Value<String?>? note,
       Value<DateTime>? orderDate,
       Value<DateTime>? shipByDate,
@@ -697,7 +659,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     return OrdersCompanion(
       id: id ?? this.id,
       customerName: customerName ?? this.customerName,
-      customerAddress: customerAddress ?? this.customerAddress,
       note: note ?? this.note,
       orderDate: orderDate ?? this.orderDate,
       shipByDate: shipByDate ?? this.shipByDate,
@@ -723,9 +684,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     }
     if (customerName.present) {
       map['customer_name'] = Variable<String>(customerName.value);
-    }
-    if (customerAddress.present) {
-      map['customer_address'] = Variable<String>(customerAddress.value);
     }
     if (note.present) {
       map['note'] = Variable<String>(note.value);
@@ -777,7 +735,6 @@ class OrdersCompanion extends UpdateCompanion<Order> {
     return (StringBuffer('OrdersCompanion(')
           ..write('id: $id, ')
           ..write('customerName: $customerName, ')
-          ..write('customerAddress: $customerAddress, ')
           ..write('note: $note, ')
           ..write('orderDate: $orderDate, ')
           ..write('shipByDate: $shipByDate, ')
@@ -4986,6 +4943,668 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $OrderFieldDefinitionsTable extends OrderFieldDefinitions
+    with TableInfo<$OrderFieldDefinitionsTable, OrderFieldDefinition> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OrderFieldDefinitionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _optionsMeta =
+      const VerificationMeta('options');
+  @override
+  late final GeneratedColumn<String> options = GeneratedColumn<String>(
+      'options', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isMultilineMeta =
+      const VerificationMeta('isMultiline');
+  @override
+  late final GeneratedColumn<bool> isMultiline = GeneratedColumn<bool>(
+      'is_multiline', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("is_multiline" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+      'position', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _isArchivedMeta =
+      const VerificationMeta('isArchived');
+  @override
+  late final GeneratedColumn<bool> isArchived = GeneratedColumn<bool>(
+      'is_archived', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_archived" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, type, options, isMultiline, position, isArchived, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'order_field_definitions';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<OrderFieldDefinition> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('options')) {
+      context.handle(_optionsMeta,
+          options.isAcceptableOrUnknown(data['options']!, _optionsMeta));
+    }
+    if (data.containsKey('is_multiline')) {
+      context.handle(
+          _isMultilineMeta,
+          isMultiline.isAcceptableOrUnknown(
+              data['is_multiline']!, _isMultilineMeta));
+    }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    }
+    if (data.containsKey('is_archived')) {
+      context.handle(
+          _isArchivedMeta,
+          isArchived.isAcceptableOrUnknown(
+              data['is_archived']!, _isArchivedMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  OrderFieldDefinition map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OrderFieldDefinition(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      options: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}options']),
+      isMultiline: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_multiline'])!,
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
+      isArchived: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $OrderFieldDefinitionsTable createAlias(String alias) {
+    return $OrderFieldDefinitionsTable(attachedDatabase, alias);
+  }
+}
+
+class OrderFieldDefinition extends DataClass
+    implements Insertable<OrderFieldDefinition> {
+  final int id;
+  final String name;
+
+  /// 'text' | 'number' | 'date' | 'choice'
+  final String type;
+
+  /// JSON list of option labels; only set for choice fields.
+  final String? options;
+  final bool isMultiline;
+  final int position;
+
+  /// Archived fields are no longer asked for, but past orders keep their
+  /// values.
+  final bool isArchived;
+  final DateTime createdAt;
+  const OrderFieldDefinition(
+      {required this.id,
+      required this.name,
+      required this.type,
+      this.options,
+      required this.isMultiline,
+      required this.position,
+      required this.isArchived,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || options != null) {
+      map['options'] = Variable<String>(options);
+    }
+    map['is_multiline'] = Variable<bool>(isMultiline);
+    map['position'] = Variable<int>(position);
+    map['is_archived'] = Variable<bool>(isArchived);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  OrderFieldDefinitionsCompanion toCompanion(bool nullToAbsent) {
+    return OrderFieldDefinitionsCompanion(
+      id: Value(id),
+      name: Value(name),
+      type: Value(type),
+      options: options == null && nullToAbsent
+          ? const Value.absent()
+          : Value(options),
+      isMultiline: Value(isMultiline),
+      position: Value(position),
+      isArchived: Value(isArchived),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory OrderFieldDefinition.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OrderFieldDefinition(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      options: serializer.fromJson<String?>(json['options']),
+      isMultiline: serializer.fromJson<bool>(json['isMultiline']),
+      position: serializer.fromJson<int>(json['position']),
+      isArchived: serializer.fromJson<bool>(json['isArchived']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'options': serializer.toJson<String?>(options),
+      'isMultiline': serializer.toJson<bool>(isMultiline),
+      'position': serializer.toJson<int>(position),
+      'isArchived': serializer.toJson<bool>(isArchived),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  OrderFieldDefinition copyWith(
+          {int? id,
+          String? name,
+          String? type,
+          Value<String?> options = const Value.absent(),
+          bool? isMultiline,
+          int? position,
+          bool? isArchived,
+          DateTime? createdAt}) =>
+      OrderFieldDefinition(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        options: options.present ? options.value : this.options,
+        isMultiline: isMultiline ?? this.isMultiline,
+        position: position ?? this.position,
+        isArchived: isArchived ?? this.isArchived,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  OrderFieldDefinition copyWithCompanion(OrderFieldDefinitionsCompanion data) {
+    return OrderFieldDefinition(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      options: data.options.present ? data.options.value : this.options,
+      isMultiline:
+          data.isMultiline.present ? data.isMultiline.value : this.isMultiline,
+      position: data.position.present ? data.position.value : this.position,
+      isArchived:
+          data.isArchived.present ? data.isArchived.value : this.isArchived,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderFieldDefinition(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('options: $options, ')
+          ..write('isMultiline: $isMultiline, ')
+          ..write('position: $position, ')
+          ..write('isArchived: $isArchived, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, name, type, options, isMultiline, position, isArchived, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OrderFieldDefinition &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.options == this.options &&
+          other.isMultiline == this.isMultiline &&
+          other.position == this.position &&
+          other.isArchived == this.isArchived &&
+          other.createdAt == this.createdAt);
+}
+
+class OrderFieldDefinitionsCompanion
+    extends UpdateCompanion<OrderFieldDefinition> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String?> options;
+  final Value<bool> isMultiline;
+  final Value<int> position;
+  final Value<bool> isArchived;
+  final Value<DateTime> createdAt;
+  const OrderFieldDefinitionsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.options = const Value.absent(),
+    this.isMultiline = const Value.absent(),
+    this.position = const Value.absent(),
+    this.isArchived = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  OrderFieldDefinitionsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String type,
+    this.options = const Value.absent(),
+    this.isMultiline = const Value.absent(),
+    this.position = const Value.absent(),
+    this.isArchived = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  })  : name = Value(name),
+        type = Value(type);
+  static Insertable<OrderFieldDefinition> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? options,
+    Expression<bool>? isMultiline,
+    Expression<int>? position,
+    Expression<bool>? isArchived,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (options != null) 'options': options,
+      if (isMultiline != null) 'is_multiline': isMultiline,
+      if (position != null) 'position': position,
+      if (isArchived != null) 'is_archived': isArchived,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  OrderFieldDefinitionsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String>? type,
+      Value<String?>? options,
+      Value<bool>? isMultiline,
+      Value<int>? position,
+      Value<bool>? isArchived,
+      Value<DateTime>? createdAt}) {
+    return OrderFieldDefinitionsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      options: options ?? this.options,
+      isMultiline: isMultiline ?? this.isMultiline,
+      position: position ?? this.position,
+      isArchived: isArchived ?? this.isArchived,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (options.present) {
+      map['options'] = Variable<String>(options.value);
+    }
+    if (isMultiline.present) {
+      map['is_multiline'] = Variable<bool>(isMultiline.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (isArchived.present) {
+      map['is_archived'] = Variable<bool>(isArchived.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderFieldDefinitionsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('options: $options, ')
+          ..write('isMultiline: $isMultiline, ')
+          ..write('position: $position, ')
+          ..write('isArchived: $isArchived, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OrderFieldValuesTable extends OrderFieldValues
+    with TableInfo<$OrderFieldValuesTable, OrderFieldValue> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OrderFieldValuesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _orderIdMeta =
+      const VerificationMeta('orderId');
+  @override
+  late final GeneratedColumn<int> orderId = GeneratedColumn<int>(
+      'order_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES orders (id) ON DELETE CASCADE'));
+  static const VerificationMeta _fieldIdMeta =
+      const VerificationMeta('fieldId');
+  @override
+  late final GeneratedColumn<int> fieldId = GeneratedColumn<int>(
+      'field_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES order_field_definitions (id)'));
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+      'value', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [orderId, fieldId, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'order_field_values';
+  @override
+  VerificationContext validateIntegrity(Insertable<OrderFieldValue> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('order_id')) {
+      context.handle(_orderIdMeta,
+          orderId.isAcceptableOrUnknown(data['order_id']!, _orderIdMeta));
+    } else if (isInserting) {
+      context.missing(_orderIdMeta);
+    }
+    if (data.containsKey('field_id')) {
+      context.handle(_fieldIdMeta,
+          fieldId.isAcceptableOrUnknown(data['field_id']!, _fieldIdMeta));
+    } else if (isInserting) {
+      context.missing(_fieldIdMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {orderId, fieldId};
+  @override
+  OrderFieldValue map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OrderFieldValue(
+      orderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}order_id'])!,
+      fieldId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}field_id'])!,
+      value: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}value'])!,
+    );
+  }
+
+  @override
+  $OrderFieldValuesTable createAlias(String alias) {
+    return $OrderFieldValuesTable(attachedDatabase, alias);
+  }
+}
+
+class OrderFieldValue extends DataClass implements Insertable<OrderFieldValue> {
+  final int orderId;
+  final int fieldId;
+  final String value;
+  const OrderFieldValue(
+      {required this.orderId, required this.fieldId, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['order_id'] = Variable<int>(orderId);
+    map['field_id'] = Variable<int>(fieldId);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  OrderFieldValuesCompanion toCompanion(bool nullToAbsent) {
+    return OrderFieldValuesCompanion(
+      orderId: Value(orderId),
+      fieldId: Value(fieldId),
+      value: Value(value),
+    );
+  }
+
+  factory OrderFieldValue.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OrderFieldValue(
+      orderId: serializer.fromJson<int>(json['orderId']),
+      fieldId: serializer.fromJson<int>(json['fieldId']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'orderId': serializer.toJson<int>(orderId),
+      'fieldId': serializer.toJson<int>(fieldId),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  OrderFieldValue copyWith({int? orderId, int? fieldId, String? value}) =>
+      OrderFieldValue(
+        orderId: orderId ?? this.orderId,
+        fieldId: fieldId ?? this.fieldId,
+        value: value ?? this.value,
+      );
+  OrderFieldValue copyWithCompanion(OrderFieldValuesCompanion data) {
+    return OrderFieldValue(
+      orderId: data.orderId.present ? data.orderId.value : this.orderId,
+      fieldId: data.fieldId.present ? data.fieldId.value : this.fieldId,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderFieldValue(')
+          ..write('orderId: $orderId, ')
+          ..write('fieldId: $fieldId, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(orderId, fieldId, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OrderFieldValue &&
+          other.orderId == this.orderId &&
+          other.fieldId == this.fieldId &&
+          other.value == this.value);
+}
+
+class OrderFieldValuesCompanion extends UpdateCompanion<OrderFieldValue> {
+  final Value<int> orderId;
+  final Value<int> fieldId;
+  final Value<String> value;
+  final Value<int> rowid;
+  const OrderFieldValuesCompanion({
+    this.orderId = const Value.absent(),
+    this.fieldId = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OrderFieldValuesCompanion.insert({
+    required int orderId,
+    required int fieldId,
+    required String value,
+    this.rowid = const Value.absent(),
+  })  : orderId = Value(orderId),
+        fieldId = Value(fieldId),
+        value = Value(value);
+  static Insertable<OrderFieldValue> custom({
+    Expression<int>? orderId,
+    Expression<int>? fieldId,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (orderId != null) 'order_id': orderId,
+      if (fieldId != null) 'field_id': fieldId,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OrderFieldValuesCompanion copyWith(
+      {Value<int>? orderId,
+      Value<int>? fieldId,
+      Value<String>? value,
+      Value<int>? rowid}) {
+    return OrderFieldValuesCompanion(
+      orderId: orderId ?? this.orderId,
+      fieldId: fieldId ?? this.fieldId,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (orderId.present) {
+      map['order_id'] = Variable<int>(orderId.value);
+    }
+    if (fieldId.present) {
+      map['field_id'] = Variable<int>(fieldId.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OrderFieldValuesCompanion(')
+          ..write('orderId: $orderId, ')
+          ..write('fieldId: $fieldId, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5001,6 +5620,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ProductStockMovementsTable productStockMovements =
       $ProductStockMovementsTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $OrderFieldDefinitionsTable orderFieldDefinitions =
+      $OrderFieldDefinitionsTable(this);
+  late final $OrderFieldValuesTable orderFieldValues =
+      $OrderFieldValuesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5016,14 +5639,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         channels,
         stockMovements,
         productStockMovements,
-        settings
+        settings,
+        orderFieldDefinitions,
+        orderFieldValues
       ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
+        [
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('orders',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('order_field_values', kind: UpdateKind.delete),
+            ],
+          ),
+        ],
+      );
 }
 
 typedef $$OrdersTableCreateCompanionBuilder = OrdersCompanion Function({
   Value<int> id,
   required String customerName,
-  required String customerAddress,
   Value<String?> note,
   required DateTime orderDate,
   required DateTime shipByDate,
@@ -5042,7 +5678,6 @@ typedef $$OrdersTableCreateCompanionBuilder = OrdersCompanion Function({
 typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
   Value<int> id,
   Value<String> customerName,
-  Value<String> customerAddress,
   Value<String?> note,
   Value<DateTime> orderDate,
   Value<DateTime> shipByDate,
@@ -5059,6 +5694,28 @@ typedef $$OrdersTableUpdateCompanionBuilder = OrdersCompanion Function({
   Value<DateTime> updatedAt,
 });
 
+final class $$OrdersTableReferences
+    extends BaseReferences<_$AppDatabase, $OrdersTable, Order> {
+  $$OrdersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$OrderFieldValuesTable, List<OrderFieldValue>>
+      _orderFieldValuesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.orderFieldValues,
+              aliasName: $_aliasNameGenerator(
+                  db.orders.id, db.orderFieldValues.orderId));
+
+  $$OrderFieldValuesTableProcessedTableManager get orderFieldValuesRefs {
+    final manager =
+        $$OrderFieldValuesTableTableManager($_db, $_db.orderFieldValues)
+            .filter((f) => f.orderId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_orderFieldValuesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
 class $$OrdersTableFilterComposer
     extends Composer<_$AppDatabase, $OrdersTable> {
   $$OrdersTableFilterComposer({
@@ -5073,10 +5730,6 @@ class $$OrdersTableFilterComposer
 
   ColumnFilters<String> get customerName => $composableBuilder(
       column: $table.customerName, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get customerAddress => $composableBuilder(
-      column: $table.customerAddress,
-      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get note => $composableBuilder(
       column: $table.note, builder: (column) => ColumnFilters(column));
@@ -5120,6 +5773,27 @@ class $$OrdersTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> orderFieldValuesRefs(
+      Expression<bool> Function($$OrderFieldValuesTableFilterComposer f) f) {
+    final $$OrderFieldValuesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.orderFieldValues,
+        getReferencedColumn: (t) => t.orderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrderFieldValuesTableFilterComposer(
+              $db: $db,
+              $table: $db.orderFieldValues,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$OrdersTableOrderingComposer
@@ -5136,10 +5810,6 @@ class $$OrdersTableOrderingComposer
 
   ColumnOrderings<String> get customerName => $composableBuilder(
       column: $table.customerName,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get customerAddress => $composableBuilder(
-      column: $table.customerAddress,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get note => $composableBuilder(
@@ -5202,9 +5872,6 @@ class $$OrdersTableAnnotationComposer
   GeneratedColumn<String> get customerName => $composableBuilder(
       column: $table.customerName, builder: (column) => column);
 
-  GeneratedColumn<String> get customerAddress => $composableBuilder(
-      column: $table.customerAddress, builder: (column) => column);
-
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
@@ -5246,6 +5913,27 @@ class $$OrdersTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> orderFieldValuesRefs<T extends Object>(
+      Expression<T> Function($$OrderFieldValuesTableAnnotationComposer a) f) {
+    final $$OrderFieldValuesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.orderFieldValues,
+        getReferencedColumn: (t) => t.orderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrderFieldValuesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.orderFieldValues,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$OrdersTableTableManager extends RootTableManager<
@@ -5257,9 +5945,9 @@ class $$OrdersTableTableManager extends RootTableManager<
     $$OrdersTableAnnotationComposer,
     $$OrdersTableCreateCompanionBuilder,
     $$OrdersTableUpdateCompanionBuilder,
-    (Order, BaseReferences<_$AppDatabase, $OrdersTable, Order>),
+    (Order, $$OrdersTableReferences),
     Order,
-    PrefetchHooks Function()> {
+    PrefetchHooks Function({bool orderFieldValuesRefs})> {
   $$OrdersTableTableManager(_$AppDatabase db, $OrdersTable table)
       : super(TableManagerState(
           db: db,
@@ -5273,7 +5961,6 @@ class $$OrdersTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> customerName = const Value.absent(),
-            Value<String> customerAddress = const Value.absent(),
             Value<String?> note = const Value.absent(),
             Value<DateTime> orderDate = const Value.absent(),
             Value<DateTime> shipByDate = const Value.absent(),
@@ -5292,7 +5979,6 @@ class $$OrdersTableTableManager extends RootTableManager<
               OrdersCompanion(
             id: id,
             customerName: customerName,
-            customerAddress: customerAddress,
             note: note,
             orderDate: orderDate,
             shipByDate: shipByDate,
@@ -5311,7 +5997,6 @@ class $$OrdersTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String customerName,
-            required String customerAddress,
             Value<String?> note = const Value.absent(),
             required DateTime orderDate,
             required DateTime shipByDate,
@@ -5330,7 +6015,6 @@ class $$OrdersTableTableManager extends RootTableManager<
               OrdersCompanion.insert(
             id: id,
             customerName: customerName,
-            customerAddress: customerAddress,
             note: note,
             orderDate: orderDate,
             shipByDate: shipByDate,
@@ -5347,9 +6031,35 @@ class $$OrdersTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) =>
+                  (e.readTable(table), $$OrdersTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({orderFieldValuesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (orderFieldValuesRefs) db.orderFieldValues
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (orderFieldValuesRefs)
+                    await $_getPrefetchedData<Order, $OrdersTable,
+                            OrderFieldValue>(
+                        currentTable: table,
+                        referencedTable: $$OrdersTableReferences
+                            ._orderFieldValuesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$OrdersTableReferences(db, table, p0)
+                                .orderFieldValuesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.orderId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
@@ -5362,9 +6072,9 @@ typedef $$OrdersTableProcessedTableManager = ProcessedTableManager<
     $$OrdersTableAnnotationComposer,
     $$OrdersTableCreateCompanionBuilder,
     $$OrdersTableUpdateCompanionBuilder,
-    (Order, BaseReferences<_$AppDatabase, $OrdersTable, Order>),
+    (Order, $$OrdersTableReferences),
     Order,
-    PrefetchHooks Function()>;
+    PrefetchHooks Function({bool orderFieldValuesRefs})>;
 typedef $$OrderItemsTableCreateCompanionBuilder = OrderItemsCompanion Function({
   Value<int> id,
   required int orderId,
@@ -7455,6 +8165,637 @@ typedef $$SettingsTableProcessedTableManager = ProcessedTableManager<
     (Setting, BaseReferences<_$AppDatabase, $SettingsTable, Setting>),
     Setting,
     PrefetchHooks Function()>;
+typedef $$OrderFieldDefinitionsTableCreateCompanionBuilder
+    = OrderFieldDefinitionsCompanion Function({
+  Value<int> id,
+  required String name,
+  required String type,
+  Value<String?> options,
+  Value<bool> isMultiline,
+  Value<int> position,
+  Value<bool> isArchived,
+  Value<DateTime> createdAt,
+});
+typedef $$OrderFieldDefinitionsTableUpdateCompanionBuilder
+    = OrderFieldDefinitionsCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String> type,
+  Value<String?> options,
+  Value<bool> isMultiline,
+  Value<int> position,
+  Value<bool> isArchived,
+  Value<DateTime> createdAt,
+});
+
+final class $$OrderFieldDefinitionsTableReferences extends BaseReferences<
+    _$AppDatabase, $OrderFieldDefinitionsTable, OrderFieldDefinition> {
+  $$OrderFieldDefinitionsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$OrderFieldValuesTable, List<OrderFieldValue>>
+      _orderFieldValuesRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.orderFieldValues,
+              aliasName: $_aliasNameGenerator(
+                  db.orderFieldDefinitions.id, db.orderFieldValues.fieldId));
+
+  $$OrderFieldValuesTableProcessedTableManager get orderFieldValuesRefs {
+    final manager =
+        $$OrderFieldValuesTableTableManager($_db, $_db.orderFieldValues)
+            .filter((f) => f.fieldId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_orderFieldValuesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$OrderFieldDefinitionsTableFilterComposer
+    extends Composer<_$AppDatabase, $OrderFieldDefinitionsTable> {
+  $$OrderFieldDefinitionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get options => $composableBuilder(
+      column: $table.options, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isMultiline => $composableBuilder(
+      column: $table.isMultiline, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> orderFieldValuesRefs(
+      Expression<bool> Function($$OrderFieldValuesTableFilterComposer f) f) {
+    final $$OrderFieldValuesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.orderFieldValues,
+        getReferencedColumn: (t) => t.fieldId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrderFieldValuesTableFilterComposer(
+              $db: $db,
+              $table: $db.orderFieldValues,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$OrderFieldDefinitionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OrderFieldDefinitionsTable> {
+  $$OrderFieldDefinitionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get options => $composableBuilder(
+      column: $table.options, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isMultiline => $composableBuilder(
+      column: $table.isMultiline, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$OrderFieldDefinitionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OrderFieldDefinitionsTable> {
+  $$OrderFieldDefinitionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get options =>
+      $composableBuilder(column: $table.options, builder: (column) => column);
+
+  GeneratedColumn<bool> get isMultiline => $composableBuilder(
+      column: $table.isMultiline, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<bool> get isArchived => $composableBuilder(
+      column: $table.isArchived, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> orderFieldValuesRefs<T extends Object>(
+      Expression<T> Function($$OrderFieldValuesTableAnnotationComposer a) f) {
+    final $$OrderFieldValuesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.orderFieldValues,
+        getReferencedColumn: (t) => t.fieldId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrderFieldValuesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.orderFieldValues,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$OrderFieldDefinitionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $OrderFieldDefinitionsTable,
+    OrderFieldDefinition,
+    $$OrderFieldDefinitionsTableFilterComposer,
+    $$OrderFieldDefinitionsTableOrderingComposer,
+    $$OrderFieldDefinitionsTableAnnotationComposer,
+    $$OrderFieldDefinitionsTableCreateCompanionBuilder,
+    $$OrderFieldDefinitionsTableUpdateCompanionBuilder,
+    (OrderFieldDefinition, $$OrderFieldDefinitionsTableReferences),
+    OrderFieldDefinition,
+    PrefetchHooks Function({bool orderFieldValuesRefs})> {
+  $$OrderFieldDefinitionsTableTableManager(
+      _$AppDatabase db, $OrderFieldDefinitionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OrderFieldDefinitionsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OrderFieldDefinitionsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OrderFieldDefinitionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> type = const Value.absent(),
+            Value<String?> options = const Value.absent(),
+            Value<bool> isMultiline = const Value.absent(),
+            Value<int> position = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              OrderFieldDefinitionsCompanion(
+            id: id,
+            name: name,
+            type: type,
+            options: options,
+            isMultiline: isMultiline,
+            position: position,
+            isArchived: isArchived,
+            createdAt: createdAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            required String type,
+            Value<String?> options = const Value.absent(),
+            Value<bool> isMultiline = const Value.absent(),
+            Value<int> position = const Value.absent(),
+            Value<bool> isArchived = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+          }) =>
+              OrderFieldDefinitionsCompanion.insert(
+            id: id,
+            name: name,
+            type: type,
+            options: options,
+            isMultiline: isMultiline,
+            position: position,
+            isArchived: isArchived,
+            createdAt: createdAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$OrderFieldDefinitionsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({orderFieldValuesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (orderFieldValuesRefs) db.orderFieldValues
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (orderFieldValuesRefs)
+                    await $_getPrefetchedData<OrderFieldDefinition,
+                            $OrderFieldDefinitionsTable, OrderFieldValue>(
+                        currentTable: table,
+                        referencedTable: $$OrderFieldDefinitionsTableReferences
+                            ._orderFieldValuesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$OrderFieldDefinitionsTableReferences(
+                                    db, table, p0)
+                                .orderFieldValuesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.fieldId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$OrderFieldDefinitionsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $OrderFieldDefinitionsTable,
+        OrderFieldDefinition,
+        $$OrderFieldDefinitionsTableFilterComposer,
+        $$OrderFieldDefinitionsTableOrderingComposer,
+        $$OrderFieldDefinitionsTableAnnotationComposer,
+        $$OrderFieldDefinitionsTableCreateCompanionBuilder,
+        $$OrderFieldDefinitionsTableUpdateCompanionBuilder,
+        (OrderFieldDefinition, $$OrderFieldDefinitionsTableReferences),
+        OrderFieldDefinition,
+        PrefetchHooks Function({bool orderFieldValuesRefs})>;
+typedef $$OrderFieldValuesTableCreateCompanionBuilder
+    = OrderFieldValuesCompanion Function({
+  required int orderId,
+  required int fieldId,
+  required String value,
+  Value<int> rowid,
+});
+typedef $$OrderFieldValuesTableUpdateCompanionBuilder
+    = OrderFieldValuesCompanion Function({
+  Value<int> orderId,
+  Value<int> fieldId,
+  Value<String> value,
+  Value<int> rowid,
+});
+
+final class $$OrderFieldValuesTableReferences extends BaseReferences<
+    _$AppDatabase, $OrderFieldValuesTable, OrderFieldValue> {
+  $$OrderFieldValuesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $OrdersTable _orderIdTable(_$AppDatabase db) => db.orders.createAlias(
+      $_aliasNameGenerator(db.orderFieldValues.orderId, db.orders.id));
+
+  $$OrdersTableProcessedTableManager get orderId {
+    final $_column = $_itemColumn<int>('order_id')!;
+
+    final manager = $$OrdersTableTableManager($_db, $_db.orders)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_orderIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $OrderFieldDefinitionsTable _fieldIdTable(_$AppDatabase db) =>
+      db.orderFieldDefinitions.createAlias($_aliasNameGenerator(
+          db.orderFieldValues.fieldId, db.orderFieldDefinitions.id));
+
+  $$OrderFieldDefinitionsTableProcessedTableManager get fieldId {
+    final $_column = $_itemColumn<int>('field_id')!;
+
+    final manager = $$OrderFieldDefinitionsTableTableManager(
+            $_db, $_db.orderFieldDefinitions)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_fieldIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$OrderFieldValuesTableFilterComposer
+    extends Composer<_$AppDatabase, $OrderFieldValuesTable> {
+  $$OrderFieldValuesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnFilters(column));
+
+  $$OrdersTableFilterComposer get orderId {
+    final $$OrdersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.orderId,
+        referencedTable: $db.orders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrdersTableFilterComposer(
+              $db: $db,
+              $table: $db.orders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$OrderFieldDefinitionsTableFilterComposer get fieldId {
+    final $$OrderFieldDefinitionsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.fieldId,
+            referencedTable: $db.orderFieldDefinitions,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$OrderFieldDefinitionsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.orderFieldDefinitions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$OrderFieldValuesTableOrderingComposer
+    extends Composer<_$AppDatabase, $OrderFieldValuesTable> {
+  $$OrderFieldValuesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnOrderings(column));
+
+  $$OrdersTableOrderingComposer get orderId {
+    final $$OrdersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.orderId,
+        referencedTable: $db.orders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrdersTableOrderingComposer(
+              $db: $db,
+              $table: $db.orders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$OrderFieldDefinitionsTableOrderingComposer get fieldId {
+    final $$OrderFieldDefinitionsTableOrderingComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.fieldId,
+            referencedTable: $db.orderFieldDefinitions,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$OrderFieldDefinitionsTableOrderingComposer(
+                  $db: $db,
+                  $table: $db.orderFieldDefinitions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$OrderFieldValuesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OrderFieldValuesTable> {
+  $$OrderFieldValuesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  $$OrdersTableAnnotationComposer get orderId {
+    final $$OrdersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.orderId,
+        referencedTable: $db.orders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$OrdersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.orders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$OrderFieldDefinitionsTableAnnotationComposer get fieldId {
+    final $$OrderFieldDefinitionsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.fieldId,
+            referencedTable: $db.orderFieldDefinitions,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$OrderFieldDefinitionsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.orderFieldDefinitions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$OrderFieldValuesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $OrderFieldValuesTable,
+    OrderFieldValue,
+    $$OrderFieldValuesTableFilterComposer,
+    $$OrderFieldValuesTableOrderingComposer,
+    $$OrderFieldValuesTableAnnotationComposer,
+    $$OrderFieldValuesTableCreateCompanionBuilder,
+    $$OrderFieldValuesTableUpdateCompanionBuilder,
+    (OrderFieldValue, $$OrderFieldValuesTableReferences),
+    OrderFieldValue,
+    PrefetchHooks Function({bool orderId, bool fieldId})> {
+  $$OrderFieldValuesTableTableManager(
+      _$AppDatabase db, $OrderFieldValuesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OrderFieldValuesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OrderFieldValuesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OrderFieldValuesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> orderId = const Value.absent(),
+            Value<int> fieldId = const Value.absent(),
+            Value<String> value = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OrderFieldValuesCompanion(
+            orderId: orderId,
+            fieldId: fieldId,
+            value: value,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int orderId,
+            required int fieldId,
+            required String value,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              OrderFieldValuesCompanion.insert(
+            orderId: orderId,
+            fieldId: fieldId,
+            value: value,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$OrderFieldValuesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({orderId = false, fieldId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (orderId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.orderId,
+                    referencedTable:
+                        $$OrderFieldValuesTableReferences._orderIdTable(db),
+                    referencedColumn:
+                        $$OrderFieldValuesTableReferences._orderIdTable(db).id,
+                  ) as T;
+                }
+                if (fieldId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.fieldId,
+                    referencedTable:
+                        $$OrderFieldValuesTableReferences._fieldIdTable(db),
+                    referencedColumn:
+                        $$OrderFieldValuesTableReferences._fieldIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$OrderFieldValuesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $OrderFieldValuesTable,
+    OrderFieldValue,
+    $$OrderFieldValuesTableFilterComposer,
+    $$OrderFieldValuesTableOrderingComposer,
+    $$OrderFieldValuesTableAnnotationComposer,
+    $$OrderFieldValuesTableCreateCompanionBuilder,
+    $$OrderFieldValuesTableUpdateCompanionBuilder,
+    (OrderFieldValue, $$OrderFieldValuesTableReferences),
+    OrderFieldValue,
+    PrefetchHooks Function({bool orderId, bool fieldId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7481,4 +8822,8 @@ class $AppDatabaseManager {
       $$ProductStockMovementsTableTableManager(_db, _db.productStockMovements);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$OrderFieldDefinitionsTableTableManager get orderFieldDefinitions =>
+      $$OrderFieldDefinitionsTableTableManager(_db, _db.orderFieldDefinitions);
+  $$OrderFieldValuesTableTableManager get orderFieldValues =>
+      $$OrderFieldValuesTableTableManager(_db, _db.orderFieldValues);
 }

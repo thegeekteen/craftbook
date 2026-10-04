@@ -41,7 +41,6 @@ Order _order({
   return Order(
     id: id,
     customerName: 'Maria Santos',
-    customerAddress: 'Quezon City',
     orderDate: _day(-1),
     shipByDate: _day(shipInDays),
     shippedAt: shippedAt,

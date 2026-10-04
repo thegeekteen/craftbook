@@ -28,6 +28,7 @@ class RouteNames {
   static const String productEditor = '/products/:id/edit';
   static const String receiveProductStock = '/products/:id/receive';
   static const String channels = '/channels';
+  static const String orderFields = '/order-fields';
 
   // Earnings
   static const String earnings = '/earnings';

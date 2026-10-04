@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/result.dart';
+import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -25,7 +26,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
 
   // Internal mutable state for building the order
   String _customerName = '';
-  String _customerAddress = '';
+  Map<int, String> _fieldValues = {};
   int _channelId = 0;
   DateTime _orderDate = DateTime.now();
   DateTime _shipByDate = DateTime.now();
@@ -57,11 +58,17 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   ) async {
     final orderResult = await orderRepository.getOrderById(event.orderId);
     final itemsResult = await orderRepository.getOrderItems(event.orderId);
+    final fieldsResult =
+        await orderRepository.getOrderFieldValues(event.orderId);
     if (orderResult case Error(:final failure)) {
       emit(NewOrderError(failure.message));
       return;
     }
     if (itemsResult case Error(:final failure)) {
+      emit(NewOrderError(failure.message));
+      return;
+    }
+    if (fieldsResult case Error(:final failure)) {
       emit(NewOrderError(failure.message));
       return;
     }
@@ -73,7 +80,12 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     _editingOrderId = event.orderId;
     _editingStatus = order.status;
     _customerName = order.customerName;
-    _customerAddress = order.customerAddress;
+    // Archived fields aren't on the form, but their values ride along so
+    // saving (which replaces the whole set) keeps them.
+    _fieldValues = {
+      for (final e in (fieldsResult as Success<List<OrderFieldEntry>>).value)
+        e.field.id!: e.value,
+    };
     _channelId = order.channelId ?? 0;
     _orderDate = order.orderDate;
     _shipByDate = order.shipByDate;
@@ -95,7 +107,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     Emitter<NewOrderState> emit,
   ) {
     _customerName = event.customerName;
-    _customerAddress = event.customerAddress;
+    _fieldValues = {..._fieldValues, ...event.fieldValues};
     _channelId = event.channelId;
     _orderDate = event.orderDate;
     _shipByDate = event.shipByDate;
@@ -187,7 +199,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       final updated = await updateOrder(
         orderId: editingId,
         customerName: _customerName,
-        customerAddress: _customerAddress,
+        fieldValues: _fieldValues,
         note: _note,
         orderDate: _orderDate,
         shipByDate: _shipByDate,
@@ -228,7 +240,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
 
     final result = await createOrder(
       customerName: _customerName,
-      customerAddress: _customerAddress,
+      fieldValues: _fieldValues,
       note: _note,
       orderDate: _orderDate,
       shipByDate: _shipByDate,
@@ -252,7 +264,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     Emitter<NewOrderState> emit,
   ) {
     _customerName = '';
-    _customerAddress = '';
+    _fieldValues = {};
     _channelId = 0;
     _orderDate = DateTime.now();
     _shipByDate = DateTime.now();
@@ -271,7 +283,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     final totalSales = _items.fold(0.0, (sum, item) => sum + item.subtotal);
     return NewOrderDetailsFilled(
       customerName: _customerName,
-      customerAddress: _customerAddress,
+      fieldValues: Map.unmodifiable(_fieldValues),
       channelId: _channelId,
       orderDate: _orderDate,
       shipByDate: _shipByDate,

@@ -25,7 +25,6 @@ enum OrderStatus {
 class Order extends Equatable {
   final int? id;
   final String customerName;
-  final String customerAddress;
   final String? note;
   final DateTime orderDate;
   final DateTime shipByDate;
@@ -44,7 +43,6 @@ class Order extends Equatable {
   const Order({
     this.id,
     required this.customerName,
-    required this.customerAddress,
     this.note,
     required this.orderDate,
     required this.shipByDate,
@@ -65,7 +63,6 @@ class Order extends Equatable {
   List<Object?> get props => [
         id,
         customerName,
-        customerAddress,
         note,
         orderDate,
         shipByDate,
@@ -85,7 +82,6 @@ class Order extends Equatable {
   Order copyWith({
     int? id,
     String? customerName,
-    String? customerAddress,
     String? note,
     DateTime? orderDate,
     DateTime? shipByDate,
@@ -104,7 +100,6 @@ class Order extends Equatable {
     return Order(
       id: id ?? this.id,
       customerName: customerName ?? this.customerName,
-      customerAddress: customerAddress ?? this.customerAddress,
       note: note ?? this.note,
       orderDate: orderDate ?? this.orderDate,
       shipByDate: shipByDate ?? this.shipByDate,

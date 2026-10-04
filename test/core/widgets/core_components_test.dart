@@ -525,6 +525,47 @@ void main() {
     });
   });
 
+  group('DateField without a date', () {
+    testWidgets('shows the placeholder and still picks a date', (tester) async {
+      DateTime? picked;
+      await tester.pumpWidget(_wrap(DateField(
+        label: 'Event date',
+        value: null,
+        onChanged: (d) => picked = d,
+      )));
+      expect(find.text('Not set'), findsOneWidget);
+      await tester.tap(find.byType(DateField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(picked, isNotNull);
+    });
+
+    testWidgets('a set date with onCleared shows a clear button', (tester) async {
+      var cleared = 0;
+      await tester.pumpWidget(_wrap(DateField(
+        label: 'Event date',
+        value: DateTime(DateTime.now().year, 6, 15),
+        onChanged: (_) {},
+        onCleared: () => cleared++,
+      )));
+      expect(find.byIcon(Icons.event_rounded), findsNothing);
+      await tester.tap(find.byTooltip('Clear Event date'));
+      expect(cleared, 1);
+    });
+
+    testWidgets('no clear button while empty', (tester) async {
+      await tester.pumpWidget(_wrap(DateField(
+        label: 'Event date',
+        value: null,
+        onChanged: (_) {},
+        onCleared: () {},
+      )));
+      expect(find.byTooltip('Clear Event date'), findsNothing);
+      expect(find.byIcon(Icons.event_rounded), findsOneWidget);
+    });
+  });
+
   group('AppSearchField', () {
     testWidgets('shows hint and no clear button when empty', (tester) async {
       await tester.pumpWidget(_wrap(AppSearchField(hint: 'Search orders', onChanged: (_) {})));

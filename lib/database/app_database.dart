@@ -15,6 +15,7 @@ import 'tables/bom_items_table.dart';
 import 'tables/stock_movements_table.dart';
 import 'tables/product_stock_movements_table.dart';
 import 'tables/settings_table.dart';
+import 'tables/order_fields_table.dart';
 import 'migrations/migrations.dart';
 
 part 'app_database.g.dart';
@@ -37,6 +38,8 @@ const craftbookAppId = 0x43524654;
     StockMovements,
     ProductStockMovements,
     Settings,
+    OrderFieldDefinitions,
+    OrderFieldValues,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -50,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Readable without opening a database, so a backup's version can be
   /// checked before anything touches it.
-  static const currentSchemaVersion = 3;
+  static const currentSchemaVersion = 4;
 
   @override
   int get schemaVersion => currentSchemaVersion;

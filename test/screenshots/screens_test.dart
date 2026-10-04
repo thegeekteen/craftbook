@@ -54,6 +54,7 @@ void main() {
     ('product_editor', RouteNames.productEditorPath(1)),
     ('product_resell', RouteNames.productEditorPath(4)),
     ('channels', RouteNames.channels),
+    ('order_fields', RouteNames.orderFields),
     ('money', RouteNames.earnings),
     ('product_earnings', RouteNames.productEarningsPath(1, weekStart.subtract(const Duration(days: 28)), weekEnd)),
     ('more', RouteNames.settings),

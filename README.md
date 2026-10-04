@@ -34,7 +34,7 @@ The bottom bar has five tabs: **Today**, **Orders**, **Stock**, **Money** and **
 
 1. **Today** shows what's due: a summary of orders to pack, new orders, overdue orders and this week's profit. It also shows a warning when materials run low, and the orders shipping today or placed today. The calendar icon opens a week or month view by ship-by date.
 2. **New order** (the **+** button) takes three steps:
-   - **Customer:** name, address, channel, order and ship-by dates, note.
+   - **Customer:** name, your order fields (address, size, wrap… set up under More → Order fields), channel, order and ship-by dates, note.
    - **Items:** pick products. The picker shows how many you can build right now.
    - **Review:** the profit preview, the fee and shipping split, and exactly which materials will be reserved. It warns you if any are short.
 3. **Pack** the order from its detail page. A sheet shows each material's stock before and after. If you used more than planned, tap **Adjust** first and record the real amount and the reason (cutting, defect, and so on). The extra is tracked as waste.
@@ -44,7 +44,7 @@ The bottom bar has five tabs: **Today**, **Orders**, **Stock**, **Money** and **
    | Status | Editable |
    |--------|----------|
    | To pack | Everything. Changing items releases the old reservations and makes new ones. |
-   | Packed | Customer, address, note, dates and channel. Items are locked because their stock is already gone. |
+   | Packed | Customer, order fields, note, dates and channel. Items are locked because their stock is already gone. |
    | Shipped | The note only. |
 
 ### 3. Keeping stock healthy

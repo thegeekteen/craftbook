@@ -102,7 +102,8 @@ void main() {
 
     expect(
       await BackupValidator.validate(snapshot),
-      const Success(BackupSummary(schemaVersion: 3, orders: 0, materials: 0, products: 1)),
+      const Success(BackupSummary(
+          schemaVersion: AppDatabase.currentSchemaVersion, orders: 0, materials: 0, products: 1)),
     );
   });
 }

@@ -67,7 +67,7 @@ lib/
 | **Stock** | `/materials`, `/materials/:id` | List (tabbed), detail, receive stock, buy list |
 | **Products** | `/products`, `/products/:id/edit`, `/channels` | List, BOM editor, channels & fees |
 | **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
-| **Settings** | `/settings` | Backup/restore, navigation hub |
+| **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields |
 
 ---
 

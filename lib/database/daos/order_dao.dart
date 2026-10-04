@@ -8,11 +8,12 @@ import '../tables/order_products_table.dart';
 import '../tables/products_table.dart';
 import '../tables/materials_table.dart';
 import '../tables/product_stock_movements_table.dart';
+import '../tables/order_fields_table.dart';
 
 part 'order_dao.g.dart';
 
 /// Data Access Object for orders
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, OrderProducts, Products, Materials, ProductStockMovements])
+@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, OrderProducts, Products, Materials, ProductStockMovements, OrderFieldDefinitions, OrderFieldValues])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   OrderDao(super.db);
 
@@ -181,6 +182,53 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   /// Update order material
   Future<bool> updateOrderMaterial(OrderMaterial material) {
     return update(orderMaterials).replace(material);
+  }
+
+  /// The order's field values with their definitions, archived included,
+  /// in field order.
+  Future<List<(OrderFieldDefinition, String)>> getFieldValues(
+      int orderId) async {
+    final query = select(orderFieldValues).join([
+      innerJoin(
+        orderFieldDefinitions,
+        orderFieldDefinitions.id.equalsExp(orderFieldValues.fieldId),
+      ),
+    ])
+      ..where(orderFieldValues.orderId.equals(orderId))
+      ..orderBy([
+        OrderingTerm.asc(orderFieldDefinitions.position),
+        OrderingTerm.asc(orderFieldDefinitions.id),
+      ]);
+    final rows = await query.get();
+    return [
+      for (final r in rows)
+        (r.readTable(orderFieldDefinitions), r.readTable(orderFieldValues).value),
+    ];
+  }
+
+  /// Replaces the order's values with [values] (field id → value). Ids whose
+  /// field no longer exists are skipped: one may be deleted while the order
+  /// form is still open.
+  Future<void> replaceFieldValues(int orderId, Map<int, String> values) async {
+    await deleteFieldValuesByOrderId(orderId);
+    if (values.isEmpty) return;
+    final existing = await (selectOnly(orderFieldDefinitions)
+          ..addColumns([orderFieldDefinitions.id])
+          ..where(orderFieldDefinitions.id.isIn(values.keys)))
+        .map((r) => r.read(orderFieldDefinitions.id)!)
+        .get();
+    for (final id in existing) {
+      await into(orderFieldValues).insert(OrderFieldValuesCompanion.insert(
+        orderId: orderId,
+        fieldId: id,
+        value: values[id]!,
+      ));
+    }
+  }
+
+  Future<int> deleteFieldValuesByOrderId(int orderId) {
+    return (delete(orderFieldValues)..where((t) => t.orderId.equals(orderId)))
+        .go();
   }
 
   /// Look up product name by ID

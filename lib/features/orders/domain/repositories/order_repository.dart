@@ -1,4 +1,5 @@
 import '../../../../core/error/result.dart';
+import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../entities/order.dart';
 import '../entities/order_item.dart';
 import '../entities/order_list_entry.dart';
@@ -21,7 +22,6 @@ abstract class OrderRepository {
   Future<Result<List<OrderProduct>>> getOrderProducts(int orderId);
   Future<Result<int>> createOrder({
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -34,14 +34,15 @@ abstract class OrderRepository {
     required List<OrderItemInput> items,
     required List<OrderMaterialInput> materials,
     List<OrderProductInput> products,
+    Map<int, String> fieldValues,
   });
   /// Rewrites the order's own fields. When [items] is given the item,
   /// material and product lines are replaced with the given lists in the same
-  /// transaction; stock reservations are the caller's job.
+  /// transaction; stock reservations are the caller's job. [fieldValues],
+  /// when given, is the order's complete set of custom field values.
   Future<Result<void>> updateOrder({
     required int id,
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -54,7 +55,13 @@ abstract class OrderRepository {
     List<OrderItemInput>? items,
     List<OrderMaterialInput>? materials,
     List<OrderProductInput>? products,
+    Map<int, String>? fieldValues,
   });
+
+  /// The order's custom field values, archived fields included, in field
+  /// order.
+  Future<Result<List<OrderFieldEntry>>> getOrderFieldValues(int orderId);
+
   /// Rewrites only the note, so it can change at any status — ticking a
   /// to-do on a shipped order must not go through the full order update.
   Future<Result<void>> updateOrderNote(int orderId, String? note);

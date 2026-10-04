@@ -1,5 +1,6 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order_item.dart';
@@ -19,7 +20,6 @@ class CreateOrder {
 
   Future<Result<int>> call({
     required String customerName,
-    required String customerAddress,
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
@@ -28,6 +28,9 @@ class CreateOrder {
     required double channelFees,
     required double shippingCost,
     required List<OrderItemInput> items,
+
+    /// Custom field values by field id; blanks are dropped.
+    Map<int, String> fieldValues = const {},
   }) async {
     if (customerName.trim().isEmpty) {
       return const Error<int>(ValidationFailure('Customer name is required'));
@@ -47,7 +50,6 @@ class CreateOrder {
 
     final result = await orderRepository.createOrder(
       customerName: customerName.trim(),
-      customerAddress: customerAddress.trim(),
       note: note?.trim(),
       orderDate: orderDate,
       shipByDate: shipByDate,
@@ -60,6 +62,7 @@ class CreateOrder {
       items: items,
       materials: expandedMaterials,
       products: expandedProducts,
+      fieldValues: OrderFieldCodec.normalize(fieldValues),
     );
 
     switch (result) {

@@ -18,7 +18,9 @@ class NewOrderInitial extends NewOrderState {}
 /// Customer details and items are being filled in
 class NewOrderDetailsFilled extends NewOrderState {
   final String customerName;
-  final String customerAddress;
+
+  /// Custom field values by field id, archived fields included.
+  final Map<int, String> fieldValues;
   final int channelId;
   final DateTime orderDate;
   final DateTime shipByDate;
@@ -38,7 +40,7 @@ class NewOrderDetailsFilled extends NewOrderState {
 
   const NewOrderDetailsFilled({
     required this.customerName,
-    required this.customerAddress,
+    this.fieldValues = const {},
     required this.channelId,
     required this.orderDate,
     required this.shipByDate,
@@ -61,7 +63,7 @@ class NewOrderDetailsFilled extends NewOrderState {
   @override
   List<Object?> get props => [
         customerName,
-        customerAddress,
+        fieldValues,
         channelId,
         orderDate,
         shipByDate,
@@ -78,7 +80,7 @@ class NewOrderDetailsFilled extends NewOrderState {
 
   NewOrderDetailsFilled copyWith({
     String? customerName,
-    String? customerAddress,
+    Map<int, String>? fieldValues,
     int? channelId,
     DateTime? orderDate,
     DateTime? shipByDate,
@@ -94,7 +96,7 @@ class NewOrderDetailsFilled extends NewOrderState {
   }) {
     return NewOrderDetailsFilled(
       customerName: customerName ?? this.customerName,
-      customerAddress: customerAddress ?? this.customerAddress,
+      fieldValues: fieldValues ?? this.fieldValues,
       channelId: channelId ?? this.channelId,
       orderDate: orderDate ?? this.orderDate,
       shipByDate: shipByDate ?? this.shipByDate,

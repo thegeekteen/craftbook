@@ -21,7 +21,6 @@ class MockGetOrderListEntries extends Mock implements GetOrderListEntries {}
 Order _order(int id, {OrderStatus status = OrderStatus.pending}) => Order(
       id: id,
       customerName: 'Customer $id',
-      customerAddress: 'Cebu City',
       orderDate: DateTime(2026, 8, 26),
       shipByDate: DateTime(2026, 8, 28),
       status: status,

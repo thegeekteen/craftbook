@@ -11,7 +11,9 @@ abstract class NewOrderEvent extends Equatable {
 /// Set customer details for the new order
 class SetCustomerDetails extends NewOrderEvent {
   final String customerName;
-  final String customerAddress;
+
+  /// Values for the fields shown on the form, by field id. Blank clears.
+  final Map<int, String> fieldValues;
   final int channelId;
   final DateTime orderDate;
   final DateTime shipByDate;
@@ -19,7 +21,7 @@ class SetCustomerDetails extends NewOrderEvent {
 
   const SetCustomerDetails({
     required this.customerName,
-    required this.customerAddress,
+    this.fieldValues = const {},
     required this.channelId,
     required this.orderDate,
     required this.shipByDate,
@@ -29,7 +31,7 @@ class SetCustomerDetails extends NewOrderEvent {
   @override
   List<Object?> get props => [
         customerName,
-        customerAddress,
+        fieldValues,
         channelId,
         orderDate,
         shipByDate,

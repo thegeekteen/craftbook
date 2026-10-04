@@ -98,7 +98,6 @@ void main() {
     final sales = items.fold<double>(0, (s, i) => s + i.subtotal);
     return ok(await createOrder(
       customerName: 'Maria',
-      customerAddress: 'Cebu',
       orderDate: day,
       shipByDate: day.add(const Duration(days: 2)),
       channelId: channelA,
@@ -120,7 +119,6 @@ void main() {
       updateOrder(
         orderId: id,
         customerName: name,
-        customerAddress: 'Cebu',
         note: note,
         orderDate: day,
         shipByDate: shipBy ?? day.add(const Duration(days: 2)),

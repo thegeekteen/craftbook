@@ -9,6 +9,7 @@ import 'package:craftbook/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+import '../../support/legacy_schema.dart';
 import '../../support/sqlite.dart';
 
 void main() {
@@ -31,8 +32,8 @@ void main() {
     await db.customStatement("INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)");
     for (var i = 0; i < orders; i++) {
       await db.customStatement(
-        "INSERT INTO orders (customer_name, customer_address, order_date, ship_by_date, status, total_sales) "
-        "VALUES ('Ana $i', 'Street $i', 0, 0, 'pending', 450)",
+        "INSERT INTO orders (customer_name, order_date, ship_by_date, status, total_sales) "
+        "VALUES ('Ana $i', 0, 0, 'pending', 450)",
       );
     }
     await db.close();
@@ -124,7 +125,8 @@ void main() {
     final file = await craftbookDb(orders: 3);
     expect(
       await BackupValidator.validate(file),
-      const Success(BackupSummary(schemaVersion: 3, orders: 3, materials: 1, products: 1)),
+      const Success(BackupSummary(
+          schemaVersion: AppDatabase.currentSchemaVersion, orders: 3, materials: 1, products: 1)),
     );
   });
 
@@ -137,6 +139,7 @@ void main() {
   test('upgrades a schema 1 backup and keeps its orders', () async {
     final file = await craftbookDb(orders: 2);
     edit(file, (db) {
+      downgradeToV3(db);
       db.execute('DROP TABLE product_stock_movements');
       db.execute('DROP TABLE order_products');
       for (final column in ['is_standalone', 'quantity_on_hand', 'quantity_promised', 'unit_cost', 'alert_level']) {
@@ -161,6 +164,7 @@ void main() {
   test('upgrades a schema 2 backup through the v3 sign fix', () async {
     final file = await craftbookDb();
     edit(file, (db) {
+      downgradeToV3(db);
       db.execute(
         "INSERT INTO product_stock_movements (product_id, type, quantity, unit_cost, reference) "
         "VALUES (1, 'adjusted', 3, 2.5, 'Adjusted -3 units')",
@@ -174,6 +178,26 @@ void main() {
     });
   });
 
+  test('upgrades a schema 3 backup and moves its addresses into a field', () async {
+    final file = await craftbookDb();
+    edit(file, (db) {
+      downgradeToV3(db);
+      db.execute("UPDATE orders SET customer_address = 'Street ' || id");
+    });
+
+    expect(
+      await BackupValidator.validate(file),
+      const Success(BackupSummary(schemaVersion: 3, orders: 2, materials: 1, products: 1)),
+    );
+    edit(file, (db) {
+      expect(db.select('SELECT name FROM order_field_definitions').single['name'], 'Address');
+      expect(
+        db.select('SELECT value FROM order_field_values ORDER BY order_id').map((r) => r['value']),
+        ['Street 1', 'Street 2'],
+      );
+    });
+  });
+
   test('rejects an old backup whose upgrade fails', () async {
     // Claims schema 1, but already has the v2 columns the upgrade adds.
     final file = await craftbookDb();
@@ -184,7 +208,8 @@ void main() {
   group('describe', () {
     test('lists what the backup holds', () {
       expect(
-        BackupService.describe(const BackupSummary(schemaVersion: 3, orders: 1, materials: 2, products: 0)),
+        BackupService.describe(const BackupSummary(
+            schemaVersion: AppDatabase.currentSchemaVersion, orders: 1, materials: 2, products: 0)),
         '1 order, 2 materials and 0 products.',
       );
     });

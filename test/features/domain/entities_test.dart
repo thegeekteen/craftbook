@@ -10,7 +10,6 @@ void main() {
       final order = Order(
         id: 1,
         customerName: 'Test',
-        customerAddress: 'Address',
         orderDate: DateTime(2026, 8, 26),
         shipByDate: DateTime(2026, 8, 28),
         status: OrderStatus.pending,

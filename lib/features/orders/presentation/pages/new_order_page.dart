@@ -22,6 +22,10 @@ import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
+import '../../../order_fields/domain/entities/order_field.dart';
+import '../../../order_fields/domain/order_field_codec.dart';
+import '../../../order_fields/domain/usecases/get_order_fields.dart';
+import '../../../order_fields/presentation/widgets/order_field_input.dart';
 import '../../../products/domain/entities/channel.dart';
 import '../../../products/domain/usecases/get_channels.dart';
 import '../../domain/entities/order.dart';
@@ -66,7 +70,12 @@ class _NewOrderViewState extends State<_NewOrderView> {
   int _step = 0;
 
   final _nameController = TextEditingController();
-  final _addressController = TextEditingController();
+
+  /// Active custom fields, asked for after the customer name.
+  List<OrderField> _fields = [];
+
+  /// Values typed into [_fields], by field id. Blank means cleared.
+  final Map<int, String> _fieldValues = {};
 
   /// Stored note (Quill Delta JSON, or legacy plain text); edited on its own
   /// page, so it needs no controller here.
@@ -101,13 +110,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
   void initState() {
     super.initState();
     _loadChannels();
+    _loadFields();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _nameController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -125,6 +134,22 @@ class _NewOrderViewState extends State<_NewOrderView> {
       context.showSnackBar(failure.message, isError: true);
     }
   }
+
+  Future<void> _loadFields() async {
+    final result = await getIt<GetOrderFields>()(includeArchived: false);
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        setState(() => _fields = value);
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+    }
+  }
+
+  /// Every shown field, so one emptied on the form is cleared on save.
+  Map<int, String> get _formFieldValues => {
+        for (final f in _fields) f.id!: _fieldValues[f.id] ?? '',
+      };
 
   Channel? get _channel => _visibleChannels.where((c) => c.id == _channelId).firstOrNull;
 
@@ -147,7 +172,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     }
     context.read<NewOrderBloc>().add(SetCustomerDetails(
           customerName: _nameController.text.trim(),
-          customerAddress: _addressController.text.trim(),
+          fieldValues: _formFieldValues,
           channelId: _channelId!,
           orderDate: _orderDate,
           shipByDate: _shipByDate,
@@ -160,7 +185,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
     _seeded = true;
     _editingStatus = d.editingStatus;
     _nameController.text = d.customerName;
-    _addressController.text = d.customerAddress;
+    _fieldValues
+      ..clear()
+      ..addAll(d.fieldValues);
     _note = d.note;
     _orderDate = DateUtils.dateOnly(d.orderDate);
     _shipByDate = DateUtils.dateOnly(d.shipByDate);
@@ -178,7 +205,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     final bloc = context.read<NewOrderBloc>();
     bloc.add(SetCustomerDetails(
       customerName: _nameController.text.trim(),
-      customerAddress: _addressController.text.trim(),
+      fieldValues: _formFieldValues,
       channelId: _channelId!,
       orderDate: _orderDate,
       shipByDate: _shipByDate,
@@ -191,6 +218,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     final dirty = _isEditing ||
         _nameController.text.trim().isNotEmpty ||
         _note != null ||
+        _fieldValues.values.any((v) => v.isNotEmpty) ||
         items.isNotEmpty;
     if (!dirty) return true;
     return ConfirmDialog.show(
@@ -297,16 +325,30 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   decoration: const InputDecoration(labelText: 'Customer name'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _addressController,
-                  textCapitalization: TextCapitalization.sentences,
-                  minLines: 1,
-                  maxLines: 3,
-                  enabled: !_noteOnly,
-                  decoration: const InputDecoration(labelText: 'Address (optional)'),
-                ),
-                const SizedBox(height: 8),
+                for (final field in _fields) ...[
+                  const SizedBox(height: 12),
+                  _lockedField(OrderFieldInput(
+                    key: ValueKey(field.id),
+                    field: field,
+                    value: _fieldValues[field.id],
+                    enabled: !_noteOnly,
+                    onChanged: (v) => setState(() => _fieldValues[field.id!] = v),
+                  )),
+                ],
+                if (_fields.isEmpty && !_isEditing)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add order fields (address, size…)'),
+                      onPressed: () async {
+                        await context.push(RouteNames.orderFields);
+                        if (mounted) _loadFields();
+                      },
+                    ),
+                  )
+                else
+                  const SizedBox(height: 8),
                 const SectionLabel('Channel'),
                 const SizedBox(height: 8),
                 if (!_channelsLoaded)
@@ -383,6 +425,14 @@ class _NewOrderViewState extends State<_NewOrderView> {
   /// Dims and blocks [child] when only the note may change.
   Widget _locked(Widget child) =>
       _noteOnly ? IgnorePointer(child: Opacity(opacity: 0.5, child: child)) : child;
+
+  /// Text boxes grey themselves out when disabled; dates and chips need
+  /// [_locked] to look and act the same.
+  Widget _lockedField(OrderFieldInput input) =>
+      switch (input.field.type) {
+        OrderFieldType.text || OrderFieldType.number => input,
+        OrderFieldType.date || OrderFieldType.choice => _locked(input),
+      };
 
   // ── Step 2 ───────────────────────────────────────────────────────────
 
@@ -493,13 +543,14 @@ class _NewOrderViewState extends State<_NewOrderView> {
                 '$pieces ${pieces == 1 ? 'item' : 'items'}',
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
-              if (d.customerAddress.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  d.customerAddress,
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted),
-                ),
-              ],
+              for (final field in _fields)
+                if (d.fieldValues[field.id]?.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${field.name}: ${OrderFieldCodec.display(field, d.fieldValues[field.id]!)}',
+                    style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                  ),
+                ],
             ],
           ),
         ),

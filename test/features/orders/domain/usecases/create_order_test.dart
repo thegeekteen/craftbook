@@ -97,7 +97,7 @@ void main() {
 
       when(() => mockOrderRepo.createOrder(
             customerName: any(named: 'customerName'),
-            customerAddress: any(named: 'customerAddress'),
+            fieldValues: any(named: 'fieldValues'),
             note: any(named: 'note'),
             orderDate: any(named: 'orderDate'),
             shipByDate: any(named: 'shipByDate'),
@@ -117,7 +117,6 @@ void main() {
 
       final result = await createOrder(
         customerName: 'Test Customer',
-        customerAddress: 'Test Address',
         orderDate: DateTime(2026, 8, 26),
         shipByDate: DateTime(2026, 8, 28),
         channelId: 1,
@@ -140,7 +139,6 @@ void main() {
     test('returns validation failure for empty customer name', () async {
       final result = await createOrder(
         customerName: '',
-        customerAddress: 'Address',
         orderDate: DateTime(2026, 8, 26),
         shipByDate: DateTime(2026, 8, 28),
         channelId: 1,
@@ -162,7 +160,6 @@ void main() {
     test('returns validation failure for empty items', () async {
       final result = await createOrder(
         customerName: 'Test',
-        customerAddress: 'Address',
         orderDate: DateTime(2026, 8, 26),
         shipByDate: DateTime(2026, 8, 28),
         channelId: 1,
@@ -206,7 +203,7 @@ void main() {
 
       when(() => mockOrderRepo.createOrder(
             customerName: any(named: 'customerName'),
-            customerAddress: any(named: 'customerAddress'),
+            fieldValues: any(named: 'fieldValues'),
             note: any(named: 'note'),
             orderDate: any(named: 'orderDate'),
             shipByDate: any(named: 'shipByDate'),
@@ -226,7 +223,6 @@ void main() {
 
       final result = await createOrder(
         customerName: 'Test',
-        customerAddress: 'Addr',
         orderDate: DateTime(2026, 8, 26),
         shipByDate: DateTime(2026, 8, 28),
         channelId: 1,
