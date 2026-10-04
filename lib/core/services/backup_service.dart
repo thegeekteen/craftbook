@@ -34,20 +34,13 @@ class BackupService {
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final fileName = 'craftbook_backup_$timestamp.sqlite';
 
-      final outputPath = await FilePicker.platform.saveFile(
+      final saved = await FilePicker.saveFile(
         dialogTitle: 'Save backup',
         fileName: fileName,
-        type: FileType.any,
         bytes: bytes,
       );
 
-      if (outputPath == null) return false;
-
-      // On non-Android platforms, saveFile returns the path but
-      // doesn't write bytes — copy manually.
-      if (!Platform.isAndroid) {
-        await snapshot.copy(outputPath);
-      }
+      if (saved == null) return false;
 
       messenger.showSnackBar(
           const SnackBar(content: Text('Backup saved successfully')));
@@ -65,25 +58,19 @@ class BackupService {
   static Future<bool> importDatabase(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final picked = await FilePicker.pickFile(
         dialogTitle: 'Select backup file',
-        type: FileType.any,
-        withData: true,
       );
 
-      if (result == null || result.files.isEmpty) return false;
+      if (picked == null) return false;
 
-      final picked = result.files.single;
       final File candidate;
-      if (picked.path != null && await File(picked.path!).exists()) {
-        candidate = await _store.stageFile(picked.path!);
-      } else if (picked.bytes != null) {
-        // SAF on Android — no path, only bytes
-        candidate = await _store.stageBytes(picked.bytes!);
+      final path = picked.path;
+      if (path != null && await File(path).exists()) {
+        candidate = await _store.stageFile(path);
       } else {
-        messenger.showSnackBar(
-            const SnackBar(content: Text('Could not read the selected file')));
-        return false;
+        // SAF on Android hands back a content:// URI with no local path.
+        candidate = await _store.stageBytes(await picked.readAsBytes());
       }
 
       final BackupSummary summary;

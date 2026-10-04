@@ -44,7 +44,7 @@ dependencies:
   intl: ^0.20.3
   path_provider: ^2.1.4
   path: ^1.9.0
-  file_picker: ^8.1.2
+  file_picker: ^13.1.0
   url_launcher: ^6.3.0
   flutter_markdown_plus: ^1.0.12
   # Product photos: camera capture and the system photo picker.
