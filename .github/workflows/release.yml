@@ -2,6 +2,9 @@
 # main. The app's "Check for updates" (lib/features/updates) installs the
 # newest of these releases.
 #
+# Checks and the build run side by side; the release is only published when
+# both pass.
+#
 # Version: major.minor come from pubspec.yaml; the patch and the Android
 # versionCode are the number of commits on main, so every release is newer
 # than the one before. Bump pubspec.yaml's major or minor for a bigger jump.
@@ -27,24 +30,18 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  FLUTTER_VERSION: 3.47.6
+
 jobs:
-  release:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          # Full history and tags: the commit count is the version, and the
-          # previous tag bounds the release notes.
-          fetch-depth: 0
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.47.6
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
 
@@ -53,6 +50,19 @@ jobs:
       - run: flutter analyze
 
       - run: flutter test
+
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.version.outputs.name }}
+      tag: ${{ steps.version.outputs.tag }}
+      exists: ${{ steps.version.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history and tags: the commit count is the version, and the
+          # previous tag bounds the release notes.
+          fetch-depth: 0
 
       - name: Work out the version
         id: version
@@ -67,6 +77,30 @@ jobs:
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "::notice::v$name is already released; nothing to do."
           fi
+
+      - uses: actions/setup-java@v5
+        if: steps.version.outputs.exists != 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+          # Gradle's dependencies (AGP, Kotlin, libraries) are most of a cold
+          # build's time.
+          cache: gradle
+
+      # The runner image doesn't ship the CMake version the Android build
+      # installs, so keep it between runs instead of installing it each time.
+      - uses: actions/cache@v4
+        if: steps.version.outputs.exists != 'true'
+        with:
+          path: /usr/local/lib/android/sdk/cmake/3.22.1
+          key: android-cmake-${{ runner.os }}-3.22.1
+
+      - uses: subosito/flutter-action@v2
+        if: steps.version.outputs.exists != 'true'
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
 
       - name: Set up signing
         if: steps.version.outputs.exists != 'true'
@@ -93,6 +127,7 @@ jobs:
       - name: Build APK
         if: steps.version.outputs.exists != 'true'
         run: |
+          flutter pub get
           flutter build apk --release \
             --build-name=${{ steps.version.outputs.name }} \
             --build-number=${{ steps.version.outputs.code }}
@@ -110,17 +145,35 @@ jobs:
           } > notes.md
           cat notes.md
 
-      - name: Publish release
+      - uses: actions/upload-artifact@v4
         if: steps.version.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create ${{ steps.version.outputs.tag }} \
-            craftbook-${{ steps.version.outputs.name }}.apk \
-            --title "Craftbook ${{ steps.version.outputs.name }}" \
-            --notes-file notes.md \
-            --target "$GITHUB_SHA"
+        with:
+          name: release
+          path: |
+            craftbook-${{ steps.version.outputs.name }}.apk
+            notes.md
+          retention-days: 7
 
       - name: Remove signing files
         if: always()
         run: rm -f android/app/release.jks android/key.properties
+
+  publish:
+    needs: [check, build]
+    if: needs.build.outputs.exists != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ needs.build.outputs.tag }} \
+            craftbook-${{ needs.build.outputs.name }}.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Craftbook ${{ needs.build.outputs.name }}" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA"
