@@ -21,10 +21,13 @@ class MaterialsLoading extends MaterialsState {}
 class MaterialsLoaded extends MaterialsState {
   final List<Material> materials;
 
-  const MaterialsLoaded(this.materials);
+  /// Low resell products, which also land on the Buy list.
+  final int lowProductCount;
+
+  const MaterialsLoaded(this.materials, {this.lowProductCount = 0});
 
   @override
-  List<Object?> get props => [materials];
+  List<Object?> get props => [materials, lowProductCount];
 }
 
 /// Buy list loaded successfully

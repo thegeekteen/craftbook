@@ -266,7 +266,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           outcome = Error(failure);
         case Success(value: final id):
           // createProduct has no alert level; set it right after.
-          if (_isStandalone && alertLevel > 0) {
+          if (alertLevel > 0) {
             await repo.updateProduct(id: id, alertLevel: alertLevel);
           }
           outcome = _isStandalone || bomInputs.isEmpty
@@ -285,7 +285,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         unitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : null,
         isStandalone: _isStandalone,
         isActive: _isActive,
-        alertLevel: _isStandalone ? alertLevel : 0,
+        alertLevel: alertLevel,
       );
       outcome = switch (updated) {
         Error() => updated,
@@ -412,7 +412,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             if (_isStandalone)
               ..._buildResell(money, digits)
             else
-              ..._buildHandmade(),
+              ..._buildHandmade(digits),
             const SizedBox(height: 12),
             ProductProfitCard(
                 sellPrice: _sellPrice,
@@ -448,7 +448,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     );
   }
 
-  List<Widget> _buildHandmade() {
+  List<Widget> _buildHandmade(List<TextInputFormatter> digits) {
     final c = context.colors;
     return [
       SectionLabel(
@@ -512,7 +512,26 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           ),
         ),
       ],
+      const SizedBox(height: 16),
+      _alertField(digits),
     ];
+  }
+
+  /// One alert level for both types; only what it counts differs.
+  Widget _alertField(List<TextInputFormatter> digits) {
+    return TextFormField(
+      controller: _alertLevel,
+      keyboardType: TextInputType.number,
+      inputFormatters: digits,
+      decoration: InputDecoration(
+        labelText: _isStandalone
+            ? 'Reorder at (optional)'
+            : 'Warn when I can make (optional)',
+        helperText: _isStandalone
+            ? 'Warn when stock drops to this.'
+            : 'Warn when materials only cover this many.',
+      ),
+    );
   }
 
   List<Widget> _buildResell(
@@ -560,15 +579,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         ),
         const SizedBox(height: 12),
       ],
-      TextFormField(
-        controller: _alertLevel,
-        keyboardType: TextInputType.number,
-        inputFormatters: digits,
-        decoration: const InputDecoration(
-          labelText: 'Reorder at (optional)',
-          helperText: 'Shows a low-stock warning at this level.',
-        ),
-      ),
+      _alertField(digits),
     ];
   }
 }

@@ -493,6 +493,15 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  @override
+  Future<Result<Map<int, int>>> getPendingOrderCounts() async {
+    try {
+      return Success(await dao.pendingOrderCounts());
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
   // ── Mappers ────────────────────────────────────────────────────────
 
   static Product _toEntity(db.Product row) => Product(

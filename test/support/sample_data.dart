@@ -120,6 +120,8 @@ Future<void> seedSampleShop() async {
   final strap = await product(
       'Beaded phone strap', 180, {beads: 3, rings: 2, clasp: 1, cord: 1});
   final keychain = await product('Resin keychain', 120, {resin: 1, rings: 1});
+  // Warns while the resin kits only cover a handful.
+  await products.updateProduct(id: keychain, alertLevel: 8);
   final box = _ok(await products.createProduct(
     name: 'Kraft gift box',
     sellPrice: 35,
@@ -131,6 +133,15 @@ Future<void> seedSampleShop() async {
   _ok(await products.receiveProductStock(
       productId: box, quantity: 4, pricePerUnit: 26));
   _ok(await products.adjustProductStock(productId: box, newQuantityOnHand: 8));
+  // A second resell item that has run low, so it lands on the Buy list.
+  final ribbon = _ok(await products.createProduct(
+    name: 'Satin ribbon roll',
+    sellPrice: 45,
+    isStandalone: true,
+    initialQuantity: 2,
+    initialUnitCost: 22,
+  ));
+  await products.updateProduct(id: ribbon, alertLevel: 5);
   // Movements are stamped with the real clock; spread them out so the
   // product history reads like a shop that's been running a while.
   final boxMoves = await (db.select(db.productStockMovements)

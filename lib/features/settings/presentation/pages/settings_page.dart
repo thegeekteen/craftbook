@@ -58,6 +58,8 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _canUndoRestore = canUndoRestore;
       if (products case Success(:final value)) {
+        // Resell only: handmade low needs buildable counts, which are too
+        // costly to work out for a hint.
         final low = value.where((p) => p.isLowStock).length;
         _productsHint =
             '${value.length} ${value.length == 1 ? 'product' : 'products'}'
@@ -140,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
               _MoreRow(
                 icon: Icons.shopping_basket_outlined,
                 title: 'Buy list',
-                subtitle: _buyListHint ?? 'Materials to restock',
+                subtitle: _buyListHint ?? 'Things to restock',
                 onTap: () => _open(RouteNames.buyList),
               ),
             ]),

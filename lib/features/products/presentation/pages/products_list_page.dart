@@ -6,7 +6,10 @@ import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/widgets/app_search_field.dart';
+import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../domain/entities/product.dart';
+import '../../domain/product_stock_status.dart';
 import '../bloc/products_bloc.dart';
 import '../bloc/products_event.dart';
 import '../bloc/products_state.dart';
@@ -25,6 +28,8 @@ class ProductsListPage extends StatelessWidget {
   }
 }
 
+enum _ProductFilter { all, handmade, resell, low, short }
+
 class _ProductsListView extends StatefulWidget {
   const _ProductsListView();
 
@@ -33,6 +38,7 @@ class _ProductsListView extends StatefulWidget {
 }
 
 class _ProductsListViewState extends State<_ProductsListView> {
+  _ProductFilter _filter = _ProductFilter.all;
   String _query = '';
 
   void _reload() => context.read<ProductsBloc>().add(const LoadProducts());
@@ -78,48 +84,115 @@ class _ProductsListViewState extends State<_ProductsListView> {
   }
 
   Widget _buildList(ProductsLoaded state) {
-    final visible = state.products
-        .where((p) => _query.isEmpty || p.name.toLowerCase().contains(_query))
-        .toList()
-      // Active products first, then by name.
+    final searched = _query.isEmpty
+        ? state.products
+        : state.products
+            .where((p) => p.name.toLowerCase().contains(_query))
+            .toList();
+    bool isLow(Product p) => isProductLow(p, state.available[p.id]);
+    bool isShort(Product p) => state.shortIds.contains(p.id);
+    final shortCount = searched.where(isShort).length;
+    // The Short chip hides when nothing is short; don't strand the user on it.
+    final filter = _filter == _ProductFilter.short && shortCount == 0
+        ? _ProductFilter.all
+        : _filter;
+    bool passes(Product p) => switch (filter) {
+          _ProductFilter.all => true,
+          _ProductFilter.handmade => !p.isStandalone,
+          _ProductFilter.resell => p.isStandalone,
+          _ProductFilter.low => isLow(p),
+          _ProductFilter.short => isShort(p),
+        };
+    final visible = searched.where(passes).toList()
+      // Problems first, then active before hidden, then by name.
       ..sort((a, b) {
+        if (isShort(a) != isShort(b)) return isShort(a) ? -1 : 1;
+        if (isLow(a) != isLow(b)) return isLow(a) ? -1 : 1;
         if (a.isActive != b.isActive) return a.isActive ? -1 : 1;
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
-    if (visible.isEmpty) {
-      return ListView(children: [
-        state.products.isEmpty
-            ? EmptyState(
-                icon: Icons.sell_outlined,
-                title: 'No products yet',
-                message: 'Add what you sell and the materials one piece uses.',
-                actionLabel: 'Add product',
-                onAction: () => _open(RouteNames.newProduct),
-              )
-            : EmptyState(
-                icon: Icons.search_off_rounded,
-                title: 'No matches',
-                message: 'Nothing matches "$_query".'),
-      ]);
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async => _reload(),
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, AppSpacing.fabClearance),
-        itemCount: visible.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, i) {
-          final p = visible[i];
-          return ProductCard(
-            product: p,
-            unitCost: state.unitCosts[p.id],
-            available: state.available[p.id],
-            onTap: () => _open(RouteNames.productPath(p.id!)),
-          );
-        },
-      ),
+    return Column(
+      children: [
+        if (state.products.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: ChoiceChipRow<_ProductFilter>.single(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              selected: filter,
+              onSelected: (f) => setState(() => _filter = f),
+              options: [
+                ChipOption(_ProductFilter.all, 'All', count: searched.length),
+                ChipOption(_ProductFilter.handmade, 'Handmade',
+                    count: searched.where((p) => !p.isStandalone).length),
+                ChipOption(_ProductFilter.resell, 'Resell',
+                    count: searched.where((p) => p.isStandalone).length),
+                ChipOption(_ProductFilter.low, 'Low',
+                    count: searched.where(isLow).length),
+                if (shortCount > 0)
+                  ChipOption(_ProductFilter.short, 'Short', count: shortCount),
+              ],
+            ),
+          ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async => _reload(),
+            child: visible.isEmpty
+                ? ListView(children: [_empty(state, filter)])
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                        16, 4, 16, AppSpacing.fabClearance),
+                    itemCount: visible.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, i) {
+                      final p = visible[i];
+                      return ProductCard(
+                        product: p,
+                        unitCost: state.unitCosts[p.id],
+                        available: state.available[p.id],
+                        isShort: isShort(p),
+                        onTap: () => _open(RouteNames.productPath(p.id!)),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
+  }
+
+  Widget _empty(ProductsLoaded state, _ProductFilter filter) {
+    if (state.products.isEmpty) {
+      return EmptyState(
+        icon: Icons.sell_outlined,
+        title: 'No products yet',
+        message: 'Add what you sell and the materials one piece uses.',
+        actionLabel: 'Add product',
+        onAction: () => _open(RouteNames.newProduct),
+      );
+    }
+    if (_query.isNotEmpty) {
+      return EmptyState(
+          icon: Icons.search_off_rounded,
+          title: 'No matches',
+          message: 'Nothing matches "$_query".');
+    }
+    return switch (filter) {
+      _ProductFilter.handmade => const EmptyState(
+          icon: Icons.content_cut_rounded,
+          title: 'No handmade products',
+          message: 'Products made from your materials show up here.',
+        ),
+      _ProductFilter.resell => const EmptyState(
+          icon: Icons.inventory_2_outlined,
+          title: 'No resell products',
+          message: 'Things you buy ready-made and sell on show up here.',
+        ),
+      _ => const EmptyState(
+          icon: Icons.check_circle_outline_rounded,
+          title: 'Nothing is low',
+          message: 'Set a warning level on a product to watch it here.',
+        ),
+    };
   }
 }

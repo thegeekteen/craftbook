@@ -26,14 +26,18 @@ class ProductsLoaded extends ProductsState {
   /// Pieces that can be built now (BOM) or are free in stock (standalone).
   final Map<int, int> available;
 
+  /// Products whose pending orders their stock or materials can't cover.
+  final Set<int> shortIds;
+
   const ProductsLoaded(
     this.products, {
     this.unitCosts = const {},
     this.available = const {},
+    this.shortIds = const {},
   });
 
   @override
-  List<Object?> get props => [products, unitCosts, available];
+  List<Object?> get props => [products, unitCosts, available, shortIds];
 }
 
 /// Product was deleted successfully

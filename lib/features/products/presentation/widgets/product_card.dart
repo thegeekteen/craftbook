@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/product_photo.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/product_stock_status.dart';
 
 /// Product in the catalogue: price, cost/profit bar, margin and how many
 /// you can make (or have) right now.
@@ -15,6 +16,9 @@ class ProductCard extends StatelessWidget {
   final Product product;
   final double? unitCost;
   final int? available;
+
+  /// Pending orders want more than stock or materials can cover.
+  final bool isShort;
   final VoidCallback? onTap;
 
   const ProductCard({
@@ -22,6 +26,7 @@ class ProductCard extends StatelessWidget {
     required this.product,
     this.unitCost,
     this.available,
+    this.isShort = false,
     this.onTap,
   });
 
@@ -35,7 +40,7 @@ class ProductCard extends StatelessWidget {
     final margin = (parts.margin * 100).round();
     final marginColor = margin >= 50 ? c.go : (margin >= 20 ? c.warn : c.alert);
     final qty = available ?? 0;
-    final lowStock = p.isStandalone ? p.isLowStock : qty > 0 && qty < 5;
+    final lowStock = isProductLow(p, available);
 
     return Opacity(
       opacity: p.isActive ? 1 : 0.6,
@@ -60,6 +65,7 @@ class ProductCard extends StatelessWidget {
                               AppTextStyles.bodyLarge.copyWith(color: c.ink)),
                       if (p.isStandalone) const AppTag('Resell'),
                       if (!p.isActive) const AppTag('Hidden'),
+                      if (isShort) const AppTag.low(text: 'Short for orders'),
                     ],
                   ),
                 ),

@@ -1,6 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/products/domain/entities/product.dart';
+import 'package:craftbook/features/products/domain/usecases/get_low_stock_products.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:craftbook/features/stock/domain/usecases/delete_material.dart';
 import 'package:craftbook/features/stock/domain/usecases/get_buy_list.dart';
@@ -25,13 +27,19 @@ class MockUpdateMaterial extends Mock implements UpdateMaterial {}
 
 class MockMaterialRepository extends Mock implements MaterialRepository {}
 
+class MockGetLowStockProducts extends Mock implements GetLowStockProducts {}
+
 void main() {
   late MockGetMaterials getMaterials;
   late MockUpdateMaterial updateMaterial;
+  late MockGetLowStockProducts getLowStockProducts;
 
   setUp(() {
     getMaterials = MockGetMaterials();
     updateMaterial = MockUpdateMaterial();
+    getLowStockProducts = MockGetLowStockProducts();
+    when(() => getLowStockProducts())
+        .thenAnswer((_) async => const Success(<Product>[]));
     when(() => getMaterials(lowStockOnly: any(named: 'lowStockOnly')))
         .thenAnswer((_) async => const Success([]));
   });
@@ -43,7 +51,45 @@ void main() {
         deleteMaterial: MockDeleteMaterial(),
         updateMaterial: updateMaterial,
         materialRepository: MockMaterialRepository(),
+        getLowStockProducts: getLowStockProducts,
       );
+
+  final now = DateTime(2026, 1, 1);
+  final lowBox = Product(
+    id: 4,
+    name: 'Gift box',
+    sellPrice: 60,
+    isActive: true,
+    isStandalone: true,
+    quantityOnHand: 1,
+    alertLevel: 3,
+    createdAt: now,
+    updatedAt: now,
+  );
+
+  blocTest<MaterialsBloc, MaterialsState>(
+    'LoadMaterials counts low resell products for the Buy list badge',
+    setUp: () => when(() => getLowStockProducts())
+        .thenAnswer((_) async => Success([lowBox])),
+    build: build,
+    act: (bloc) => bloc.add(const LoadMaterials()),
+    expect: () => [
+      isA<MaterialsLoading>(),
+      const MaterialsLoaded([], lowProductCount: 1),
+    ],
+  );
+
+  blocTest<MaterialsBloc, MaterialsState>(
+    'LoadMaterials still loads when the low product count fails',
+    setUp: () => when(() => getLowStockProducts())
+        .thenAnswer((_) async => const Error(DatabaseFailure('boom'))),
+    build: build,
+    act: (bloc) => bloc.add(const LoadMaterials()),
+    expect: () => [
+      isA<MaterialsLoading>(),
+      const MaterialsLoaded([]),
+    ],
+  );
 
   const event = UpdateMaterialEvent(
     id: 1,

@@ -60,7 +60,12 @@ abstract class ProductRepository {
   Future<Result<void>> restoreDeductedProductStock(int productId, int quantity);
   Future<Result<List<ProductStockMovement>>> getProductStockMovements(
       int productId);
+
+  /// Active resell products at or below their alert level.
   Future<Result<List<Product>>> getLowStockProducts();
+
+  /// Pending orders per product id; products with none are absent.
+  Future<Result<Map<int, int>>> getPendingOrderCounts();
 
   /// Every order line this product appears in, across all statuses.
   Future<Result<List<ProductSale>>> getProductSales(int productId);

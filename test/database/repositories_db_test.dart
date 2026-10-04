@@ -14,6 +14,7 @@ import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/products/data/repositories/product_repository_impl.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
 import 'package:craftbook/features/stock/data/repositories/material_repository_impl.dart';
+import 'package:craftbook/features/stock/domain/entities/buy_list_item.dart';
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -259,6 +260,79 @@ void main() {
       final item = ok(await materials.getBuyList()).single;
       expect(
           item.packsToOrder, 2); // needs 25, has 7 → 18 short → 2 packs of 10
+    });
+  });
+
+  group('resell on the buy list', () {
+    Future<int> resell({
+      int onHand = 1,
+      int alert = 3,
+      bool active = true,
+      double unitCost = 25,
+    }) =>
+        db.into(db.products).insert(ProductsCompanion.insert(
+              name: 'Gift box',
+              sellPrice: 60,
+              isStandalone: const Value(true),
+              isActive: Value(active),
+              quantityOnHand: Value(onHand),
+              alertLevel: Value(alert),
+              unitCost: Value(unitCost),
+            ));
+
+    test('lists a low resell product by the piece after materials', () async {
+      await material(onHand: 2, alert: 5);
+      final id = await resell(onHand: 1, alert: 3);
+      await ProductRepositoryImpl(ProductDao(db)).reserveProductStock(id, 2);
+
+      final items = ok(await materials.getBuyList());
+      expect(items.map((i) => i.kind),
+          [BuyListKind.material, BuyListKind.product]);
+      final box = items.last;
+      expect(box.id, id);
+      expect(box.name, 'Gift box');
+      expect(box.packSize, 1);
+      // Needs 3 + 2 promised, has 1 → 4 pieces.
+      expect(box.packsToOrder, 4);
+      expect(box.totalCost, 100);
+      expect(box.blockedProducts, isEmpty);
+    });
+
+    test('counts pending orders for the resell product', () async {
+      final id = await resell(onHand: 0);
+      await order(product: id, shipBy: DateTime(2026, 10, 4));
+      final packed = await order(product: id, shipBy: DateTime(2026, 10, 4));
+      await orders.packOrder(packed);
+
+      final box = ok(await materials.getBuyList()).single;
+      expect(box.ownOpenOrders, 1);
+      expect(box.blockingOrders, 1);
+    });
+
+    test('skips inactive, above-alert and alert-less products', () async {
+      await resell(onHand: 0, active: false);
+      await resell(onHand: 5, alert: 3);
+      await resell(onHand: 0, alert: 0);
+      expect(ok(await materials.getBuyList()), isEmpty);
+    });
+  });
+
+  group('pendingOrderCounts', () {
+    test('counts only pending orders, per product', () async {
+      final a = await productId();
+      final b = await productId();
+      await order(product: a, shipBy: DateTime(2026, 10, 4));
+      await order(product: a, shipBy: DateTime(2026, 10, 5));
+      await order(product: b, shipBy: DateTime(2026, 10, 4));
+      final packed = await order(product: b, shipBy: DateTime(2026, 10, 4));
+      await orders.packOrder(packed);
+      final shipped = await order(product: b, shipBy: DateTime(2026, 10, 4));
+      await orders.packOrder(shipped);
+      await orders.shipOrder(shipped);
+
+      final counts = ok(
+          await ProductRepositoryImpl(ProductDao(db)).getPendingOrderCounts());
+      expect(counts, {a: 2, b: 1});
     });
   });
 

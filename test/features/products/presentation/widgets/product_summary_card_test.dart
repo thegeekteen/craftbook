@@ -99,11 +99,29 @@ void main() {
       expect(find.text('LOW'), findsNothing);
     });
 
-    testWidgets('flags a handful left as low', (tester) async {
-      await tester.pumpWidget(_wrap(
-          ProductSummaryCard(product: _product(), cost: 100, buildable: 3)));
+    testWidgets('flags low at its alert level and shows Warn at',
+        (tester) async {
+      await tester.pumpWidget(_wrap(ProductSummaryCard(
+          product: _product(alertLevel: 3), cost: 100, buildable: 3)));
 
       expect(find.text('LOW'), findsOneWidget);
+      expect(find.text('WARN AT'), findsOneWidget);
+    });
+
+    testWidgets('no alert level means no Low and no Warn at', (tester) async {
+      await tester.pumpWidget(_wrap(
+          ProductSummaryCard(product: _product(), cost: 100, buildable: 1)));
+
+      expect(find.text('LOW'), findsNothing);
+      expect(find.text('WARN AT'), findsNothing);
+    });
+
+    testWidgets('short shows the Short tag in alert colour', (tester) async {
+      await tester.pumpWidget(_wrap(ProductSummaryCard(
+          product: _product(), cost: 100, buildable: 4, isShort: true)));
+
+      expect(find.text('SHORT'), findsOneWidget);
+      expect(_colorOf(tester, '4'), _colors(tester).alert);
     });
   });
 

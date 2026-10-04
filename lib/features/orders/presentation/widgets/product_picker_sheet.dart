@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/product_photo.dart';
 import '../../../products/domain/entities/product.dart';
+import '../../../products/domain/product_stock_status.dart';
 import '../../../products/domain/usecases/calculate_buildable_quantity.dart';
 import '../../../products/domain/usecases/get_products.dart';
 import '../../domain/entities/order_item.dart';
@@ -203,7 +204,8 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                             Text(p.name,
                                 style: AppTextStyles.bodyLarge
                                     .copyWith(color: c.ink)),
-                            if (available && qty < 5) const AppTag.low(),
+                            if (available && isProductLow(p, qty))
+                              const AppTag.low(),
                             if (added)
                               const AppTag('Added', type: AppTagType.ok),
                           ],
