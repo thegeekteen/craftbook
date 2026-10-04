@@ -128,12 +128,13 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
         unitPrice: existing.unitPrice,
       );
     } else {
-      _items = List.from(_items)..add(OrderItemInput(
-            productId: event.productId,
-            productName: event.productName,
-            quantity: event.quantity,
-            unitPrice: event.unitPrice,
-          ));
+      _items = List.from(_items)
+        ..add(OrderItemInput(
+          productId: event.productId,
+          productName: event.productName,
+          quantity: event.quantity,
+          unitPrice: event.unitPrice,
+        ));
     }
     _emitDetailsFilled(emit);
   }
@@ -174,7 +175,8 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     );
     switch (result) {
       case Error(:final failure):
-        emit(current.copyWith(isPreviewing: false, previewError: failure.message));
+        emit(current.copyWith(
+            isPreviewing: false, previewError: failure.message));
       case Success(:final value):
         emit(current.copyWith(isPreviewing: false, preview: value));
     }
@@ -186,7 +188,9 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   ) async {
     // Kept so a failed save returns to the same review screen, preview
     // included.
-    final before = state is NewOrderDetailsFilled ? state as NewOrderDetailsFilled : _detailsState();
+    final before = state is NewOrderDetailsFilled
+        ? state as NewOrderDetailsFilled
+        : _detailsState();
     emit(before.copyWith(isSaving: true));
 
     void fail(String message) {

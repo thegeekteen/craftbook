@@ -26,7 +26,8 @@ void main() {
       createdAt: DateTime(2026, 1, 1),
     );
 
-    test('calculates Shopee fees correctly (6% commission + 2% transaction)', () {
+    test('calculates Shopee fees correctly (6% commission + 2% transaction)',
+        () {
       final fees = shopee.calculateFees(647.0);
       // 6% of 647 = 38.82, 2% of 647 = 12.94, total = 51.76
       expect(fees, closeTo(51.76, 0.01));

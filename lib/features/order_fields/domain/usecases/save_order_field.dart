@@ -25,8 +25,8 @@ class SaveOrderField {
     if (type == OrderFieldType.choice) {
       for (final o in options) {
         final option = o.trim();
-        final duplicate = cleanOptions
-            .any((c) => c.toLowerCase() == option.toLowerCase());
+        final duplicate =
+            cleanOptions.any((c) => c.toLowerCase() == option.toLowerCase());
         if (option.isNotEmpty && !duplicate) cleanOptions.add(option);
       }
       if (cleanOptions.isEmpty) {
@@ -47,7 +47,8 @@ class SaveOrderField {
       (f) => f.id != id && f.name.toLowerCase() == trimmed.toLowerCase(),
     );
     if (clash) {
-      return Error(ValidationFailure('There is already a field called $trimmed'));
+      return Error(
+          ValidationFailure('There is already a field called $trimmed'));
     }
 
     final field = OrderField(

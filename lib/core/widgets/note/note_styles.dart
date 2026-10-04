@@ -15,10 +15,12 @@ abstract final class NoteStyles {
     final mono = base.copyWith(fontFamily: AppTextStyles.mono, fontSize: 13);
     const flat = HorizontalSpacing(0, 0);
 
-    DefaultTextBlockStyle block(TextStyle style, [VerticalSpacing above = VerticalSpacing.zero]) =>
+    DefaultTextBlockStyle block(TextStyle style,
+            [VerticalSpacing above = VerticalSpacing.zero]) =>
         DefaultTextBlockStyle(style, flat, above, VerticalSpacing.zero, null);
 
-    final heading = AppTextStyles.displaySmall.copyWith(color: c.ink, height: 1.3);
+    final heading =
+        AppTextStyles.displaySmall.copyWith(color: c.ink, height: 1.3);
 
     return DefaultStyles(
       paragraph: block(base),
@@ -64,7 +66,8 @@ abstract final class NoteStyles {
         const HorizontalSpacing(12, 0),
         const VerticalSpacing(6, 6),
         VerticalSpacing.zero,
-        BoxDecoration(border: Border(left: BorderSide(width: 3, color: c.hair))),
+        BoxDecoration(
+            border: Border(left: BorderSide(width: 3, color: c.hair))),
       ),
       code: DefaultTextBlockStyle(
         mono.copyWith(color: c.ink, height: 1.45),
@@ -101,7 +104,8 @@ abstract final class NoteStyles {
 
   /// Line-level extras Quill can't express through [DefaultStyles]: a ticked
   /// to-do fades and is struck through, so what's left to do stands out.
-  static TextStyle Function(Attribute) lineStyles(CraftColors c) => (attribute) {
+  static TextStyle Function(Attribute) lineStyles(CraftColors c) =>
+      (attribute) {
         if (attribute == Attribute.checked) {
           return TextStyle(
             color: c.muted,
@@ -141,7 +145,9 @@ class _NoteCheckbox implements QuillCheckboxBuilder {
               borderRadius: BorderRadius.circular(5),
               border: Border.all(color: isChecked ? c.go : c.muted, width: 1.5),
             ),
-            child: isChecked ? Icon(Icons.check_rounded, size: 14, color: c.onAccent) : null,
+            child: isChecked
+                ? Icon(Icons.check_rounded, size: 14, color: c.onAccent)
+                : null,
           ),
         ),
       ),

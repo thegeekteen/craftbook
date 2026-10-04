@@ -8,7 +8,8 @@ part 'material_dao.g.dart';
 
 /// Data Access Object for materials
 @DriftAccessor(tables: [Materials, StockMovements])
-class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin {
+class MaterialDao extends DatabaseAccessor<AppDatabase>
+    with _$MaterialDaoMixin {
   MaterialDao(super.db);
 
   /// Get all materials
@@ -18,8 +19,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
 
   /// Get material by ID
   Future<Material?> getMaterialById(int id) {
-    return (select(materials)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(materials)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get materials below alert level
@@ -41,12 +41,13 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
   }
 
   /// Update material stock
-  Future<int> updateMaterialStock(int materialId, int quantityOnHand, int quantityPromised) {
+  Future<int> updateMaterialStock(
+      int materialId, int quantityOnHand, int quantityPromised) {
     return (update(materials)..where((t) => t.id.equals(materialId)))
         .write(MaterialsCompanion(
-          quantityOnHand: Value(quantityOnHand),
-          quantityPromised: Value(quantityPromised),
-        ));
+      quantityOnHand: Value(quantityOnHand),
+      quantityPromised: Value(quantityPromised),
+    ));
   }
 
   /// Delete material
@@ -78,7 +79,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
       variables: [Variable.withInt(productId)],
       readsFrom: {materials},
     ).get();
-    
+
     return Future.wait(rows.map((row) => materials.mapFromRow(row)));
   }
 }

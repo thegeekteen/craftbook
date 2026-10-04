@@ -104,7 +104,8 @@ Future<void> runMigrations(
         'FROM orders o JOIN order_field_definitions d '
         "ON d.name = 'Address' WHERE TRIM(o.customer_address) <> ''",
       );
-      await db.customStatement('ALTER TABLE orders DROP COLUMN customer_address');
+      await db
+          .customStatement('ALTER TABLE orders DROP COLUMN customer_address');
     });
   }
 

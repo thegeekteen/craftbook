@@ -54,7 +54,9 @@ class _NotesView extends StatelessWidget {
             context.showSnackBar(
               state.message!,
               isError: state.isError,
-              onAction: deleted == null ? null : () => bloc.add(RestoreNoteEvent(deleted)),
+              onAction: deleted == null
+                  ? null
+                  : () => bloc.add(RestoreNoteEvent(deleted)),
             );
           }
         },
@@ -75,7 +77,8 @@ class _NotesView extends StatelessWidget {
               child: EmptyState(
                 icon: Icons.sticky_note_2_outlined,
                 title: 'No notes yet',
-                message: 'Keep supplier details, product ideas and packing how-tos here.',
+                message:
+                    'Keep supplier details, product ideas and packing how-tos here.',
                 actionLabel: 'Add note',
                 onAction: () => _open(context, null),
               ),
@@ -173,7 +176,8 @@ class _NoteActions extends StatelessWidget {
 
   const _NoteActions({required this.note});
 
-  static Future<void> open(BuildContext context, NotesBloc bloc, Note note) async {
+  static Future<void> open(
+      BuildContext context, NotesBloc bloc, Note note) async {
     final action = await showAppSheet<_NoteAction>(
       context: context,
       title: note.displayTitle,
@@ -205,7 +209,8 @@ class _NoteActions extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(note.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded),
+          leading: Icon(
+              note.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded),
           title: Text(note.isPinned ? 'Unpin' : 'Pin to Today'),
           onTap: () => Navigator.pop(context, _NoteAction.togglePin),
         ),

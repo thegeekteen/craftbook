@@ -45,7 +45,8 @@ void main() {
 
   test('creates and reads back a note', () async {
     final body = noteBody(['[ ] Ribbon']);
-    final id = ok(await notes.createNote(Note(title: 'Suppliers', body: body, isPinned: true)));
+    final id = ok(await notes
+        .createNote(Note(title: 'Suppliers', body: body, isPinned: true)));
 
     final saved = ok(await notes.getNote(id))!;
     expect(saved.title, 'Suppliers');
@@ -64,8 +65,10 @@ void main() {
     await note('New', daysAgo: 1);
     await note('Pinned new', pinned: true, daysAgo: 2);
 
-    expect(titles(ok(await notes.getNotes())), ['Pinned new', 'Pinned old', 'New', 'Old']);
-    expect(titles(ok(await notes.getPinnedNotes())), ['Pinned new', 'Pinned old']);
+    expect(titles(ok(await notes.getNotes())),
+        ['Pinned new', 'Pinned old', 'New', 'Old']);
+    expect(
+        titles(ok(await notes.getPinnedNotes())), ['Pinned new', 'Pinned old']);
   });
 
   test('editing a note moves it up', () async {
@@ -87,7 +90,8 @@ void main() {
   test('changing a deleted note is NotFoundFailure', () async {
     expect(await notes.updateNote(const Note(id: 99, title: 'x')),
         const Error<void>(NotFoundFailure('Note not found')));
-    expect(await notes.setPinned(99, true), const Error<void>(NotFoundFailure('Note not found')));
+    expect(await notes.setPinned(99, true),
+        const Error<void>(NotFoundFailure('Note not found')));
   });
 
   test('restoring a deleted note brings back its id and dates', () async {

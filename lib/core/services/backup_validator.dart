@@ -52,7 +52,9 @@ class BackupValidator {
   /// [file] must be a scratch copy: an older backup is migrated as part of
   /// the check, so a migration that fails costs nothing.
   static Future<Result<BackupSummary>> validate(File file) async {
-    if (!await _hasSqliteHeader(file)) return Error(BackupFailure(BackupProblem.notSqlite));
+    if (!await _hasSqliteHeader(file)) {
+      return Error(BackupFailure(BackupProblem.notSqlite));
+    }
 
     final int version;
     switch (_inspect(file)) {
@@ -70,10 +72,14 @@ class BackupValidator {
       } catch (_) {
         return Error(BackupFailure(BackupProblem.upgradeFailed));
       }
-      if (!await _hasEveryColumn(db)) return Error(BackupFailure(BackupProblem.schemaMismatch));
+      if (!await _hasEveryColumn(db)) {
+        return Error(BackupFailure(BackupProblem.schemaMismatch));
+      }
 
-      Future<int> count(String table) async =>
-          (await db.customSelect('SELECT COUNT(*) AS n FROM $table').getSingle()).read<int>('n');
+      Future<int> count(String table) async => (await db
+              .customSelect('SELECT COUNT(*) AS n FROM $table')
+              .getSingle())
+          .read<int>('n');
       return Success(BackupSummary(
         schemaVersion: version,
         orders: await count('orders'),
@@ -125,7 +131,9 @@ class BackupValidator {
           .select("SELECT name FROM sqlite_master WHERE type = 'table'")
           .map((row) => row['name'] as String)
           .toSet();
-      if (!tables.containsAll(_coreTables)) return Error(BackupFailure(BackupProblem.wrongApp));
+      if (!tables.containsAll(_coreTables)) {
+        return Error(BackupFailure(BackupProblem.wrongApp));
+      }
 
       // Drift keeps its schema version here; 0 means drift never opened it.
       final version = db.select('PRAGMA user_version').first.columnAt(0) as int;
@@ -146,7 +154,9 @@ class BackupValidator {
   /// follows the schema without a hand-kept list.
   static Future<bool> _hasEveryColumn(AppDatabase db) async {
     for (final table in db.allTables) {
-      final rows = await db.customSelect('PRAGMA table_info("${table.actualTableName}")').get();
+      final rows = await db
+          .customSelect('PRAGMA table_info("${table.actualTableName}")')
+          .get();
       final present = rows.map((r) => r.read<String>('name')).toSet();
       if (present.isEmpty) return false;
       if (!table.$columns.every((c) => present.contains(c.name))) return false;

@@ -36,7 +36,8 @@ class ReceiveStockEvent extends MaterialsEvent {
   });
 
   @override
-  List<Object?> get props => [materialId, packsReceived, pricePerPack, supplier];
+  List<Object?> get props =>
+      [materialId, packsReceived, pricePerPack, supplier];
 }
 
 /// Create a new material

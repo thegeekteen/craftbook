@@ -65,7 +65,8 @@ class OrderMiniRow extends StatelessWidget {
                       parts.join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 12),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: c.muted, fontSize: 12),
                     ),
                   ],
                 ),

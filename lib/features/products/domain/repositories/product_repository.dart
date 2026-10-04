@@ -18,6 +18,7 @@ abstract class ProductRepository {
     int initialQuantity,
     double initialUnitCost,
   });
+
   /// Null leaves a field as is. An empty [description] clears it. [unitCost]
   /// only matters for resell products (handmade cost comes from the BOM).
   Future<Result<void>> updateProduct({
@@ -52,7 +53,8 @@ abstract class ProductRepository {
   Future<Result<void>> releaseReservedProductStock(int productId, int quantity);
   Future<Result<void>> deductProductStock(int productId, int quantity);
   Future<Result<void>> restoreDeductedProductStock(int productId, int quantity);
-  Future<Result<List<ProductStockMovement>>> getProductStockMovements(int productId);
+  Future<Result<List<ProductStockMovement>>> getProductStockMovements(
+      int productId);
   Future<Result<List<Product>>> getLowStockProducts();
 
   /// Every order line this product appears in, across all statuses.

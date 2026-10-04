@@ -31,7 +31,11 @@ void main() {
   late PreviewOrder preview;
   final now = DateTime(2026, 10, 4);
 
-  Product product(int id, {bool standalone = false, int onHand = 0, int promised = 0, double unitCost = 0}) =>
+  Product product(int id,
+          {bool standalone = false,
+          int onHand = 0,
+          int promised = 0,
+          double unitCost = 0}) =>
       Product(
         id: id,
         name: 'P$id',
@@ -45,7 +49,8 @@ void main() {
         updatedAt: now,
       );
 
-  Material material(int id, {required int onHand, int promised = 0}) => Material(
+  Material material(int id, {required int onHand, int promised = 0}) =>
+      Material(
         id: id,
         name: 'M$id',
         packSize: 10,
@@ -76,29 +81,39 @@ void main() {
       materialRepository: materials,
       calculateOrderProfit: CalculateOrderProfit(channels),
     );
-    when(() => channels.getChannelById(1)).thenAnswer((_) async => Success(Channel(
-          id: 1,
-          name: 'Shop',
-          commissionRate: 10,
-          transactionFeeRate: 0,
-          flatFee: 5,
-          shippingPaidByUs: 40,
-          isActive: true,
-          createdAt: now,
-        )));
+    when(() => channels.getChannelById(1))
+        .thenAnswer((_) async => Success(Channel(
+              id: 1,
+              name: 'Shop',
+              commissionRate: 10,
+              transactionFeeRate: 0,
+              flatFee: 5,
+              shippingPaidByUs: 40,
+              isActive: true,
+              createdAt: now,
+            )));
   });
 
-  test('expands BOM products, merges shared materials and prices fees', () async {
-    when(() => products.getProductById(1)).thenAnswer((_) async => Success(product(1)));
-    when(() => products.getProductById(2)).thenAnswer((_) async => Success(product(2)));
-    when(() => products.getBomItems(1)).thenAnswer((_) async => Success([bom(1, 10, 2, 5)]));
-    when(() => products.getBomItems(2)).thenAnswer((_) async => Success([bom(2, 10, 1, 5), bom(2, 11, 3, 2)]));
-    when(() => materials.getMaterialById(10)).thenAnswer((_) async => Success(material(10, onHand: 7)));
-    when(() => materials.getMaterialById(11)).thenAnswer((_) async => Success(material(11, onHand: 20, promised: 5)));
+  test('expands BOM products, merges shared materials and prices fees',
+      () async {
+    when(() => products.getProductById(1))
+        .thenAnswer((_) async => Success(product(1)));
+    when(() => products.getProductById(2))
+        .thenAnswer((_) async => Success(product(2)));
+    when(() => products.getBomItems(1))
+        .thenAnswer((_) async => Success([bom(1, 10, 2, 5)]));
+    when(() => products.getBomItems(2))
+        .thenAnswer((_) async => Success([bom(2, 10, 1, 5), bom(2, 11, 3, 2)]));
+    when(() => materials.getMaterialById(10))
+        .thenAnswer((_) async => Success(material(10, onHand: 7)));
+    when(() => materials.getMaterialById(11)).thenAnswer(
+        (_) async => Success(material(11, onHand: 20, promised: 5)));
 
     final result = await preview(channelId: 1, items: const [
-      OrderItemInput(productId: 1, productName: 'P1', quantity: 2, unitPrice: 100),
-      OrderItemInput(productId: 2, productName: 'P2', quantity: 1, unitPrice: 200),
+      OrderItemInput(
+          productId: 1, productName: 'P1', quantity: 2, unitPrice: 100),
+      OrderItemInput(
+          productId: 2, productName: 'P2', quantity: 1, unitPrice: 200),
     ]);
 
     final p = (result as Success<OrderPreview>).value;
@@ -114,12 +129,14 @@ void main() {
     ]);
   });
 
-  test('standalone products reserve their own stock and use unit cost', () async {
-    when(() => products.getProductById(3))
-        .thenAnswer((_) async => Success(product(3, standalone: true, onHand: 2, promised: 1, unitCost: 28)));
+  test('standalone products reserve their own stock and use unit cost',
+      () async {
+    when(() => products.getProductById(3)).thenAnswer((_) async => Success(
+        product(3, standalone: true, onHand: 2, promised: 1, unitCost: 28)));
 
     final result = await preview(channelId: 1, items: const [
-      OrderItemInput(productId: 3, productName: 'P3', quantity: 2, unitPrice: 35),
+      OrderItemInput(
+          productId: 3, productName: 'P3', quantity: 2, unitPrice: 35),
     ]);
 
     final p = (result as Success<OrderPreview>).value;
@@ -139,12 +156,15 @@ void main() {
       calculateOrderProfit: CalculateOrderProfit(channels),
       orderRepository: orders,
     );
-    when(() => products.getProductById(1)).thenAnswer((_) async => Success(product(1)));
-    when(() => products.getProductById(3))
-        .thenAnswer((_) async => Success(product(3, standalone: true, onHand: 5, promised: 4, unitCost: 10)));
-    when(() => products.getBomItems(1)).thenAnswer((_) async => Success([bom(1, 10, 2, 5)]));
+    when(() => products.getProductById(1))
+        .thenAnswer((_) async => Success(product(1)));
+    when(() => products.getProductById(3)).thenAnswer((_) async => Success(
+        product(3, standalone: true, onHand: 5, promised: 4, unitCost: 10)));
+    when(() => products.getBomItems(1))
+        .thenAnswer((_) async => Success([bom(1, 10, 2, 5)]));
     // 10 on hand, 8 promised, of which this order holds 6.
-    when(() => materials.getMaterialById(10)).thenAnswer((_) async => Success(material(10, onHand: 10, promised: 8)));
+    when(() => materials.getMaterialById(10)).thenAnswer(
+        (_) async => Success(material(10, onHand: 10, promised: 8)));
     when(() => orders.getOrderMaterials(7)).thenAnswer((_) async => Success([
           OrderMaterial(
             orderId: 7,
@@ -157,18 +177,32 @@ void main() {
             createdAt: now,
           ),
         ]));
-    when(() => orders.getOrderProducts(7)).thenAnswer((_) async => const Success(<OrderProduct>[
-          OrderProduct(orderId: 7, productId: 3, productName: 'P3', quantity: 3, unitCost: 10),
-        ]));
+    when(() => orders.getOrderProducts(7))
+        .thenAnswer((_) async => const Success(<OrderProduct>[
+              OrderProduct(
+                  orderId: 7,
+                  productId: 3,
+                  productName: 'P3',
+                  quantity: 3,
+                  unitCost: 10),
+            ]));
 
     const items = [
-      OrderItemInput(productId: 1, productName: 'P1', quantity: 3, unitPrice: 100),
-      OrderItemInput(productId: 3, productName: 'P3', quantity: 3, unitPrice: 100),
+      OrderItemInput(
+          productId: 1, productName: 'P1', quantity: 3, unitPrice: 100),
+      OrderItemInput(
+          productId: 3, productName: 'P3', quantity: 3, unitPrice: 100),
     ];
-    final plain = (await editing(channelId: 1, items: items) as Success<OrderPreview>).value;
-    final excluding = (await editing(channelId: 1, items: items, excludeOrderId: 7) as Success<OrderPreview>).value;
+    final plain =
+        (await editing(channelId: 1, items: items) as Success<OrderPreview>)
+            .value;
+    final excluding =
+        (await editing(channelId: 1, items: items, excludeOrderId: 7)
+                as Success<OrderPreview>)
+            .value;
 
-    expect(plain.reservations.every((r) => r.isShort), isTrue, reason: 'only 2 pcs / 1 piece look free');
+    expect(plain.reservations.every((r) => r.isShort), isTrue,
+        reason: 'only 2 pcs / 1 piece look free');
     expect(excluding.reservations.map((r) => r.available), [8, 4]);
     expect(excluding.reservations.any((r) => r.isShort), isFalse);
   });
@@ -181,22 +215,28 @@ void main() {
   });
 
   test('fails when the channel lookup fails', () async {
-    when(() => products.getProductById(1)).thenAnswer((_) async => Success(product(1)));
-    when(() => products.getBomItems(1)).thenAnswer((_) async => const Success([]));
-    when(() => channels.getChannelById(9)).thenAnswer((_) async => const Error(DatabaseFailure('db')));
+    when(() => products.getProductById(1))
+        .thenAnswer((_) async => Success(product(1)));
+    when(() => products.getBomItems(1))
+        .thenAnswer((_) async => const Success([]));
+    when(() => channels.getChannelById(9))
+        .thenAnswer((_) async => const Error(DatabaseFailure('db')));
 
     final result = await preview(channelId: 9, items: const [
-      OrderItemInput(productId: 1, productName: 'P1', quantity: 1, unitPrice: 100),
+      OrderItemInput(
+          productId: 1, productName: 'P1', quantity: 1, unitPrice: 100),
     ]);
 
     expect(result, isA<Error<OrderPreview>>());
   });
 
   test('fails when a product lookup fails', () async {
-    when(() => products.getProductById(1)).thenAnswer((_) async => const Error(DatabaseFailure('db')));
+    when(() => products.getProductById(1))
+        .thenAnswer((_) async => const Error(DatabaseFailure('db')));
 
     final result = await preview(channelId: 1, items: const [
-      OrderItemInput(productId: 1, productName: 'P1', quantity: 1, unitPrice: 100),
+      OrderItemInput(
+          productId: 1, productName: 'P1', quantity: 1, unitPrice: 100),
     ]);
 
     expect(result, isA<Error<OrderPreview>>());

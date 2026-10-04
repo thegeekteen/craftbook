@@ -108,10 +108,9 @@ class AppTheme {
         titleTextStyle: AppTextStyles.displaySmall.copyWith(color: c.ink),
         iconTheme: IconThemeData(color: c.ink, size: 22),
         actionsIconTheme: IconThemeData(color: c.ink, size: 22),
-        systemOverlayStyle: (isDark
-                ? SystemUiOverlayStyle.light
-                : SystemUiOverlayStyle.dark)
-            .copyWith(statusBarColor: Colors.transparent),
+        systemOverlayStyle:
+            (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+                .copyWith(statusBarColor: Colors.transparent),
       ),
       cardTheme: CardThemeData(
         color: c.surface,
@@ -218,8 +217,8 @@ class AppTheme {
         disabledColor: c.paper,
         labelStyle: AppTextStyles.bodySmall
             .copyWith(color: c.ink, fontWeight: FontWeight.w500, fontSize: 13),
-        secondaryLabelStyle: AppTextStyles.bodySmall
-            .copyWith(color: c.paper, fontWeight: FontWeight.w600, fontSize: 13),
+        secondaryLabelStyle: AppTextStyles.bodySmall.copyWith(
+            color: c.paper, fontWeight: FontWeight.w600, fontSize: 13),
         side: BorderSide(color: c.hair),
         shape: const StadiumBorder(),
         showCheckmark: false,
@@ -284,8 +283,8 @@ class AppTheme {
         indicatorColor: c.go,
         dividerColor: c.hair,
         labelStyle: buttonText.copyWith(fontSize: 13.5),
-        unselectedLabelStyle: buttonText.copyWith(
-            fontSize: 13.5, fontWeight: FontWeight.w500),
+        unselectedLabelStyle:
+            buttonText.copyWith(fontSize: 13.5, fontWeight: FontWeight.w500),
       ),
       listTileTheme: ListTileThemeData(
         iconColor: c.ink,

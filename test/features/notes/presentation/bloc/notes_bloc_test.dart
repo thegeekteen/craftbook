@@ -27,7 +27,8 @@ void main() {
   late MockRestoreNote restoreNote;
 
   const suppliers = Note(id: 1, title: 'Suppliers', isPinned: true);
-  const ideas = Note(id: 2, title: 'Ideas', body: '[{"insert":"Pressed flowers\\n"}]');
+  const ideas =
+      Note(id: 2, title: 'Ideas', body: '[{"insert":"Pressed flowers\\n"}]');
   const notes = [suppliers, ideas];
 
   setUpAll(() => registerFallbackValue(const Note()));
@@ -61,7 +62,8 @@ void main() {
 
     blocTest<NotesBloc, NotesState>(
       'emits an error when loading fails',
-      setUp: () => when(() => getNotes()).thenAnswer((_) async => const Error(DatabaseFailure('db'))),
+      setUp: () => when(() => getNotes())
+          .thenAnswer((_) async => const Error(DatabaseFailure('db'))),
       build: build,
       act: (bloc) => bloc.add(const LoadNotes()),
       expect: () => [isA<NotesLoading>(), const NotesError('db')],
@@ -102,21 +104,26 @@ void main() {
   group('ToggleNotePinEvent', () {
     blocTest<NotesBloc, NotesState>(
       'unpins a pinned note and reloads',
-      setUp: () => when(() => setNotePinned(1, false)).thenAnswer((_) async => const Success(null)),
+      setUp: () => when(() => setNotePinned(1, false))
+          .thenAnswer((_) async => const Success(null)),
       build: build,
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const ToggleNotePinEvent(1)),
-      expect: () => [const NotesLoaded(all: notes, message: 'Unpinned', serial: 1)],
+      expect: () =>
+          [const NotesLoaded(all: notes, message: 'Unpinned', serial: 1)],
       verify: (_) => verify(() => setNotePinned(1, false)).called(1),
     );
 
     blocTest<NotesBloc, NotesState>(
       'pins an unpinned note',
-      setUp: () => when(() => setNotePinned(2, true)).thenAnswer((_) async => const Success(null)),
+      setUp: () => when(() => setNotePinned(2, true))
+          .thenAnswer((_) async => const Success(null)),
       build: build,
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const ToggleNotePinEvent(2)),
-      expect: () => [const NotesLoaded(all: notes, message: 'Pinned to Today', serial: 1)],
+      expect: () => [
+        const NotesLoaded(all: notes, message: 'Pinned to Today', serial: 1)
+      ],
     );
 
     blocTest<NotesBloc, NotesState>(
@@ -126,7 +133,10 @@ void main() {
       build: build,
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const ToggleNotePinEvent(1)),
-      expect: () => [const NotesLoaded(all: notes, message: 'locked', isError: true, serial: 1)],
+      expect: () => [
+        const NotesLoaded(
+            all: notes, message: 'locked', isError: true, serial: 1)
+      ],
     );
   });
 
@@ -135,13 +145,18 @@ void main() {
       'deletes, reloads and hands back the note for Undo',
       setUp: () {
         when(() => deleteNote(2)).thenAnswer((_) async => const Success(null));
-        when(() => getNotes()).thenAnswer((_) async => const Success([suppliers]));
+        when(() => getNotes())
+            .thenAnswer((_) async => const Success([suppliers]));
       },
       build: build,
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const DeleteNoteEvent(2)),
       expect: () => [
-        const NotesLoaded(all: [suppliers], message: 'Ideas deleted', serial: 1, deleted: ideas),
+        const NotesLoaded(
+            all: [suppliers],
+            message: 'Ideas deleted',
+            serial: 1,
+            deleted: ideas),
       ],
     );
 
@@ -157,10 +172,12 @@ void main() {
 
   blocTest<NotesBloc, NotesState>(
     'RestoreNoteEvent puts the note back and reloads',
-    setUp: () => when(() => restoreNote(ideas)).thenAnswer((_) async => const Success(null)),
+    setUp: () => when(() => restoreNote(ideas))
+        .thenAnswer((_) async => const Success(null)),
     build: build,
     seed: () => const NotesLoaded(all: [suppliers]),
     act: (bloc) => bloc.add(const RestoreNoteEvent(ideas)),
-    expect: () => [const NotesLoaded(all: notes, message: 'Ideas restored', serial: 1)],
+    expect: () =>
+        [const NotesLoaded(all: notes, message: 'Ideas restored', serial: 1)],
   );
 }

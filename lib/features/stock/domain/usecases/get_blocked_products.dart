@@ -13,7 +13,8 @@ class GetBlockedProducts {
       case Error(:final failure):
         return Error(failure);
       case Success(:final value):
-        return Success(value.where((item) => item.blockedProducts.isNotEmpty).toList());
+        return Success(
+            value.where((item) => item.blockedProducts.isNotEmpty).toList());
     }
   }
 }

@@ -30,9 +30,16 @@ void main() {
   late MockRestoreOrderField restore;
   late MockReorderOrderFields reorder;
 
-  const address = OrderField(id: 1, name: 'Address', type: OrderFieldType.text, usageCount: 2);
-  const size = OrderField(id: 2, name: 'Size', type: OrderFieldType.text, position: 1);
-  const card = OrderField(id: 3, name: 'Card', type: OrderFieldType.text, isArchived: true, usageCount: 1);
+  const address = OrderField(
+      id: 1, name: 'Address', type: OrderFieldType.text, usageCount: 2);
+  const size =
+      OrderField(id: 2, name: 'Size', type: OrderFieldType.text, position: 1);
+  const card = OrderField(
+      id: 3,
+      name: 'Card',
+      type: OrderFieldType.text,
+      isArchived: true,
+      usageCount: 1);
 
   const loaded = OrderFieldsLoaded(active: [address, size], archived: [card]);
 
@@ -44,7 +51,8 @@ void main() {
     remove = MockRemoveOrderField();
     restore = MockRestoreOrderField();
     reorder = MockReorderOrderFields();
-    when(() => getFields()).thenAnswer((_) async => const Success([address, size, card]));
+    when(() => getFields())
+        .thenAnswer((_) async => const Success([address, size, card]));
   });
 
   OrderFieldsBloc build() => OrderFieldsBloc(
@@ -77,7 +85,8 @@ void main() {
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'emits an error when loading fails',
-      setUp: () => when(() => getFields()).thenAnswer((_) async => const Error(DatabaseFailure('disk'))),
+      setUp: () => when(() => getFields())
+          .thenAnswer((_) async => const Error(DatabaseFailure('disk'))),
       build: build,
       act: (bloc) => bloc.add(const LoadOrderFields()),
       expect: () => [isA<OrderFieldsLoading>(), const OrderFieldsError('disk')],
@@ -90,7 +99,8 @@ void main() {
       setUp: () => stubSave(const Success(4)),
       build: build,
       seed: () => loaded,
-      act: (bloc) => bloc.add(const SaveOrderFieldEvent(name: ' Wrap ', type: OrderFieldType.choice, options: ['Kraft'])),
+      act: (bloc) => bloc.add(const SaveOrderFieldEvent(
+          name: ' Wrap ', type: OrderFieldType.choice, options: ['Kraft'])),
       expect: () => [loaded.withMessage('Wrap added', 1)],
       verify: (_) => verify(() => save(
             id: null,
@@ -106,24 +116,31 @@ void main() {
       setUp: () => stubSave(const Success(2)),
       build: build,
       seed: () => loaded,
-      act: (bloc) => bloc.add(const SaveOrderFieldEvent(id: 2, name: 'Size', type: OrderFieldType.text)),
+      act: (bloc) => bloc.add(const SaveOrderFieldEvent(
+          id: 2, name: 'Size', type: OrderFieldType.text)),
       expect: () => [loaded.withMessage('Size saved', 1)],
     );
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'keeps the list and shows a validation error',
-      setUp: () => stubSave(const Error(ValidationFailure('There is already a field called Size'))),
+      setUp: () => stubSave(const Error(
+          ValidationFailure('There is already a field called Size'))),
       build: build,
       seed: () => loaded,
-      act: (bloc) => bloc.add(const SaveOrderFieldEvent(name: 'Size', type: OrderFieldType.text)),
-      expect: () => [loaded.withMessage('There is already a field called Size', 1, isError: true)],
+      act: (bloc) => bloc.add(
+          const SaveOrderFieldEvent(name: 'Size', type: OrderFieldType.text)),
+      expect: () => [
+        loaded.withMessage('There is already a field called Size', 1,
+            isError: true)
+      ],
     );
   });
 
   group('RemoveOrderFieldEvent', () {
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'says archived when orders use the field',
-      setUp: () => when(() => remove(1)).thenAnswer((_) async => const Success(RemoveOutcome.archived)),
+      setUp: () => when(() => remove(1))
+          .thenAnswer((_) async => const Success(RemoveOutcome.archived)),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(1)),
@@ -132,7 +149,8 @@ void main() {
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'says deleted otherwise',
-      setUp: () => when(() => remove(2)).thenAnswer((_) async => const Success(RemoveOutcome.deleted)),
+      setUp: () => when(() => remove(2))
+          .thenAnswer((_) async => const Success(RemoveOutcome.deleted)),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(2)),
@@ -141,7 +159,8 @@ void main() {
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'shows a failure',
-      setUp: () => when(() => remove(2)).thenAnswer((_) async => const Error(DatabaseFailure('locked'))),
+      setUp: () => when(() => remove(2))
+          .thenAnswer((_) async => const Error(DatabaseFailure('locked'))),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(2)),
@@ -152,7 +171,8 @@ void main() {
   group('RestoreOrderFieldEvent', () {
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'reloads and confirms',
-      setUp: () => when(() => restore(3)).thenAnswer((_) async => const Success(null)),
+      setUp: () =>
+          when(() => restore(3)).thenAnswer((_) async => const Success(null)),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RestoreOrderFieldEvent(3)),
@@ -163,17 +183,21 @@ void main() {
   group('ReorderOrderFieldsEvent', () {
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'moves the field straight away and saves the order',
-      setUp: () => when(() => reorder([2, 1])).thenAnswer((_) async => const Success(null)),
+      setUp: () => when(() => reorder([2, 1]))
+          .thenAnswer((_) async => const Success(null)),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const ReorderOrderFieldsEvent(1, 0)),
-      expect: () => [const OrderFieldsLoaded(active: [size, address], archived: [card])],
+      expect: () => [
+        const OrderFieldsLoaded(active: [size, address], archived: [card])
+      ],
       verify: (_) => verify(() => reorder([2, 1])).called(1),
     );
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
       'puts the list back when saving fails',
-      setUp: () => when(() => reorder(any())).thenAnswer((_) async => const Error(DatabaseFailure('locked'))),
+      setUp: () => when(() => reorder(any()))
+          .thenAnswer((_) async => const Error(DatabaseFailure('locked'))),
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const ReorderOrderFieldsEvent(0, 1)),

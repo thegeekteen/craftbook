@@ -55,5 +55,6 @@ class BlockedProduct extends Equatable {
   });
 
   @override
-  List<Object?> get props => [productId, productName, buildableQuantity, openOrderCount];
+  List<Object?> get props =>
+      [productId, productName, buildableQuantity, openOrderCount];
 }

@@ -54,19 +54,33 @@ void main() {
     products = ProductRepositoryImpl(ProductDao(db));
     final channels = ChannelRepositoryImpl(ChannelDao(db));
     final profit = CalculateOrderProfit(channels);
-    createOrder = CreateOrder(orderRepository: orders, productRepository: products, materialRepository: materials);
+    createOrder = CreateOrder(
+        orderRepository: orders,
+        productRepository: products,
+        materialRepository: materials);
     updateOrder = UpdateOrder(
       orderRepository: orders,
       productRepository: products,
       materialRepository: materials,
       calculateOrderProfit: profit,
     );
-    packOrder = PackOrder(orderRepository: orders, materialRepository: materials, productRepository: products);
+    packOrder = PackOrder(
+        orderRepository: orders,
+        materialRepository: materials,
+        productRepository: products);
 
     channelA = ok(await channels.createChannel(
-        name: 'Shopee', commissionRate: 10, transactionFeeRate: 0, flatFee: 0, shippingPaidByUs: 0));
+        name: 'Shopee',
+        commissionRate: 10,
+        transactionFeeRate: 0,
+        flatFee: 0,
+        shippingPaidByUs: 0));
     channelB = ok(await channels.createChannel(
-        name: 'Direct', commissionRate: 0, transactionFeeRate: 0, flatFee: 0, shippingPaidByUs: 20));
+        name: 'Direct',
+        commissionRate: 0,
+        transactionFeeRate: 0,
+        flatFee: 0,
+        shippingPaidByUs: 20));
 
     yarn = ok(await materials.createMaterial(
       name: 'Yarn',
@@ -77,9 +91,11 @@ void main() {
       alertLevel: 5,
     ));
     tulip = ok(await products.createProduct(name: 'Tulip', sellPrice: 450));
-    ok(await products.saveBomItems(tulip, [BomItemInput(materialId: yarn, quantityRequired: 3)]));
+    ok(await products.saveBomItems(
+        tulip, [BomItemInput(materialId: yarn, quantityRequired: 3)]));
     rose = ok(await products.createProduct(name: 'Rose', sellPrice: 300));
-    ok(await products.saveBomItems(rose, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
+    ok(await products.saveBomItems(
+        rose, [BomItemInput(materialId: yarn, quantityRequired: 5)]));
     pin = ok(await products.createProduct(
       name: 'Pin',
       sellPrice: 100,
@@ -92,7 +108,11 @@ void main() {
   tearDown(() => db.close());
 
   OrderItemInput line(int productId, String name, int qty, double price) =>
-      OrderItemInput(productId: productId, productName: name, quantity: qty, unitPrice: price);
+      OrderItemInput(
+          productId: productId,
+          productName: name,
+          quantity: qty,
+          unitPrice: price);
 
   Future<int> create(List<OrderItemInput> items) async {
     final sales = items.fold<double>(0, (s, i) => s + i.subtotal);
@@ -126,7 +146,8 @@ void main() {
         items: items,
       );
 
-  Future<int> promisedYarn() async => ok(await materials.getMaterialById(yarn))!.quantityPromised;
+  Future<int> promisedYarn() async =>
+      ok(await materials.getMaterialById(yarn))!.quantityPromised;
 
   group('pending orders', () {
     test('changing items re-balances reservations and money', () async {
@@ -158,14 +179,17 @@ void main() {
 
     test('details-only change keeps reservations the same', () async {
       final id = await create([line(tulip, 'Tulip', 2, 450)]);
-      ok(await edit(id, [line(tulip, 'Tulip', 2, 450)], name: 'Maria L.', note: 'Gift'));
+      ok(await edit(id, [line(tulip, 'Tulip', 2, 450)],
+          name: 'Maria L.', note: 'Gift'));
       expect(await promisedYarn(), 6);
       final order = ok(await orders.getOrderById(id))!;
       expect((order.customerName, order.note), ('Maria L.', 'Gift'));
     });
 
-    test('keeps recorded waste on a line whose quantity did not change', () async {
-      final id = await create([line(tulip, 'Tulip', 2, 450), line(pin, 'Pin', 1, 100)]);
+    test('keeps recorded waste on a line whose quantity did not change',
+        () async {
+      final id = await create(
+          [line(tulip, 'Tulip', 2, 450), line(pin, 'Pin', 1, 100)]);
       final planned = ok(await orders.getOrderMaterials(id)).single;
       ok(await orders.adjustMaterialsUsed(id, [
         OrderMaterialInput(
@@ -179,10 +203,12 @@ void main() {
         ),
       ]));
 
-      ok(await edit(id, [line(tulip, 'Tulip', 2, 450), line(pin, 'Pin', 3, 100)]));
+      ok(await edit(
+          id, [line(tulip, 'Tulip', 2, 450), line(pin, 'Pin', 3, 100)]));
 
       final kept = ok(await orders.getOrderMaterials(id)).single;
-      expect((kept.actualQuantity, kept.wasteQuantity, kept.wasteReason), (8, 2, 'Knotted'));
+      expect((kept.actualQuantity, kept.wasteQuantity, kept.wasteReason),
+          (8, 2, 'Knotted'));
     });
 
     test('changing channel recalculates fees and shipping', () async {
@@ -194,19 +220,24 @@ void main() {
       expect(order.shippingCost, 20);
     });
 
-    test('rejects an empty item list, a blank name and an inverted date range', () async {
+    test('rejects an empty item list, a blank name and an inverted date range',
+        () async {
       final id = await create([line(tulip, 'Tulip', 1, 450)]);
       expect(await edit(id, []), isA<Error<void>>());
-      expect(await edit(id, [line(tulip, 'Tulip', 1, 450)], name: ' '), isA<Error<void>>());
+      expect(await edit(id, [line(tulip, 'Tulip', 1, 450)], name: ' '),
+          isA<Error<void>>());
       expect(
-        await edit(id, [line(tulip, 'Tulip', 1, 450)], shipBy: day.subtract(const Duration(days: 1))),
+        await edit(id, [line(tulip, 'Tulip', 1, 450)],
+            shipBy: day.subtract(const Duration(days: 1))),
         isA<Error<void>>(),
       );
-      expect(await promisedYarn(), 3, reason: 'a rejected edit changes nothing');
+      expect(await promisedYarn(), 3,
+          reason: 'a rejected edit changes nothing');
     });
 
     test('unknown order fails with NotFound', () async {
-      expect(await edit(999, [line(tulip, 'Tulip', 1, 450)]), isA<Error<void>>());
+      expect(
+          await edit(999, [line(tulip, 'Tulip', 1, 450)]), isA<Error<void>>());
     });
   });
 
@@ -219,10 +250,12 @@ void main() {
 
     test('details and channel change, items and stock do not', () async {
       final id = await packed();
-      final onHandBefore = ok(await materials.getMaterialById(yarn))!.quantityOnHand;
+      final onHandBefore =
+          ok(await materials.getMaterialById(yarn))!.quantityOnHand;
 
       // A different item list is ignored for packed orders.
-      ok(await edit(id, [line(rose, 'Rose', 9, 300)], name: 'Maria L.', channelId: channelB));
+      ok(await edit(id, [line(rose, 'Rose', 9, 300)],
+          name: 'Maria L.', channelId: channelB));
 
       final order = ok(await orders.getOrderById(id))!;
       expect(order.customerName, 'Maria L.');
@@ -232,7 +265,8 @@ void main() {
       expect(order.totalSales, 900);
       expect(order.profit, 900 - order.totalMaterialCost - 0 - 20);
       expect(ok(await orders.getOrderItems(id)).single.productName, 'Tulip');
-      expect(ok(await materials.getMaterialById(yarn))!.quantityOnHand, onHandBefore);
+      expect(ok(await materials.getMaterialById(yarn))!.quantityOnHand,
+          onHandBefore);
     });
   });
 
@@ -242,7 +276,8 @@ void main() {
       ok(await packOrder(id));
       ok(await orders.shipOrder(id));
 
-      ok(await edit(id, [], name: 'Someone else', note: 'Left at door', channelId: channelB));
+      ok(await edit(id, [],
+          name: 'Someone else', note: 'Left at door', channelId: channelB));
 
       final order = ok(await orders.getOrderById(id))!;
       expect(order.note, 'Left at door');

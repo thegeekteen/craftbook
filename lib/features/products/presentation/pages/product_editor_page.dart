@@ -71,13 +71,21 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   @override
   void dispose() {
-    for (final ctrl in [_name, _description, _price, _unitCost, _alertLevel, _initialQty]) {
+    for (final ctrl in [
+      _name,
+      _description,
+      _price,
+      _unitCost,
+      _alertLevel,
+      _initialQty
+    ]) {
       ctrl.dispose();
     }
     super.dispose();
   }
 
-  static String _money(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+  static String _money(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
   Future<void> _load() async {
     final matResult = await getIt<GetMaterials>()();
@@ -134,7 +142,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             Success(value: true) => 'Used in orders, so its type is fixed.',
             _ when p.quantityOnHand > 0 || p.quantityPromised > 0 =>
               'It has stock on hand or reserved, so its type is fixed.',
-            _ when !p.isStandalone && _bom.isNotEmpty => 'Remove its materials first to switch it to Resell.',
+            _ when !p.isStandalone && _bom.isNotEmpty =>
+              'Remove its materials first to switch it to Resell.',
             _ => null,
           };
       }
@@ -143,8 +152,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   double get _sellPrice => double.tryParse(_price.text) ?? 0;
 
-  double get _cost =>
-      _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
+  double get _cost => _isStandalone
+      ? double.tryParse(_unitCost.text) ?? 0
+      : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
 
   Future<void> _addMaterial() async {
     final taken = _bom.map((b) => b.materialId).toSet();
@@ -157,12 +167,18 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
           final c = sheetContext.colors;
-          final visible = options.where((m) => m.name.toLowerCase().contains(query)).toList();
+          final visible = options
+              .where((m) => m.name.toLowerCase().contains(query))
+              .toList();
           if (options.isEmpty) {
             return EmptyState(
               icon: Icons.inventory_2_outlined,
-              title: _materials.isEmpty ? 'No materials yet' : 'All materials added',
-              message: _materials.isEmpty ? 'Add materials under Stock first.' : null,
+              title: _materials.isEmpty
+                  ? 'No materials yet'
+                  : 'All materials added',
+              message: _materials.isEmpty
+                  ? 'Add materials under Stock first.'
+                  : null,
             );
           }
           return Column(
@@ -171,7 +187,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               if (options.length > 6) ...[
                 AppSearchField(
                   hint: 'Search materials',
-                  onChanged: (v) => setSheet(() => query = v.trim().toLowerCase()),
+                  onChanged: (v) =>
+                      setSheet(() => query = v.trim().toLowerCase()),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -183,14 +200,18 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(m.name, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                          child: Text(m.name,
+                              style: AppTextStyles.bodyLarge
+                                  .copyWith(color: c.ink)),
                         ),
                         Text(
                           '${CurrencyFormatter.format(m.unitCost)}/pc',
-                          style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                          style:
+                              AppTextStyles.bodySmall.copyWith(color: c.muted),
                         ),
                         const SizedBox(width: 8),
-                        Icon(Icons.add_circle_outline_rounded, color: c.go, size: 22),
+                        Icon(Icons.add_circle_outline_rounded,
+                            color: c.go, size: 22),
                       ],
                     ),
                   ),
@@ -216,7 +237,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final name = _name.text.trim();
     final alertLevel = int.tryParse(_alertLevel.text) ?? 0;
     final bomInputs = [
-      for (final b in _bom) BomItemInput(materialId: b.materialId, quantityRequired: b.quantity),
+      for (final b in _bom)
+        BomItemInput(materialId: b.materialId, quantityRequired: b.quantity),
     ];
 
     Result<void> outcome;
@@ -225,9 +247,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         name: name,
         sellPrice: _sellPrice,
         isStandalone: _isStandalone,
-        initialQuantity: _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
-        description: _description.text.trim().isEmpty ? null : _description.text.trim(),
-        initialUnitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : 0,
+        initialQuantity:
+            _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
+        description:
+            _description.text.trim().isEmpty ? null : _description.text.trim(),
+        initialUnitCost:
+            _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : 0,
       );
       switch (created) {
         case Error(:final failure):
@@ -237,7 +262,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           if (_isStandalone && alertLevel > 0) {
             await repo.updateProduct(id: id, alertLevel: alertLevel);
           }
-          outcome = _isStandalone || bomInputs.isEmpty ? const Success(null) : await repo.saveBomItems(id, bomInputs);
+          outcome = _isStandalone || bomInputs.isEmpty
+              ? const Success(null)
+              : await repo.saveBomItems(id, bomInputs);
       }
     } else {
       final updated = await getIt<UpdateProduct>()(
@@ -252,7 +279,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       );
       outcome = switch (updated) {
         Error() => updated,
-        Success() => _isStandalone ? updated : await repo.saveBomItems(widget.productId!, bomInputs),
+        Success() => _isStandalone
+            ? updated
+            : await repo.saveBomItems(widget.productId!, bomInputs),
       };
     }
 
@@ -271,13 +300,19 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   Widget build(BuildContext context) {
     const back = BackButton();
     if (_loading) {
-      return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(leading: back),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_error != null) {
-      return Scaffold(appBar: AppBar(leading: back), body: Center(child: ErrorState(message: _error!, onRetry: _load)));
+      return Scaffold(
+          appBar: AppBar(leading: back),
+          body: Center(child: ErrorState(message: _error!, onRetry: _load)));
     }
     final c = context.colors;
-    final money = [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))];
+    final money = [
+      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
+    ];
     final digits = [FilteringTextInputFormatter.digitsOnly];
 
     return Scaffold(
@@ -295,22 +330,28 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               autofocus: _isNew,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(labelText: 'Name'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _description,
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Description (optional)'),
+              decoration:
+                  const InputDecoration(labelText: 'Description (optional)'),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _price,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: money,
-              decoration: const InputDecoration(labelText: 'Sell price', prefixText: '₱ '),
-              validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Enter a price above 0' : null,
+              decoration: const InputDecoration(
+                  labelText: 'Sell price', prefixText: '₱ '),
+              validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
+                  ? 'Enter a price above 0'
+                  : null,
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -318,11 +359,19 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               child: SegmentedButton<bool>(
                 showSelectedIcon: false,
                 segments: const [
-                  ButtonSegment(value: false, label: Text('Handmade'), icon: Icon(Icons.content_cut_rounded, size: 18)),
-                  ButtonSegment(value: true, label: Text('Resell'), icon: Icon(Icons.inventory_2_outlined, size: 18)),
+                  ButtonSegment(
+                      value: false,
+                      label: Text('Handmade'),
+                      icon: Icon(Icons.content_cut_rounded, size: 18)),
+                  ButtonSegment(
+                      value: true,
+                      label: Text('Resell'),
+                      icon: Icon(Icons.inventory_2_outlined, size: 18)),
                 ],
                 selected: {_isStandalone},
-                onSelectionChanged: _typeLockReason != null ? null : (s) => setState(() => _isStandalone = s.first),
+                onSelectionChanged: _typeLockReason != null
+                    ? null
+                    : (s) => setState(() => _isStandalone = s.first),
               ),
             ),
             Padding(
@@ -335,9 +384,15 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
             ),
-            if (_isStandalone) ..._buildResell(money, digits) else ..._buildHandmade(),
+            if (_isStandalone)
+              ..._buildResell(money, digits)
+            else
+              ..._buildHandmade(),
             const SizedBox(height: 12),
-            ProductProfitCard(sellPrice: _sellPrice, cost: _cost, isStandalone: _isStandalone),
+            ProductProfitCard(
+                sellPrice: _sellPrice,
+                cost: _cost,
+                isStandalone: _isStandalone),
             if (!_isNew) ...[
               const SizedBox(height: 12),
               AppCard(
@@ -347,7 +402,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   value: _isActive,
                   onChanged: (v) => setState(() => _isActive = v),
                   title: const Text('Show in new orders'),
-                  subtitle: const Text('Turn off to retire a product without deleting it.'),
+                  subtitle: const Text(
+                      'Turn off to retire a product without deleting it.'),
                 ),
               ),
             ],
@@ -358,7 +414,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         Expanded(
           child: FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving…' : (_isNew ? 'Add product' : 'Save changes')),
+            child: Text(_saving
+                ? 'Saving…'
+                : (_isNew ? 'Add product' : 'Save changes')),
           ),
         ),
       ]),
@@ -371,7 +429,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       SectionLabel(
         'Materials per piece',
         padding: const EdgeInsets.fromLTRB(2, 16, 0, 0),
-        trailing: SectionAction(label: 'Add', icon: Icons.add_rounded, onTap: _addMaterial),
+        trailing: SectionAction(
+            label: 'Add', icon: Icons.add_rounded, onTap: _addMaterial),
       ),
       const SizedBox(height: 8),
       if (_bom.isEmpty)
@@ -384,7 +443,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               Expanded(
                 child: Text(
                   'Add the materials one piece uses so the app can work out cost and reserve stock.',
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: c.muted, fontSize: 13),
                 ),
               ),
             ],
@@ -397,10 +457,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               CardRow(
                 title: Text(b.materialName),
                 subtitle: Text.rich(TextSpan(children: [
-                  TextSpan(text: '${CurrencyFormatter.format(b.unitCost)} each · '),
+                  TextSpan(
+                      text: '${CurrencyFormatter.format(b.unitCost)} each · '),
                   TextSpan(
                     text: CurrencyFormatter.format(b.quantity * b.unitCost),
-                    style: TextStyle(color: c.coin, fontWeight: FontWeight.w600),
+                    style:
+                        TextStyle(color: c.coin, fontWeight: FontWeight.w600),
                   ),
                 ])),
                 trailing: StepperInput(
@@ -428,7 +490,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     ];
   }
 
-  List<Widget> _buildResell(List<TextInputFormatter> money, List<TextInputFormatter> digits) {
+  List<Widget> _buildResell(
+      List<TextInputFormatter> money, List<TextInputFormatter> digits) {
     final p = _product;
     return [
       const SectionLabel('Stock', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
@@ -452,9 +515,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             Expanded(
               child: TextFormField(
                 controller: _unitCost,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
-                decoration: const InputDecoration(labelText: 'Cost per piece', prefixText: '₱ '),
+                decoration: const InputDecoration(
+                    labelText: 'Cost per piece', prefixText: '₱ '),
               ),
             ),
             const SizedBox(width: 8),

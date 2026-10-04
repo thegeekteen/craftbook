@@ -21,10 +21,12 @@ class CreateProduct {
       return const Error(ValidationFailure('Product name is required'));
     }
     if (sellPrice <= 0) {
-      return const Error(ValidationFailure('Sell price must be greater than 0'));
+      return const Error(
+          ValidationFailure('Sell price must be greater than 0'));
     }
     if (isStandalone && initialQuantity < 0) {
-      return const Error(ValidationFailure('Initial quantity cannot be negative'));
+      return const Error(
+          ValidationFailure('Initial quantity cannot be negative'));
     }
     if (isStandalone && initialUnitCost < 0) {
       return const Error(ValidationFailure('Unit cost cannot be negative'));

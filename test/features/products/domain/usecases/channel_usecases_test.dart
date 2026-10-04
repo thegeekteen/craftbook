@@ -77,7 +77,8 @@ void main() {
 
   group('UpdateChannel', () {
     test('updates channel successfully', () async {
-      when(() => mockRepository.updateChannel(id: any(named: 'id'), name: any(named: 'name')))
+      when(() => mockRepository.updateChannel(
+              id: any(named: 'id'), name: any(named: 'name')))
           .thenAnswer((_) async => const Success<void>(null));
 
       final result = await updateChannel(id: 1, name: 'Shopee Updated');

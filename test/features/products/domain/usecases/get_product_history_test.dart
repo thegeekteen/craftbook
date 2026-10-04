@@ -11,8 +11,10 @@ import 'package:mocktail/mocktail.dart';
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
-ProductStockMovement _move(ProductStockMovementType type, DateTime at, {int qty = 3}) =>
-    ProductStockMovement(productId: 1, type: type, quantity: qty, unitCost: 28, createdAt: at);
+ProductStockMovement _move(ProductStockMovementType type, DateTime at,
+        {int qty = 3}) =>
+    ProductStockMovement(
+        productId: 1, type: type, quantity: qty, unitCost: 28, createdAt: at);
 
 ProductSale _sale(int orderId, DateTime at) => ProductSale(
       orderId: orderId,
@@ -24,7 +26,8 @@ ProductSale _sale(int orderId, DateTime at) => ProductSale(
       subtotal: 60,
     );
 
-List<ProductHistoryEntry> _entries(Result<List<ProductHistoryEntry>> r) => switch (r) {
+List<ProductHistoryEntry> _entries(Result<List<ProductHistoryEntry>> r) =>
+    switch (r) {
       Success(:final value) => value,
       Error(:final failure) => throw StateError(failure.message),
     };
@@ -42,13 +45,16 @@ void main() {
     Result<List<ProductStockMovement>> movements = const Success([]),
     Result<List<ProductSale>> sales = const Success([]),
   }) {
-    when(() => repo.getProductStockMovements(1)).thenAnswer((_) async => movements);
+    when(() => repo.getProductStockMovements(1))
+        .thenAnswer((_) async => movements);
     when(() => repo.getProductSales(1)).thenAnswer((_) async => sales);
   }
 
   test('merges stock changes and orders, newest first', () async {
-    final received = _move(ProductStockMovementType.received, DateTime(2026, 3, 1));
-    final counted = _move(ProductStockMovementType.adjusted, DateTime(2026, 3, 9), qty: -1);
+    final received =
+        _move(ProductStockMovementType.received, DateTime(2026, 3, 1));
+    final counted =
+        _move(ProductStockMovementType.adjusted, DateTime(2026, 3, 9), qty: -1);
     final sale = _sale(7, DateTime(2026, 3, 5));
     stub(movements: Success([counted, received]), sales: Success([sale]));
 
@@ -61,8 +67,10 @@ void main() {
     ]);
   });
 
-  test('leaves out deducted movements, which the order row already covers', () async {
-    final deducted = _move(ProductStockMovementType.deducted, DateTime(2026, 3, 5));
+  test('leaves out deducted movements, which the order row already covers',
+      () async {
+    final deducted =
+        _move(ProductStockMovementType.deducted, DateTime(2026, 3, 5));
     final sale = _sale(7, DateTime(2026, 3, 5));
     stub(movements: Success([deducted]), sales: Success([sale]));
 
@@ -74,12 +82,14 @@ void main() {
   test('fails when stock movements fail to load', () async {
     stub(movements: const Error(DatabaseFailure('disk')));
 
-    expect(await getHistory(1), const Error<List<ProductHistoryEntry>>(DatabaseFailure('disk')));
+    expect(await getHistory(1),
+        const Error<List<ProductHistoryEntry>>(DatabaseFailure('disk')));
   });
 
   test('fails when orders fail to load', () async {
     stub(sales: const Error(DatabaseFailure('disk')));
 
-    expect(await getHistory(1), const Error<List<ProductHistoryEntry>>(DatabaseFailure('disk')));
+    expect(await getHistory(1),
+        const Error<List<ProductHistoryEntry>>(DatabaseFailure('disk')));
   });
 }

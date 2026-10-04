@@ -69,7 +69,8 @@ class _OrderFieldsView extends StatelessWidget {
               child: EmptyState(
                 icon: Icons.dashboard_customize_outlined,
                 title: 'No order fields yet',
-                message: 'Add what you note on every order: address, size, gift message…',
+                message:
+                    'Add what you note on every order: address, size, gift message…',
                 actionLabel: 'Add field',
                 onAction: () => _OrderFieldSheet.open(context, bloc),
               ),
@@ -102,7 +103,8 @@ class _FieldList extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
           sliver: SliverReorderableList(
             itemCount: state.active.length,
-            onReorderItem: (from, to) => bloc.add(ReorderOrderFieldsEvent(from, to)),
+            onReorderItem: (from, to) =>
+                bloc.add(ReorderOrderFieldsEvent(from, to)),
             proxyDecorator: (child, _, __) => Material(
               color: Colors.transparent,
               elevation: 4,
@@ -116,7 +118,8 @@ class _FieldList extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: OrderFieldTile(
                   field: field,
-                  onTap: () => _OrderFieldSheet.open(context, bloc, field: field),
+                  onTap: () =>
+                      _OrderFieldSheet.open(context, bloc, field: field),
                   leading: ReorderableDragStartListener(
                     index: i,
                     child: Padding(
@@ -135,7 +138,8 @@ class _FieldList extends StatelessWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, AppSpacing.fabClearance),
+          padding:
+              const EdgeInsets.fromLTRB(16, 0, 16, AppSpacing.fabClearance),
           sliver: SliverList.list(
             children: [
               if (state.archived.isNotEmpty) ...[
@@ -150,11 +154,14 @@ class _FieldList extends StatelessWidget {
                         if (!field.isUsed)
                           IconButton(
                             tooltip: 'Delete ${field.name}',
-                            onPressed: () => _confirmRemove(context, bloc, field),
-                            icon: Icon(Icons.delete_outline_rounded, size: 20, color: c.muted),
+                            onPressed: () =>
+                                _confirmRemove(context, bloc, field),
+                            icon: Icon(Icons.delete_outline_rounded,
+                                size: 20, color: c.muted),
                           ),
                         TextButton(
-                          onPressed: () => bloc.add(RestoreOrderFieldEvent(field.id!)),
+                          onPressed: () =>
+                              bloc.add(RestoreOrderFieldEvent(field.id!)),
                           child: const Text('Restore'),
                         ),
                       ],
@@ -207,7 +214,8 @@ class _OrderFieldSheet extends StatefulWidget {
 
   const _OrderFieldSheet({this.field, required this.bloc});
 
-  static Future<void> open(BuildContext context, OrderFieldsBloc bloc, {OrderField? field}) {
+  static Future<void> open(BuildContext context, OrderFieldsBloc bloc,
+      {OrderField? field}) {
     return showAppSheet(
       context: context,
       title: field == null ? 'New order field' : 'Edit ${field.name}',
@@ -225,7 +233,8 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
   late OrderFieldType _type = widget.field?.type ?? OrderFieldType.text;
   late bool _multiline = widget.field?.isMultiline ?? false;
   late final List<TextEditingController> _options = [
-    for (final o in widget.field?.options ?? const <String>[]) TextEditingController(text: o),
+    for (final o in widget.field?.options ?? const <String>[])
+      TextEditingController(text: o),
     if (widget.field?.options.isEmpty ?? true) TextEditingController(),
   ];
 
@@ -276,8 +285,10 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
             controller: _name,
             autofocus: field == null,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. Address'),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+            decoration: const InputDecoration(
+                labelText: 'Name', hintText: 'e.g. Address'),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
           ),
           const SizedBox(height: 4),
           const SectionLabel('Type'),
@@ -290,7 +301,9 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
                 wrap: true,
                 selected: _type,
                 onSelected: (t) => setState(() => _type = t),
-                options: [for (final t in OrderFieldType.values) ChipOption(t, t.label)],
+                options: [
+                  for (final t in OrderFieldType.values) ChipOption(t, t.label)
+                ],
               ),
             ),
           ),
@@ -326,16 +339,20 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
                       child: TextFormField(
                         controller: _options[i],
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(hintText: 'Choice ${i + 1}'),
-                        validator: (_) => i == 0 && _options.every((o) => o.text.trim().isEmpty)
+                        decoration:
+                            InputDecoration(hintText: 'Choice ${i + 1}'),
+                        validator: (_) => i == 0 &&
+                                _options.every((o) => o.text.trim().isEmpty)
                             ? 'Add at least one choice'
                             : null,
                       ),
                     ),
                     IconButton(
                       tooltip: 'Remove choice',
-                      onPressed: _options.length > 1 ? () => _removeOption(i) : null,
-                      icon: const Icon(Icons.remove_circle_outline_rounded, size: 20),
+                      onPressed:
+                          _options.length > 1 ? () => _removeOption(i) : null,
+                      icon: const Icon(Icons.remove_circle_outline_rounded,
+                          size: 20),
                     ),
                   ],
                 ),

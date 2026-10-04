@@ -56,7 +56,8 @@ class _SettingsPageState extends State<SettingsPage> {
       _canUndoRestore = canUndoRestore;
       if (products case Success(:final value)) {
         final low = value.where((p) => p.isLowStock).length;
-        _productsHint = '${value.length} ${value.length == 1 ? 'product' : 'products'}'
+        _productsHint =
+            '${value.length} ${value.length == 1 ? 'product' : 'products'}'
             '${low > 0 ? ' · $low low' : ''}';
       }
       if (channels case Success(:final value)) {
@@ -101,26 +102,30 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: AppSpacing.page,
         children: [
-          const SectionLabel('Catalogue', padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
+          const SectionLabel('Catalogue',
+              padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
               _MoreRow(
                 icon: Icons.sell_outlined,
                 title: 'Products',
-                subtitle: _productsHint ?? 'What you sell and what goes into it',
+                subtitle:
+                    _productsHint ?? 'What you sell and what goes into it',
                 onTap: () => _open(RouteNames.products),
               ),
               _MoreRow(
                 icon: Icons.storefront_outlined,
                 title: 'Channels & fees',
-                subtitle: _channelsHint ?? 'Where you sell and what they charge',
+                subtitle:
+                    _channelsHint ?? 'Where you sell and what they charge',
                 onTap: () => _open(RouteNames.channels),
               ),
               _MoreRow(
                 icon: Icons.dashboard_customize_outlined,
                 title: 'Order fields',
-                subtitle: _orderFieldsHint ?? 'Extra details to note on each order',
+                subtitle:
+                    _orderFieldsHint ?? 'Extra details to note on each order',
                 onTap: () => _open(RouteNames.orderFields),
               ),
               _MoreRow(
@@ -131,7 +136,8 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
-          const SectionLabel('Notebook', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Notebook',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -143,10 +149,12 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ]),
           ),
-          const SectionLabel('Appearance', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Appearance',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           const AppearanceCard(),
-          const SectionLabel('Your data', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('Your data',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -172,7 +180,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
             ]),
           ),
-          const SectionLabel('About', padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+          const SectionLabel('About',
+              padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
           const SizedBox(height: 8),
           AppCard.flush(
             child: CardList(children: [
@@ -192,7 +201,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 10),
                 Text(
                   AppConstants.appName,
-                  style: AppTextStyles.displaySmall.copyWith(color: c.ink, fontSize: 17),
+                  style: AppTextStyles.displaySmall
+                      .copyWith(color: c.ink, fontSize: 17),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -231,7 +241,8 @@ class _MoreRow extends StatelessWidget {
       leading: Container(
         width: 36,
         height: 36,
-        decoration: BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
+        decoration:
+            BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
         child: Icon(icon, size: 20, color: iconColor ?? c.ink),
       ),
       title: Text(title),

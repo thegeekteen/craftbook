@@ -7,7 +7,8 @@ class GetProductEarnings {
 
   GetProductEarnings(this.repository);
 
-  Future<Result<List<ProductEarnings>>> call(DateTime startDate, DateTime endDate) {
+  Future<Result<List<ProductEarnings>>> call(
+      DateTime startDate, DateTime endDate) {
     return repository.getProductEarnings(startDate, endDate);
   }
 }

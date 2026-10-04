@@ -81,7 +81,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
   /// page, so it needs no controller here.
   String? _note;
   DateTime _orderDate = DateUtils.dateOnly(DateTime.now());
-  DateTime _shipByDate = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 2));
+  DateTime _shipByDate =
+      DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 2));
   int? _channelId;
   List<Channel> _channels = [];
   bool _channelsLoaded = false;
@@ -93,12 +94,15 @@ class _NewOrderViewState extends State<_NewOrderView> {
   bool get _isEditing => widget.orderId != null;
 
   /// Packed and shipped orders have had their stock deducted, so items stay.
-  bool get _itemsLocked => _editingStatus == OrderStatus.packed || _editingStatus == OrderStatus.shipped;
+  bool get _itemsLocked =>
+      _editingStatus == OrderStatus.packed ||
+      _editingStatus == OrderStatus.shipped;
 
   /// Shipped orders are history; only the note can change.
   bool get _noteOnly => _editingStatus == OrderStatus.shipped;
 
-  List<String> get _stepNames => _itemsLocked ? const ['Details'] : const ['Customer', 'Items', 'Review'];
+  List<String> get _stepNames =>
+      _itemsLocked ? const ['Details'] : const ['Customer', 'Items', 'Review'];
 
   /// Inactive channels are hidden, except the one this order already uses.
   List<Channel> get _visibleChannels => [
@@ -127,7 +131,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
       _channelsLoaded = true;
       if (result case Success(:final value)) {
         _channels = value;
-        if (_channelId == null && value.isNotEmpty) _channelId = value.where((c) => c.isActive).firstOrNull?.id;
+        if (_channelId == null && value.isNotEmpty) {
+          _channelId = value.where((c) => c.isActive).firstOrNull?.id;
+        }
       }
     });
     if (result case Error(:final failure)) {
@@ -151,7 +157,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
         for (final f in _fields) f.id!: _fieldValues[f.id] ?? '',
       };
 
-  Channel? get _channel => _visibleChannels.where((c) => c.id == _channelId).firstOrNull;
+  Channel? get _channel =>
+      _visibleChannels.where((c) => c.id == _channelId).firstOrNull;
 
   void _goTo(int step) {
     FocusScope.of(context).unfocus();
@@ -224,7 +231,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
     return ConfirmDialog.show(
       context,
       title: _isEditing ? 'Discard your changes?' : 'Discard this order?',
-      message: _isEditing ? 'The order stays as it was.' : "What you've entered so far will be lost.",
+      message: _isEditing
+          ? 'The order stays as it was.'
+          : "What you've entered so far will be lost.",
       confirmText: 'Discard',
       cancelText: 'Keep editing',
       isDestructive: true,
@@ -247,7 +256,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
           setState(() => _seed(state));
         }
         if (state is NewOrderSaved) {
-          context.showSnackBar(_isEditing ? 'Order #${state.orderId} updated' : 'Order #${state.orderId} saved');
+          context.showSnackBar(_isEditing
+              ? 'Order #${state.orderId} updated'
+              : 'Order #${state.orderId} saved');
           context.pop(true);
         }
         if (state is NewOrderError) {
@@ -277,10 +288,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
             appBar: AppBar(
               leading: IconButton(
                 tooltip: _step == 0 ? 'Close' : 'Back',
-                icon: Icon(_step == 0 ? Icons.close_rounded : Icons.arrow_back_rounded),
+                icon: Icon(_step == 0
+                    ? Icons.close_rounded
+                    : Icons.arrow_back_rounded),
                 onPressed: () => _handleBack(items),
               ),
-              title: Text(_isEditing ? 'Edit order #${widget.orderId}' : 'New order'),
+              title: Text(
+                  _isEditing ? 'Edit order #${widget.orderId}' : 'New order'),
               bottom: _itemsLocked
                   ? null
                   : PreferredSize(
@@ -299,7 +313,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
                 ],
               ],
             ),
-            bottomNavigationBar: _itemsLocked ? _buildDetailsOnlyBar(details) : _buildBottomBar(details, items),
+            bottomNavigationBar: _itemsLocked
+                ? _buildDetailsOnlyBar(details)
+                : _buildBottomBar(details, items),
           ),
         );
       },
@@ -323,7 +339,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   textInputAction: TextInputAction.next,
                   enabled: !_noteOnly,
                   decoration: const InputDecoration(labelText: 'Customer name'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter the customer name' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Enter the customer name'
+                      : null,
                 ),
                 for (final field in _fields) ...[
                   const SizedBox(height: 12),
@@ -332,7 +350,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     field: field,
                     value: _fieldValues[field.id],
                     enabled: !_noteOnly,
-                    onChanged: (v) => setState(() => _fieldValues[field.id!] = v),
+                    onChanged: (v) =>
+                        setState(() => _fieldValues[field.id!] = v),
                   )),
                 ],
                 if (_fields.isEmpty && !_isEditing)
@@ -373,7 +392,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     wrap: true,
                     selected: _channelId,
                     onSelected: (id) => setState(() => _channelId = id),
-                    options: [for (final ch in _visibleChannels) ChipOption(ch.id, ch.name)],
+                    options: [
+                      for (final ch in _visibleChannels)
+                        ChipOption(ch.id, ch.name)
+                    ],
                   )),
                 const SizedBox(height: 16),
                 _locked(Row(
@@ -423,13 +445,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
   }
 
   /// Dims and blocks [child] when only the note may change.
-  Widget _locked(Widget child) =>
-      _noteOnly ? IgnorePointer(child: Opacity(opacity: 0.5, child: child)) : child;
+  Widget _locked(Widget child) => _noteOnly
+      ? IgnorePointer(child: Opacity(opacity: 0.5, child: child))
+      : child;
 
   /// Text boxes grey themselves out when disabled; dates and chips need
   /// [_locked] to look and act the same.
-  Widget _lockedField(OrderFieldInput input) =>
-      switch (input.field.type) {
+  Widget _lockedField(OrderFieldInput input) => switch (input.field.type) {
         OrderFieldType.text || OrderFieldType.number => input,
         OrderFieldType.date || OrderFieldType.choice => _locked(input),
       };
@@ -531,10 +553,12 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   Expanded(
                     child: Text(
                       d.customerName,
-                      style: AppTextStyles.bodyLarge.copyWith(color: c.ink, fontSize: 16),
+                      style: AppTextStyles.bodyLarge
+                          .copyWith(color: c.ink, fontSize: 16),
                     ),
                   ),
-                  if (_channel != null) AppTag(_channel!.name, type: AppTagType.outline),
+                  if (_channel != null)
+                    AppTag(_channel!.name, type: AppTagType.outline),
                 ],
               ),
               const SizedBox(height: 4),
@@ -574,11 +598,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
             const InlineBanner(
               icon: Icons.warning_amber_rounded,
               title: 'Not enough stock for some pieces.',
-              message: 'You can still save; the buy list will show what to get.',
+              message:
+                  'You can still save; the buy list will show what to get.',
             ),
             const SizedBox(height: 12),
           ],
-          if (preview.reservations.isNotEmpty) _ReservationsCard(lines: preview.reservations),
+          if (preview.reservations.isNotEmpty)
+            _ReservationsCard(lines: preview.reservations),
         ],
       ],
     );
@@ -674,7 +700,8 @@ class _StepHeader extends StatelessWidget {
                     style: AppTextStyles.bodySmall.copyWith(
                       fontSize: 12,
                       color: i == current ? c.ink : c.muted,
-                      fontWeight: i == current ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          i == current ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                 ],
@@ -718,7 +745,8 @@ class _MoneyPreviewCard extends StatelessWidget {
           const SizedBox(height: 12),
           MoneyBreakdown(
             parts: parts,
-            feesLabel: channelName == null ? 'Channel fees' : '$channelName fees',
+            feesLabel:
+                channelName == null ? 'Channel fees' : '$channelName fees',
           ),
           ProfitRow(parts: parts),
         ],

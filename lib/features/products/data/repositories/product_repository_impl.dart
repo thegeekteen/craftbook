@@ -262,8 +262,9 @@ class ProductRepositoryImpl implements ProductRepository {
       final oldQty = product.quantityOnHand;
       final oldCost = product.unitCost;
       final newQty = oldQty + quantity;
-      final newUnitCost =
-          newQty > 0 ? (oldQty * oldCost + quantity * pricePerUnit) / newQty : 0.0;
+      final newUnitCost = newQty > 0
+          ? (oldQty * oldCost + quantity * pricePerUnit) / newQty
+          : 0.0;
 
       await (dao.db.update(dao.db.products)
             ..where((t) => t.id.equals(productId)))
@@ -313,9 +314,8 @@ class ProductRepositoryImpl implements ProductRepository {
           type: const Value('adjusted'),
           quantity: Value(diff),
           unitCost: Value(product.unitCost),
-          reference: Value(diff >= 0
-              ? 'Adjusted +$diff units'
-              : 'Adjusted $diff units'),
+          reference: Value(
+              diff >= 0 ? 'Adjusted +$diff units' : 'Adjusted $diff units'),
         ),
       );
 
@@ -356,7 +356,8 @@ class ProductRepositoryImpl implements ProductRepository {
       if (product == null) {
         return const Error(NotFoundFailure('Product not found'));
       }
-      final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
+      final newPromised =
+          (product.quantityPromised - quantity).clamp(0, 999999);
       await dao.updateProductStock(
         productId,
         product.quantityOnHand,
@@ -379,7 +380,8 @@ class ProductRepositoryImpl implements ProductRepository {
         return const Error(NotFoundFailure('Product not found'));
       }
       final newOnHand = (product.quantityOnHand - quantity).clamp(0, 999999);
-      final newPromised = (product.quantityPromised - quantity).clamp(0, 999999);
+      final newPromised =
+          (product.quantityPromised - quantity).clamp(0, 999999);
       await dao.updateProductStock(productId, newOnHand, newPromised);
 
       await dao.addProductStockMovement(
@@ -508,7 +510,8 @@ class ProductRepositoryImpl implements ProductRepository {
         createdAt: row.createdAt,
       );
 
-  static OrderStatus _orderStatus(String status) => OrderStatus.values.firstWhere(
+  static OrderStatus _orderStatus(String status) =>
+      OrderStatus.values.firstWhere(
         (s) => s.name == status,
         orElse: () => OrderStatus.pending,
       );

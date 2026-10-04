@@ -178,8 +178,8 @@ class PaletteSwatch extends StatelessWidget {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration:
-                            BoxDecoration(color: p.coin, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                            color: p.coin, shape: BoxShape.circle),
                       ),
                       const Spacer(),
                       if (selected)

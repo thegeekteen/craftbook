@@ -20,8 +20,10 @@ void main() {
 
   setUp(() {
     repo = _MockSettings();
-    when(() => repo.setThemeMode(any())).thenAnswer((_) async => const Success(null));
-    when(() => repo.setPalette(any())).thenAnswer((_) async => const Success(null));
+    when(() => repo.setThemeMode(any()))
+        .thenAnswer((_) async => const Success(null));
+    when(() => repo.setPalette(any()))
+        .thenAnswer((_) async => const Success(null));
   });
 
   test('starts on Auto with the Forest scheme', () {
@@ -36,7 +38,8 @@ void main() {
       return ThemeCubit(repo);
     },
     act: (c) => c.load(),
-    expect: () => [const ThemeSettings(mode: ThemeMode.dark, palette: AppPalette.ocean)],
+    expect: () =>
+        [const ThemeSettings(mode: ThemeMode.dark, palette: AppPalette.ocean)],
   );
 
   blocTest<ThemeCubit, ThemeSettings>(
@@ -44,7 +47,8 @@ void main() {
     build: () => ThemeCubit(repo),
     seed: () => const ThemeSettings(palette: AppPalette.berry),
     act: (c) => c.setMode(ThemeMode.light),
-    expect: () => [const ThemeSettings(mode: ThemeMode.light, palette: AppPalette.berry)],
+    expect: () =>
+        [const ThemeSettings(mode: ThemeMode.light, palette: AppPalette.berry)],
     verify: (_) => verify(() => repo.setThemeMode(ThemeMode.light)).called(1),
   );
 
@@ -53,7 +57,8 @@ void main() {
     build: () => ThemeCubit(repo),
     seed: () => const ThemeSettings(mode: ThemeMode.dark),
     act: (c) => c.setPalette(AppPalette.sunset),
-    expect: () => [const ThemeSettings(mode: ThemeMode.dark, palette: AppPalette.sunset)],
+    expect: () =>
+        [const ThemeSettings(mode: ThemeMode.dark, palette: AppPalette.sunset)],
     verify: (_) => verify(() => repo.setPalette(AppPalette.sunset)).called(1),
   );
 }

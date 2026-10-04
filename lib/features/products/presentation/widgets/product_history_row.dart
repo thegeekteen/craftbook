@@ -32,7 +32,8 @@ class ProductHistoryRow extends StatelessWidget {
         final title = switch (mv.type) {
           ProductStockMovementType.received => switch (mv.reference) {
               'Initial stock' => 'Initial stock',
-              final r? when r.contains('Restored') => 'Returned from deleted order',
+              final r? when r.contains('Restored') =>
+                'Returned from deleted order',
               _ => 'Received',
             },
           ProductStockMovementType.deducted => 'Used in an order',
@@ -58,8 +59,12 @@ class ProductHistoryRow extends StatelessWidget {
       case SaleHistoryEntry(:final sale):
         return CardRow(
           onTap: onOrderTap == null ? null : () => onOrderTap!(sale.orderId),
-          leading: _Badge(icon: Icons.receipt_long_outlined, color: c.coin, background: c.coinSoft),
-          title: Text('#${sale.orderId} · ${sale.customerName}', maxLines: 1, overflow: TextOverflow.ellipsis),
+          leading: _Badge(
+              icon: Icons.receipt_long_outlined,
+              color: c.coin,
+              background: c.coinSoft),
+          title: Text('#${sale.orderId} · ${sale.customerName}',
+              maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
             '$when · ${sale.quantity} × ${CurrencyFormatter.formatShort(sale.unitPrice)}',
           ),
@@ -70,7 +75,8 @@ class ProductHistoryRow extends StatelessWidget {
               CurrencyText(
                 amount: sale.subtotal,
                 short: true,
-                style: AppTextStyles.amount.copyWith(color: c.ink, fontSize: 15),
+                style:
+                    AppTextStyles.amount.copyWith(color: c.ink, fontSize: 15),
               ),
               const SizedBox(height: 4),
               OrderStatusPill(status: sale.status),
@@ -86,7 +92,8 @@ class _Badge extends StatelessWidget {
   final Color color;
   final Color background;
 
-  const _Badge({required this.icon, required this.color, required this.background});
+  const _Badge(
+      {required this.icon, required this.color, required this.background});
 
   @override
   Widget build(BuildContext context) => Container(

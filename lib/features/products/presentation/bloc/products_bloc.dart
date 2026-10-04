@@ -50,7 +50,8 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
           if (await calculateBomCost(p.id!) case Success(value: final cost)) {
             costs[p.id!] = cost;
           }
-          if (await calculateBuildableQuantity(p.id!) case Success(value: final n)) {
+          if (await calculateBuildableQuantity(p.id!)
+              case Success(value: final n)) {
             available[p.id!] = n < 0 ? 0 : n;
           }
         }

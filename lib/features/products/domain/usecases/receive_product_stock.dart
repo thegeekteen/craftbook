@@ -18,7 +18,8 @@ class ReceiveProductStock {
       return const Error(ValidationFailure('Quantity must be greater than 0'));
     }
     if (pricePerUnit < 0) {
-      return const Error(ValidationFailure('Price per unit cannot be negative'));
+      return const Error(
+          ValidationFailure('Price per unit cannot be negative'));
     }
 
     return repository.receiveProductStock(

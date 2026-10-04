@@ -47,7 +47,9 @@ class NoteField extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    filled ? Icons.sticky_note_2_rounded : Icons.sticky_note_2_outlined,
+                    filled
+                        ? Icons.sticky_note_2_rounded
+                        : Icons.sticky_note_2_outlined,
                     size: 16,
                     color: filled ? c.warn : c.muted,
                   ),
@@ -75,7 +77,8 @@ class NoteField extends StatelessWidget {
                     ? IgnorePointer(child: NoteView(raw: note!))
                     : Text(
                         'Gift wrap, colour requests, packing steps…',
-                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
+                        style:
+                            AppTextStyles.bodyMedium.copyWith(color: c.muted),
                       ),
               ),
             ],

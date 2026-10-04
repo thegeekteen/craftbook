@@ -32,7 +32,9 @@ class ProfitTrendChart extends StatelessWidget {
 
   String _label(int i) {
     final d = buckets[i].start;
-    if (granularity == TrendGranularity.month) return DateFormat('MMMMM').format(d);
+    if (granularity == TrendGranularity.month) {
+      return DateFormat('MMMMM').format(d);
+    }
     if (buckets.length <= 7) return DateFormat('EEEEE').format(d);
     // A month of days: label the 1st and every 7th day to avoid crowding.
     return (d.day == 1 || d.day % 7 == 0) ? '${d.day}' : '';
@@ -48,7 +50,8 @@ class ProfitTrendChart extends StatelessWidget {
     final minY = buckets.map((b) => b.profit).fold<double>(0, math.min);
     final top = maxY <= 0 ? 1.0 : maxY * 1.1;
     final bottom = minY < 0 ? minY * 1.1 : 0.0;
-    final barWidth = buckets.length > 14 ? 5.0 : (buckets.length > 7 ? 12.0 : 18.0);
+    final barWidth =
+        buckets.length > 14 ? 5.0 : (buckets.length > 7 ? 12.0 : 18.0);
 
     return SizedBox(
       height: height,
@@ -63,16 +66,21 @@ class ProfitTrendChart extends StatelessWidget {
             border: Border(bottom: BorderSide(color: c.boardRaised)),
           ),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 20,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  if (i < 0 || i >= buckets.length) return const SizedBox.shrink();
+                  if (i < 0 || i >= buckets.length) {
+                    return const SizedBox.shrink();
+                  }
                   final current = _isCurrent(buckets[i].start);
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
@@ -100,7 +108,8 @@ class ProfitTrendChart extends StatelessWidget {
                     : DateFormat('MMMM').format(b.start);
                 return BarTooltipItem(
                   '$when\n',
-                  AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 11),
+                  AppTextStyles.bodySmall
+                      .copyWith(color: c.muted, fontSize: 11),
                   children: [
                     TextSpan(
                       text: CurrencyFormatter.formatShort(b.profit),
@@ -124,7 +133,9 @@ class ProfitTrendChart extends StatelessWidget {
                     width: barWidth,
                     color: buckets[i].profit < 0
                         ? CraftColors.dark.alert
-                        : (_isCurrent(buckets[i].start) ? onBoard : onBoard.withValues(alpha: 0.6)),
+                        : (_isCurrent(buckets[i].start)
+                            ? onBoard
+                            : onBoard.withValues(alpha: 0.6)),
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(buckets[i].profit >= 0 ? 3 : 0),
                       bottom: Radius.circular(buckets[i].profit < 0 ? 3 : 0),

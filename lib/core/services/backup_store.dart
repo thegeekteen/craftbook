@@ -26,10 +26,12 @@ class BackupStore {
   /// swapped-in file would be replayed into it, so they go too.
   static const _sidecars = ['-journal', '-wal', '-shm'];
 
-  Future<File> get liveFile async => File(p.join((await _dataDir()).path, dbName));
+  Future<File> get liveFile async =>
+      File(p.join((await _dataDir()).path, dbName));
 
   /// What was on the phone before the last restore, for undo.
-  Future<File> get preRestoreFile async => File(p.join((await _dataDir()).path, _preRestoreName));
+  Future<File> get preRestoreFile async =>
+      File(p.join((await _dataDir()).path, _preRestoreName));
 
   Future<bool> hasPreRestoreCopy() async => (await preRestoreFile).exists();
 
@@ -49,7 +51,8 @@ class BackupStore {
       (await scratchFile(_candidateName)).writeAsBytes(bytes, flush: true);
 
   /// Copies the pre-restore file to scratch, to check it before undoing.
-  Future<File> stagePreRestore() async => stageFile((await preRestoreFile).path);
+  Future<File> stagePreRestore() async =>
+      stageFile((await preRestoreFile).path);
 
   /// Puts [candidate] where the live database is. The database must be
   /// closed.
@@ -57,9 +60,11 @@ class BackupStore {
   /// With [keepAsPreRestore] the old live file becomes the pre-restore copy
   /// (a restore). Without it the old file and any pre-restore copy are
   /// dropped (an undo). If the move fails the old file goes back.
-  Future<void> replaceLive(File candidate, {required bool keepAsPreRestore}) async {
+  Future<void> replaceLive(File candidate,
+      {required bool keepAsPreRestore}) async {
     final live = await liveFile;
-    final aside = keepAsPreRestore ? await preRestoreFile : File('${live.path}.replaced');
+    final aside =
+        keepAsPreRestore ? await preRestoreFile : File('${live.path}.replaced');
 
     await _deleteWithSidecars(aside);
     await _deleteSidecars(live);

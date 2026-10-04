@@ -48,19 +48,25 @@ class NoteToolbar extends StatelessWidget {
               final attrs = controller.getSelectionStyle().attributes;
               return ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm, vertical: 6),
                 children: [
                   _button(Icons.undo_rounded, 'Undo',
                       onPressed: controller.hasUndo ? controller.undo : null),
                   _button(Icons.redo_rounded, 'Redo',
                       onPressed: controller.hasRedo ? controller.redo : null),
                   const _Divider(),
-                  _toggle(attrs, Attribute.bold, Icons.format_bold_rounded, 'Bold'),
-                  _toggle(attrs, Attribute.italic, Icons.format_italic_rounded, 'Italic'),
-                  _toggle(attrs, Attribute.underline, Icons.format_underlined_rounded, 'Underline'),
-                  _toggle(attrs, Attribute.strikeThrough, Icons.strikethrough_s_rounded, 'Strikethrough'),
+                  _toggle(
+                      attrs, Attribute.bold, Icons.format_bold_rounded, 'Bold'),
+                  _toggle(attrs, Attribute.italic, Icons.format_italic_rounded,
+                      'Italic'),
+                  _toggle(attrs, Attribute.underline,
+                      Icons.format_underlined_rounded, 'Underline'),
+                  _toggle(attrs, Attribute.strikeThrough,
+                      Icons.strikethrough_s_rounded, 'Strikethrough'),
                   if (full) ...[
-                    _toggle(attrs, Attribute.inlineCode, Icons.code_rounded, 'Inline code'),
+                    _toggle(attrs, Attribute.inlineCode, Icons.code_rounded,
+                        'Inline code'),
                     _button(
                       Icons.format_color_fill_rounded,
                       'Highlight',
@@ -71,35 +77,46 @@ class NoteToolbar extends StatelessWidget {
                   ],
                   const _Divider(),
                   if (full)
-                    _toggle(attrs, Attribute.h1, Icons.format_size_rounded, 'Large heading'),
+                    _toggle(attrs, Attribute.h1, Icons.format_size_rounded,
+                        'Large heading'),
                   _toggle(attrs, Attribute.h2, Icons.title_rounded, 'Heading'),
                   if (full)
-                    _toggle(attrs, Attribute.h3, Icons.text_fields_rounded, 'Small heading'),
+                    _toggle(attrs, Attribute.h3, Icons.text_fields_rounded,
+                        'Small heading'),
                   if (full) const _Divider(),
-                  _toggle(attrs, Attribute.unchecked, Icons.checklist_rounded, 'Checklist'),
-                  _toggle(attrs, Attribute.ul, Icons.format_list_bulleted_rounded, 'Bullet list'),
-                  _toggle(attrs, Attribute.ol, Icons.format_list_numbered_rounded, 'Numbered list'),
+                  _toggle(attrs, Attribute.unchecked, Icons.checklist_rounded,
+                      'Checklist'),
+                  _toggle(attrs, Attribute.ul,
+                      Icons.format_list_bulleted_rounded, 'Bullet list'),
+                  _toggle(attrs, Attribute.ol,
+                      Icons.format_list_numbered_rounded, 'Numbered list'),
                   if (full) ...[
-                    _toggle(attrs, Attribute.blockQuote, Icons.format_quote_rounded, 'Quote'),
-                    _toggle(attrs, Attribute.codeBlock, Icons.data_object_rounded, 'Code block'),
+                    _toggle(attrs, Attribute.blockQuote,
+                        Icons.format_quote_rounded, 'Quote'),
+                    _toggle(attrs, Attribute.codeBlock,
+                        Icons.data_object_rounded, 'Code block'),
                     const _Divider(),
                     _button(Icons.format_indent_decrease_rounded, 'Outdent',
                         onPressed: () => controller.indentSelection(false)),
                     _button(Icons.format_indent_increase_rounded, 'Indent',
                         onPressed: () => controller.indentSelection(true)),
-                    _toggle(attrs, Attribute.centerAlignment, Icons.format_align_center_rounded, 'Align centre'),
-                    _toggle(attrs, Attribute.rightAlignment, Icons.format_align_right_rounded, 'Align right'),
+                    _toggle(attrs, Attribute.centerAlignment,
+                        Icons.format_align_center_rounded, 'Align centre'),
+                    _toggle(attrs, Attribute.rightAlignment,
+                        Icons.format_align_right_rounded, 'Align right'),
                     const _Divider(),
                     _button(
                       Icons.link_rounded,
                       'Link',
                       selected: attrs.containsKey(Attribute.link.key),
-                      onPressed: () => _editLink(context, attrs[Attribute.link.key]?.value as String?),
+                      onPressed: () => _editLink(
+                          context, attrs[Attribute.link.key]?.value as String?),
                       refocus: false,
                     ),
                   ],
                   const _Divider(),
-                  _button(Icons.format_clear_rounded, 'Clear formatting', onPressed: _clearFormat),
+                  _button(Icons.format_clear_rounded, 'Clear formatting',
+                      onPressed: _clearFormat),
                 ],
               );
             },
@@ -109,24 +126,28 @@ class NoteToolbar extends StatelessWidget {
     );
   }
 
-  Widget _toggle(Map<String, Attribute> attrs, Attribute attribute, IconData icon, String tooltip) {
+  Widget _toggle(Map<String, Attribute> attrs, Attribute attribute,
+      IconData icon, String tooltip) {
     final current = attrs[attribute.key]?.value;
     // Ticked and unticked are both "a checklist" as far as the button goes.
     final on = attribute == Attribute.unchecked
-        ? current == Attribute.unchecked.value || current == Attribute.checked.value
+        ? current == Attribute.unchecked.value ||
+            current == Attribute.checked.value
         : current == attribute.value;
     return _button(
       icon,
       tooltip,
       selected: on,
-      onPressed: () => controller.formatSelection(on ? Attribute.clone(attribute, null) : attribute),
+      onPressed: () => controller
+          .formatSelection(on ? Attribute.clone(attribute, null) : attribute),
     );
   }
 
   /// Strips every attribute in the selection, the way Quill's own button does.
   void _clearFormat() {
     final attributes = {
-      for (final style in controller.getAllSelectionStyles()) ...style.attributes.values,
+      for (final style in controller.getAllSelectionStyles())
+        ...style.attributes.values,
     };
     for (final attribute in attributes) {
       controller.formatSelection(Attribute.clone(attribute, null));
@@ -234,7 +255,11 @@ class _Swatch extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onTap;
 
-  const _Swatch({required this.label, required this.color, required this.onTap, this.icon});
+  const _Swatch(
+      {required this.label,
+      required this.color,
+      required this.onTap,
+      this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -342,7 +367,8 @@ class _ToolButton extends StatelessWidget {
           minimumSize: const Size(36, 36),
           padding: EdgeInsets.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: const RoundedRectangleBorder(borderRadius: AppRadii.controlAll),
+          shape:
+              const RoundedRectangleBorder(borderRadius: AppRadii.controlAll),
           backgroundColor: selected ? c.goSoft : null,
         ).copyWith(
           foregroundColor: WidgetStatePropertyAll(
@@ -361,7 +387,8 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      child: VerticalDivider(width: 1, thickness: 1, color: context.colors.hair),
+      child:
+          VerticalDivider(width: 1, thickness: 1, color: context.colors.hair),
     );
   }
 }

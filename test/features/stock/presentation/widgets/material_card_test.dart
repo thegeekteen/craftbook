@@ -1,6 +1,7 @@
 import 'package:craftbook/core/theme/app_theme.dart';
 import 'package:craftbook/core/widgets/pip_strip.dart';
-import 'package:craftbook/features/stock/domain/entities/material.dart' as entity;
+import 'package:craftbook/features/stock/domain/entities/material.dart'
+    as entity;
 import 'package:craftbook/features/stock/presentation/widgets/material_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,7 +42,8 @@ void main() {
       )));
       expect(find.text('Glass beads'), findsOneWidget);
       expect(find.text('10'), findsOneWidget);
-      expect(find.text('6 free · 4 promised · reorder at 3 · ₱2.50/pc'), findsOneWidget);
+      expect(find.text('6 free · 4 promised · reorder at 3 · ₱2.50/pc'),
+          findsOneWidget);
       expect(find.text('LOW'), findsNothing);
       final pips = tester.widget<PipStrip>(find.byType(PipStrip));
       expect(pips.total, 10);
@@ -54,7 +56,8 @@ void main() {
     });
 
     testWidgets('omits promised when nothing is promised', (tester) async {
-      await tester.pumpWidget(_wrap(MaterialCard(material: _material(promised: 0))));
+      await tester
+          .pumpWidget(_wrap(MaterialCard(material: _material(promised: 0))));
       expect(find.text('10 free · reorder at 3 · ₱2.50/pc'), findsOneWidget);
     });
 
@@ -73,7 +76,8 @@ void main() {
       expect(find.text('LOW'), findsOneWidget);
     });
 
-    testWidgets('promised beyond on hand shows N short and zero free', (tester) async {
+    testWidgets('promised beyond on hand shows N short and zero free',
+        (tester) async {
       await tester.pumpWidget(_wrap(MaterialCard(
         material: _material(onHand: 8, promised: 11, alertLevel: 2),
       )));
@@ -85,7 +89,8 @@ void main() {
     });
 
     testWidgets('no short text when fully covered', (tester) async {
-      await tester.pumpWidget(_wrap(MaterialCard(material: _material(onHand: 5, promised: 5))));
+      await tester.pumpWidget(
+          _wrap(MaterialCard(material: _material(onHand: 5, promised: 5))));
       expect(find.textContaining('short'), findsNothing);
     });
   });

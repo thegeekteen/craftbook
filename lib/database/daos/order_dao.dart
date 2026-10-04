@@ -13,7 +13,17 @@ import '../tables/order_fields_table.dart';
 part 'order_dao.g.dart';
 
 /// Data Access Object for orders
-@DriftAccessor(tables: [Orders, OrderItems, OrderMaterials, OrderProducts, Products, Materials, ProductStockMovements, OrderFieldDefinitions, OrderFieldValues])
+@DriftAccessor(tables: [
+  Orders,
+  OrderItems,
+  OrderMaterials,
+  OrderProducts,
+  Products,
+  Materials,
+  ProductStockMovements,
+  OrderFieldDefinitions,
+  OrderFieldValues
+])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   OrderDao(super.db);
 
@@ -24,8 +34,7 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
 
   /// Get order by ID
   Future<Order?> getOrderById(int id) {
-    return (select(orders)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (select(orders)..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// Get orders by status
@@ -37,7 +46,7 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   Future<List<Order>> getOrdersForToday(DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+
     return (select(orders)
           ..where((t) =>
               t.orderDate.isBiggerOrEqualValue(startOfDay) &
@@ -154,13 +163,13 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
 
   /// Delete all order products for a given order
   Future<int> deleteOrderProductsByOrderId(int orderId) {
-    return (delete(orderProducts)..where((t) => t.orderId.equals(orderId))).go();
+    return (delete(orderProducts)..where((t) => t.orderId.equals(orderId)))
+        .go();
   }
 
   /// Get order items
   Future<List<OrderItem>> getOrderItems(int orderId) {
-    return (select(orderItems)..where((t) => t.orderId.equals(orderId)))
-        .get();
+    return (select(orderItems)..where((t) => t.orderId.equals(orderId))).get();
   }
 
   /// Add order item
@@ -202,7 +211,10 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
     final rows = await query.get();
     return [
       for (final r in rows)
-        (r.readTable(orderFieldDefinitions), r.readTable(orderFieldValues).value),
+        (
+          r.readTable(orderFieldDefinitions),
+          r.readTable(orderFieldValues).value
+        ),
     ];
   }
 
@@ -240,9 +252,8 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
 
   /// Look up material name by ID
   Future<String> getMaterialName(int materialId) async {
-    final row =
-        await (select(materials)..where((t) => t.id.equals(materialId)))
-            .getSingleOrNull();
+    final row = await (select(materials)..where((t) => t.id.equals(materialId)))
+        .getSingleOrNull();
     return row?.name ?? '';
   }
 }

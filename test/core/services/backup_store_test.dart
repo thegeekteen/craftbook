@@ -20,7 +20,8 @@ void main() {
     root = await Directory.systemTemp.createTemp('backup_store_');
     data = await Directory('${root.path}/data').create();
     scratch = await Directory('${root.path}/scratch').create();
-    store = BackupStore(dataDir: () async => data, scratchDir: () async => scratch);
+    store =
+        BackupStore(dataDir: () async => data, scratchDir: () async => scratch);
   });
   tearDown(() => root.delete(recursive: true));
 
@@ -29,12 +30,14 @@ void main() {
   File preRestore() => inData('craftbook.pre-restore.sqlite');
 
   Future<File> candidate(String contents) async {
-    final source = File('${root.path}/picked.sqlite')..writeAsStringSync(contents);
+    final source = File('${root.path}/picked.sqlite')
+      ..writeAsStringSync(contents);
     return store.stageFile(source.path);
   }
 
   test('staging copies the pick, leaving the original alone', () async {
-    final source = File('${root.path}/picked.sqlite')..writeAsStringSync('backup');
+    final source = File('${root.path}/picked.sqlite')
+      ..writeAsStringSync('backup');
     final staged = await store.stageFile(source.path);
     staged.writeAsStringSync('changed by validation');
     expect(source.readAsStringSync(), 'backup');
@@ -53,7 +56,8 @@ void main() {
     expect(await store.hasPreRestoreCopy(), isTrue);
   });
 
-  test('a restore clears a stale journal so it is not replayed into the backup', () async {
+  test('a restore clears a stale journal so it is not replayed into the backup',
+      () async {
     live().writeAsStringSync('old');
     inData('${BackupStore.dbName}-journal').writeAsStringSync('stale');
 
@@ -73,21 +77,24 @@ void main() {
 
   test('undo puts the old data back and drops the copy', () async {
     live().writeAsStringSync('old');
-    await store.replaceLive(await candidate('restored'), keepAsPreRestore: true);
+    await store.replaceLive(await candidate('restored'),
+        keepAsPreRestore: true);
 
     final staged = await store.stagePreRestore();
     await store.replaceLive(staged, keepAsPreRestore: false);
 
     expect(live().readAsStringSync(), 'old');
     expect(await store.hasPreRestoreCopy(), isFalse);
-    expect(data.listSync().map((f) => f.uri.pathSegments.last), [BackupStore.dbName]);
+    expect(data.listSync().map((f) => f.uri.pathSegments.last),
+        [BackupStore.dbName]);
   });
 
   test('a failed swap leaves the live data where it was', () async {
     live().writeAsStringSync('old');
     final missing = File('${scratch.path}/gone.sqlite');
 
-    await expectLater(store.replaceLive(missing, keepAsPreRestore: true), throwsA(isA<FileSystemException>()));
+    await expectLater(store.replaceLive(missing, keepAsPreRestore: true),
+        throwsA(isA<FileSystemException>()));
 
     expect(live().readAsStringSync(), 'old');
     expect(preRestore().existsSync(), isFalse);
@@ -95,7 +102,8 @@ void main() {
 
   test('an export snapshot passes validation', () async {
     final db = AppDatabase.file(live());
-    await db.customStatement("INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)");
+    await db.customStatement(
+        "INSERT INTO products (name, sell_price) VALUES ('Tulip', 450)");
     final snapshot = await store.scratchFile('export.sqlite');
     await db.customStatement('VACUUM INTO ?', [snapshot.path]);
     await db.close();
@@ -103,7 +111,10 @@ void main() {
     expect(
       await BackupValidator.validate(snapshot),
       const Success(BackupSummary(
-          schemaVersion: AppDatabase.currentSchemaVersion, orders: 0, materials: 0, products: 1)),
+          schemaVersion: AppDatabase.currentSchemaVersion,
+          orders: 0,
+          materials: 0,
+          products: 1)),
     );
   });
 }

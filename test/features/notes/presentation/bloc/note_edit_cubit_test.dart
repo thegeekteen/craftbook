@@ -28,8 +28,8 @@ void main() {
     deleteNote = MockDeleteNote();
   });
 
-  NoteEditCubit build() =>
-      NoteEditCubit(getNote: getNote, saveNote: saveNote, deleteNote: deleteNote);
+  NoteEditCubit build() => NoteEditCubit(
+      getNote: getNote, saveNote: saveNote, deleteNote: deleteNote);
 
   test('starts loading', () {
     expect(build().state.isLoading, isTrue);
@@ -45,7 +45,8 @@ void main() {
 
   blocTest<NoteEditCubit, NoteEditState>(
     'loads an existing note',
-    setUp: () => when(() => getNote(1)).thenAnswer((_) async => const Success(note)),
+    setUp: () =>
+        when(() => getNote(1)).thenAnswer((_) async => const Success(note)),
     build: build,
     act: (cubit) => cubit.load(1),
     expect: () => [const NoteEditState(note: note)],
@@ -53,8 +54,8 @@ void main() {
 
   blocTest<NoteEditCubit, NoteEditState>(
     'says when the note is gone',
-    setUp: () => when(() => getNote(1))
-        .thenAnswer((_) async => const Error(NotFoundFailure('This note was deleted'))),
+    setUp: () => when(() => getNote(1)).thenAnswer(
+        (_) async => const Error(NotFoundFailure('This note was deleted'))),
     build: build,
     act: (cubit) => cubit.load(1),
     expect: () => [const NoteEditState(error: 'This note was deleted')],
@@ -62,7 +63,8 @@ void main() {
 
   test('save and delete hand back the use case result', () async {
     when(() => saveNote(note)).thenAnswer((_) async => const Success(1));
-    when(() => deleteNote(1)).thenAnswer((_) async => const Error(DatabaseFailure('db')));
+    when(() => deleteNote(1))
+        .thenAnswer((_) async => const Error(DatabaseFailure('db')));
     final cubit = build();
     expect(await cubit.save(note), const Success(1));
     expect(await cubit.delete(1), const Error<void>(DatabaseFailure('db')));

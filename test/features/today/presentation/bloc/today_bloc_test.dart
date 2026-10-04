@@ -39,7 +39,8 @@ void main() {
   setUp(() {
     getTodayDashboard = MockGetTodayDashboard();
     getPinnedNotes = MockGetPinnedNotes();
-    when(() => getPinnedNotes()).thenAnswer((_) async => const Success(<Note>[]));
+    when(() => getPinnedNotes())
+        .thenAnswer((_) async => const Success(<Note>[]));
   });
 
   TodayBloc build() => TodayBloc(
@@ -63,8 +64,8 @@ void main() {
 
   blocTest<TodayBloc, TodayState>(
     'emits [TodayLoading, TodayError] on failure',
-    setUp: () => when(() => getTodayDashboard()).thenAnswer(
-        (_) async => const Error(DatabaseFailure('db down'))),
+    setUp: () => when(() => getTodayDashboard())
+        .thenAnswer((_) async => const Error(DatabaseFailure('db down'))),
     build: build,
     act: (bloc) => bloc.add(const LoadToday()),
     expect: () => [isA<TodayLoading>(), const TodayError('db down')],
@@ -82,8 +83,8 @@ void main() {
 
   blocTest<TodayBloc, TodayState>(
     'reload failure while loaded emits only TodayError',
-    setUp: () => when(() => getTodayDashboard()).thenAnswer(
-        (_) async => const Error(DatabaseFailure('oops'))),
+    setUp: () => when(() => getTodayDashboard())
+        .thenAnswer((_) async => const Error(DatabaseFailure('oops'))),
     build: build,
     seed: () => const TodayLoaded(dashboard),
     act: (bloc) => bloc.add(const LoadToday()),
@@ -96,20 +97,26 @@ void main() {
     blocTest<TodayBloc, TodayState>(
       'are loaded alongside the dashboard',
       setUp: () {
-        when(() => getTodayDashboard()).thenAnswer((_) async => const Success(dashboard));
-        when(() => getPinnedNotes()).thenAnswer((_) async => const Success(pinned));
+        when(() => getTodayDashboard())
+            .thenAnswer((_) async => const Success(dashboard));
+        when(() => getPinnedNotes())
+            .thenAnswer((_) async => const Success(pinned));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadToday()),
-      expect: () => [isA<TodayLoading>(), const TodayLoaded(dashboard, pinnedNotes: pinned)],
+      expect: () => [
+        isA<TodayLoading>(),
+        const TodayLoaded(dashboard, pinnedNotes: pinned)
+      ],
     );
 
     blocTest<TodayBloc, TodayState>(
       'failing to load them is reported, not hidden',
       setUp: () {
-        when(() => getTodayDashboard()).thenAnswer((_) async => const Success(dashboard));
-        when(() => getPinnedNotes())
-            .thenAnswer((_) async => const Error(DatabaseFailure('notes down')));
+        when(() => getTodayDashboard())
+            .thenAnswer((_) async => const Success(dashboard));
+        when(() => getPinnedNotes()).thenAnswer(
+            (_) async => const Error(DatabaseFailure('notes down')));
       },
       build: build,
       act: (bloc) => bloc.add(const LoadToday()),
@@ -131,8 +138,8 @@ void main() {
     });
 
     test('completes after a failed load', () async {
-      when(() => getTodayDashboard()).thenAnswer(
-          (_) async => const Error(DatabaseFailure('nope')));
+      when(() => getTodayDashboard())
+          .thenAnswer((_) async => const Error(DatabaseFailure('nope')));
       final bloc = build();
       final done = Completer<void>();
       bloc.add(LoadToday(done: done));

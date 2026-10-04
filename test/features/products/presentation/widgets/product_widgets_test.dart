@@ -56,7 +56,8 @@ Channel _channel({
 
 void main() {
   group('ProductCard', () {
-    testWidgets('shows name, price, cost, margin and can-build count', (tester) async {
+    testWidgets('shows name, price, cost, margin and can-build count',
+        (tester) async {
       var taps = 0;
       await tester.pumpWidget(_wrap(ProductCard(
         product: _product(),
@@ -76,13 +77,15 @@ void main() {
     });
 
     testWidgets('margin rounds and handles missing cost', (tester) async {
-      await tester.pumpWidget(_wrap(ProductCard(product: _product(price: 300))));
+      await tester
+          .pumpWidget(_wrap(ProductCard(product: _product(price: 300))));
       expect(find.text('Cost ₱0 · 100% margin'), findsOneWidget);
       expect(find.textContaining('Can build'), findsNothing);
     });
 
     testWidgets('negative margin when cost exceeds price', (tester) async {
-      await tester.pumpWidget(_wrap(ProductCard(product: _product(price: 100), unitCost: 150)));
+      await tester.pumpWidget(
+          _wrap(ProductCard(product: _product(price: 100), unitCost: 150)));
       expect(find.text('Cost ₱150 · −50% margin'), findsOneWidget);
     });
 
@@ -106,7 +109,8 @@ void main() {
       expect(find.text('LOW'), findsNothing);
     });
 
-    testWidgets('standalone shows Resell tag and in-stock count', (tester) async {
+    testWidgets('standalone shows Resell tag and in-stock count',
+        (tester) async {
       await tester.pumpWidget(_wrap(ProductCard(
         product: _product(standalone: true, onHand: 7, alertLevel: 2),
         unitCost: 120,
@@ -117,7 +121,8 @@ void main() {
       expect(find.text('LOW'), findsNothing);
     });
 
-    testWidgets('standalone low stock uses the product alert level', (tester) async {
+    testWidgets('standalone low stock uses the product alert level',
+        (tester) async {
       await tester.pumpWidget(_wrap(ProductCard(
         product: _product(standalone: true, onHand: 2, alertLevel: 5),
         unitCost: 120,
@@ -127,52 +132,61 @@ void main() {
     });
 
     testWidgets('inactive product shows Hidden and is dimmed', (tester) async {
-      await tester.pumpWidget(_wrap(ProductCard(product: _product(active: false))));
+      await tester
+          .pumpWidget(_wrap(ProductCard(product: _product(active: false))));
       expect(find.text('HIDDEN'), findsOneWidget);
-      final opacity = tester.widget<Opacity>(find.ancestor(
-        of: find.text('Tulip bouquet'),
-        matching: find.byType(Opacity),
-      ).first);
+      final opacity = tester.widget<Opacity>(find
+          .ancestor(
+            of: find.text('Tulip bouquet'),
+            matching: find.byType(Opacity),
+          )
+          .first);
       expect(opacity.opacity, 0.6);
     });
   });
 
   group('ChannelCard.recipe', () {
     test('lists every fee and the shipping we pay', () {
-      expect(ChannelCard.recipe(_channel()), '8% + 2% + ₱5 · you pay ₱40 shipping');
+      expect(ChannelCard.recipe(_channel()),
+          '8% + 2% + ₱5 · you pay ₱40 shipping');
     });
 
     test('no fees', () {
       expect(
-        ChannelCard.recipe(_channel(commission: 0, txn: 0, flat: 0, shipping: 0)),
+        ChannelCard.recipe(
+            _channel(commission: 0, txn: 0, flat: 0, shipping: 0)),
         'No fees',
       );
     });
 
     test('no fees but shipping', () {
       expect(
-        ChannelCard.recipe(_channel(commission: 0, txn: 0, flat: 0, shipping: 130)),
+        ChannelCard.recipe(
+            _channel(commission: 0, txn: 0, flat: 0, shipping: 130)),
         'No fees · you pay ₱130 shipping',
       );
     });
 
     test('fractional rates keep one decimal', () {
       expect(
-        ChannelCard.recipe(_channel(commission: 5.5, txn: 0, flat: 0, shipping: 0)),
+        ChannelCard.recipe(
+            _channel(commission: 5.5, txn: 0, flat: 0, shipping: 0)),
         '5.5%',
       );
     });
 
     test('flat fee with centavos keeps them', () {
       expect(
-        ChannelCard.recipe(_channel(commission: 0, txn: 0, flat: 2.5, shipping: 0)),
+        ChannelCard.recipe(
+            _channel(commission: 0, txn: 0, flat: 2.5, shipping: 0)),
         '₱2.50',
       );
     });
   });
 
   group('ChannelCard', () {
-    testWidgets('shows name, recipe, effective rate and what you keep', (tester) async {
+    testWidgets('shows name, recipe, effective rate and what you keep',
+        (tester) async {
       await tester.pumpWidget(_wrap(ChannelCard(channel: _channel())));
       expect(find.text('Shopee'), findsOneWidget);
       expect(find.text('On'), findsOneWidget);
@@ -207,7 +221,8 @@ void main() {
 
     testWidgets('card tap fires onTap', (tester) async {
       var taps = 0;
-      await tester.pumpWidget(_wrap(ChannelCard(channel: _channel(), onTap: () => taps++)));
+      await tester.pumpWidget(
+          _wrap(ChannelCard(channel: _channel(), onTap: () => taps++)));
       await tester.tap(find.text('Shopee'));
       expect(taps, 1);
     });
@@ -215,7 +230,8 @@ void main() {
 
   group('ProductProfitCard', () {
     testWidgets('shows profit per piece, cost and margin', (tester) async {
-      await tester.pumpWidget(_wrap(const ProductProfitCard(sellPrice: 400, cost: 100, isStandalone: false)));
+      await tester.pumpWidget(_wrap(const ProductProfitCard(
+          sellPrice: 400, cost: 100, isStandalone: false)));
 
       final c = tester.element(find.byType(ProductProfitCard)).colors;
       expect(find.text('PROFIT PER PIECE'), findsOneWidget);
@@ -226,8 +242,10 @@ void main() {
       expect(find.byType(MoneyBreakdownBar), findsOneWidget);
     });
 
-    testWidgets('shows a loss in alert colour and says cost for resell', (tester) async {
-      await tester.pumpWidget(_wrap(const ProductProfitCard(sellPrice: 100, cost: 150, isStandalone: true)));
+    testWidgets('shows a loss in alert colour and says cost for resell',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const ProductProfitCard(
+          sellPrice: 100, cost: 150, isStandalone: true)));
 
       final c = tester.element(find.byType(ProductProfitCard)).colors;
       final loss = find.text(CurrencyFormatter.formatShort(-50));

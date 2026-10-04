@@ -89,7 +89,8 @@ class PreviewOrder {
       final mats = await orderRepository!.getOrderMaterials(excludeOrderId);
       if (mats case Error(:final failure)) return Error(failure);
       for (final m in (mats as Success<List<OrderMaterial>>).value) {
-        ownMaterials[m.materialId] = (ownMaterials[m.materialId] ?? 0) + m.plannedQuantity;
+        ownMaterials[m.materialId] =
+            (ownMaterials[m.materialId] ?? 0) + m.plannedQuantity;
       }
       final prods = await orderRepository!.getOrderProducts(excludeOrderId);
       if (prods case Error(:final failure)) return Error(failure);
@@ -105,7 +106,8 @@ class PreviewOrder {
     final materialNeeds = <int, (String, int, double)>{};
 
     for (final item in items) {
-      final productResult = await productRepository.getProductById(item.productId);
+      final productResult =
+          await productRepository.getProductById(item.productId);
       if (productResult case Error(:final failure)) return Error(failure);
       final product = (productResult as Success).value;
 
@@ -137,13 +139,15 @@ class PreviewOrder {
     final materialLines = <ReservationLine>[];
     for (final entry in materialNeeds.entries) {
       final (name, needed, _) = entry.value;
-      final materialResult = await materialRepository.getMaterialById(entry.key);
+      final materialResult =
+          await materialRepository.getMaterialById(entry.key);
       if (materialResult case Error(:final failure)) return Error(failure);
       final material = (materialResult as Success).value;
       materialLines.add(ReservationLine(
         name: name,
         quantity: needed,
-        available: (material?.quantityFree ?? 0) + (ownMaterials[entry.key] ?? 0),
+        available:
+            (material?.quantityFree ?? 0) + (ownMaterials[entry.key] ?? 0),
       ));
     }
 

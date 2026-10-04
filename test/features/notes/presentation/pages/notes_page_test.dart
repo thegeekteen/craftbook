@@ -27,7 +27,8 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.runAsync(() async {
       await getIt.reset();
-      await configureDependencies(database: AppDatabase.forTesting(NativeDatabase.memory()));
+      await configureDependencies(
+          database: AppDatabase.forTesting(NativeDatabase.memory()));
     });
   }
 
@@ -41,11 +42,11 @@ void main() {
     await tester.runAsync(() => getIt<AppDatabase>().close());
   }
 
-  Future<int> note(WidgetTester tester, Note n) async =>
-      (await tester.runAsync(() async => _ok(await getIt<NoteRepository>().createNote(n))))!;
+  Future<int> note(WidgetTester tester, Note n) async => (await tester
+      .runAsync(() async => _ok(await getIt<NoteRepository>().createNote(n))))!;
 
-  Future<List<Note>> stored(WidgetTester tester) async =>
-      (await tester.runAsync(() async => _ok(await getIt<NoteRepository>().getNotes())))!;
+  Future<List<Note>> stored(WidgetTester tester) async => (await tester
+      .runAsync(() async => _ok(await getIt<NoteRepository>().getNotes())))!;
 
   testWidgets('starts empty and writes a first note', (tester) async {
     await start(tester);
@@ -55,7 +56,8 @@ void main() {
     await tester.tap(find.text('Add note'));
     await _settle(tester);
     expect(find.text('New note'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Ribbon suppliers');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Title'), 'Ribbon suppliers');
     await tester.tap(find.byTooltip('Pin to Today'));
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await _settle(tester);
@@ -87,7 +89,8 @@ void main() {
     await tester.tap(find.text('Suppliers'));
     await _settle(tester);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Suppliers'), 'Changed');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Suppliers'), 'Changed');
     await tester.tap(find.byTooltip('Close'));
     await _settle(tester);
     expect(find.text('Discard changes?'), findsOneWidget);
@@ -95,23 +98,27 @@ void main() {
     await _settle(tester);
 
     expect(find.text('Suppliers'), findsOneWidget);
-    expect((await stored(tester)).single, isA<Note>().having((n) => n.id, 'id', id));
+    expect((await stored(tester)).single,
+        isA<Note>().having((n) => n.id, 'id', id));
     expect((await stored(tester)).single.title, 'Suppliers');
     await teardown(tester);
   });
 
   testWidgets('searches titles and bodies', (tester) async {
     await start(tester);
-    await note(tester, Note(title: 'Suppliers', body: noteBody(['Ribbon from Divisoria'])));
+    await note(tester,
+        Note(title: 'Suppliers', body: noteBody(['Ribbon from Divisoria'])));
     await note(tester, const Note(title: 'Ideas'));
     await open(tester, RouteNames.notes);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Search notes'), 'divisoria');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Search notes'), 'divisoria');
     await _settle(tester);
     expect(find.text('Suppliers'), findsOneWidget);
     expect(find.text('Ideas'), findsNothing);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Search notes'), 'boxes');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Search notes'), 'boxes');
     await _settle(tester);
     expect(find.text('No matches'), findsOneWidget);
     await teardown(tester);
@@ -213,7 +220,8 @@ void main() {
       await teardown(tester);
     });
 
-    testWidgets('unpinning in the editor drops the note from Today', (tester) async {
+    testWidgets('unpinning in the editor drops the note from Today',
+        (tester) async {
       await start(tester);
       await note(tester, const Note(title: 'Supplier numbers', isPinned: true));
       await open(tester, RouteNames.today);
@@ -234,7 +242,8 @@ void main() {
 /// never settles, so pump a fixed run of frames instead of pumpAndSettle.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 8; i++) {
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump(const Duration(milliseconds: 100));
   }
 }

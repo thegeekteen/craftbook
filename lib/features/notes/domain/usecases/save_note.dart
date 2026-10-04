@@ -17,7 +17,8 @@ class SaveNote {
       return const Error(ValidationFailure('Write something first'));
     }
     // An emptied body is stored as null, like order notes.
-    final clean = note.copyWith(title: title, body: () => blankBody ? null : note.body);
+    final clean =
+        note.copyWith(title: title, body: () => blankBody ? null : note.body);
 
     final id = clean.id;
     if (id == null) return repository.createNote(clean);

@@ -86,7 +86,9 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           return switch (state) {
             OrderDetailLoaded() => _buildLoaded(state),
             OrderDetailError(:final message) => Scaffold(
-                appBar: AppBar(leading: BackButton(onPressed: () => context.pop(_changed))),
+                appBar: AppBar(
+                    leading:
+                        BackButton(onPressed: () => context.pop(_changed))),
                 body: Center(
                   child: ErrorState(
                     message: message,
@@ -119,7 +121,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
               'ORDER #${order.id}',
               style: AppTextStyles.monoLabel.copyWith(color: c.muted),
             ),
-            Text(order.customerName, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(order.customerName,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
         actions: [
@@ -138,7 +141,9 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                     children: [
                       const Icon(Icons.edit_outlined, size: 20),
                       const SizedBox(width: 10),
-                      Text(order.status == OrderStatus.shipped ? 'Edit note' : 'Edit order'),
+                      Text(order.status == OrderStatus.shipped
+                          ? 'Edit note'
+                          : 'Edit order'),
                     ],
                   ),
                 ),
@@ -147,7 +152,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                        Icon(Icons.delete_outline_rounded,
+                            size: 20, color: c.alert),
                         const SizedBox(width: 10),
                         Text('Delete order', style: TextStyle(color: c.alert)),
                       ],
@@ -180,7 +186,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                         padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
                         child: Text(
                           'ITEMS',
-                          style: AppTextStyles.monoLabel.copyWith(color: c.muted),
+                          style:
+                              AppTextStyles.monoLabel.copyWith(color: c.muted),
                         ),
                       ),
                       for (final item in state.items)
@@ -208,7 +215,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
             ],
           ),
           if (state.isBusy)
-            const Positioned(left: 0, right: 0, top: 0, child: LinearProgressIndicator()),
+            const Positioned(
+                left: 0, right: 0, top: 0, child: LinearProgressIndicator()),
         ],
       ),
       bottomNavigationBar: _buildActions(state),
@@ -239,7 +247,9 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                 ? 'Materials'
                 : 'Materials · $lineCount ${lineCount == 1 ? 'line' : 'lines'}'
                     '${hasWaste ? ' · waste' : ''}',
-            feesLabel: state.channel == null ? 'Channel fees' : '${state.channel!.name} fees',
+            feesLabel: state.channel == null
+                ? 'Channel fees'
+                : '${state.channel!.name} fees',
             onMaterialsTap: lineCount == 0
                 ? null
                 : () => setState(() => _showMaterials = !_showMaterials),
@@ -274,7 +284,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                         for (final p in state.products)
                           _LineDetail(
                             name: p.productName,
-                            detail: '${p.quantity} × ${CurrencyFormatter.format(p.unitCost)} · from stock',
+                            detail:
+                                '${p.quantity} × ${CurrencyFormatter.format(p.unitCost)} · from stock',
                             amount: p.totalCost,
                           ),
                       ],
@@ -298,7 +309,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
   }
 
   Future<void> _edit(Order order) async {
-    final changed = await context.push<bool>(RouteNames.editOrderPath(order.id!));
+    final changed =
+        await context.push<bool>(RouteNames.editOrderPath(order.id!));
     if (changed == true && mounted) {
       _changed = true;
       _bloc.add(LoadOrderDetail(widget.orderId));
@@ -329,7 +341,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         return BottomActionBar(children: [
           Expanded(
             child: FilledButton.icon(
-              onPressed: busy ? null : () => _bloc.add(ShipOrderDetail(order.id!)),
+              onPressed:
+                  busy ? null : () => _bloc.add(ShipOrderDetail(order.id!)),
               style: FilledButton.styleFrom(backgroundColor: c.coin),
               icon: const Icon(Icons.local_shipping_rounded, size: 18),
               label: const Text('Mark shipped'),
@@ -358,7 +371,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: _bloc,
-          child: AdjustMaterialsPage(orderId: state.order.id!, materials: state.materials),
+          child: AdjustMaterialsPage(
+              orderId: state.order.id!, materials: state.materials),
         ),
       ),
     );
@@ -441,13 +455,18 @@ class _StatusTrack extends StatelessWidget {
                         Expanded(
                           child: i == 0
                               ? const SizedBox()
-                              : Container(height: 2, color: i <= reached ? c.go : c.hair),
+                              : Container(
+                                  height: 2,
+                                  color: i <= reached ? c.go : c.hair),
                         ),
-                        _TrackDot(index: i, reached: reached, alert: steps[i].$3),
+                        _TrackDot(
+                            index: i, reached: reached, alert: steps[i].$3),
                         Expanded(
                           child: i == steps.length - 1
                               ? const SizedBox()
-                              : Container(height: 2, color: i < reached ? c.go : c.hair),
+                              : Container(
+                                  height: 2,
+                                  color: i < reached ? c.go : c.hair),
                         ),
                       ],
                     ),
@@ -457,7 +476,8 @@ class _StatusTrack extends StatelessWidget {
                     steps[i].$1,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: i <= reached + 1 ? c.ink : c.muted,
-                      fontWeight: i <= reached + 1 ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight:
+                          i <= reached + 1 ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                   if (steps[i].$2.isNotEmpty)
@@ -466,7 +486,8 @@ class _StatusTrack extends StatelessWidget {
                       style: AppTextStyles.bodySmall.copyWith(
                         fontSize: 11.5,
                         color: steps[i].$3 ? c.alert : c.muted,
-                        fontWeight: steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight:
+                            steps[i].$3 ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                 ],
@@ -483,7 +504,8 @@ class _TrackDot extends StatelessWidget {
   final int reached;
   final bool alert;
 
-  const _TrackDot({required this.index, required this.reached, required this.alert});
+  const _TrackDot(
+      {required this.index, required this.reached, required this.alert});
 
   @override
   Widget build(BuildContext context) {
@@ -532,29 +554,36 @@ class _CustomerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final muted = AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13);
+    final muted =
+        AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13);
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(child: SectionLabel('Customer', padding: EdgeInsets.zero)),
-              if (channelName != null) AppTag(channelName!, type: AppTagType.outline),
+              const Expanded(
+                  child: SectionLabel('Customer', padding: EdgeInsets.zero)),
+              if (channelName != null)
+                AppTag(channelName!, type: AppTagType.outline),
             ],
           ),
           const SizedBox(height: 8),
-          Text(order.customerName, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+          Text(order.customerName,
+              style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
           for (final entry in fields) ...[
             const SizedBox(height: 8),
             Text(
               entry.field.name,
-              style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 11.5),
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: c.muted, fontSize: 11.5),
             ),
             if (entry.field.type == OrderFieldType.text)
-              _CopyableValue(text: entry.value, label: entry.field.name, style: muted)
+              _CopyableValue(
+                  text: entry.value, label: entry.field.name, style: muted)
             else
-              Text(OrderFieldCodec.display(entry.field, entry.value), style: muted),
+              Text(OrderFieldCodec.display(entry.field, entry.value),
+                  style: muted),
           ],
           if (!NoteCodec.isBlank(order.note)) ...[
             const SizedBox(height: 10),
@@ -570,20 +599,25 @@ class _CustomerCard extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 1),
-                    child: Icon(Icons.sticky_note_2_outlined, size: 16, color: c.warn),
+                    child: Icon(Icons.sticky_note_2_outlined,
+                        size: 16, color: c.warn),
                   ),
                   const SizedBox(width: 8),
                   // To-dos tick right here, so a packing checklist works
                   // without opening the editor.
-                  Expanded(child: NoteView(raw: order.note!, onChanged: onNoteChanged)),
+                  Expanded(
+                      child:
+                          NoteView(raw: order.note!, onChanged: onNoteChanged)),
                   IconButton(
                     tooltip: 'Edit note',
                     onPressed: onEditNote,
                     icon: Icon(Icons.edit_outlined, size: 16, color: c.warn),
                     visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(width: 32, height: 28),
+                    constraints:
+                        const BoxConstraints.tightFor(width: 32, height: 28),
                     padding: EdgeInsets.zero,
-                    style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   ),
                 ],
               ),
@@ -622,15 +656,19 @@ class _LineDetail extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: c.ink, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: AppTextStyles.bodySmall.copyWith(
+                      color: c.ink, fontWeight: FontWeight.w600, fontSize: 13),
                 ),
-                Text(detail, style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 12)),
+                Text(detail,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: c.muted, fontSize: 12)),
                 if (waste != null)
                   Text(
                     waste!,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: c.alert, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.bodySmall.copyWith(
+                        color: c.alert,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
               ],
             ),
@@ -656,7 +694,8 @@ class _CopyableValue extends StatelessWidget {
   final String label;
   final TextStyle style;
 
-  const _CopyableValue({required this.text, required this.label, required this.style});
+  const _CopyableValue(
+      {required this.text, required this.label, required this.style});
 
   @override
   Widget build(BuildContext context) {
@@ -705,7 +744,8 @@ class _OrderTotalRow extends StatelessWidget {
           ),
           Text(
             CurrencyFormatter.format(total),
-            style: AppTextStyles.displayMedium.copyWith(fontSize: 26, color: c.ink),
+            style: AppTextStyles.displayMedium
+                .copyWith(fontSize: 26, color: c.ink),
           ),
         ],
       ),

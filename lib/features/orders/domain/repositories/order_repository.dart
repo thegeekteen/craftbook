@@ -11,7 +11,9 @@ abstract class OrderRepository {
   Future<Result<Order?>> getOrderById(int id);
   Future<Result<List<Order>>> getOrdersByStatus(OrderStatus status);
   Future<Result<List<Order>>> getOrdersForDate(DateTime date);
-  Future<Result<List<Order>>> getOrdersForDateRange(DateTime start, DateTime end);
+  Future<Result<List<Order>>> getOrdersForDateRange(
+      DateTime start, DateTime end);
+
   /// Pending or packed orders with a ship-by date before [end].
   Future<Result<List<Order>>> getOpenOrdersDueBefore(DateTime end);
   Future<Result<List<OrderItem>>> getOrderItems(int orderId);
@@ -36,6 +38,7 @@ abstract class OrderRepository {
     List<OrderProductInput> products,
     Map<int, String> fieldValues,
   });
+
   /// Rewrites the order's own fields. When [items] is given the item,
   /// material and product lines are replaced with the given lists in the same
   /// transaction; stock reservations are the caller's job. [fieldValues],
@@ -67,6 +70,7 @@ abstract class OrderRepository {
   Future<Result<void>> updateOrderNote(int orderId, String? note);
   Future<Result<void>> packOrder(int orderId);
   Future<Result<void>> shipOrder(int orderId);
-  Future<Result<void>> adjustMaterialsUsed(int orderId, List<OrderMaterialInput> materials);
+  Future<Result<void>> adjustMaterialsUsed(
+      int orderId, List<OrderMaterialInput> materials);
   Future<Result<void>> deleteOrder(int id);
 }

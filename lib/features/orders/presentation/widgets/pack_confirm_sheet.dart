@@ -67,7 +67,8 @@ class PackConfirmSheet extends StatelessWidget {
     final c = context.colors;
     final short = lines.where((l) => l.isShort).toList();
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

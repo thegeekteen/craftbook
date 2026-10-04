@@ -19,7 +19,8 @@ class GetProfitTrend {
       case Error(:final failure):
         return Error(failure);
       case Success(:final value):
-        return Success(bucket(value, start: start, end: end, granularity: granularity));
+        return Success(
+            bucket(value, start: start, end: end, granularity: granularity));
     }
   }
 

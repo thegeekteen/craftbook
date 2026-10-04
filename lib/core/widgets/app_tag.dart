@@ -55,7 +55,11 @@ class AppTag extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: type == AppTagType.outline
-            ? AppTextStyles.bodySmall.copyWith(color: fg, fontSize: 11.5, fontWeight: FontWeight.w500, height: 1.15)
+            ? AppTextStyles.bodySmall.copyWith(
+                color: fg,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                height: 1.15)
             : AppTextStyles.monoTag.copyWith(color: fg),
       ),
     );

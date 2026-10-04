@@ -49,10 +49,12 @@ class AppRestarterState extends State<AppRestarter> {
     });
     if (message == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(message)));
+      _messengerKey.currentState
+          ?.showSnackBar(SnackBar(content: Text(message)));
     });
   }
 
   @override
-  Widget build(BuildContext context) => KeyedSubtree(key: _subtreeKey, child: _app);
+  Widget build(BuildContext context) =>
+      KeyedSubtree(key: _subtreeKey, child: _app);
 }

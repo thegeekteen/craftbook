@@ -122,10 +122,12 @@ class _CalendarPageState extends State<CalendarPage> {
 
   List<DateTime> _monthGrid() {
     final first = DateTime(_anchor.year, _anchor.month, 1);
-    final start = first.subtract(Duration(days: first.weekday - DateTime.monday));
+    final start =
+        first.subtract(Duration(days: first.weekday - DateTime.monday));
     final last = DateTime(_anchor.year, _anchor.month + 1, 0);
     final weeks = ((last.difference(start).inDays + 1) / 7).ceil();
-    return List.generate(weeks * 7, (i) => DateTime(start.year, start.month, start.day + i));
+    return List.generate(
+        weeks * 7, (i) => DateTime(start.year, start.month, start.day + i));
   }
 
   String get _title {
@@ -136,7 +138,8 @@ class _CalendarPageState extends State<CalendarPage> {
     final start = app_date.DateUtils.startOfWeek(_anchor);
     final end = start.add(const Duration(days: 6));
     final startText = DateFormat('MMM d').format(start);
-    final endText = DateFormat(start.month == end.month ? 'd' : 'MMM d').format(end);
+    final endText =
+        DateFormat(start.month == end.month ? 'd' : 'MMM d').format(end);
     return '$startText – $endText';
   }
 
@@ -171,7 +174,9 @@ class _CalendarPageState extends State<CalendarPage> {
           title: Text(_title),
           actions: [
             IconButton(
-              tooltip: _mode == CalendarMode.week ? 'Previous week' : 'Previous month',
+              tooltip: _mode == CalendarMode.week
+                  ? 'Previous week'
+                  : 'Previous month',
               icon: const Icon(Icons.chevron_left_rounded),
               onPressed: () => _shift(-1),
             ),
@@ -191,8 +196,10 @@ class _CalendarPageState extends State<CalendarPage> {
                 child: SegmentedButton<CalendarMode>(
                   showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: CalendarMode.week, label: Text('Week')),
-                    ButtonSegment(value: CalendarMode.month, label: Text('Month')),
+                    ButtonSegment(
+                        value: CalendarMode.week, label: Text('Week')),
+                    ButtonSegment(
+                        value: CalendarMode.month, label: Text('Month')),
                   ],
                   selected: {_mode},
                   onSelectionChanged: (s) => _setMode(s.first),
@@ -251,7 +258,8 @@ class _CalendarPageState extends State<CalendarPage> {
                           padding: const EdgeInsets.only(top: 14),
                           child: Text(
                             'Nothing due',
-                            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                            style: AppTextStyles.bodySmall
+                                .copyWith(color: c.muted),
                           ),
                         )
                       : Column(
@@ -283,7 +291,8 @@ class _CalendarPageState extends State<CalendarPage> {
           for (final d in dow)
             Expanded(
               child: Center(
-                child: Text(d, style: AppTextStyles.monoTag.copyWith(color: c.muted)),
+                child: Text(d,
+                    style: AppTextStyles.monoTag.copyWith(color: c.muted)),
               ),
             ),
         ],
@@ -305,7 +314,11 @@ class _CalendarPageState extends State<CalendarPage> {
               dots: [
                 for (final e in _forDay(day).take(3))
                   orderStatusColor(e.order,
-                      alert: c.alert, warn: c.warn, go: c.go, coin: c.coin, muted: c.muted),
+                      alert: c.alert,
+                      warn: c.warn,
+                      go: c.go,
+                      coin: c.coin,
+                      muted: c.muted),
               ],
               onTap: () => setState(() => _selectedDay = day),
             ),
@@ -357,7 +370,8 @@ class _DayBadge extends StatelessWidget {
         children: [
           Text(
             DateFormat('EEE').format(day).toUpperCase(),
-            style: AppTextStyles.monoTag.copyWith(color: highlighted ? fg : c.muted),
+            style: AppTextStyles.monoTag
+                .copyWith(color: highlighted ? fg : c.muted),
           ),
           Text(
             '${day.day}',
@@ -410,7 +424,8 @@ class _MonthCell extends StatelessWidget {
               '${day.day}',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: fg,
-                fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+                fontWeight:
+                    isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
                 fontFeatures: AppTextStyles.tabular.fontFeatures,
               ),
             ),

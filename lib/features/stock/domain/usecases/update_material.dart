@@ -34,7 +34,9 @@ class UpdateMaterial {
       packSize: packSize,
       packPrice: packPrice,
       alertLevel: alertLevel,
-      supplier: trimmedSupplier == null || trimmedSupplier.isEmpty ? null : trimmedSupplier,
+      supplier: trimmedSupplier == null || trimmedSupplier.isEmpty
+          ? null
+          : trimmedSupplier,
     );
   }
 }

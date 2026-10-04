@@ -36,7 +36,8 @@ class CreateOrder {
       return const Error<int>(ValidationFailure('Customer name is required'));
     }
     if (items.isEmpty) {
-      return const Error<int>(ValidationFailure('At least one item is required'));
+      return const Error<int>(
+          ValidationFailure('At least one item is required'));
     }
 
     final expanded = await expandOrderItems(productRepository, items);

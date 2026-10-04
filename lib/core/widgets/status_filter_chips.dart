@@ -42,7 +42,8 @@ class StatusFilterChips extends StatelessWidget {
       ],
       isSelected: (s) => s == null ? _isAll : (!_isAll && selected.contains(s)),
       onTap: (s) {
-        if (s == null || (!_isAll && selected.length == 1 && selected.contains(s))) {
+        if (s == null ||
+            (!_isAll && selected.length == 1 && selected.contains(s))) {
           onChanged(Set<OrderStatus>.from(OrderStatus.values));
         } else {
           onChanged({s});

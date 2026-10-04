@@ -34,7 +34,8 @@ class OrderStatusPill extends StatelessWidget {
   final OrderStatus status;
   final bool overdue;
 
-  const OrderStatusPill({super.key, required this.status, this.overdue = false});
+  const OrderStatusPill(
+      {super.key, required this.status, this.overdue = false});
 
   factory OrderStatusPill.of(Order order, {Key? key}) =>
       OrderStatusPill(key: key, status: order.status, overdue: order.isOverdue);
@@ -55,8 +56,12 @@ class OrderStatusPill extends StatelessWidget {
 }
 
 /// Dot colour for an order on calendars.
-Color orderStatusColor(Order order, {required Color alert, required Color warn,
-    required Color go, required Color coin, required Color muted}) {
+Color orderStatusColor(Order order,
+    {required Color alert,
+    required Color warn,
+    required Color go,
+    required Color coin,
+    required Color muted}) {
   if (order.isOverdue) return alert;
   return switch (order.status) {
     OrderStatus.pending => warn,

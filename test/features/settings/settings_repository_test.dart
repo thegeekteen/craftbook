@@ -40,7 +40,8 @@ void main() {
 
   test('an unknown stored value falls back to Auto', () async {
     await db.into(db.settings).insert(
-          SettingsCompanion.insert(key: SettingsRepositoryImpl.themeModeKey, value: 'sepia'),
+          SettingsCompanion.insert(
+              key: SettingsRepositoryImpl.themeModeKey, value: 'sepia'),
         );
     expect(await repo.getThemeMode(), ThemeMode.system);
   });
@@ -58,7 +59,8 @@ void main() {
 
   test('an unknown stored palette falls back to Forest', () async {
     await db.into(db.settings).insert(
-          SettingsCompanion.insert(key: SettingsRepositoryImpl.paletteKey, value: 'neon'),
+          SettingsCompanion.insert(
+              key: SettingsRepositoryImpl.paletteKey, value: 'neon'),
         );
     expect(await repo.getPalette(), AppPalette.forest);
   });
@@ -85,7 +87,8 @@ void main() {
 
   test('an unknown stored order amount falls back to the total', () async {
     await db.into(db.settings).insert(
-          SettingsCompanion.insert(key: SettingsRepositoryImpl.orderAmountKey, value: 'margin'),
+          SettingsCompanion.insert(
+              key: SettingsRepositoryImpl.orderAmountKey, value: 'margin'),
         );
     expect(await repo.getOrderAmountShown(), OrderAmountShown.total);
   });

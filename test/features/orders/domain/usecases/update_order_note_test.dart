@@ -21,7 +21,8 @@ void main() {
   });
 
   test('stores the note as given', () async {
-    final note = NoteCodec.encode(Delta()..insert('Ring twice\n', {'list': 'checked'}))!;
+    final note =
+        NoteCodec.encode(Delta()..insert('Ring twice\n', {'list': 'checked'}))!;
 
     expect(await updateOrderNote(3, note), const Success<void>(null));
     verify(() => repository.updateOrderNote(3, note)).called(1);
@@ -37,8 +38,8 @@ void main() {
   });
 
   test('passes a repository failure through', () async {
-    when(() => repository.updateOrderNote(any(), any()))
-        .thenAnswer((_) async => const Error(NotFoundFailure('Order not found')));
+    when(() => repository.updateOrderNote(any(), any())).thenAnswer(
+        (_) async => const Error(NotFoundFailure('Order not found')));
 
     expect(
       await updateOrderNote(3, 'Ring twice'),

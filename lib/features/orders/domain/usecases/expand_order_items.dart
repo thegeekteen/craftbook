@@ -27,7 +27,8 @@ Future<ExpandedOrder> expandOrderItems(
   final products = <OrderProductInput>[];
 
   for (final item in items) {
-    final productResult = await productRepository.getProductById(item.productId);
+    final productResult =
+        await productRepository.getProductById(item.productId);
     final product = switch (productResult) {
       Success(:final value) => value,
       Error() => null,

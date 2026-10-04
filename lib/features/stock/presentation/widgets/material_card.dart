@@ -46,7 +46,8 @@ class MaterialCard extends StatelessWidget {
                   children: [
                     Text(
                       m.name,
-                      style: AppTextStyles.bodyLarge.copyWith(color: low ? c.alert : c.ink),
+                      style: AppTextStyles.bodyLarge
+                          .copyWith(color: low ? c.alert : c.ink),
                     ),
                     if (low) const AppTag.low(),
                   ],
@@ -55,7 +56,8 @@ class MaterialCard extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 '${m.quantityOnHand}',
-                style: AppTextStyles.amount.copyWith(color: low ? c.alert : c.ink, fontSize: 19),
+                style: AppTextStyles.amount
+                    .copyWith(color: low ? c.alert : c.ink, fontSize: 19),
               ),
             ],
           ),

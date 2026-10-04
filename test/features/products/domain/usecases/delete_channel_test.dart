@@ -60,8 +60,7 @@ void main() {
   group('DeleteChannel', () {
     test('deletes channel when no orders reference it', () async {
       when(() => mockOrderRepo.getAllOrders())
-          .thenAnswer(
-              (_) async => Success<List<Order>>([orderNoChannel]));
+          .thenAnswer((_) async => Success<List<Order>>([orderNoChannel]));
       when(() => mockChannelRepo.deleteChannel(5))
           .thenAnswer((_) async => const Success<void>(null));
 
@@ -72,8 +71,8 @@ void main() {
     });
 
     test('blocks deletion when orders reference the channel', () async {
-      when(() => mockOrderRepo.getAllOrders()).thenAnswer(
-          (_) async => Success<List<Order>>([orderWithChannel]));
+      when(() => mockOrderRepo.getAllOrders())
+          .thenAnswer((_) async => Success<List<Order>>([orderWithChannel]));
 
       final result = await deleteChannel(5);
 

@@ -87,7 +87,8 @@ class EarningsRepositoryImpl implements EarningsRepository {
     try {
       final rows = await dao.getCompletedOrderProfits(startDate, endDate);
       return Success([
-        for (final (at, profit) in rows) ProfitPoint(completedAt: at, profit: profit),
+        for (final (at, profit) in rows)
+          ProfitPoint(completedAt: at, profit: profit),
       ]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -101,7 +102,8 @@ class EarningsRepositoryImpl implements EarningsRepository {
     DateTime endDate,
   ) async {
     try {
-      final rows = await dao.getProductOrderLines(productId, startDate, endDate);
+      final rows =
+          await dao.getProductOrderLines(productId, startDate, endDate);
       return Success([
         for (final m in rows)
           ProductOrderLine(

@@ -204,7 +204,8 @@ class _NoteEditorState extends State<_NoteEditor> {
                     onTap: _delete,
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
+                        Icon(Icons.delete_outline_rounded,
+                            size: 20, color: c.alert),
                         const SizedBox(width: AppSpacing.md),
                         Text('Delete', style: TextStyle(color: c.alert)),
                       ],
@@ -215,7 +216,8 @@ class _NoteEditorState extends State<_NoteEditor> {
             // Up here rather than in a bottom bar, so it stays reachable while
             // the keyboard is open.
             Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.xs, right: AppSpacing.md),
+              padding: const EdgeInsets.only(
+                  left: AppSpacing.xs, right: AppSpacing.md),
               child: FilledButton(
                 onPressed: _busy ? null : _save,
                 style: FilledButton.styleFrom(
@@ -234,7 +236,8 @@ class _NoteEditorState extends State<_NoteEditor> {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(sidePadding, AppSpacing.lg, sidePadding, 0),
+              padding: const EdgeInsets.fromLTRB(
+                  sidePadding, AppSpacing.lg, sidePadding, 0),
               child: TextField(
                 controller: _title,
                 autofocus: _isNew,
@@ -246,7 +249,8 @@ class _NoteEditorState extends State<_NoteEditor> {
                 // heading, so every border is cleared explicitly.
                 decoration: InputDecoration(
                   hintText: 'Title',
-                  hintStyle: AppTextStyles.displaySmall.copyWith(color: c.muted),
+                  hintStyle:
+                      AppTextStyles.displaySmall.copyWith(color: c.muted),
                   isCollapsed: true,
                   filled: false,
                   contentPadding: EdgeInsets.zero,

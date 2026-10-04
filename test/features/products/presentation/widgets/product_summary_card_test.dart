@@ -36,15 +36,18 @@ Product _product({
       updatedAt: _now,
     );
 
-Color? _colorOf(WidgetTester tester, String text) => tester.widget<Text>(find.text(text)).style?.color;
+Color? _colorOf(WidgetTester tester, String text) =>
+    tester.widget<Text>(find.text(text)).style?.color;
 
-CraftColors _colors(WidgetTester tester) => tester.element(find.byType(ProductSummaryCard)).colors;
+CraftColors _colors(WidgetTester tester) =>
+    tester.element(find.byType(ProductSummaryCard)).colors;
 
 void main() {
   group('ProductSummaryCard resell', () {
     testWidgets('shows on hand, pips and stock stats', (tester) async {
       await tester.pumpWidget(_wrap(ProductSummaryCard(
-        product: _product(standalone: true, onHand: 12, promised: 3, alertLevel: 4),
+        product:
+            _product(standalone: true, onHand: 12, promised: 3, alertLevel: 4),
         cost: 100,
       )));
 
@@ -63,7 +66,8 @@ void main() {
 
     testWidgets('flags low stock and shows a shortfall', (tester) async {
       await tester.pumpWidget(_wrap(ProductSummaryCard(
-        product: _product(standalone: true, onHand: 2, promised: 5, alertLevel: 4),
+        product:
+            _product(standalone: true, onHand: 2, promised: 5, alertLevel: 4),
         cost: 100,
       )));
 
@@ -75,7 +79,8 @@ void main() {
 
   group('ProductSummaryCard handmade', () {
     testWidgets('shows can-build count without pips', (tester) async {
-      await tester.pumpWidget(_wrap(ProductSummaryCard(product: _product(), cost: 100, buildable: 8)));
+      await tester.pumpWidget(_wrap(
+          ProductSummaryCard(product: _product(), cost: 100, buildable: 8)));
 
       expect(find.text('8'), findsOneWidget);
       expect(find.text('CAN BUILD'), findsOneWidget);
@@ -85,20 +90,23 @@ void main() {
     });
 
     testWidgets('shows zero buildable in alert colour', (tester) async {
-      await tester.pumpWidget(_wrap(ProductSummaryCard(product: _product(), cost: 100)));
+      await tester.pumpWidget(
+          _wrap(ProductSummaryCard(product: _product(), cost: 100)));
 
       expect(_colorOf(tester, '0'), _colors(tester).alert);
       expect(find.text('LOW'), findsNothing);
     });
 
     testWidgets('flags a handful left as low', (tester) async {
-      await tester.pumpWidget(_wrap(ProductSummaryCard(product: _product(), cost: 100, buildable: 3)));
+      await tester.pumpWidget(_wrap(
+          ProductSummaryCard(product: _product(), cost: 100, buildable: 3)));
 
       expect(find.text('LOW'), findsOneWidget);
     });
   });
 
-  testWidgets('shows price, cost, margin, description and hidden tag', (tester) async {
+  testWidgets('shows price, cost, margin, description and hidden tag',
+      (tester) async {
     await tester.pumpWidget(_wrap(ProductSummaryCard(
       product: _product(active: false, description: 'Seven crochet tulips'),
       cost: 100,
@@ -114,7 +122,8 @@ void main() {
   });
 
   testWidgets('shows a negative margin in alert colour', (tester) async {
-    await tester.pumpWidget(_wrap(ProductSummaryCard(product: _product(), cost: 500, buildable: 10)));
+    await tester.pumpWidget(_wrap(
+        ProductSummaryCard(product: _product(), cost: 500, buildable: 10)));
 
     expect(find.text('−25%'), findsOneWidget);
     expect(_colorOf(tester, '−25%'), _colors(tester).alert);

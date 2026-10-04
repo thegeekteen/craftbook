@@ -16,7 +16,8 @@ void main() {
 
   setUp(() {
     repo = _MockSettings();
-    when(() => repo.setOrderAmountShown(any())).thenAnswer((_) async => const Success(null));
+    when(() => repo.setOrderAmountShown(any()))
+        .thenAnswer((_) async => const Success(null));
   });
 
   test('starts on the order total', () {
@@ -26,7 +27,8 @@ void main() {
   blocTest<OrderAmountCubit, OrderAmountShown>(
     'load emits the stored choice',
     build: () {
-      when(() => repo.getOrderAmountShown()).thenAnswer((_) async => OrderAmountShown.profit);
+      when(() => repo.getOrderAmountShown())
+          .thenAnswer((_) async => OrderAmountShown.profit);
       return OrderAmountCubit(repo);
     },
     act: (c) => c.load(),
@@ -38,7 +40,9 @@ void main() {
     build: () => OrderAmountCubit(repo),
     act: (c) => c.set(OrderAmountShown.profit),
     expect: () => [OrderAmountShown.profit],
-    verify: (_) => verify(() => repo.setOrderAmountShown(OrderAmountShown.profit)).called(1),
+    verify: (_) =>
+        verify(() => repo.setOrderAmountShown(OrderAmountShown.profit))
+            .called(1),
   );
 
   blocTest<OrderAmountCubit, OrderAmountShown>(

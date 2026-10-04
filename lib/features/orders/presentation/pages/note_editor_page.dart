@@ -102,7 +102,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             icon: const Icon(Icons.close_rounded),
             onPressed: _handleBack,
           ),
-          title: Text(NoteCodec.isBlank(widget.initialNote) ? 'Add note' : 'Edit note'),
+          title: Text(
+              NoteCodec.isBlank(widget.initialNote) ? 'Add note' : 'Edit note'),
           // Up here rather than in a bottom bar, so it stays reachable while
           // the keyboard is open.
           actions: [

@@ -21,7 +21,8 @@ class CalculateOrderProfit {
       case Success(:final value):
         final channel = value;
         if (channel == null) {
-          return const Error<OrderProfitBreakdown>(NotFoundFailure('Channel not found'));
+          return const Error<OrderProfitBreakdown>(
+              NotFoundFailure('Channel not found'));
         }
 
         final fees = channel.calculateFees(totalSales);

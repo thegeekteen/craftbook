@@ -16,5 +16,6 @@ class ProductEarnings extends Equatable {
   });
 
   @override
-  List<Object?> get props => [productId, productName, quantitySold, totalSales, totalProfit];
+  List<Object?> get props =>
+      [productId, productName, quantitySold, totalSales, totalProfit];
 }

@@ -51,8 +51,15 @@ class EarningsLoaded extends EarningsState {
       );
 
   @override
-  List<Object?> get props =>
-      [startDate, endDate, summary, productEarnings, wasteSummary, trend, isRefreshing];
+  List<Object?> get props => [
+        startDate,
+        endDate,
+        summary,
+        productEarnings,
+        wasteSummary,
+        trend,
+        isRefreshing
+      ];
 }
 
 /// Error occurred while loading earnings data

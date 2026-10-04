@@ -37,14 +37,24 @@ class NotesLoaded extends NotesState {
   });
 
   /// The notes matching [query], in list order.
-  List<Note> get visible => [for (final n in all) if (n.matches(query)) n];
-  List<Note> get pinned => [for (final n in visible) if (n.isPinned) n];
-  List<Note> get others => [for (final n in visible) if (!n.isPinned) n];
+  List<Note> get visible => [
+        for (final n in all)
+          if (n.matches(query)) n
+      ];
+  List<Note> get pinned => [
+        for (final n in visible)
+          if (n.isPinned) n
+      ];
+  List<Note> get others => [
+        for (final n in visible)
+          if (!n.isPinned) n
+      ];
 
   NotesLoaded copyWith({List<Note>? all, String? query}) =>
       NotesLoaded(all: all ?? this.all, query: query ?? this.query);
 
-  NotesLoaded withMessage(String message, int serial, {bool isError = false, Note? deleted}) =>
+  NotesLoaded withMessage(String message, int serial,
+          {bool isError = false, Note? deleted}) =>
       NotesLoaded(
         all: all,
         query: query,

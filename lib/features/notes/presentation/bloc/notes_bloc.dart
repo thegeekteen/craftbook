@@ -52,21 +52,24 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     if (current is NotesLoaded) emit(current.copyWith(query: event.query));
   }
 
-  Future<void> _onTogglePin(ToggleNotePinEvent event, Emitter<NotesState> emit) async {
+  Future<void> _onTogglePin(
+      ToggleNotePinEvent event, Emitter<NotesState> emit) async {
     final note = _find(event.id);
     if (note == null) return;
     final result = await setNotePinned(event.id, !note.isPinned);
     await _finish(emit, result, note.isPinned ? 'Unpinned' : 'Pinned to Today');
   }
 
-  Future<void> _onDelete(DeleteNoteEvent event, Emitter<NotesState> emit) async {
+  Future<void> _onDelete(
+      DeleteNoteEvent event, Emitter<NotesState> emit) async {
     final note = _find(event.id);
     if (note == null) return;
     final result = await deleteNote(event.id);
     await _finish(emit, result, '${note.displayTitle} deleted', deleted: note);
   }
 
-  Future<void> _onRestore(RestoreNoteEvent event, Emitter<NotesState> emit) async {
+  Future<void> _onRestore(
+      RestoreNoteEvent event, Emitter<NotesState> emit) async {
     final result = await restoreNote(event.note);
     await _finish(emit, result, '${event.note.displayTitle} restored');
   }

@@ -23,12 +23,14 @@ void main() {
   Future<void> pump(WidgetTester tester, String? readme) => tester.pumpWidget(
         DefaultAssetBundle(
           bundle: _FakeBundle(readme),
-          child: MaterialApp(theme: AppTheme.lightTheme, home: const AboutPage()),
+          child:
+              MaterialApp(theme: AppTheme.lightTheme, home: const AboutPage()),
         ),
       );
 
   testWidgets('renders the README headings, text and tables', (tester) async {
-    await pump(tester, '# Craftbook\n\nOffline app.\n\n| Step | Where |\n|---|---|\n| One | More |\n');
+    await pump(tester,
+        '# Craftbook\n\nOffline app.\n\n| Step | Where |\n|---|---|\n| One | More |\n');
     await tester.pumpAndSettle();
 
     expect(find.text('Craftbook'), findsOneWidget);
@@ -37,7 +39,8 @@ void main() {
     expect(find.text('More'), findsOneWidget);
   });
 
-  testWidgets('shows a friendly message when the README cannot be loaded', (tester) async {
+  testWidgets('shows a friendly message when the README cannot be loaded',
+      (tester) async {
     await pump(tester, null);
     await tester.pumpAndSettle();
 

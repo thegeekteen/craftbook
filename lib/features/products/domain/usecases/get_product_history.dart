@@ -21,7 +21,8 @@ class GetProductHistory {
           // Packing writes a 'deducted' movement for the same pieces the
           // order row already shows, so listing both would count them twice.
           for (final m in mv)
-            if (m.type != ProductStockMovementType.deducted) StockHistoryEntry(m),
+            if (m.type != ProductStockMovementType.deducted)
+              StockHistoryEntry(m),
           for (final s in sl) SaleHistoryEntry(s),
         ]..sort((a, b) => b.date.compareTo(a.date));
         return Success(entries);

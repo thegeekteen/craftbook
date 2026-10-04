@@ -137,7 +137,8 @@ class _StepperInputState extends State<StepperInput> {
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 2, vertical: 6),
                 isDense: true,
               ),
               onTap: () => setState(() => _isEditing = true),

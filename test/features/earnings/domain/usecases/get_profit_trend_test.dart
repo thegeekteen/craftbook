@@ -23,7 +23,8 @@ void main() {
       );
 
       expect(buckets, hasLength(7));
-      expect(buckets.first, TrendBucket(start: DateTime(2026, 9, 28), profit: 150));
+      expect(buckets.first,
+          TrendBucket(start: DateTime(2026, 9, 28), profit: 150));
       expect(buckets[1].profit, 0);
       expect(buckets[2].profit, -20);
       expect(buckets.last.start, DateTime(2026, 10, 4));
@@ -66,11 +67,13 @@ void main() {
     });
 
     test('buckets repository points', () async {
-      when(() => repo.getCompletedOrderProfits(start, end)).thenAnswer((_) async => Success([
-            ProfitPoint(completedAt: DateTime(2026, 10, 2, 8), profit: 40),
-          ]));
+      when(() => repo.getCompletedOrderProfits(start, end))
+          .thenAnswer((_) async => Success([
+                ProfitPoint(completedAt: DateTime(2026, 10, 2, 8), profit: 40),
+              ]));
 
-      final result = await useCase(start: start, end: end, granularity: TrendGranularity.day);
+      final result = await useCase(
+          start: start, end: end, granularity: TrendGranularity.day);
 
       switch (result) {
         case Success(:final value):
@@ -84,7 +87,8 @@ void main() {
       when(() => repo.getCompletedOrderProfits(start, end))
           .thenAnswer((_) async => const Error(DatabaseFailure('boom')));
 
-      final result = await useCase(start: start, end: end, granularity: TrendGranularity.day);
+      final result = await useCase(
+          start: start, end: end, granularity: TrendGranularity.day);
 
       expect(result, isA<Error<List<TrendBucket>>>());
     });

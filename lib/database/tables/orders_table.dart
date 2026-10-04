@@ -25,7 +25,8 @@ class Channels extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   RealColumn get commissionRate => real().withDefault(const Constant(0.0))();
-  RealColumn get transactionFeeRate => real().withDefault(const Constant(0.0))();
+  RealColumn get transactionFeeRate =>
+      real().withDefault(const Constant(0.0))();
   RealColumn get flatFee => real().withDefault(const Constant(0.0))();
   RealColumn get shippingPaidByUs => real().withDefault(const Constant(0.0))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();

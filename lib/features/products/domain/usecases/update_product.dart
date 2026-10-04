@@ -22,13 +22,16 @@ class UpdateProduct {
       return Future.value(const Error(ValidationFailure('Enter a name')));
     }
     if (sellPrice != null && sellPrice <= 0) {
-      return Future.value(const Error(ValidationFailure('Enter a price above 0')));
+      return Future.value(
+          const Error(ValidationFailure('Enter a price above 0')));
     }
     if (unitCost != null && unitCost < 0) {
-      return Future.value(const Error(ValidationFailure('Cost cannot be negative')));
+      return Future.value(
+          const Error(ValidationFailure('Cost cannot be negative')));
     }
     if (alertLevel != null && alertLevel < 0) {
-      return Future.value(const Error(ValidationFailure('Reorder level cannot be negative')));
+      return Future.value(
+          const Error(ValidationFailure('Reorder level cannot be negative')));
     }
     return repository.updateProduct(
       id: id,

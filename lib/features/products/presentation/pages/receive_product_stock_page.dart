@@ -26,7 +26,8 @@ class ReceiveProductStockPage extends StatefulWidget {
   const ReceiveProductStockPage({super.key, required this.productId});
 
   @override
-  State<ReceiveProductStockPage> createState() => _ReceiveProductStockPageState();
+  State<ReceiveProductStockPage> createState() =>
+      _ReceiveProductStockPageState();
 }
 
 class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
@@ -51,7 +52,8 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
   }
 
   Future<void> _load() async {
-    final result = await getIt<ProductRepository>().getProductById(widget.productId);
+    final result =
+        await getIt<ProductRepository>().getProductById(widget.productId);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -97,12 +99,16 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_product == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: ErrorState(message: _error ?? 'Product not found', onRetry: _load)),
+        body: Center(
+            child: ErrorState(
+                message: _error ?? 'Product not found', onRetry: _load)),
       );
     }
     final c = context.colors;
@@ -116,7 +122,8 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('RECEIVE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+            Text('RECEIVE',
+                style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
             Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
@@ -131,7 +138,9 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('QUANTITY RECEIVED', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                      child: Text('QUANTITY RECEIVED',
+                          style:
+                              AppTextStyles.monoLabel.copyWith(color: c.muted)),
                     ),
                     StepperInput(
                       value: _quantity,
@@ -144,9 +153,13 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _price,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
-                  decoration: const InputDecoration(labelText: 'Price per piece', prefixText: '₱ '),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
+                  ],
+                  decoration: const InputDecoration(
+                      labelText: 'Price per piece', prefixText: '₱ '),
                 ),
               ],
             ),
@@ -156,23 +169,30 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('AFTER RECEIVING', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                Text('AFTER RECEIVING',
+                    style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
                 const SizedBox(height: 6),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('${p.quantityOnHand}', style: AppTextStyles.amount.copyWith(color: c.muted, fontSize: 20)),
+                    Text('${p.quantityOnHand}',
+                        style: AppTextStyles.amount
+                            .copyWith(color: c.muted, fontSize: 20)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.arrow_forward_rounded, size: 18, color: c.muted),
+                      child: Icon(Icons.arrow_forward_rounded,
+                          size: 18, color: c.muted),
                     ),
                     Text(
                       '${p.quantityOnHand + _quantity}',
-                      style: AppTextStyles.displayMedium.copyWith(color: c.go, fontSize: 32),
+                      style: AppTextStyles.displayMedium
+                          .copyWith(color: c.go, fontSize: 32),
                     ),
                     const SizedBox(width: 6),
-                    Text('PCS', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                    Text('PCS',
+                        style:
+                            AppTextStyles.monoLabel.copyWith(color: c.muted)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -189,13 +209,17 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Unit cost (weighted)', style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+                      child: Text('Unit cost (weighted)',
+                          style:
+                              AppTextStyles.bodyMedium.copyWith(color: c.ink)),
                     ),
                     Text('${CurrencyFormatter.format(p.unitCost)} → ',
-                        style: AppTextStyles.bodyMedium.copyWith(color: c.muted)),
+                        style:
+                            AppTextStyles.bodyMedium.copyWith(color: c.muted)),
                     Text(
                       CurrencyFormatter.format(_newUnitCost),
-                      style: AppTextStyles.amount.copyWith(color: costUp ? c.alert : c.coin, fontSize: 16),
+                      style: AppTextStyles.amount.copyWith(
+                          color: costUp ? c.alert : c.coin, fontSize: 16),
                     ),
                   ],
                 ),

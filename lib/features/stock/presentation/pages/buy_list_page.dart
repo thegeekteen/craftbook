@@ -47,7 +47,9 @@ class _BuyListViewState extends State<_BuyListView> {
 
   /// Urgency: blocking orders, then out of free stock, then the rest.
   static int _rank(BuyListItem i) {
-    if (i.blockedProducts.any((p) => p.openOrderCount > 0) && i.isCritical) return 0;
+    if (i.blockedProducts.any((p) => p.openOrderCount > 0) && i.isCritical) {
+      return 0;
+    }
     if (i.isCritical) return 1;
     return 2;
   }
@@ -75,7 +77,9 @@ class _BuyListViewState extends State<_BuyListView> {
       },
       child: BlocBuilder<MaterialsBloc, MaterialsState>(
         builder: (context, state) {
-          final items = state is BuyListLoaded ? ([...state.items]..sort((a, b) => _rank(a).compareTo(_rank(b)))) : null;
+          final items = state is BuyListLoaded
+              ? ([...state.items]..sort((a, b) => _rank(a).compareTo(_rank(b))))
+              : null;
           return Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: () => context.pop(_changed)),
@@ -98,7 +102,8 @@ class _BuyListViewState extends State<_BuyListView> {
                     itemBuilder: (context, i) => _BuyCard(
                       item: items[i],
                       onTap: () async {
-                        final changed = await context.push<bool>(RouteNames.materialPath(items[i].materialId));
+                        final changed = await context.push<bool>(
+                            RouteNames.materialPath(items[i].materialId));
                         if (changed == true && mounted) {
                           _changed = true;
                           _reload();
@@ -107,15 +112,18 @@ class _BuyListViewState extends State<_BuyListView> {
                     ),
                   ),
                 ),
-              MaterialsError(:final message) => Center(child: ErrorState(message: message, onRetry: _reload)),
+              MaterialsError(:final message) =>
+                Center(child: ErrorState(message: message, onRetry: _reload)),
               _ => const Center(child: CircularProgressIndicator()),
             },
             bottomNavigationBar: items == null || items.isEmpty
                 ? null
                 : BottomActionBar(children: [
                     BarTotal(
-                      label: '${items.length} ${items.length == 1 ? 'item' : 'items'}',
-                      value: CurrencyFormatter.format(items.fold<double>(0, (s, i) => s + i.totalCost)),
+                      label:
+                          '${items.length} ${items.length == 1 ? 'item' : 'items'}',
+                      value: CurrencyFormatter.format(
+                          items.fold<double>(0, (s, i) => s + i.totalCost)),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => _copy(items),
@@ -139,8 +147,10 @@ class _BuyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final holdingUp = item.blockedProducts.where((p) => p.openOrderCount > 0).toList();
-    final blockedOrders = holdingUp.fold<int>(0, (s, p) => s + p.openOrderCount);
+    final holdingUp =
+        item.blockedProducts.where((p) => p.openOrderCount > 0).toList();
+    final blockedOrders =
+        holdingUp.fold<int>(0, (s, p) => s + p.openOrderCount);
     final pcs = item.packsToOrder * item.packSize;
 
     return AppCard(
@@ -152,11 +162,14 @@ class _BuyCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(item.materialName, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                child: Text(item.materialName,
+                    style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
               ),
               const SizedBox(width: 8),
               if (item.isCritical && blockedOrders > 0)
-                AppTag('Blocking $blockedOrders ${blockedOrders == 1 ? 'order' : 'orders'}', type: AppTagType.low)
+                AppTag(
+                    'Blocking $blockedOrders ${blockedOrders == 1 ? 'order' : 'orders'}',
+                    type: AppTagType.low)
               else if (item.isCritical)
                 const AppTag('Out of free stock', type: AppTagType.low)
               else
@@ -181,17 +194,23 @@ class _BuyCard extends StatelessWidget {
                   TextSpan(children: [
                     const TextSpan(text: 'Buy '),
                     TextSpan(
-                      text: '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
-                      style: TextStyle(color: c.ink, fontWeight: FontWeight.w600),
+                      text:
+                          '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
+                      style:
+                          TextStyle(color: c.ink, fontWeight: FontWeight.w600),
                     ),
-                    TextSpan(text: ' · $pcs pcs · ${item.quantityFree < 0 ? 0 : item.quantityFree} free now'),
+                    TextSpan(
+                        text:
+                            ' · $pcs pcs · ${item.quantityFree < 0 ? 0 : item.quantityFree} free now'),
                   ]),
-                  style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: c.muted, fontSize: 13),
                 ),
               ),
               Text(
                 CurrencyFormatter.format(item.totalCost),
-                style: AppTextStyles.amount.copyWith(color: c.coin, fontSize: 16),
+                style:
+                    AppTextStyles.amount.copyWith(color: c.coin, fontSize: 16),
               ),
             ],
           ),

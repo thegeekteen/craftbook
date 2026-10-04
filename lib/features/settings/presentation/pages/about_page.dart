@@ -23,7 +23,8 @@ class _AboutPageState extends State<AboutPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // DefaultAssetBundle (not rootBundle) so tests can supply their own.
-    _readme ??= DefaultAssetBundle.of(context).loadString(AboutPage.readmeAsset);
+    _readme ??=
+        DefaultAssetBundle.of(context).loadString(AboutPage.readmeAsset);
   }
 
   @override

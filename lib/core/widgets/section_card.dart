@@ -29,7 +29,9 @@ class SectionCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (label != null) ...[
-          SectionLabel(label!, trailing: trailing, padding: const EdgeInsets.fromLTRB(2, 0, 2, 0)),
+          SectionLabel(label!,
+              trailing: trailing,
+              padding: const EdgeInsets.fromLTRB(2, 0, 2, 0)),
           const SizedBox(height: 8),
         ],
         AppCard(

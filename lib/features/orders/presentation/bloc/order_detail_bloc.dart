@@ -117,16 +117,16 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     for (final m in materials.cast<OrderMaterial>()) {
       final r = await materialRepository.getMaterialById(m.materialId);
       if (r case Success(:final value) when value != null) {
-        materialStock[m.materialId] =
-            StockLevel(onHand: value.quantityOnHand, alertLevel: value.alertLevel);
+        materialStock[m.materialId] = StockLevel(
+            onHand: value.quantityOnHand, alertLevel: value.alertLevel);
       }
     }
     final productStock = <int, StockLevel>{};
     for (final p in products.cast<OrderProduct>()) {
       final r = await productRepository.getProductById(p.productId);
       if (r case Success(:final value) when value != null) {
-        productStock[p.productId] =
-            StockLevel(onHand: value.quantityOnHand, alertLevel: value.alertLevel);
+        productStock[p.productId] = StockLevel(
+            onHand: value.quantityOnHand, alertLevel: value.alertLevel);
       }
     }
 
@@ -162,14 +162,16 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Future<Result<void>> Function() action,
     String successMessage,
   ) async {
-    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    final loaded =
+        state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
     // One action at a time; a double tap shouldn't pack twice.
     if (loaded?.isBusy ?? false) return;
     if (loaded != null) emit(loaded.copyWith(isBusy: true));
     final result = await action();
     switch (result) {
       case Error(:final failure):
-        emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+        emit(OrderDetailMessage(failure.message,
+            isError: true, serial: ++_serial));
         if (loaded != null) emit(loaded.copyWith(isBusy: false));
       case Success():
         emit(OrderDetailMessage(successMessage, serial: ++_serial));
@@ -193,13 +195,15 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     PackOrderDetail event,
     Emitter<OrderDetailState> emit,
   ) =>
-      _runAction(emit, event.orderId, () => packOrder(event.orderId), 'Packed. Stock updated.');
+      _runAction(emit, event.orderId, () => packOrder(event.orderId),
+          'Packed. Stock updated.');
 
   Future<void> _onShipOrder(
     ShipOrderDetail event,
     Emitter<OrderDetailState> emit,
   ) =>
-      _runAction(emit, event.orderId, () => shipOrder(event.orderId), 'Marked as shipped');
+      _runAction(emit, event.orderId, () => shipOrder(event.orderId),
+          'Marked as shipped');
 
   /// Quiet on success: ticking a to-do shouldn't flash a progress bar or a
   /// snackbar. The reload hands the note view back what was stored, which
@@ -208,10 +212,12 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     SaveOrderNote event,
     Emitter<OrderDetailState> emit,
   ) async {
-    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    final loaded =
+        state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
     final result = await updateOrderNote(event.orderId, event.note);
     if (result case Error(:final failure)) {
-      emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+      emit(OrderDetailMessage(failure.message,
+          isError: true, serial: ++_serial));
       // Back to the screen before reloading, or the reload shows a spinner.
       if (loaded != null) emit(loaded);
     }
@@ -222,12 +228,14 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     DeleteOrderEvent event,
     Emitter<OrderDetailState> emit,
   ) async {
-    final loaded = state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
+    final loaded =
+        state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
     if (loaded != null) emit(loaded.copyWith(isBusy: true));
     final result = await deleteOrder(event.orderId);
     switch (result) {
       case Error(:final failure):
-        emit(OrderDetailMessage(failure.message, isError: true, serial: ++_serial));
+        emit(OrderDetailMessage(failure.message,
+            isError: true, serial: ++_serial));
         if (loaded != null) emit(loaded.copyWith(isBusy: false));
       case Success():
         emit(OrderDeleted());

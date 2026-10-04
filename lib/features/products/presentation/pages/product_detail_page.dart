@@ -57,7 +57,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final repo = getIt<ProductRepository>();
     final productResult = await repo.getProductById(widget.productId);
     final bomResult = await repo.getBomItems(widget.productId);
-    final buildableResult = await repo.calculateBuildableQuantity(widget.productId);
+    final buildableResult =
+        await repo.calculateBuildableQuantity(widget.productId);
     final historyResult = await getIt<GetProductHistory>()(widget.productId);
     if (!mounted) return;
     setState(() {
@@ -91,7 +92,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   double get _cost {
     final p = _product!;
-    return p.isStandalone ? p.unitCost : _bom.fold(0.0, (s, b) => s + b.quantityRequired * b.materialUnitCost);
+    return p.isStandalone
+        ? p.unitCost
+        : _bom.fold(0.0, (s, b) => s + b.quantityRequired * b.materialUnitCost);
   }
 
   /// Pushes [location] and reloads if the child page changed something.
@@ -123,7 +126,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: counted == p.quantityOnHand ? null : () => Navigator.pop(sheetContext, true),
+              onPressed: counted == p.quantityOnHand
+                  ? null
+                  : () => Navigator.pop(sheetContext, true),
               child: const Text('Save count'),
             ),
           ],
@@ -131,7 +136,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       ),
     );
     if (save != true || !mounted) return;
-    final result = await getIt<AdjustProductStock>()(productId: p.id!, newQuantityOnHand: counted);
+    final result = await getIt<AdjustProductStock>()(
+        productId: p.id!, newQuantityOnHand: counted);
     if (!mounted) return;
     switch (result) {
       case Error(:final failure):
@@ -147,7 +153,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final confirmed = await ConfirmDialog.show(
       context,
       title: 'Delete ${p.name}?',
-      message: "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
+      message:
+          "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
       confirmText: 'Delete',
       isDestructive: true,
     );
@@ -177,12 +184,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget _buildScaffold() {
     final back = BackButton(onPressed: () => context.pop(_changed));
     if (_loading) {
-      return Scaffold(appBar: AppBar(leading: back), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(leading: back),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_error != null || _product == null) {
       return Scaffold(
         appBar: AppBar(leading: back),
-        body: Center(child: ErrorState(message: _error ?? 'Product not found', onRetry: _load)),
+        body: Center(
+            child: ErrorState(
+                message: _error ?? 'Product not found', onRetry: _load)),
       );
     }
     final c = context.colors;
@@ -197,7 +208,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (v) {
-              if (v == 'edit') _open(RouteNames.productEditorPath(widget.productId));
+              if (v == 'edit') {
+                _open(RouteNames.productEditorPath(widget.productId));
+              }
               if (v == 'delete') _delete(p);
             },
             itemBuilder: (_) => [
@@ -232,7 +245,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               Row(children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => _open(RouteNames.receiveProductStockPath(widget.productId)),
+                    onPressed: () => _open(
+                        RouteNames.receiveProductStockPath(widget.productId)),
                     icon: const Icon(Icons.add_rounded, size: 20),
                     label: const Text('Receive'),
                   ),
@@ -258,19 +272,27 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     for (final b in _bom)
                       CardRow(
                         title: Text(b.materialName),
-                        subtitle: Text('${b.quantityRequired} × ${CurrencyFormatter.format(b.materialUnitCost)}'),
+                        subtitle: Text(
+                            '${b.quantityRequired} × ${CurrencyFormatter.format(b.materialUnitCost)}'),
                         trailing: Text(
-                          CurrencyFormatter.format(b.quantityRequired * b.materialUnitCost),
-                          style: AppTextStyles.bodyMedium.copyWith(color: c.coin, fontWeight: FontWeight.w600),
+                          CurrencyFormatter.format(
+                              b.quantityRequired * b.materialUnitCost),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                              color: c.coin, fontWeight: FontWeight.w600),
                         ),
-                        onTap: () => _open(RouteNames.materialPath(b.materialId)),
+                        onTap: () =>
+                            _open(RouteNames.materialPath(b.materialId)),
                       ),
                   ]),
                 ),
             ],
             const SizedBox(height: 12),
-            ProductProfitCard(sellPrice: p.sellPrice, cost: cost, isStandalone: p.isStandalone),
-            const SectionLabel('History', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
+            ProductProfitCard(
+                sellPrice: p.sellPrice,
+                cost: cost,
+                isStandalone: p.isStandalone),
+            const SectionLabel('History',
+                padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
             const SizedBox(height: 8),
             if (_historyError != null)
               _quiet("Couldn't load history: $_historyError")
@@ -280,7 +302,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               AppCard.flush(
                 child: CardList(children: [
                   for (final e in _history.take(30))
-                    ProductHistoryRow(entry: e, onOrderTap: (id) => _open(RouteNames.orderPath(id))),
+                    ProductHistoryRow(
+                        entry: e,
+                        onOrderTap: (id) => _open(RouteNames.orderPath(id))),
                 ]),
               ),
           ],
@@ -291,6 +315,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   Widget _quiet(String text) => Padding(
         padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
-        child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
+        child: Text(text,
+            style:
+                AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
       );
 }

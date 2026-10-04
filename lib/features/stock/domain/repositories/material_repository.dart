@@ -17,6 +17,7 @@ abstract class MaterialRepository {
     required int alertLevel,
     String? supplier,
   });
+
   /// Edits the master data. Stock counts are never touched. [unitCost]
   /// (the weighted average) is only reset to packPrice / packSize when the
   /// price or pack size actually changed.
@@ -38,11 +39,13 @@ abstract class MaterialRepository {
   Future<Result<void>> adjustStock(int materialId, int newQuantityOnHand);
   Future<Result<void>> reserveMaterials(int materialId, int quantity);
   Future<Result<void>> releaseReservedMaterials(int materialId, int quantity);
+
   /// Takes [quantity] off the shelf. [reserved] is how much of it this
   /// order had promised (defaults to [quantity]); only that much is
   /// released from promised, so other orders keep their reservations when
   /// more was used than planned.
-  Future<Result<void>> deductMaterials(int materialId, int quantity, {int? reserved});
+  Future<Result<void>> deductMaterials(int materialId, int quantity,
+      {int? reserved});
   Future<Result<void>> restoreDeductedMaterials(int materialId, int quantity);
   Future<Result<List<BuyListItem>>> getBuyList();
   Future<Result<void>> deleteMaterial(int id);

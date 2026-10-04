@@ -22,7 +22,8 @@ class ProductProfitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final parts = MoneyParts(sales: sellPrice, materials: cost, fees: 0, shipping: 0);
+    final parts =
+        MoneyParts(sales: sellPrice, materials: cost, fees: 0, shipping: 0);
     final positive = parts.profit >= 0;
     return AppCard(
       child: Column(
@@ -33,11 +34,13 @@ class ProductProfitCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Expanded(
-                child: Text('PROFIT PER PIECE', style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
+                child: Text('PROFIT PER PIECE',
+                    style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               ),
               Text(
                 CurrencyFormatter.formatShort(parts.profit),
-                style: AppTextStyles.displayMedium.copyWith(fontSize: 26, color: positive ? c.go : c.alert),
+                style: AppTextStyles.displayMedium
+                    .copyWith(fontSize: 26, color: positive ? c.go : c.alert),
               ),
             ],
           ),

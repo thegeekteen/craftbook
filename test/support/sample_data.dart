@@ -37,10 +37,12 @@ Future<void> seedSampleShop() async {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day, 10);
 
-  final addressField = _ok(await fields.createField(
-      const OrderField(name: 'Address', type: OrderFieldType.text, isMultiline: true)));
+  final addressField = _ok(await fields.createField(const OrderField(
+      name: 'Address', type: OrderFieldType.text, isMultiline: true)));
   final wrapField = _ok(await fields.createField(const OrderField(
-      name: 'Wrap', type: OrderFieldType.choice, options: ['Kraft', 'Floral', 'None'])));
+      name: 'Wrap',
+      type: OrderFieldType.choice,
+      options: ['Kraft', 'Floral', 'None'])));
   final eventField = _ok(await fields.createField(
       const OrderField(name: 'Event date', type: OrderFieldType.date)));
   // Archived once orders have used it, so its value still shows on them.
@@ -48,16 +50,34 @@ Future<void> seedSampleShop() async {
       const OrderField(name: 'Card message', type: OrderFieldType.text)));
 
   final shopee = _ok(await channels.createChannel(
-      name: 'Shopee', commissionRate: 8, transactionFeeRate: 2, flatFee: 5, shippingPaidByUs: 40));
+      name: 'Shopee',
+      commissionRate: 8,
+      transactionFeeRate: 2,
+      flatFee: 5,
+      shippingPaidByUs: 40));
   final tiktok = _ok(await channels.createChannel(
-      name: 'TikTok Shop', commissionRate: 6, transactionFeeRate: 2, flatFee: 0, shippingPaidByUs: 30));
+      name: 'TikTok Shop',
+      commissionRate: 6,
+      transactionFeeRate: 2,
+      flatFee: 0,
+      shippingPaidByUs: 30));
   final walkIn = _ok(await channels.createChannel(
-      name: 'Walk-in', commissionRate: 0, transactionFeeRate: 0, flatFee: 0, shippingPaidByUs: 0));
+      name: 'Walk-in',
+      commissionRate: 0,
+      transactionFeeRate: 0,
+      flatFee: 0,
+      shippingPaidByUs: 0));
   final lazada = _ok(await channels.createChannel(
-      name: 'Lazada', commissionRate: 10, transactionFeeRate: 2, flatFee: 0, shippingPaidByUs: 0));
+      name: 'Lazada',
+      commissionRate: 10,
+      transactionFeeRate: 2,
+      flatFee: 0,
+      shippingPaidByUs: 0));
   await channels.updateChannel(id: lazada, isActive: false);
 
-  Future<int> material(String name, int pack, double price, int onHand, int alert, [String? supplier]) async =>
+  Future<int> material(
+          String name, int pack, double price, int onHand, int alert,
+          [String? supplier]) async =>
       _ok(await materials.createMaterial(
         name: name,
         packSize: pack,
@@ -68,10 +88,12 @@ Future<void> seedSampleShop() async {
         supplier: supplier,
       ));
 
-  final yarn = await material('Milk cotton yarn, cream', 10, 180, 40, 8, 'YarnPH');
+  final yarn =
+      await material('Milk cotton yarn, cream', 10, 180, 40, 8, 'YarnPH');
   final wire = await material('Floral wire 18g', 20, 80, 80, 15);
   final wrap = await material('Cellophane wrap', 10, 260, 14, 5);
-  final beads = await material('Glass seed beads 2mm', 50, 120, 16, 10, 'Divisoria Beads');
+  final beads = await material(
+      'Glass seed beads 2mm', 50, 120, 16, 10, 'Divisoria Beads');
   final rings = await material('Jump rings 6mm', 100, 80, 48, 20);
   final clasp = await material('Lobster clasp', 50, 150, 12, 10);
   final cord = await material('Phone strap cord', 20, 100, 30, 10);
@@ -81,13 +103,16 @@ Future<void> seedSampleShop() async {
   Future<int> product(String name, double price, Map<int, int> bom) async {
     final id = _ok(await products.createProduct(name: name, sellPrice: price));
     await products.saveBomItems(id, [
-      for (final e in bom.entries) BomItemInput(materialId: e.key, quantityRequired: e.value),
+      for (final e in bom.entries)
+        BomItemInput(materialId: e.key, quantityRequired: e.value),
     ]);
     return id;
   }
 
-  final tulip = await product('Crochet tulip bouquet', 450, {yarn: 3, wire: 7, wrap: 1});
-  final strap = await product('Beaded phone strap', 180, {beads: 3, rings: 2, clasp: 1, cord: 1});
+  final tulip =
+      await product('Crochet tulip bouquet', 450, {yarn: 3, wire: 7, wrap: 1});
+  final strap = await product(
+      'Beaded phone strap', 180, {beads: 3, rings: 2, clasp: 1, cord: 1});
   final keychain = await product('Resin keychain', 120, {resin: 1, rings: 1});
   final box = _ok(await products.createProduct(
     name: 'Kraft gift box',
@@ -97,7 +122,8 @@ Future<void> seedSampleShop() async {
     initialUnitCost: 28,
   ));
   await products.updateProduct(id: box, alertLevel: 3);
-  _ok(await products.receiveProductStock(productId: box, quantity: 4, pricePerUnit: 26));
+  _ok(await products.receiveProductStock(
+      productId: box, quantity: 4, pricePerUnit: 26));
   _ok(await products.adjustProductStock(productId: box, newQuantityOnHand: 8));
   // Movements are stamped with the real clock; spread them out so the
   // product history reads like a shop that's been running a while.
@@ -106,8 +132,10 @@ Future<void> seedSampleShop() async {
         ..orderBy([(t) => OrderingTerm.asc(t.id)]))
       .get();
   for (final (i, daysAgo) in [30, 15, 8].indexed) {
-    await (db.update(db.productStockMovements)..where((t) => t.id.equals(boxMoves[i].id)))
-        .write(ProductStockMovementsCompanion(createdAt: Value(today.subtract(Duration(days: daysAgo)))));
+    await (db.update(db.productStockMovements)
+          ..where((t) => t.id.equals(boxMoves[i].id)))
+        .write(ProductStockMovementsCompanion(
+            createdAt: Value(today.subtract(Duration(days: daysAgo)))));
   }
 
   final createOrder = getIt<CreateOrder>();
@@ -116,7 +144,8 @@ Future<void> seedSampleShop() async {
   final orderRepo = getIt<OrderRepository>();
 
   OrderItemInput item(int id, String name, int qty, double price) =>
-      OrderItemInput(productId: id, productName: name, quantity: qty, unitPrice: price);
+      OrderItemInput(
+          productId: id, productName: name, quantity: qty, unitPrice: price);
 
   Future<int> order(
     String customer,
@@ -148,7 +177,8 @@ Future<void> seedSampleShop() async {
   Future<void> completedOn(int id, DateTime when, {bool shipped = true}) async {
     _ok(await pack(id));
     if (shipped) _ok(await ship(id));
-    await (db.update(db.orders)..where((t) => t.id.equals(id))).write(OrdersCompanion(
+    await (db.update(db.orders)..where((t) => t.id.equals(id)))
+        .write(OrdersCompanion(
       packedAt: Value(when),
       shippedAt: Value(shipped ? when : null),
     ));
@@ -156,18 +186,68 @@ Future<void> seedSampleShop() async {
 
   // Finished orders across the last few weeks, for Money.
   final history = <(String, int, List<OrderItemInput>, int, double, double)>[
-    ('Bea Garcia', shopee, [item(tulip, 'Crochet tulip bouquet', 1, 450)], 20, 50, 40),
-    ('Carlo Diaz', tiktok, [item(strap, 'Beaded phone strap', 2, 180)], 12, 29, 30),
+    (
+      'Bea Garcia',
+      shopee,
+      [item(tulip, 'Crochet tulip bouquet', 1, 450)],
+      20,
+      50,
+      40
+    ),
+    (
+      'Carlo Diaz',
+      tiktok,
+      [item(strap, 'Beaded phone strap', 2, 180)],
+      12,
+      29,
+      30
+    ),
     ('Dana Uy', walkIn, [item(keychain, 'Resin keychain', 3, 120)], 9, 0, 0),
-    ('Eli Ramos', shopee, [item(tulip, 'Crochet tulip bouquet', 2, 450), item(box, 'Kraft gift box', 1, 35)], 6, 98, 40),
-    ('Faye Lim', tiktok, [item(strap, 'Beaded phone strap', 1, 180)], 4, 14, 30),
-    ('Gio Tan', walkIn, [item(tulip, 'Crochet tulip bouquet', 1, 450)], 2, 0, 0),
-    ('Hana Cruz', shopee, [item(keychain, 'Resin keychain', 2, 120)], 1, 29, 40),
+    (
+      'Eli Ramos',
+      shopee,
+      [
+        item(tulip, 'Crochet tulip bouquet', 2, 450),
+        item(box, 'Kraft gift box', 1, 35)
+      ],
+      6,
+      98,
+      40
+    ),
+    (
+      'Faye Lim',
+      tiktok,
+      [item(strap, 'Beaded phone strap', 1, 180)],
+      4,
+      14,
+      30
+    ),
+    (
+      'Gio Tan',
+      walkIn,
+      [item(tulip, 'Crochet tulip bouquet', 1, 450)],
+      2,
+      0,
+      0
+    ),
+    (
+      'Hana Cruz',
+      shopee,
+      [item(keychain, 'Resin keychain', 2, 120)],
+      1,
+      29,
+      40
+    ),
   ];
   for (final (name, ch, items, daysAgo, fees, shipping) in history) {
     final id = await order(name, ch, items,
-        placedDaysAgo: daysAgo + 2, shipInDays: -daysAgo, fees: fees, shipping: shipping,
-        fields: name == 'Bea Garcia' ? {cardField: 'Happy anniversary, love!'} : const {});
+        placedDaysAgo: daysAgo + 2,
+        shipInDays: -daysAgo,
+        fees: fees,
+        shipping: shipping,
+        fields: name == 'Bea Garcia'
+            ? {cardField: 'Happy anniversary, love!'}
+            : const {});
     if (name == 'Eli Ramos') {
       // Used more yarn than planned: shows waste on Money.
       final mats = _ok(await orderRepo.getOrderMaterials(id));
@@ -177,7 +257,8 @@ Future<void> seedSampleShop() async {
             materialId: m.materialId,
             materialName: m.materialName,
             plannedQuantity: m.plannedQuantity,
-            actualQuantity: m.materialId == yarn ? m.plannedQuantity + 2 : m.actualQuantity,
+            actualQuantity:
+                m.materialId == yarn ? m.plannedQuantity + 2 : m.actualQuantity,
             wasteQuantity: m.materialId == yarn ? 2 : 0,
             wasteReason: m.materialId == yarn ? 'Cutting' : null,
             unitCost: m.unitCost,
@@ -188,15 +269,30 @@ Future<void> seedSampleShop() async {
   }
 
   // Open orders for Today and Orders.
-  await order('Maria Santos', shopee, [item(tulip, 'Crochet tulip bouquet', 2, 450), item(box, 'Kraft gift box', 1, 35)],
-      placedDaysAgo: 3, shipInDays: -1, address: '22 Rizal Ave, Pasig City',
+  await order(
+      'Maria Santos',
+      shopee,
+      [
+        item(tulip, 'Crochet tulip bouquet', 2, 450),
+        item(box, 'Kraft gift box', 1, 35)
+      ],
+      placedDaysAgo: 3,
+      shipInDays: -1,
+      address: '22 Rizal Ave, Pasig City',
       fields: {
         wrapField: 'Floral',
-        eventField: OrderFieldCodec.encodeDate(today.add(const Duration(days: 4))),
+        eventField:
+            OrderFieldCodec.encodeDate(today.add(const Duration(days: 4))),
       },
-      note: 'Gift wrap please, birthday on the 5th', fees: 98.5, shipping: 40);
+      note: 'Gift wrap please, birthday on the 5th',
+      fees: 98.5,
+      shipping: 40);
   await order('Jun Reyes', tiktok, [item(strap, 'Beaded phone strap', 3, 180)],
-      placedDaysAgo: 2, shipInDays: 0, address: '9 Kalayaan St, Makati', fees: 43.2, shipping: 30);
+      placedDaysAgo: 2,
+      shipInDays: 0,
+      address: '9 Kalayaan St, Makati',
+      fees: 43.2,
+      shipping: 30);
   // A formatted note. Maria's above is still plain text, so the screenshots
   // cover both a rich note and one written before rich notes existed.
   final anaNote = NoteCodec.encode(Delta()
@@ -205,14 +301,29 @@ Future<void> seedSampleShop() async {
     ..insert('\n')
     ..insert('Include the care card\n', {'list': 'unchecked'})
     ..insert('Ring the bell twice\n', {'list': 'checked'}))!;
-  final ana = await order('Ana Cruz', walkIn, [item(keychain, 'Resin keychain', 1, 120)],
+  final ana = await order(
+      'Ana Cruz', walkIn, [item(keychain, 'Resin keychain', 1, 120)],
       placedDaysAgo: 4, shipInDays: 0, note: anaNote);
   await completedOn(ana, today, shipped: false);
-  await order('Lea Bautista', shopee, [item(keychain, 'Resin keychain', 1, 120), item(tulip, 'Crochet tulip bouquet', 1, 450)],
-      placedDaysAgo: 0, shipInDays: 3, address: '41 Aguinaldo Hwy, Imus', fees: 62, shipping: 40,
+  await order(
+      'Lea Bautista',
+      shopee,
+      [
+        item(keychain, 'Resin keychain', 1, 120),
+        item(tulip, 'Crochet tulip bouquet', 1, 450)
+      ],
+      placedDaysAgo: 0,
+      shipInDays: 3,
+      address: '41 Aguinaldo Hwy, Imus',
+      fees: 62,
+      shipping: 40,
       fields: {wrapField: 'Kraft'});
   await order('Paolo Lim', tiktok, [item(strap, 'Beaded phone strap', 2, 180)],
-      placedDaysAgo: 0, shipInDays: 5, address: '14 Mabini St, Cubao, Quezon City', fees: 28.8, shipping: 30);
+      placedDaysAgo: 0,
+      shipInDays: 5,
+      address: '14 Mabini St, Cubao, Quezon City',
+      fees: 28.8,
+      shipping: 30);
 
   _ok(await fields.setArchived(cardField, true));
 
@@ -223,7 +334,8 @@ Future<void> seedSampleShop() async {
 Future<void> _seedNotes() async {
   final notes = getIt<NoteRepository>();
   Future<void> add(String title, Delta body, {bool pinned = false}) async =>
-      _ok(await notes.createNote(Note(title: title, body: NoteCodec.encode(body), isPinned: pinned)));
+      _ok(await notes.createNote(
+          Note(title: title, body: NoteCodec.encode(body), isPinned: pinned)));
 
   await add(
     'Packing checklist',
@@ -240,7 +352,8 @@ Future<void> _seedNotes() async {
   await add(
     'Suppliers',
     Delta()
-      ..line('Yarn: Divisoria, stall 14 (ask for Aling Nena)', {'list': 'bullet'})
+      ..line(
+          'Yarn: Divisoria, stall 14 (ask for Aling Nena)', {'list': 'bullet'})
       ..line('Resin & molds: online, ships Tuesdays', {'list': 'bullet'})
       ..insert('Kraft boxes cheaper by 100s.', {'italic': true})
       ..insert('\n'),

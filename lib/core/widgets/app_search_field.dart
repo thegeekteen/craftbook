@@ -60,7 +60,8 @@ class _AppSearchFieldState extends State<AppSearchField> {
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
         prefixIcon: Icon(Icons.search_rounded, size: 20, color: c.muted),
-        prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 44, minHeight: 40),
         suffixIcon: _controller.text.isEmpty
             ? null
             : IconButton(

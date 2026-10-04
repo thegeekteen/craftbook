@@ -94,8 +94,9 @@ class OrderFieldRepositoryImpl implements OrderFieldRepository {
           id,
           db.OrderFieldDefinitionsCompanion(
             isArchived: Value(archived),
-            position:
-                archived ? const Value.absent() : Value(await dao.nextPosition()),
+            position: archived
+                ? const Value.absent()
+                : Value(await dao.nextPosition()),
           ),
         );
       });

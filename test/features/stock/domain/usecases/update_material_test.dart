@@ -41,7 +41,8 @@ void main() {
       );
 
   test('trims text and delegates to the repository', () async {
-    expect(await call(name: '  Beads ', supplier: '  Shopee '), const Success<void>(null));
+    expect(await call(name: '  Beads ', supplier: '  Shopee '),
+        const Success<void>(null));
     verify(() => repo.updateMaterial(
           id: 1,
           name: 'Beads',

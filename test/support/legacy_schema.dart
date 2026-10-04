@@ -13,6 +13,7 @@ void downgradeToV3(raw.Database db) {
   downgradeToV4(db);
   db.execute('DROP TABLE order_field_values');
   db.execute('DROP TABLE order_field_definitions');
-  db.execute("ALTER TABLE orders ADD COLUMN customer_address TEXT NOT NULL DEFAULT ''");
+  db.execute(
+      "ALTER TABLE orders ADD COLUMN customer_address TEXT NOT NULL DEFAULT ''");
   db.execute('PRAGMA user_version = 3');
 }

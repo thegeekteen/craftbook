@@ -83,7 +83,9 @@ extension BuildContextExtension on BuildContext {
           content: Row(
             children: [
               Icon(
-                isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+                isError
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_rounded,
                 size: 18,
                 color: isError ? c.alert : c.goSoft,
               ),
@@ -94,7 +96,8 @@ extension BuildContextExtension on BuildContext {
           behavior: SnackBarBehavior.floating,
           action: onAction == null
               ? null
-              : SnackBarAction(label: actionLabel ?? 'Undo', onPressed: onAction),
+              : SnackBarAction(
+                  label: actionLabel ?? 'Undo', onPressed: onAction),
         ),
       );
   }

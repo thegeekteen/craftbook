@@ -60,14 +60,18 @@ class _EarningsViewState extends State<_EarningsView> {
     final now = DateTime.now();
     switch (_range) {
       case _Range.week:
-        final start = app_date.DateUtils.startOfWeek(now).add(Duration(days: 7 * _offset));
-        return DateTimeRange(start: start, end: app_date.DateUtils.endOfWeek(start));
+        final start = app_date.DateUtils.startOfWeek(now)
+            .add(Duration(days: 7 * _offset));
+        return DateTimeRange(
+            start: start, end: app_date.DateUtils.endOfWeek(start));
       case _Range.month:
         final start = DateTime(now.year, now.month + _offset, 1);
-        return DateTimeRange(start: start, end: app_date.DateUtils.endOfMonth(start));
+        return DateTimeRange(
+            start: start, end: app_date.DateUtils.endOfMonth(start));
       case _Range.year:
         final year = now.year + _offset;
-        return DateTimeRange(start: DateTime(year), end: DateTime(year, 12, 31, 23, 59, 59));
+        return DateTimeRange(
+            start: DateTime(year), end: DateTime(year, 12, 31, 23, 59, 59));
     }
   }
 
@@ -95,7 +99,8 @@ class _EarningsViewState extends State<_EarningsView> {
   String get _periodDetail {
     final p = _period;
     return switch (_range) {
-      _Range.week => '${DateFormat('MMM d').format(p.start)} – ${DateFormat('MMM d').format(p.end)}',
+      _Range.week =>
+        '${DateFormat('MMM d').format(p.start)} – ${DateFormat('MMM d').format(p.end)}',
       _Range.month => DateFormat('MMMM y').format(p.start),
       _Range.year => '${p.start.year}',
     };
@@ -104,7 +109,8 @@ class _EarningsViewState extends State<_EarningsView> {
   void _load() {
     final p = _period;
     context.read<EarningsBloc>().add(
-          LoadEarnings(startDate: p.start, endDate: p.end, granularity: _granularity),
+          LoadEarnings(
+              startDate: p.start, endDate: p.end, granularity: _granularity),
         );
   }
 
@@ -129,7 +135,8 @@ class _EarningsViewState extends State<_EarningsView> {
         builder: (context, state) {
           return switch (state) {
             EarningsLoaded() => _buildLoaded(state),
-            EarningsError(:final message) => Center(child: ErrorState(message: message, onRetry: _load)),
+            EarningsError(:final message) =>
+              Center(child: ErrorState(message: message, onRetry: _load)),
             _ => const Center(child: CircularProgressIndicator()),
           };
         },
@@ -177,9 +184,13 @@ class _EarningsViewState extends State<_EarningsView> {
               Expanded(
                 child: Column(
                   children: [
-                    Text(_periodLabel, style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
-                    if (_offset == 0 || (_offset == -1 && _range != _Range.year))
-                      Text(_periodDetail, style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 11.5)),
+                    Text(_periodLabel,
+                        style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
+                    if (_offset == 0 ||
+                        (_offset == -1 && _range != _Range.year))
+                      Text(_periodDetail,
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: c.muted, fontSize: 11.5)),
                   ],
                 ),
               ),
@@ -198,17 +209,20 @@ class _EarningsViewState extends State<_EarningsView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SummaryBoard(
-                  label: 'Net profit · $orders ${orders == 1 ? 'order' : 'orders'}',
+                  label:
+                      'Net profit · $orders ${orders == 1 ? 'order' : 'orders'}',
                   value: CurrencyFormatter.formatShort(parts.profit),
                   valueColor: parts.profit < 0 ? c.alert : null,
-                  child: ProfitTrendChart(buckets: s.trend, granularity: _granularity),
+                  child: ProfitTrendChart(
+                      buckets: s.trend, granularity: _granularity),
                 ),
                 const SizedBox(height: 12),
                 if (orders == 0)
                   AppCard(
                     child: Text(
                       'No packed or shipped orders in this period. Profit counts once an order is packed.',
-                      style: AppTextStyles.bodySmall.copyWith(color: c.muted, fontSize: 13),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: c.muted, fontSize: 13),
                     ),
                   )
                 else ...[
@@ -220,7 +234,8 @@ class _EarningsViewState extends State<_EarningsView> {
                         const SizedBox(height: 4),
                         Text(
                           '${(parts.margin * 100).round()}% of sales is profit',
-                          style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                          style:
+                              AppTextStyles.bodySmall.copyWith(color: c.muted),
                         ),
                       ],
                     ),
@@ -246,11 +261,13 @@ class _EarningsViewState extends State<_EarningsView> {
                                   color: p.totalProfit >= 0 ? c.go : c.alert,
                                 ),
                               ),
-                              Icon(Icons.chevron_right_rounded, color: c.muted, size: 20),
+                              Icon(Icons.chevron_right_rounded,
+                                  color: c.muted, size: 20),
                             ],
                           ),
                           onTap: () => context.push(
-                            RouteNames.productEarningsPath(p.productId, s.startDate, s.endDate),
+                            RouteNames.productEarningsPath(
+                                p.productId, s.startDate, s.endDate),
                           ),
                         ),
                     ]),
@@ -276,13 +293,15 @@ class _EarningsViewState extends State<_EarningsView> {
                         for (final w in s.wasteSummary.items)
                           CardRow(
                             title: Text(w.materialName),
-                            subtitle: Text('${w.quantity} ${w.quantity == 1 ? 'pc' : 'pcs'} wasted'),
+                            subtitle: Text(
+                                '${w.quantity} ${w.quantity == 1 ? 'pc' : 'pcs'} wasted'),
                             trailing: Text(
                               '−${CurrencyFormatter.format(w.cost)}',
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: c.alert,
                                 fontWeight: FontWeight.w600,
-                                fontFeatures: AppTextStyles.tabular.fontFeatures,
+                                fontFeatures:
+                                    AppTextStyles.tabular.fontFeatures,
                               ),
                             ),
                           ),

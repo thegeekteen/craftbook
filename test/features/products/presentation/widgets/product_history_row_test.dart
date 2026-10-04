@@ -12,7 +12,8 @@ Widget _wrap(Widget child) => MaterialApp(
       home: Scaffold(body: child),
     );
 
-StockHistoryEntry _stock(ProductStockMovementType type, int qty, {String? reference}) =>
+StockHistoryEntry _stock(ProductStockMovementType type, int qty,
+        {String? reference}) =>
     StockHistoryEntry(ProductStockMovement(
       productId: 1,
       type: type,
@@ -23,8 +24,10 @@ StockHistoryEntry _stock(ProductStockMovementType type, int qty, {String? refere
     ));
 
 void main() {
-  testWidgets('received stock shows as an addition with its cost', (tester) async {
-    await tester.pumpWidget(_wrap(ProductHistoryRow(entry: _stock(ProductStockMovementType.received, 5))));
+  testWidgets('received stock shows as an addition with its cost',
+      (tester) async {
+    await tester.pumpWidget(_wrap(ProductHistoryRow(
+        entry: _stock(ProductStockMovementType.received, 5))));
 
     expect(find.text('Received'), findsOneWidget);
     expect(find.text('+5'), findsOneWidget);
@@ -32,11 +35,15 @@ void main() {
     expect(find.textContaining('/pc'), findsOneWidget);
   });
 
-  testWidgets('initial stock and restored rows get their own titles', (tester) async {
+  testWidgets('initial stock and restored rows get their own titles',
+      (tester) async {
     await tester.pumpWidget(_wrap(Column(children: [
-      ProductHistoryRow(entry: _stock(ProductStockMovementType.received, 6, reference: 'Initial stock')),
       ProductHistoryRow(
-        entry: _stock(ProductStockMovementType.received, 1, reference: 'Restored from deleted order'),
+          entry: _stock(ProductStockMovementType.received, 6,
+              reference: 'Initial stock')),
+      ProductHistoryRow(
+        entry: _stock(ProductStockMovementType.received, 1,
+            reference: 'Restored from deleted order'),
       ),
     ])));
 
@@ -45,13 +52,16 @@ void main() {
   });
 
   testWidgets('a count that lowered stock shows as a removal', (tester) async {
-    await tester.pumpWidget(_wrap(ProductHistoryRow(entry: _stock(ProductStockMovementType.adjusted, -2))));
+    await tester.pumpWidget(_wrap(ProductHistoryRow(
+        entry: _stock(ProductStockMovementType.adjusted, -2))));
 
     expect(find.text('Counted'), findsOneWidget);
     expect(find.text('−2'), findsOneWidget);
   });
 
-  testWidgets('an order row shows customer, status and amount, and opens the order', (tester) async {
+  testWidgets(
+      'an order row shows customer, status and amount, and opens the order',
+      (tester) async {
     int? opened;
     await tester.pumpWidget(_wrap(ProductHistoryRow(
       entry: SaleHistoryEntry(ProductSale(
