@@ -35,6 +35,18 @@ void main() {
       url: 'https://www.shopee.ph/mycrafts/',
     );
 
+    testWidgets('long press fires onLongPress, not onTap', (tester) async {
+      var taps = 0;
+      var longPresses = 0;
+      await tester.pumpWidget(host(SocialLinkTile(
+        link: link,
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+      )));
+      await tester.longPress(find.text('Shopee'));
+      expect((taps, longPresses), (0, 1));
+    });
+
     testWidgets('shows the name and the tidy address', (tester) async {
       await tester.pumpWidget(host(SocialLinkTile(link: link, onTap: () {})));
 

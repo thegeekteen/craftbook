@@ -10,6 +10,7 @@ import '../../domain/entities/order_field.dart';
 class OrderFieldTile extends StatelessWidget {
   final OrderField field;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   /// Drag handle for reordering; null for archived fields.
   final Widget? leading;
@@ -19,6 +20,7 @@ class OrderFieldTile extends StatelessWidget {
     super.key,
     required this.field,
     this.onTap,
+    this.onLongPress,
     this.leading,
     this.trailing,
   });
@@ -42,6 +44,7 @@ class OrderFieldTile extends StatelessWidget {
     final c = context.colors;
     return AppCard(
       onTap: onTap,
+      onLongPress: onLongPress,
       padding: const EdgeInsets.fromLTRB(6, 10, 10, 10),
       child: Row(
         children: [

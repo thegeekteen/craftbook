@@ -19,12 +19,14 @@ import 'order_status_ui.dart';
 class OrderCard extends StatelessWidget {
   final OrderListEntry entry;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final OrderAmountShown amountShown;
 
   const OrderCard({
     super.key,
     required this.entry,
     this.onTap,
+    this.onLongPress,
     this.amountShown = OrderAmountShown.total,
   });
 
@@ -39,6 +41,7 @@ class OrderCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
+      onLongPress: onLongPress,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

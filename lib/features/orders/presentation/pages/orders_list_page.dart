@@ -20,6 +20,7 @@ import '../../domain/entities/order_list_entry.dart';
 import '../bloc/orders_list_bloc.dart';
 import '../bloc/orders_list_event.dart';
 import '../bloc/orders_list_state.dart';
+import '../widgets/order_actions.dart';
 import '../widgets/order_card.dart';
 import '../widgets/order_status_ui.dart';
 
@@ -143,6 +144,13 @@ class _OrdersListViewState extends State<_OrdersListView> {
                                 amountShown: shown,
                                 onTap: () =>
                                     _open(RouteNames.orderPath(e.order.id!)),
+                                onLongPress: () async {
+                                  if (await OrderActions.open(
+                                          context, e.order) &&
+                                      mounted) {
+                                    _reload();
+                                  }
+                                },
                               ),
                             ),
                           ),

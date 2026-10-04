@@ -4,18 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_search_field.dart';
-import '../../../../core/widgets/app_sheet.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/notes_bloc.dart';
 import '../bloc/notes_event.dart';
 import '../bloc/notes_state.dart';
+import '../widgets/note_actions.dart';
 import '../widgets/note_card.dart';
 
 /// The shop's notebook.
@@ -129,7 +127,7 @@ class _NoteList extends StatelessWidget {
             key: ValueKey(note.id),
             note: note,
             onTap: () => _open(context, note.id),
-            onLongPress: () => _NoteActions.open(context, bloc, note),
+            onLongPress: () => _noteActions(context, bloc, note),
             onTogglePin: () => bloc.add(ToggleNotePinEvent(note.id!)),
           ),
         );
@@ -167,60 +165,19 @@ class _NoteList extends StatelessWidget {
   }
 }
 
-enum _NoteAction { togglePin, delete }
-
-/// Long-press actions on a note. The sheet only picks one; the page carries
-/// it out, since a dialog can't hang off a sheet that has already closed.
-class _NoteActions extends StatelessWidget {
-  final Note note;
-
-  const _NoteActions({required this.note});
-
-  static Future<void> open(
-      BuildContext context, NotesBloc bloc, Note note) async {
-    final action = await showAppSheet<_NoteAction>(
-      context: context,
-      title: note.displayTitle,
-      builder: (_) => _NoteActions(note: note),
-    );
-    if (!context.mounted) return;
-    switch (action) {
-      case _NoteAction.togglePin:
-        bloc.add(ToggleNotePinEvent(note.id!));
-      case _NoteAction.delete:
-        final confirmed = await ConfirmDialog.show(
-          context,
-          title: 'Delete note?',
-          message: '${note.displayTitle} is removed from your notebook.',
-          confirmText: 'Delete',
-          isDestructive: true,
-        );
-        if (confirmed) bloc.add(DeleteNoteEvent(note.id!));
-      case null:
-        break;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(
-              note.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded),
-          title: Text(note.isPinned ? 'Unpin' : 'Pin to Today'),
-          onTap: () => Navigator.pop(context, _NoteAction.togglePin),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.delete_outline_rounded, color: c.alert),
-          title: Text('Delete', style: TextStyle(color: c.alert)),
-          onTap: () => Navigator.pop(context, _NoteAction.delete),
-        ),
-      ],
-    );
+/// Carries out the note's long-press menu.
+Future<void> _noteActions(
+    BuildContext context, NotesBloc bloc, Note note) async {
+  final action = await NoteActions.pick(context, note);
+  if (!context.mounted) return;
+  switch (action) {
+    case NoteAction.togglePin:
+      bloc.add(ToggleNotePinEvent(note.id!));
+    case NoteAction.delete:
+      if (await NoteActions.confirmDelete(context, note)) {
+        bloc.add(DeleteNoteEvent(note.id!));
+      }
+    case null:
+      break;
   }
 }

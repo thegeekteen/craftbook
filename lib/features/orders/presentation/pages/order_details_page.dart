@@ -15,7 +15,6 @@ import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/product_photo.dart';
@@ -28,6 +27,7 @@ import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
 import '../../../../core/widgets/note/note_view.dart';
+import '../widgets/order_actions.dart';
 import '../widgets/order_status_ui.dart';
 import '../widgets/pack_confirm_sheet.dart';
 import 'adjust_materials_page.dart';
@@ -127,15 +127,16 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           ],
         ),
         actions: [
-          if (order.status != OrderStatus.cancelled)
-            PopupMenuButton<String>(
-              tooltip: 'More',
-              icon: const Icon(Icons.more_vert_rounded),
-              onSelected: (value) {
-                if (value == 'edit') _edit(order);
-                if (value == 'delete') _confirmDelete(order);
-              },
-              itemBuilder: (context) => [
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (value) {
+              if (value == 'edit') _edit(order);
+              if (value == 'cancel') _confirmCancel(order);
+              if (value == 'delete') _confirmDelete(order);
+            },
+            itemBuilder: (context) => [
+              if (order.status != OrderStatus.cancelled)
                 PopupMenuItem(
                   value: 'edit',
                   child: Row(
@@ -148,20 +149,31 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                     ],
                   ),
                 ),
-                if (order.status != OrderStatus.shipped)
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline_rounded,
-                            size: 20, color: c.alert),
-                        const SizedBox(width: 10),
-                        Text('Delete order', style: TextStyle(color: c.alert)),
-                      ],
-                    ),
+              if (OrderActions.canCancel(order))
+                const PopupMenuItem(
+                  value: 'cancel',
+                  child: Row(
+                    children: [
+                      Icon(Icons.block_rounded, size: 20),
+                      SizedBox(width: 10),
+                      Text('Cancel order'),
+                    ],
                   ),
-              ],
-            ),
+                ),
+              if (order.status != OrderStatus.shipped)
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded,
+                          size: 20, color: c.alert),
+                      const SizedBox(width: 10),
+                      Text('Delete order', style: TextStyle(color: c.alert)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
       body: Stack(
@@ -389,16 +401,16 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
     );
   }
 
+  Future<void> _confirmCancel(Order order) async {
+    final confirmed = await OrderActions.confirmCancel(context, order);
+    if (confirmed && mounted) {
+      _changed = true;
+      _bloc.add(CancelOrderDetail(order.id!));
+    }
+  }
+
   Future<void> _confirmDelete(Order order) async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Delete order #${order.id}?',
-      message: order.status == OrderStatus.packed
-          ? 'The order is removed and its materials go back on the shelf.'
-          : 'The order is removed and its reserved stock is released.',
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
+    final confirmed = await OrderActions.confirmDelete(context, order);
     if (confirmed && mounted) _bloc.add(DeleteOrderEvent(order.id!));
   }
 }

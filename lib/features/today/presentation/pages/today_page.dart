@@ -7,19 +7,26 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/status_filter_chips.dart';
 import '../../../../core/widgets/summary_board.dart';
 import '../../../notes/domain/entities/note.dart';
+import '../../../notes/domain/usecases/delete_note.dart';
+import '../../../notes/domain/usecases/restore_note.dart';
+import '../../../notes/domain/usecases/set_note_pinned.dart';
+import '../../../notes/presentation/widgets/note_actions.dart';
 import '../../../notes/presentation/widgets/note_card.dart';
 import '../../../orders/domain/entities/order.dart';
 import '../../../orders/domain/entities/order_list_entry.dart';
+import '../../../orders/presentation/widgets/order_actions.dart';
 import '../../../orders/presentation/widgets/order_card.dart';
 import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../../settings/presentation/bloc/order_amount_cubit.dart';
@@ -72,6 +79,37 @@ class _TodayViewState extends State<_TodayView> {
   Future<void> _openNotes() async {
     await context.push(RouteNames.notes);
     if (mounted) _reload();
+  }
+
+  Future<void> _orderActions(Order order) async {
+    if (await OrderActions.open(context, order) && mounted) _reload();
+  }
+
+  /// The notebook's long-press menu, carried out without the Notes bloc.
+  Future<void> _noteActions(Note note) async {
+    final action = await NoteActions.pick(context, note);
+    if (action == null || !mounted) return;
+    switch (action) {
+      case NoteAction.togglePin:
+        _report(await getIt<SetNotePinned>()(note.id!, !note.isPinned));
+      case NoteAction.delete:
+        if (!await NoteActions.confirmDelete(context, note) || !mounted) return;
+        _report(await getIt<DeleteNote>()(note.id!),
+            message: '${note.displayTitle} deleted',
+            undo: () async => _report(await getIt<RestoreNote>()(note)));
+    }
+  }
+
+  /// Reloads after a note change, or says why it failed.
+  void _report(Result<void> result, {String? message, VoidCallback? undo}) {
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success():
+        _reload();
+        if (message != null) context.showSnackBar(message, onAction: undo);
+    }
   }
 
   @override
@@ -194,7 +232,8 @@ class _TodayViewState extends State<_TodayView> {
                 child: NoteCard(
                     note: note,
                     compact: true,
-                    onTap: () => _openNote(note.id!)),
+                    onTap: () => _openNote(note.id!),
+                    onLongPress: () => _noteActions(note)),
               ),
           ],
           const SizedBox(height: 16),
@@ -240,6 +279,7 @@ class _TodayViewState extends State<_TodayView> {
                 entry: e,
                 amountShown: shown,
                 onTap: () => _open(RouteNames.orderPath(e.order.id!)),
+                onLongPress: () => _orderActions(e.order),
               ),
             ),
           ),

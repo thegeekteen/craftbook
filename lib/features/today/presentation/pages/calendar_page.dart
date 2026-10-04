@@ -17,6 +17,7 @@ import '../../../orders/domain/entities/order.dart';
 import '../../../orders/domain/entities/order_list_entry.dart';
 import '../../../orders/domain/repositories/order_repository.dart';
 import '../../../orders/domain/usecases/get_order_list_entries.dart';
+import '../../../orders/presentation/widgets/order_actions.dart';
 import '../../../orders/presentation/widgets/order_mini_row.dart';
 import '../../../orders/presentation/widgets/order_status_ui.dart';
 import '../../../settings/domain/entities/order_amount_shown.dart';
@@ -158,6 +159,12 @@ class _CalendarPageState extends State<CalendarPage> {
           entry: e,
           amountShown: shown,
           onTap: () => _openOrder(e.order),
+          onLongPress: () async {
+            if (await OrderActions.open(context, e.order) && mounted) {
+              _changed = true;
+              _load();
+            }
+          },
         ),
       );
 

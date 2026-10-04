@@ -13,7 +13,6 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/app_tag.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/pip_strip.dart';
 import '../../../../core/widgets/section_label.dart';
@@ -24,8 +23,8 @@ import '../../../products/domain/repositories/product_repository.dart';
 import '../../domain/entities/material.dart';
 import '../../domain/entities/stock_movement.dart';
 import '../../domain/usecases/adjust_stock.dart';
-import '../../domain/usecases/delete_material.dart';
 import '../../domain/usecases/get_material_detail.dart';
+import '../widgets/material_actions.dart';
 
 /// One material: stock with pips, cost facts, where it's used, history.
 class MaterialDetailPage extends StatefulWidget {
@@ -174,24 +173,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   }
 
   Future<void> _delete(Material m) async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Delete ${m.name}?',
-      message:
-          "This can't be undone. Materials used in a product or with stock history can't be deleted.",
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-    if (!confirmed || !mounted) return;
-    final result = await getIt<DeleteMaterial>()(widget.materialId);
-    if (!mounted) return;
-    switch (result) {
-      case Error(:final failure):
-        context.showSnackBar(failure.message, isError: true);
-      case Success():
-        context.showSnackBar('${m.name} deleted');
-        context.pop(true);
-    }
+    if (await MaterialActions.delete(context, m) && mounted) context.pop(true);
   }
 
   @override

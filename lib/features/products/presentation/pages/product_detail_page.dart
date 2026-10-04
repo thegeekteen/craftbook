@@ -11,7 +11,6 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
@@ -21,9 +20,9 @@ import '../../domain/entities/product_history_entry.dart';
 import '../../domain/product_stock_status.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/adjust_product_stock.dart';
-import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/get_pending_order_counts.dart';
 import '../../domain/usecases/get_product_history.dart';
+import '../widgets/product_actions.dart';
 import '../widgets/product_history_row.dart';
 import '../widgets/product_profit_card.dart';
 import '../widgets/product_summary_card.dart';
@@ -160,24 +159,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> _delete(Product p) async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Delete ${p.name}?',
-      message:
-          "This can't be undone. Products that appear in orders can't be deleted; hide them instead.",
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-    if (!confirmed || !mounted) return;
-    final result = await getIt<DeleteProduct>()(widget.productId);
-    if (!mounted) return;
-    switch (result) {
-      case Error(:final failure):
-        context.showSnackBar(failure.message, isError: true);
-      case Success():
-        context.showSnackBar('Product deleted');
-        context.pop(true);
-    }
+    if (await ProductActions.delete(context, p) && mounted) context.pop(true);
   }
 
   @override

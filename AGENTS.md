@@ -101,6 +101,8 @@ lib/
 
 8. **Earnings Scope**: Earnings include both **packed and shipped** orders. Waste also only counts from packed/shipped orders.
 
+9. **Cancelling**: Pending and packed orders can be cancelled; shipped ones can't. Cancelling releases a pending order's reservations or restores a packed order's deducted stock (`ReturnOrderStock`, shared with `DeleteOrder`), and the order stays on record as cancelled. Deleting a cancelled order returns nothing, since its stock already came back.
+
 ---
 
 ## UI Conventions
@@ -108,7 +110,8 @@ lib/
 - **Colours**: never use `AppColors` or `Colors.*` in widgets. Read `context.colors` (`CraftColors` in `lib/core/theme/colors.dart`) so light and dark both work.
 - **Type**: `AppTextStyles` (`lib/core/theme/text_styles.dart`) carries no colour; add it with `copyWith`. Nothing smaller than `monoTag` (10px). Letter spacing is in px.
 - **Shape and spacing**: `AppRadii` and `AppSpacing` (`lib/core/theme/dimens.dart`). Page bodies use `AppSpacing.page`.
-- **Build from shared widgets** in `lib/core/widgets/` before writing a new container: `AppCard`, `CardList`/`CardRow`, `SectionLabel`, `AppTag`, `MoneyBreakdown`, `SummaryBoard`, `StatTile`, `EmptyState`, `BottomActionBar`, `ChoiceChipRow`, `PipStrip`, `showAppSheet`, `ProductPhoto` / `showPhotoViewer` (product thumbnails with an initial as fallback). Rich text (order notes, the notebook) uses `NoteView`, `NoteToolbar` and `NoteStyles` in `lib/core/widgets/note/`, stored as Delta JSON via `NoteCodec`.
+- **Build from shared widgets** in `lib/core/widgets/` before writing a new container: `AppCard`, `CardList`/`CardRow`, `SectionLabel`, `AppTag`, `MoneyBreakdown`, `SummaryBoard`, `StatTile`, `EmptyState`, `BottomActionBar`, `ChoiceChipRow`, `PipStrip`, `showAppSheet`, `showActionSheet`, `ProductPhoto` / `showPhotoViewer` (product thumbnails with an initial as fallback). Rich text (order notes, the notebook) uses `NoteView`, `NoteToolbar` and `NoteStyles` in `lib/core/widgets/note/`, stored as Delta JSON via `NoteCodec`.
+- **Long press** on a list item opens its actions via `showActionSheet`. Each entity's menu lives in one place (`ProductActions`, `MaterialActions`, `OrderActions`, `NoteActions`, or a `_xActions` function on the page) and returns `true` when the caller should reload. A new list of things that can be edited or deleted gets the same menu.
 - **Order status** maps to a pill only through `OrderStatusPill` (`lib/features/orders/presentation/widgets/order_status_ui.dart`). User-facing name for pending is "To pack".
 - **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. Profit is always `MoneyParts(...).profit` or `Order.liveProfit`.
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen into `test/screenshots/goldens/` using the sample shop in `test/support/sample_data.dart`. Review them after UI changes.

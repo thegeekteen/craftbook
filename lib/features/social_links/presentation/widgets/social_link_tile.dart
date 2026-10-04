@@ -10,8 +10,10 @@ import 'social_mark.dart';
 class SocialLinkTile extends StatelessWidget {
   final SocialLink link;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
-  const SocialLinkTile({super.key, required this.link, required this.onTap});
+  const SocialLinkTile(
+      {super.key, required this.link, required this.onTap, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +23,7 @@ class SocialLinkTile extends StatelessWidget {
       label: 'Open ${link.label}',
       child: AppCard(
         onTap: onTap,
+        onLongPress: onLongPress,
         padding: const EdgeInsets.all(14),
         child: ExcludeSemantics(
           child: Column(

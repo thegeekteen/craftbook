@@ -46,7 +46,10 @@ abstract class MaterialRepository {
   /// more was used than planned.
   Future<Result<void>> deductMaterials(int materialId, int quantity,
       {int? reserved});
-  Future<Result<void>> restoreDeductedMaterials(int materialId, int quantity);
+
+  /// Puts [quantity] back on hand, logged under [reference] in the history.
+  Future<Result<void>> restoreDeductedMaterials(int materialId, int quantity,
+      {String reference = 'Restored from deleted order'});
   Future<Result<List<BuyListItem>>> getBuyList();
   Future<Result<void>> deleteMaterial(int id);
 }

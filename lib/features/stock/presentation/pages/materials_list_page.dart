@@ -14,6 +14,7 @@ import '../../domain/entities/material.dart';
 import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
 import '../bloc/materials_state.dart';
+import '../widgets/material_actions.dart';
 import '../widgets/material_card.dart';
 
 enum _StockFilter { all, low, promised }
@@ -168,6 +169,12 @@ class _MaterialsListViewState extends State<_MaterialsListView> {
                       material: visible[i],
                       onTap: () =>
                           _open(RouteNames.materialPath(visible[i].id!)),
+                      onLongPress: () async {
+                        if (await MaterialActions.open(context, visible[i]) &&
+                            mounted) {
+                          _reload();
+                        }
+                      },
                     ),
                   ),
           ),

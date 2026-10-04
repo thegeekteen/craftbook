@@ -8,6 +8,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -92,6 +93,7 @@ class _ChannelsView extends StatelessWidget {
               return ChannelCard(
                 channel: ch,
                 onTap: () => _ChannelSheet.open(context, bloc, channel: ch),
+                onLongPress: () => _channelActions(context, bloc, ch),
                 onActiveChanged: (v) =>
                     bloc.add(UpdateChannelEvent(id: ch.id!, isActive: v)),
               );
@@ -106,6 +108,55 @@ class _ChannelsView extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _ChannelAction { edit, toggleActive, delete }
+
+/// The long-press menu on a channel.
+Future<void> _channelActions(
+    BuildContext context, ChannelsBloc bloc, Channel ch) async {
+  final action = await showActionSheet<_ChannelAction>(
+    context,
+    title: ch.name,
+    actions: [
+      const SheetAction(
+          value: _ChannelAction.edit,
+          icon: Icons.edit_outlined,
+          label: 'Edit channel'),
+      SheetAction(
+        value: _ChannelAction.toggleActive,
+        icon:
+            ch.isActive ? Icons.toggle_off_outlined : Icons.toggle_on_outlined,
+        label: ch.isActive ? 'Turn off' : 'Turn on',
+      ),
+      const SheetAction(
+          value: _ChannelAction.delete,
+          icon: Icons.delete_outline_rounded,
+          label: 'Delete channel',
+          destructive: true),
+    ],
+  );
+  if (action == null || !context.mounted) return;
+  switch (action) {
+    case _ChannelAction.edit:
+      await _ChannelSheet.open(context, bloc, channel: ch);
+    case _ChannelAction.toggleActive:
+      bloc.add(UpdateChannelEvent(id: ch.id!, isActive: !ch.isActive));
+    case _ChannelAction.delete:
+      if (await _confirmDelete(context, ch)) {
+        bloc.add(DeleteChannelEvent(ch.id!));
+      }
+  }
+}
+
+Future<bool> _confirmDelete(BuildContext context, Channel ch) {
+  return ConfirmDialog.show(
+    context,
+    title: 'Delete ${ch.name}?',
+    message: "Channels used by orders can't be deleted. Turn them off instead.",
+    confirmText: 'Delete',
+    isDestructive: true,
+  );
 }
 
 /// Create/edit form in a bottom sheet.
@@ -188,15 +239,7 @@ class _ChannelSheetState extends State<_ChannelSheet> {
 
   Future<void> _delete() async {
     final ch = widget.channel!;
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'Delete ${ch.name}?',
-      message:
-          "Channels used by orders can't be deleted. Turn them off instead.",
-      confirmText: 'Delete',
-      isDestructive: true,
-    );
-    if (!confirmed || !mounted) return;
+    if (!await _confirmDelete(context, ch) || !mounted) return;
     widget.bloc.add(DeleteChannelEvent(ch.id!));
     Navigator.pop(context);
   }

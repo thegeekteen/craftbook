@@ -20,6 +20,7 @@ class ProductCard extends StatelessWidget {
   /// Pending orders want more than stock or materials can cover.
   final bool isShort;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const ProductCard({
     super.key,
@@ -28,6 +29,7 @@ class ProductCard extends StatelessWidget {
     this.available,
     this.isShort = false,
     this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -46,6 +48,7 @@ class ProductCard extends StatelessWidget {
       opacity: p.isActive ? 1 : 0.6,
       child: AppCard(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

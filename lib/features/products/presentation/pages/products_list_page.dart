@@ -13,6 +13,7 @@ import '../../domain/product_stock_status.dart';
 import '../bloc/products_bloc.dart';
 import '../bloc/products_event.dart';
 import '../bloc/products_state.dart';
+import '../widgets/product_actions.dart';
 import '../widgets/product_card.dart';
 
 /// The product catalogue with cost, margin and availability.
@@ -152,6 +153,12 @@ class _ProductsListViewState extends State<_ProductsListView> {
                         available: state.available[p.id],
                         isShort: isShort(p),
                         onTap: () => _open(RouteNames.productPath(p.id!)),
+                        onLongPress: () async {
+                          if (await ProductActions.open(context, p) &&
+                              mounted) {
+                            _reload();
+                          }
+                        },
                       );
                     },
                   ),

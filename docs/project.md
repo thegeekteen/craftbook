@@ -85,6 +85,8 @@ The app is built around 6 main user flows:
 | Material adjustment | ✅ | Actual vs planned, waste tracking, profit recalculation |
 | Pack & Ship | ✅ | Stock deduction, status updates |
 | Delete orders | ✅ | Blocked when shipped, stock reversal for pending/packed |
+| Cancel orders | ✅ | Pending or packed orders, from the detail menu or a long press. Reservations are released, packed stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. Cancelled orders can then only be deleted |
+| Long-press menus | ✅ | Long press any product, material, order (list, Today, calendar), channel, social shortcut, order field or note for its actions: edit, delete, plus shortcuts such as Hide, Receive stock, Mark shipped, Cancel, Turn off, Restore |
 | Materials list | ✅ | Tabbed, search, pip visualization |
 | Material detail | ✅ | Stock overview, movements, receive, adjust, delete |
 | Receive stock | ✅ | Packs + price, weighted avg cost preview, read-only pack size |
@@ -125,6 +127,9 @@ Not just shipped. Waste also scoped to packed/shipped only.
 
 ### Safe deletion with referential integrity
 Deletes blocked when entities are referenced. No cascade data loss. Stock reversal on order deletion.
+
+### Cancelling returns stock once
+Cancelling and deleting share `ReturnOrderStock`. A cancelled order already gave its stock back, so deleting it later returns nothing; doing it again would double-count.
 
 ### Search fields use TextEditingController
 Required for clear (X) button to work — clearing just the state variable doesn't reset the TextField.
