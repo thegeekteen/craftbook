@@ -7,8 +7,10 @@ import '../../../../database/daos/order_dao.dart';
 import '../../../order_fields/data/repositories/order_field_repository_impl.dart';
 import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_discount.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/entities/order_list_entry.dart';
+import '../../domain/entities/order_money.dart';
 import '../../domain/entities/order_material.dart';
 import '../../domain/entities/order_product.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -178,9 +180,15 @@ class OrderRepositoryImpl implements OrderRepository {
     required List<OrderMaterialInput> materials,
     List<OrderProductInput> products = const [],
     Map<int, String> fieldValues = const {},
+    OrderTerms terms = const OrderTerms(),
+    double discountTotal = 0,
+    double taxAmount = 0,
   }) async {
     try {
       final orderId = await dao.transaction(() => _insertOrder(
+            terms: terms,
+            discountTotal: discountTotal,
+            taxAmount: taxAmount,
             customerName: customerName,
             note: note,
             orderDate: orderDate,
@@ -203,6 +211,9 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   Future<int> _insertOrder({
+    required OrderTerms terms,
+    required double discountTotal,
+    required double taxAmount,
     required String customerName,
     String? note,
     required DateTime orderDate,
@@ -230,7 +241,14 @@ class OrderRepositoryImpl implements OrderRepository {
       channelFees: Value(channelFees),
       shippingCost: Value(shippingCost),
       profit: Value(profit),
+      discountTotal: Value(discountTotal),
+      taxRate: Value(terms.tax?.rate),
+      taxAmount: Value(taxAmount),
+      taxInclusive: Value(terms.tax?.inclusive ?? true),
+      isPaid: Value(terms.isPaid),
+      paidAt: Value(terms.isPaid ? DateTime.now() : null),
     ));
+    await dao.replaceOrderDiscounts(orderId, _discountRows(terms.discounts));
 
     // Insert order items
     for (final item in items) {
@@ -287,9 +305,26 @@ class OrderRepositoryImpl implements OrderRepository {
     List<OrderMaterialInput>? materials,
     List<OrderProductInput>? products,
     Map<int, String>? fieldValues,
+    OrderTerms? terms,
+    double discountTotal = 0,
+    double taxAmount = 0,
   }) async {
     try {
       await dao.transaction(() async {
+        if (terms != null) {
+          final existing = await dao.getOrderById(id);
+          await (dao.update(dao.orders)..where((t) => t.id.equals(id)))
+              .write(db.OrdersCompanion(
+            discountTotal: Value(discountTotal),
+            taxRate: Value(terms.tax?.rate),
+            taxAmount: Value(taxAmount),
+            taxInclusive: Value(terms.tax?.inclusive ?? true),
+            isPaid: Value(terms.isPaid),
+            paidAt: Value(
+                terms.isPaid ? (existing?.paidAt ?? DateTime.now()) : null),
+          ));
+          await dao.replaceOrderDiscounts(id, _discountRows(terms.discounts));
+        }
         await (dao.update(dao.orders)..where((t) => t.id.equals(id)))
             .write(db.OrdersCompanion(
           customerName: Value(customerName),
@@ -341,6 +376,52 @@ class OrderRepositoryImpl implements OrderRepository {
           ));
         }
       });
+      return const Success(null);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<OrderDiscount>>> getOrderDiscounts(int orderId) async {
+    try {
+      final rows = await dao.getOrderDiscounts(orderId);
+      return Success([
+        for (final r in rows)
+          OrderDiscount(
+            label: r.label,
+            kind: DiscountKind.fromName(r.kind),
+            value: r.value,
+            amount: r.amount,
+          ),
+      ]);
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<List<Order>>> getUnpaidOrders() async {
+    try {
+      final rows = await dao.getUnpaidOrders();
+      return Success(rows.map(_toEntity).toList());
+    } catch (e) {
+      return Error(DatabaseFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void>> setOrderPaid(int orderId, bool paid) async {
+    try {
+      final now = DateTime.now();
+      final updated = await (dao.update(dao.orders)
+            ..where((t) => t.id.equals(orderId)))
+          .write(db.OrdersCompanion(
+        isPaid: Value(paid),
+        paidAt: Value(paid ? now : null),
+        updatedAt: Value(now),
+      ));
+      if (updated == 0) return const Error(NotFoundFailure('Order not found'));
       return const Success(null);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
@@ -447,10 +528,9 @@ class OrderRepositoryImpl implements OrderRepository {
 
       final order = await dao.getOrderById(orderId);
       final newProfit = order != null
-          ? order.totalSales -
-              totalCost -
-              order.channelFees -
-              order.shippingCost
+          ? OrderMoney.fromOrder(_toEntity(order))
+              .withMaterials(totalCost)
+              .profit
           : 0.0;
 
       final now = DateTime.now();
@@ -511,6 +591,7 @@ class OrderRepositoryImpl implements OrderRepository {
         await dao.deleteStockMovementsByOrderId(id);
         await dao.deleteProductStockMovementsByOrderId(id);
         await dao.deleteFieldValuesByOrderId(id);
+        await dao.deleteDiscountsByOrderId(id);
         await dao.deleteOrder(id);
       });
       return const Success(null);
@@ -521,7 +602,10 @@ class OrderRepositoryImpl implements OrderRepository {
 
   // ── Mapping helpers ──────────────────────────────────────────────────
 
-  Order _toEntity(db.Order row) => Order(
+  Order _toEntity(db.Order row) => toEntity(row);
+
+  /// Shared with the reports repository, which reads the same rows.
+  static Order toEntity(db.Order row) => Order(
         id: row.id,
         customerName: row.customerName,
         note: row.note,
@@ -536,9 +620,28 @@ class OrderRepositoryImpl implements OrderRepository {
         channelFees: row.channelFees,
         shippingCost: row.shippingCost,
         profit: row.profit,
+        discountTotal: row.discountTotal,
+        taxRate: row.taxRate,
+        taxAmount: row.taxAmount,
+        taxInclusive: row.taxInclusive,
+        isPaid: row.isPaid,
+        paidAt: row.paidAt,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       );
+
+  static List<db.OrderDiscountsCompanion> _discountRows(
+          List<OrderDiscount> discounts) =>
+      [
+        for (final d in discounts)
+          db.OrderDiscountsCompanion.insert(
+            orderId: 0, // set by the DAO
+            label: d.label,
+            kind: d.kind.name,
+            value: d.value,
+            amount: d.amount,
+          ),
+      ];
 
   OrderItem _itemToEntity(
     db.OrderItem row,

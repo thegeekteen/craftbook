@@ -14,6 +14,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stat_tile.dart';
 import '../../domain/entities/profit_trend.dart';
+import '../../domain/entities/report_filter.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../domain/usecases/get_product_order_lines.dart';
 
@@ -28,7 +29,11 @@ class ProductEarningsPage extends StatefulWidget {
     required this.productId,
     this.startDate,
     this.endDate,
+    this.filter = ReportFilter.none,
   });
+
+  /// The report's filter, so the orders listed match its numbers.
+  final ReportFilter filter;
 
   @override
   State<ProductEarningsPage> createState() => _ProductEarningsPageState();
@@ -52,8 +57,9 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
   }
 
   Future<void> _load() async {
-    final result =
-        await getIt<GetProductOrderLines>()(widget.productId, _start, _end);
+    final result = await getIt<GetProductOrderLines>()(
+        widget.productId, _start, _end,
+        filter: widget.filter);
     if (!mounted) return;
     setState(() {
       _loading = false;

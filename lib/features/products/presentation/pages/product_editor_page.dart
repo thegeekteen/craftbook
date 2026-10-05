@@ -371,8 +371,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: money,
-              decoration: const InputDecoration(
-                  labelText: 'Sell price', prefixText: '₱ '),
+              decoration: InputDecoration(
+                  labelText: 'Sell price',
+                  prefixText: '${CurrencyFormatter.symbol} '),
               validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Enter a price above 0'
                   : null,
@@ -530,9 +531,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           controller: _unitCost,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: money,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Cost per piece',
-            prefixText: '₱ ',
+            prefixText: '${CurrencyFormatter.symbol} ',
             helperText: 'Receiving stock recalculates this as an average.',
           ),
         ),
@@ -547,8 +548,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
-                decoration: const InputDecoration(
-                    labelText: 'Cost per piece', prefixText: '₱ '),
+                decoration: InputDecoration(
+                    labelText: 'Cost per piece',
+                    prefixText: '${CurrencyFormatter.symbol} '),
               ),
             ),
             const SizedBox(width: 8),

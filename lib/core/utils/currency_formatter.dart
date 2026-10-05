@@ -1,13 +1,32 @@
 import 'package:intl/intl.dart';
-import '../constants/app_constants.dart';
 
-/// Currency formatter for PHP (Philippine Peso)
+import 'currency_setting.dart';
+
+/// Formats amounts in the shop's currency. Static so the many call sites
+/// stay simple; [configure] switches the currency for the whole app.
 class CurrencyFormatter {
-  static final NumberFormat _formatter = NumberFormat.currency(
-    locale: 'en_PH',
-    symbol: AppConstants.currencySymbol,
-    decimalDigits: 2,
-  );
+  static CurrencySetting _currency = CurrencySetting.php;
+  static NumberFormat _formatter = _build(_currency.decimals);
+  static NumberFormat _wholeFormatter = _build(0);
+
+  static NumberFormat _build(int decimals) => NumberFormat.currency(
+        locale: 'en_US',
+        symbol: _currency.symbol,
+        decimalDigits: decimals,
+      );
+
+  static CurrencySetting get currency => _currency;
+
+  static String get symbol => _currency.symbol;
+
+  /// Decimal places amounts are written with (0 for yen, 2 for most).
+  static int get decimals => _currency.decimals;
+
+  static void configure(CurrencySetting currency) {
+    _currency = currency;
+    _formatter = _build(currency.decimals);
+    _wholeFormatter = _build(0);
+  }
 
   /// Losses use the true minus sign (−), matching the rest of the UI.
   static String format(double amount) {
@@ -16,7 +35,7 @@ class CurrencyFormatter {
   }
 
   /// Drops ".00" on whole amounts (₱412 instead of ₱412.00) but keeps
-  /// real centavos. Used for headline numbers where the zeros are noise.
+  /// real cents. Used for headline numbers where the zeros are noise.
   static String formatShort(double amount) {
     if (amount < 0) return '−${formatShort(-amount)}';
     final rounded = amount.roundToDouble();
@@ -26,24 +45,18 @@ class CurrencyFormatter {
     return format(amount);
   }
 
-  static final NumberFormat _wholeFormatter = NumberFormat.currency(
-    locale: 'en_PH',
-    symbol: AppConstants.currencySymbol,
-    decimalDigits: 0,
-  );
-
   static String formatCompact(double amount) {
     final sign = amount < 0 ? '−' : '';
     final abs = amount.abs();
     if (abs >= 1000000) {
-      return '$sign${AppConstants.currencySymbol}${(abs / 1000000).toStringAsFixed(1)}M';
+      return '$sign$symbol${(abs / 1000000).toStringAsFixed(1)}M';
     } else if (abs >= 1000) {
-      return '$sign${AppConstants.currencySymbol}${(abs / 1000).toStringAsFixed(1)}K';
+      return '$sign$symbol${(abs / 1000).toStringAsFixed(1)}K';
     }
     return formatShort(amount);
   }
 
   static String formatWithoutSymbol(double amount) {
-    return amount.toStringAsFixed(2);
+    return amount.toStringAsFixed(_currency.decimals);
   }
 }

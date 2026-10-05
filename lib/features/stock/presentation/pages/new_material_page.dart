@@ -228,8 +228,9 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
                                 inputFormatters: money,
-                                decoration: const InputDecoration(
-                                    labelText: 'Pack price', prefixText: '₱ '),
+                                decoration: InputDecoration(
+                                    labelText: 'Pack price',
+                                    prefixText: '${CurrencyFormatter.symbol} '),
                                 validator: (v) {
                                   final n = double.tryParse(v ?? '');
                                   return (n == null || n < 0)

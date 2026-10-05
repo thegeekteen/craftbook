@@ -1,232 +1,188 @@
 # Craftbook
 
-Craftbook is an offline Android app for small craft businesses: people who make crochet bouquets, beaded phone straps or resin keychains and sell them on Shopee, TikTok Shop or at a market table.
+Craftbook helps small craft shops run their orders: crochet bouquets, beaded phone straps, resin keychains, sold on Shopee, TikTok Shop, Facebook or at a market table.
 
-It answers three everyday questions:
+It answers four everyday questions:
 
 - **What do I need to pack today?**
 - **Do I have enough materials, and what should I buy?**
-- **How much did I actually make,** after materials, waste, platform fees and shipping?
+- **How much did I actually make,** after discounts, tax, materials, waste, platform fees and shipping?
+- **Who still owes me money?**
 
-Everything stays on the phone. There are no accounts and no sync. The app only goes online when you tap **Check for updates**, and then it only asks GitHub for the newest version. You can export the whole database to a file as a backup.
-
----
-
-## How it works in one paragraph
-
-You list your **materials** (yarn, wire, beads, boxes) and your **products**, and tell the app how many of each material one product uses (its bill of materials, or BOM). When you save an **order**, the app works out which materials it needs and **reserves** them, so you can see what's promised before you've touched anything. When you **pack** the order, those pieces come off the shelf for real. **Profit** is always calculated from its parts: sales minus the materials actually used (waste included), channel fees and shipping.
+Everything stays on your phone. There's no account to make and nothing to sync. Craftbook only goes online when you tap **Check for updates**. Export a backup now and then so you never lose your records.
 
 ---
 
-## Using the app
+## The big idea
 
-The bottom bar has five tabs: **Today**, **Orders**, **Stock**, **Money** and **More**.
+You tell Craftbook what your **materials** are (yarn, wire, beads, boxes) and how much of each goes into one of your **products**. When you save an **order**, Craftbook works out the materials it needs and **sets them aside**, so you can see what's promised before you've touched anything. When you **pack** the order, those pieces come off your shelf for real.
 
-### 1. Set up once
+Profit is always worked out fresh from the parts, so it stays right even when you change things later:
 
-| Step | Where | What you enter |
+> **Profit** = what the customer paid − tax − materials actually used − channel fees − shipping you paid
+
+---
+
+## Getting around
+
+The bar at the bottom has five tabs:
+
+| Tab | What's there |
+|-----|--------------|
+| **Today** | What's due today, new orders, low stock, this week's profit, pinned notes |
+| **Orders** | Every order, by status, with search |
+| **Products** | What you sell, with photos, margins and how many you can make now |
+| **Reports** | Profit for any period, where the money went, waste, and who hasn't paid |
+| **More** | Materials, channels, discounts, tax, currency, notes, backups and settings |
+
+**Long-press** almost anything (an order, a product, a material, a discount) to see what you can do with it.
+
+---
+
+## 1. Set up once
+
+Go to **More** and work down the list. You can change everything later.
+
+| What | Where | What you enter |
 |------|-------|----------------|
-| Add sales channels | More → Channels & fees | Commission %, transaction fee %, fixed fee, shipping you pay. Each card shows what you keep on an example sale. |
-| Add materials | Stock → **+ Material** | Pieces per pack, pack price (unit cost is worked out for you), supplier, pieces on hand, reorder level. |
-| Add products | More → Products → **+ Product** | Sell price, then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and unit cost). The editor shows profit per piece and margin as you type. |
+| **Currency** | More → Currency | Pick yours from the list, or type any symbol. This only changes the symbol; your amounts aren't converted. |
+| **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
+| **Materials** | More → Materials → **+ Material** | Pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
+| **Products** | Products → **+ Product** | Sell price and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). The editor shows your profit per piece as you type. |
+| **Tax** (optional) | More → Tax | Turn on **Add tax to new orders** and set the rate and name (VAT, GST…). Choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
+| **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
+| **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
 
-### 2. Day to day
+---
 
-1. **Today** shows what's due: a summary of orders to pack, new orders, overdue orders and this week's profit. It also shows a warning when materials run low, and the orders shipping today or placed today. The calendar icon opens a week or month view by ship-by date.
-2. **New order** (the **+** button) takes three steps:
-   - **Customer:** name, your order fields (address, size, wrap… set up under More → Order fields), channel, order and ship-by dates, note.
-   - **Items:** pick products. The picker shows how many you can build right now.
-   - **Review:** the profit preview, the fee and shipping split, and exactly which materials will be reserved. It warns you if any are short.
-3. **Pack** the order from its detail page. A sheet shows each material's stock before and after. If you used more than planned, tap **Adjust** first and record the real amount and the reason (cutting, defect, and so on). The extra is tracked as waste.
-4. **Mark shipped** when it goes out.
-5. **Edit** an order from its menu. What you can change depends on how far the order has got:
+## 2. Taking an order
 
-   | Status | Editable |
-   |--------|----------|
-   | To pack | Everything. Changing items releases the old reservations and makes new ones. |
-   | Packed | Customer, order fields, note, dates and channel. Items are locked because their stock is already gone. |
-   | Shipped | The note only. |
+Tap **+ New order** on the Orders tab. There are three steps:
 
-### 3. Keeping stock healthy
+1. **Customer**: their name, your order fields, the channel, the order date, the ship-by date and a note. Notes can have checklists, so they work as a packing to-do.
+2. **Items**: pick products. The picker shows how many you can make with the stock you have now.
+3. **Review**: check everything before you save.
+   - **Discounts**: tap a saved discount, or **+ Other** to type one just for this order. Add as many as you like; tap ✕ to remove one.
+   - **Tax**: if tax is on, it's added here. Switch it off for this order if it doesn't apply.
+   - **Paid**: this starts from the channel's setting. Flip it if this customer hasn't paid yet.
+   - The **order total**, where the money goes, your profit, and which materials will be set aside. If you're short of anything you'll see a warning, but you can still save.
 
-- **Stock** lists every material with a **pip strip**, one block per piece:
+### Packing and shipping
 
-  | Pip | Meaning |
-  |-----|---------|
-  | Solid green | Free to use |
-  | Hatched red | Promised to an open order |
-  | Grey | Empty space up to the reorder level |
-  | Thin black tick | The reorder level |
+- **Pack** the order from its page. A sheet shows each material's stock before and after. If you used more than planned, tap **Adjust** first and record what you really used and why (cutting, a defect…). The extra is counted as **waste**.
+- **Mark shipped** when it goes out.
+- **Mark paid** from the order page as soon as the money comes in. You can also do it by long-pressing the order.
 
-  If orders promise more than you have, the card says how many you're short.
-- **Receive** on a material adds packs and recalculates the unit cost as a weighted average. The new cost is previewed before you save.
-- **Count** sets the on-hand number after a physical count.
-- **Edit material** (⋮ menu on its page) changes the name, pack size, pack price, supplier or reorder level.
-- **Buy list** (Stock or More) lists everything at or below its reorder level: how many packs to buy, the cost, and which open orders it's holding up. **Copy list** puts it on the clipboard so you can paste it into a chat with your supplier.
+### Changing an order
 
-### 4. Money
+Open the order's **⋮** menu and choose **Edit**. How much you can change depends on how far the order has got:
 
-**Money** shows net profit for a week, month or year. The view includes:
+| Status | What you can change |
+|--------|---------------------|
+| **To pack** | Everything. Changing items releases the old materials and sets aside the new ones. |
+| **Packed** | Customer, order fields, note, dates, channel, discounts, tax and paid. Items are locked because their materials are already used. |
+| **Shipped** | The note only. You can still mark it paid or unpaid. |
 
-- a bar chart by day (or by month for a year)
-- a breakdown bar and lines for sales, materials, fees and shipping
+### Cancelling
+
+You can cancel an order that hasn't shipped. Whatever it set aside or used goes back into stock, and the order stays in your list under **Cancelled**. If the customer comes back, **Restore** puts it back to *To pack*. Delete a cancelled order only if you don't want it on record at all.
+
+---
+
+## 3. Getting paid
+
+Each order is either **paid** or **unpaid**. New orders start out the way their channel is set: paid for marketplaces, unpaid for walk-in or chat sales if you set it up that way.
+
+- Unpaid orders carry an **UNPAID** tag in every list.
+- On the Orders tab, the **Unpaid** chip shows only the orders still waiting for money.
+- **Waiting for payment** (on Reports, or More → Waiting for payment) lists everything customers still owe, grouped by customer, with the total. Tap an order to open it, or long-press it to mark it paid.
+
+Unpaid orders still count toward your profit once they're packed, because the sale happened. Reports shows how much of that profit you haven't been paid yet.
+
+---
+
+## 4. Discounts
+
+A discount is either a **percentage** of the items total or a **fixed amount**. One order can have several. They apply in order, and together they never take more than the order is worth.
+
+Channel fees and tax are worked out on what the customer pays **after** the discount, which is how marketplaces charge their commission.
+
+Editing or deleting a saved discount never changes orders that already used it.
+
+---
+
+## Tax
+
+Turn tax on under **More → Tax**. Every new order then starts with it, and you can switch it off for any single order.
+
+| Your prices… | What the customer pays | What it does to profit |
+|--------------|------------------------|------------------------|
+| **Already include tax** | The price you set | Part of every sale is tax, so it comes **out of** your profit. For 12% on a ₱1,120 sale, ₱120 is tax. |
+| **Tax added on top** | Price + tax | The customer pays the tax and you pass it on, so it **doesn't** reduce your profit. A ₱1,000 sale becomes ₱1,120. |
+
+Each order keeps the rate it was saved with, so changing the setting later doesn't rewrite old orders. Reports shows how much tax you collected, so you know what to set aside.
+
+---
+
+## 5. Keeping stock healthy
+
+**More → Materials** lists every material with a **pip strip**, one block per piece:
+
+| Pip | Meaning |
+|-----|---------|
+| Solid green | Free to use |
+| Hatched red | Set aside for an open order |
+| Grey | Empty space up to the low-stock level |
+| Thin black tick | The low-stock level |
+
+If orders need more than you have, the card says how many you're short.
+
+- **Receive** adds packs you bought. The cost per piece is re-averaged with the new price, and you see the new cost before you save.
+- **Count** sets the number on hand after you've physically counted.
+- **Buy list** (on the Products tab or under More) lists everything at or below its low level: how many packs to buy, what it'll cost and which orders are waiting on it. **Copy list** puts it on your clipboard to paste into a chat with your supplier.
+- **Archive** a product or material you no longer use. It disappears from lists and pickers but stays on past orders and reports. Use the **Archived** chip to see archived items again.
+
+---
+
+## 6. Reports
+
+The **Reports** tab shows net profit for a **Week**, **Month**, **Year** or a **Custom** range of dates. Use the arrows to step back through earlier weeks, months or years. With Custom, tap the dates to pick a different range.
+
+You'll see:
+
+- a bar chart of profit by day (or by month for longer ranges)
+- **Waiting for payment**: what customers owe you in total, whenever they ordered
+- where the money went: sales, discounts, tax, materials, fees and shipping, plus how much is still unpaid
 - profit per product (tap one to see the orders behind it)
 - waste for the period
 
-Only **packed and shipped** orders count.
+Only **packed and shipped** orders count. An order counts in the period it was packed, or shipped if it has shipped.
 
-### 5. Backups
+### Filtering
 
-More → **Export backup** saves the SQLite file wherever you choose. **Restore from backup** replaces everything on the phone with a backup file; restart the app afterwards.
+Tap the **filter** button at the top of Reports to look at just some orders:
 
-### 6. Updates
+- one or more **channels**
+- orders containing certain **products**
+- **packed** or **shipped**
+- **paid** or **unpaid**
+- **with or without a discount**
+- **with or without tax**
+- an **order total** between two amounts
 
-More → **Check for updates** looks for a newer version of Craftbook. If there is one, it shows what changed. Tap **Update** to download it and open Android's installer. The first time, Android asks you to allow installs from Craftbook. Your data stays as it is.
-
----
-
-## How things connect
-
-### The stock lifecycle
-
-```mermaid
-flowchart LR
-    R[Receive packs] -->|on hand ↑<br/>unit cost re-averaged| S[(Material stock)]
-    O[Save order] -->|promised ↑| S
-    E[Edit pending order] -->|release old,<br/>reserve new| S
-    P[Pack order] -->|on hand ↓ by actual use<br/>promised ↓ by reserved amount| S
-    D[Delete order] -->|pending: release promised<br/>packed: put stock back| S
-    S --> B[Buy list:<br/>at or below reorder level]
-```
-
-**Resell** products follow the same lifecycle with their own on-hand and promised counts instead of materials.
-
-### Where profit comes from
-
-```
-profit = sales − materials actually used − channel fees − shipping you pay
-```
-
-- **Channel fees** = sales × (commission % + transaction fee %) + the fixed fee.
-- **Materials actually used** includes waste recorded with Adjust.
-- Profit is recalculated whenever it's shown. The `profit` column stored on an order is never trusted, because it goes stale when materials are adjusted.
-- Per-product profit splits each order's profit across its products by share of sales.
-
-### Data model
-
-```mermaid
-erDiagram
-    CHANNEL ||--o{ ORDER : "sold through"
-    ORDER ||--|{ ORDER_ITEM : contains
-    ORDER ||--o{ ORDER_MATERIAL : "reserves / uses"
-    ORDER ||--o{ ORDER_PRODUCT : "reserves (resell)"
-    PRODUCT ||--o{ ORDER_ITEM : "sold as"
-    PRODUCT ||--o{ BOM_ITEM : "made from"
-    MATERIAL ||--o{ BOM_ITEM : "used in"
-    MATERIAL ||--o{ ORDER_MATERIAL : ""
-    MATERIAL ||--o{ STOCK_MOVEMENT : history
-    PRODUCT ||--o{ PRODUCT_STOCK_MOVEMENT : history
-```
-
-`ORDER_MATERIAL` keeps both the **planned** and the **actual** quantity. The difference is waste.
-
-### Code layout
-
-The app follows Clean Architecture with feature folders. The UI never touches the database directly.
-
-```mermaid
-flowchart LR
-    UI[Pages & widgets] --> BLoC
-    BLoC --> UC[Use cases]
-    UC --> RI[Repository interfaces]
-    RI -.implemented by.-> Impl[Repository impls]
-    Impl --> DAO[Drift DAOs] --> DB[(SQLite)]
-```
-
-```
-lib/
-├── app.dart              # MaterialApp, light/dark themes, go_router routes
-├── core/
-│   ├── di/               # get_it registrations (everything is wired here)
-│   ├── theme/            # CraftColors (light + dark), type scale, radii/spacing
-│   ├── widgets/          # shared UI: AppCard, PipStrip, MoneyBreakdown, …
-│   └── utils/ error/ constants/ services/
-├── database/             # Drift tables, DAOs, migrations
-└── features/
-    ├── today/            # dashboard + calendar
-    ├── orders/           # list, new/edit wizard, details, pack, adjust
-    ├── stock/            # materials, receive, buy list
-    ├── products/         # products, BOM editor, channels
-    ├── earnings/         # Money tab
-    ├── settings/         # More tab, backup/restore
-    └── updates/          # check GitHub releases, download and install
-```
-
-Each feature has `presentation/` (pages, BLoCs, widgets), `domain/` (entities, use cases, repository interfaces) and `data/` (repository implementations). Use cases return a `Result<T>` (`Success` or `Error`) instead of throwing.
+Everything on the page then counts only the matching orders. Active filters show as chips under the dates; tap one to remove it, or **Clear** to remove them all.
 
 ---
 
-## Development
+## 7. Notes and shortcuts
 
-### Requirements
+- **Notes** (More → Notes) is your shop notebook for supplier details, recipes and ideas. It has headings, checklists and links. Pin a note to show it on Today.
+- **Social shortcuts** (More → Social shortcuts) keep your Facebook, TikTok, Shopee or Lazada page one tap away.
 
-- Flutter 3.x (Dart SDK ≥ 3.5)
-- Android SDK (min API 24, target/compile API 36)
+---
 
-### Run it
+## 8. Backups and updates
 
-```bash
-flutter pub get
-dart run build_runner build   # regenerate Drift code after schema changes
-flutter run
-```
-
-### Checks
-
-```bash
-flutter analyze   # must report "No issues found!", info-level hints included
-flutter test      # use cases, BLoCs, widgets, repositories on in-memory SQLite
-```
-
-### Screenshots of every screen
-
-There's no need for a device to review the UI. This command renders every screen in light and dark mode, using a seeded sample shop (`test/support/sample_data.dart`):
-
-```bash
-flutter test --run-skipped --tags screenshots --update-goldens
-```
-
-The PNGs land in `test/screenshots/goldens/`, which is git-ignored.
-
-### Releases
-
-Every push to `main` runs [.github/workflows/release.yml](.github/workflows/release.yml). It runs the checks, builds a signed APK and publishes it as a GitHub release. The app's **Check for updates** installs the newest one.
-
-- **Version:** major and minor come from `pubspec.yaml`. The patch number is the commit count on `main`, so `1.0.73` is the 73rd commit. Bump `pubspec.yaml` for a new minor or major.
-- **Signing:** Android only installs an update that is signed with the same key as the installed app. Every release must use the same keystore, and losing it means users have to uninstall and reinstall. Back it up somewhere safe.
-
-To set up the key once:
-
-```bash
-keytool -genkeypair -v -keystore craftbook-release.jks -alias craftbook \
-  -keyalg RSA -keysize 2048 -validity 10000
-base64 -w0 craftbook-release.jks   # paste into ANDROID_KEYSTORE_BASE64
-```
-
-Then add these repository secrets (Settings → Secrets and variables → Actions): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`craftbook`) and `ANDROID_KEY_PASSWORD`. The workflow won't publish without them.
-
-To sign a local release build with the same key, create `android/key.properties` (git-ignored):
-
-```properties
-storeFile=/absolute/path/to/craftbook-release.jks
-storePassword=…
-keyAlias=craftbook
-keyPassword=…
-```
-
-Without it, local release builds use the debug key.
-
-### Further reading
-
-- [AGENTS.md](AGENTS.md): architecture, business rules, UI conventions and coding standards. Read this before changing code.
-- [docs/project.md](docs/project.md): feature status and design decisions.
+- **More → Export backup** saves all your data to a file wherever you choose. Do it regularly and keep a copy off your phone.
+- **More → Restore from backup** replaces everything on this phone with a backup file. If you change your mind, **Undo last restore** brings back what you had before.
+- **More → Check for updates** looks for a newer Craftbook. If there is one, it shows what's new. Tap **Update** to download and install it. The first time, Android asks you to allow installs from Craftbook. Your data stays as it is.

@@ -16,6 +16,7 @@ mixin _$OrderDaoMixin on DatabaseAccessor<AppDatabase> {
       attachedDatabase.orderFieldDefinitions;
   $OrderFieldValuesTable get orderFieldValues =>
       attachedDatabase.orderFieldValues;
+  $OrderDiscountsTable get orderDiscounts => attachedDatabase.orderDiscounts;
   OrderDaoManager get managers => OrderDaoManager(this);
 }
 
@@ -44,4 +45,7 @@ class OrderDaoManager {
   $$OrderFieldValuesTableTableManager get orderFieldValues =>
       $$OrderFieldValuesTableTableManager(
           _db.attachedDatabase, _db.orderFieldValues);
+  $$OrderDiscountsTableTableManager get orderDiscounts =>
+      $$OrderDiscountsTableTableManager(
+          _db.attachedDatabase, _db.orderDiscounts);
 }

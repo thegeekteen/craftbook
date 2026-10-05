@@ -72,6 +72,8 @@ void main() {
   testWidgets('More has a row that opens the page', (tester) async {
     await start(tester);
     await open(tester, RouteNames.settings);
+    await tester.scrollUntilVisible(find.text('Social shortcuts'), 200,
+        scrollable: find.byType(Scrollable).first);
 
     expect(find.text('Social shortcuts'), findsOneWidget);
     expect(find.text('Facebook, TikTok, Shopee, Lazada…'), findsOneWidget);
@@ -86,6 +88,9 @@ void main() {
     await start(tester);
     await seed(tester, [facebook, shopee]);
     await open(tester, RouteNames.settings);
+    await tester.scrollUntilVisible(
+        find.text('2 shortcuts · Facebook, Shopee'), 200,
+        scrollable: find.byType(Scrollable).first);
 
     expect(find.text('2 shortcuts · Facebook, Shopee'), findsOneWidget);
     await teardown(tester);

@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/order_discount.dart';
+
 /// Base class for new order events
 abstract class NewOrderEvent extends Equatable {
   const NewOrderEvent();
@@ -21,6 +23,10 @@ class SetCustomerDetails extends NewOrderEvent {
   final DateTime shipByDate;
   final String? note;
 
+  /// The chosen channel's "paid when placed" default. Sets the order's paid
+  /// status unless the user has already set it themselves.
+  final bool channelPaidByDefault;
+
   const SetCustomerDetails({
     required this.customerName,
     this.fieldValues = const {},
@@ -28,6 +34,7 @@ class SetCustomerDetails extends NewOrderEvent {
     required this.orderDate,
     required this.shipByDate,
     this.note,
+    this.channelPaidByDefault = true,
   });
 
   @override
@@ -38,6 +45,7 @@ class SetCustomerDetails extends NewOrderEvent {
         orderDate,
         shipByDate,
         note,
+        channelPaidByDefault,
       ];
 }
 
@@ -94,6 +102,46 @@ class LoadExistingOrder extends NewOrderEvent {
 
   @override
   List<Object?> get props => [orderId];
+}
+
+/// Add a discount line (from a preset or typed in).
+class AddDiscount extends NewOrderEvent {
+  final OrderDiscount discount;
+
+  const AddDiscount(this.discount);
+
+  @override
+  List<Object?> get props => [discount];
+}
+
+/// Remove the discount line at [index].
+class RemoveDiscount extends NewOrderEvent {
+  final int index;
+
+  const RemoveDiscount(this.index);
+
+  @override
+  List<Object?> get props => [index];
+}
+
+/// Turn tax on or off for this order only.
+class SetOrderTaxEnabled extends NewOrderEvent {
+  final bool enabled;
+
+  const SetOrderTaxEnabled(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Mark the order paid or unpaid.
+class SetOrderPaidStatus extends NewOrderEvent {
+  final bool paid;
+
+  const SetOrderPaidStatus(this.paid);
+
+  @override
+  List<Object?> get props => [paid];
 }
 
 /// Work out profit and reservations for the review step.

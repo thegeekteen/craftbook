@@ -30,10 +30,12 @@ class RouteNames {
   static const String channels = '/channels';
   static const String orderFields = '/order-fields';
   static const String socialLinks = '/social-links';
+  static const String discounts = '/discounts';
 
-  // Earnings
-  static const String earnings = '/earnings';
-  static const String productEarnings = '/earnings/:productId';
+  // Reports (the earnings feature)
+  static const String reports = '/reports';
+  static const String productReport = '/reports/:productId';
+  static const String receivables = '/receivables';
 
   /// Concrete paths for parameterised routes.
   static String orderPath(int id) => '/orders/$id';
@@ -44,8 +46,8 @@ class RouteNames {
   static String productPath(int id) => '/products/$id';
   static String productEditorPath(int id) => '/products/$id/edit';
   static String receiveProductStockPath(int id) => '/products/$id/receive';
-  static String productEarningsPath(int id, DateTime start, DateTime end) =>
-      '/earnings/$id?start=${start.millisecondsSinceEpoch}'
+  static String productReportPath(int id, DateTime start, DateTime end) =>
+      '/reports/$id?start=${start.millisecondsSinceEpoch}'
       '&end=${end.millisecondsSinceEpoch}';
 
   // Notes

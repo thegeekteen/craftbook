@@ -49,6 +49,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
     required double transactionFeeRate,
     required double flatFee,
     required double shippingPaidByUs,
+    bool paidByDefault = true,
   }) async {
     try {
       final id = await dao.createChannel(db.ChannelsCompanion(
@@ -57,6 +58,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
         transactionFeeRate: Value(transactionFeeRate),
         flatFee: Value(flatFee),
         shippingPaidByUs: Value(shippingPaidByUs),
+        paidByDefault: Value(paidByDefault),
       ));
       return Success(id);
     } catch (e) {
@@ -73,6 +75,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
     double? flatFee,
     double? shippingPaidByUs,
     bool? isActive,
+    bool? paidByDefault,
   }) async {
     try {
       final existing = await dao.getChannelById(id);
@@ -88,6 +91,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
         flatFee: flatFee ?? existing.flatFee,
         shippingPaidByUs: shippingPaidByUs ?? existing.shippingPaidByUs,
         isActive: isActive ?? existing.isActive,
+        paidByDefault: paidByDefault ?? existing.paidByDefault,
         createdAt: existing.createdAt,
       ));
       return const Success(null);
@@ -114,6 +118,7 @@ class ChannelRepositoryImpl implements ChannelRepository {
         flatFee: row.flatFee,
         shippingPaidByUs: row.shippingPaidByUs,
         isActive: row.isActive,
+        paidByDefault: row.paidByDefault,
         createdAt: row.createdAt,
       );
 }

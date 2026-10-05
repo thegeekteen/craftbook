@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:craftbook/core/error/failures.dart';
 import 'package:craftbook/core/error/result.dart';
+import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/products/domain/entities/bom_item.dart';
@@ -40,6 +41,8 @@ void main() {
     createdAt: DateTime(2026, 1, 1),
     updatedAt: DateTime(2026, 1, 1),
   );
+
+  setUpAll(() => registerFallbackValue(const OrderTerms()));
 
   setUp(() {
     mockOrderRepo = MockOrderRepository();
@@ -110,6 +113,9 @@ void main() {
             items: any(named: 'items'),
             materials: any(named: 'materials'),
             products: any(named: 'products'),
+            terms: any(named: 'terms'),
+            discountTotal: any(named: 'discountTotal'),
+            taxAmount: any(named: 'taxAmount'),
           )).thenAnswer((_) async => const Success<int>(1));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))
@@ -226,6 +232,9 @@ void main() {
             items: any(named: 'items'),
             materials: any(named: 'materials'),
             products: any(named: 'products'),
+            terms: any(named: 'terms'),
+            discountTotal: any(named: 'discountTotal'),
+            taxAmount: any(named: 'taxAmount'),
           )).thenAnswer((_) async => const Success<int>(2));
 
       when(() => mockMaterialRepo.reserveMaterials(any(), any()))

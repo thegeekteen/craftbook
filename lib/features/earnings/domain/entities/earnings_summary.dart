@@ -1,12 +1,27 @@
 import 'package:equatable/equatable.dart';
 
+/// Totals for the packed and shipped orders in a report.
 class EarningsSummary extends Equatable {
+  /// Item prices before discounts.
   final double totalSales;
   final double totalMaterialCost;
   final double totalChannelFees;
   final double totalShippingCost;
+
+  /// Stored for old callers; the page recomputes profit from the parts.
   final double totalProfit;
   final int orderCount;
+  final double totalDiscount;
+
+  /// Tax that came out of sales (prices included it).
+  final double totalIncludedTax;
+
+  /// Tax customers paid on top, passed on.
+  final double totalAddedTax;
+
+  /// What customers still owe on these orders.
+  final double unpaidTotal;
+  final int unpaidCount;
 
   const EarningsSummary({
     required this.totalSales,
@@ -15,7 +30,23 @@ class EarningsSummary extends Equatable {
     required this.totalShippingCost,
     required this.totalProfit,
     required this.orderCount,
+    this.totalDiscount = 0,
+    this.totalIncludedTax = 0,
+    this.totalAddedTax = 0,
+    this.unpaidTotal = 0,
+    this.unpaidCount = 0,
   });
+
+  double get totalTax => totalIncludedTax + totalAddedTax;
+
+  /// Recomputed from the parts (business rule 5).
+  double get profit =>
+      totalSales -
+      totalDiscount -
+      totalIncludedTax -
+      totalMaterialCost -
+      totalChannelFees -
+      totalShippingCost;
 
   @override
   List<Object?> get props => [
@@ -25,6 +56,11 @@ class EarningsSummary extends Equatable {
         totalShippingCost,
         totalProfit,
         orderCount,
+        totalDiscount,
+        totalIncludedTax,
+        totalAddedTax,
+        unpaidTotal,
+        unpaidCount,
       ];
 }
 

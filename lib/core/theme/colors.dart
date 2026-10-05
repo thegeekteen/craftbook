@@ -51,7 +51,7 @@ class CraftColors extends ThemeExtension<CraftColors> {
   /// Text/icons drawn on top of [go], [alert] or [coin] fills.
   final Color onAccent;
 
-  /// Dark summary panel used on Today and Money.
+  /// Dark summary panel used on Today and Reports.
   final Color board;
   final Color boardRaised;
   final Color boardInk;

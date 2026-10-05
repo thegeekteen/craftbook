@@ -157,4 +157,50 @@ Future<void> runMigrations(
       await db.customStatement('ALTER TABLE products DROP COLUMN is_active');
     });
   }
+
+  // Version 9: discounts, tax and paid status on orders, discount presets,
+  // and a per-channel "paid when placed" default. Orders from before this
+  // had no way to be unpaid, so they all start paid.
+  if (from < 9) {
+    await db.transaction(() async {
+      String flag(String name, int value) =>
+          '"$name" INTEGER NOT NULL DEFAULT $value CHECK ("$name" IN (0, 1))';
+      for (final column in [
+        '"discount_total" REAL NOT NULL DEFAULT 0.0',
+        '"tax_rate" REAL NULL',
+        '"tax_amount" REAL NOT NULL DEFAULT 0.0',
+        flag('tax_inclusive', 1),
+        flag('is_paid', 1),
+        '"paid_at" INTEGER NULL',
+      ]) {
+        await db.customStatement('ALTER TABLE orders ADD COLUMN $column');
+      }
+      await db.customStatement(
+          'UPDATE orders SET paid_at = COALESCE(shipped_at, packed_at, order_date)');
+      await db.customStatement(
+          'ALTER TABLE channels ADD COLUMN ${flag('paid_by_default', 1)}');
+      await db.customStatement(
+        'CREATE TABLE "order_discounts" ('
+        '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        '"order_id" INTEGER NOT NULL REFERENCES orders (id) ON DELETE CASCADE, '
+        '"label" TEXT NOT NULL, '
+        '"kind" TEXT NOT NULL, '
+        '"value" REAL NOT NULL, '
+        '"amount" REAL NOT NULL, '
+        '"position" INTEGER NOT NULL DEFAULT 0'
+        ')',
+      );
+      await db.customStatement(
+        'CREATE TABLE "discount_presets" ('
+        '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        '"label" TEXT NOT NULL, '
+        '"kind" TEXT NOT NULL, '
+        '"value" REAL NOT NULL, '
+        '"position" INTEGER NOT NULL DEFAULT 0, '
+        '"created_at" INTEGER NOT NULL DEFAULT '
+        "(CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER))"
+        ')',
+      );
+    });
+  }
 }

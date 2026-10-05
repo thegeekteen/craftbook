@@ -90,7 +90,8 @@ void main() {
 
   test('install hands the path to the plugin', () async {
     when(() => updater.installApk(any())).thenAnswer((_) async {});
-    expect(await repo.install('/data/craftbook.apk'), const Success<void>(null));
+    expect(
+        await repo.install('/data/craftbook.apk'), const Success<void>(null));
     verify(() => updater.installApk('/data/craftbook.apk')).called(1);
   });
 }

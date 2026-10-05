@@ -25,6 +25,7 @@ class CreateChannelEvent extends ChannelsEvent {
   final double transactionFeeRate;
   final double flatFee;
   final double shippingPaidByUs;
+  final bool paidByDefault;
 
   const CreateChannelEvent({
     required this.name,
@@ -32,6 +33,7 @@ class CreateChannelEvent extends ChannelsEvent {
     required this.transactionFeeRate,
     required this.flatFee,
     required this.shippingPaidByUs,
+    this.paidByDefault = true,
   });
 
   @override
@@ -41,6 +43,7 @@ class CreateChannelEvent extends ChannelsEvent {
         transactionFeeRate,
         flatFee,
         shippingPaidByUs,
+        paidByDefault,
       ];
 }
 
@@ -53,6 +56,7 @@ class UpdateChannelEvent extends ChannelsEvent {
   final double? flatFee;
   final double? shippingPaidByUs;
   final bool? isActive;
+  final bool? paidByDefault;
 
   const UpdateChannelEvent({
     required this.id,
@@ -62,6 +66,7 @@ class UpdateChannelEvent extends ChannelsEvent {
     this.flatFee,
     this.shippingPaidByUs,
     this.isActive,
+    this.paidByDefault,
   });
 
   @override
@@ -73,6 +78,7 @@ class UpdateChannelEvent extends ChannelsEvent {
         flatFee,
         shippingPaidByUs,
         isActive,
+        paidByDefault,
       ];
 }
 

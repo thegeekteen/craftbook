@@ -9,6 +9,9 @@ class Channel extends Equatable {
   final double flatFee;
   final double shippingPaidByUs;
   final bool isActive;
+
+  /// Whether new orders on this channel start out paid.
+  final bool paidByDefault;
   final DateTime createdAt;
 
   const Channel({
@@ -19,6 +22,7 @@ class Channel extends Equatable {
     required this.flatFee,
     required this.shippingPaidByUs,
     required this.isActive,
+    this.paidByDefault = true,
     required this.createdAt,
   });
 
@@ -37,6 +41,7 @@ class Channel extends Equatable {
         flatFee,
         shippingPaidByUs,
         isActive,
+        paidByDefault,
         createdAt,
       ];
 
@@ -48,6 +53,7 @@ class Channel extends Equatable {
     double? flatFee,
     double? shippingPaidByUs,
     bool? isActive,
+    bool? paidByDefault,
     DateTime? createdAt,
   }) {
     return Channel(
@@ -58,6 +64,7 @@ class Channel extends Equatable {
       flatFee: flatFee ?? this.flatFee,
       shippingPaidByUs: shippingPaidByUs ?? this.shippingPaidByUs,
       isActive: isActive ?? this.isActive,
+      paidByDefault: paidByDefault ?? this.paidByDefault,
       createdAt: createdAt ?? this.createdAt,
     );
   }

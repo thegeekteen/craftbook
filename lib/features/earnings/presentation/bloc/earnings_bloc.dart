@@ -11,7 +11,7 @@ import '../../domain/usecases/get_waste_summary.dart';
 import 'earnings_event.dart';
 import 'earnings_state.dart';
 
-/// BLoC for the Money screen.
+/// BLoC for the Reports screen.
 class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
   final GetEarningsSummary getEarningsSummary;
   final GetProductEarnings getProductEarnings;
@@ -41,11 +41,16 @@ class EarningsBloc extends Bloc<EarningsEvent, EarningsState> {
 
     final start = event.startDate;
     final end = event.endDate;
+    final filter = event.filter;
     final results = await Future.wait([
-      getEarningsSummary(start, end),
-      getProductEarnings(start, end),
-      getWasteSummary(start, end),
-      getProfitTrend(start: start, end: end, granularity: event.granularity),
+      getEarningsSummary(start, end, filter: filter),
+      getProductEarnings(start, end, filter: filter),
+      getWasteSummary(start, end, filter: filter),
+      getProfitTrend(
+          start: start,
+          end: end,
+          granularity: event.granularity,
+          filter: filter),
     ]);
     if (!identical(event, _latest)) return;
 

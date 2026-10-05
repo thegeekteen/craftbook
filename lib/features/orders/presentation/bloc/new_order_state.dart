@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_discount.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/usecases/preview_order.dart';
 
@@ -28,6 +29,13 @@ class NewOrderDetailsFilled extends NewOrderState {
   final List<OrderItemInput> items;
   final double totalSales;
 
+  /// Discounts, tax and paid status.
+  final OrderTerms terms;
+
+  /// The tax this order gets if it's switched on; null when there's no rate
+  /// to use, so the switch isn't offered.
+  final OrderTax? availableTax;
+
   /// Filled on the review step; cleared whenever details or items change.
   final OrderPreview? preview;
   final bool isPreviewing;
@@ -47,6 +55,8 @@ class NewOrderDetailsFilled extends NewOrderState {
     this.note,
     required this.items,
     required this.totalSales,
+    this.terms = const OrderTerms(),
+    this.availableTax,
     this.preview,
     this.isPreviewing = false,
     this.previewError,
@@ -70,6 +80,8 @@ class NewOrderDetailsFilled extends NewOrderState {
         note,
         items,
         totalSales,
+        terms,
+        availableTax,
         preview,
         isPreviewing,
         previewError,
@@ -103,6 +115,8 @@ class NewOrderDetailsFilled extends NewOrderState {
       note: clearNote ? null : (note ?? this.note),
       items: items ?? this.items,
       totalSales: totalSales ?? this.totalSales,
+      terms: terms,
+      availableTax: availableTax,
       preview: clearPreview ? null : (preview ?? this.preview),
       isPreviewing: isPreviewing ?? this.isPreviewing,
       previewError: previewError,

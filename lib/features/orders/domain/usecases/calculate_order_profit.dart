@@ -1,57 +1,42 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../products/domain/repositories/channel_repository.dart';
+import '../entities/order_discount.dart';
+import '../entities/order_money.dart';
 
+/// Looks the channel up and works an order's money out with [OrderMoney].
 class CalculateOrderProfit {
   final ChannelRepository channelRepository;
 
   CalculateOrderProfit(this.channelRepository);
 
-  Future<Result<OrderProfitBreakdown>> call({
+  /// [totalSales] is the items total before discounts. [shippingCost] is
+  /// shipping on top of what the channel charges.
+  Future<Result<OrderMoney>> call({
     required double totalSales,
     required double totalMaterialCost,
     required int channelId,
     required double shippingCost,
+    List<OrderDiscount> discounts = const [],
+    OrderTax? tax,
   }) async {
     final channelResult = await channelRepository.getChannelById(channelId);
 
     switch (channelResult) {
       case Error(:final failure):
-        return Error<OrderProfitBreakdown>(failure);
+        return Error<OrderMoney>(failure);
       case Success(:final value):
-        final channel = value;
-        if (channel == null) {
-          return const Error<OrderProfitBreakdown>(
-              NotFoundFailure('Channel not found'));
+        if (value == null) {
+          return const Error<OrderMoney>(NotFoundFailure('Channel not found'));
         }
-
-        final fees = channel.calculateFees(totalSales);
-        final totalShipping = shippingCost + channel.shippingPaidByUs;
-        final profit = totalSales - totalMaterialCost - fees - totalShipping;
-
-        return Success(OrderProfitBreakdown(
-          totalSales: totalSales,
-          totalMaterialCost: totalMaterialCost,
-          channelFees: fees,
-          shippingCost: totalShipping,
-          profit: profit,
+        return Success(OrderMoney.compute(
+          itemsTotal: totalSales,
+          discounts: discounts,
+          tax: tax,
+          channel: value,
+          materials: totalMaterialCost,
+          extraShipping: shippingCost,
         ));
     }
   }
-}
-
-class OrderProfitBreakdown {
-  final double totalSales;
-  final double totalMaterialCost;
-  final double channelFees;
-  final double shippingCost;
-  final double profit;
-
-  const OrderProfitBreakdown({
-    required this.totalSales,
-    required this.totalMaterialCost,
-    required this.channelFees,
-    required this.shippingCost,
-    required this.profit,
-  });
 }

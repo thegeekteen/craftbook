@@ -51,6 +51,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       transactionFeeRate: event.transactionFeeRate,
       flatFee: event.flatFee,
       shippingPaidByUs: event.shippingPaidByUs,
+      paidByDefault: event.paidByDefault,
     );
     switch (result) {
       case Error(:final failure):
@@ -72,6 +73,7 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
       flatFee: event.flatFee,
       shippingPaidByUs: event.shippingPaidByUs,
       isActive: event.isActive,
+      paidByDefault: event.paidByDefault,
     );
     switch (result) {
       case Error(:final failure):

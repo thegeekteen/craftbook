@@ -15,6 +15,7 @@ class UpdateChannel {
     double? flatFee,
     double? shippingPaidByUs,
     bool? isActive,
+    bool? paidByDefault,
   }) {
     return repository.updateChannel(
       id: id,
@@ -24,6 +25,7 @@ class UpdateChannel {
       flatFee: flatFee,
       shippingPaidByUs: shippingPaidByUs,
       isActive: isActive,
+      paidByDefault: paidByDefault,
     );
   }
 }

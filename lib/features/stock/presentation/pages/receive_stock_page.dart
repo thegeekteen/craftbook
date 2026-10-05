@@ -194,8 +194,9 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                       FilteringTextInputFormatter.allow(
                           RegExp(r'^\d*\.?\d{0,2}'))
                     ],
-                    decoration: const InputDecoration(
-                        labelText: 'Price per pack', prefixText: '₱ '),
+                    decoration: InputDecoration(
+                        labelText: 'Price per pack',
+                        prefixText: '${CurrencyFormatter.symbol} '),
                   ),
                   const SizedBox(height: 10),
                   TextField(

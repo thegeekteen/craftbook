@@ -9,6 +9,7 @@ import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/earnings/domain/entities/earnings_summary.dart';
 import 'package:craftbook/features/earnings/domain/entities/product_earnings.dart';
 import 'package:craftbook/features/earnings/domain/entities/profit_trend.dart';
+import 'package:craftbook/features/earnings/domain/entities/report_filter.dart';
 import 'package:craftbook/features/earnings/domain/usecases/get_earnings_summary.dart';
 import 'package:craftbook/features/earnings/domain/usecases/get_product_earnings.dart';
 import 'package:craftbook/features/earnings/domain/usecases/get_profit_trend.dart';
@@ -77,6 +78,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2000));
     registerFallbackValue(TrendGranularity.day);
+    registerFallbackValue(ReportFilter.none);
   });
 
   setUp(() {
@@ -92,6 +94,8 @@ void main() {
         getWasteSummary: getWasteSummary,
         getProfitTrend: getProfitTrend,
       );
+
+  const unpaidOnly = ReportFilter(payment: PaymentFilter.unpaid);
 
   /// Stubs every use case to succeed. The product list is growable because
   /// the bloc sorts it in place.
@@ -118,6 +122,41 @@ void main() {
         wasteSummary: waste,
         trend: trend,
       );
+
+  blocTest<EarningsBloc, EarningsState>(
+    'passes the filter to every part of the report',
+    setUp: () {
+      stubAll();
+      when(() => getEarningsSummary(any(), any(), filter: any(named: 'filter')))
+          .thenAnswer((_) async => const Success(summary));
+      when(() => getProductEarnings(any(), any(), filter: any(named: 'filter')))
+          .thenAnswer((_) async => Success(List.of(const [low])));
+      when(() => getWasteSummary(any(), any(), filter: any(named: 'filter')))
+          .thenAnswer((_) async => const Success(waste));
+      when(() => getProfitTrend(
+            start: any(named: 'start'),
+            end: any(named: 'end'),
+            granularity: any(named: 'granularity'),
+            filter: any(named: 'filter'),
+          )).thenAnswer((_) async => Success(trend));
+    },
+    build: build,
+    act: (bloc) => bloc
+        .add(LoadEarnings(startDate: start, endDate: end, filter: unpaidOnly)),
+    verify: (_) {
+      verify(() => getEarningsSummary(start, end, filter: unpaidOnly))
+          .called(1);
+      verify(() => getProductEarnings(start, end, filter: unpaidOnly))
+          .called(1);
+      verify(() => getWasteSummary(start, end, filter: unpaidOnly)).called(1);
+      verify(() => getProfitTrend(
+            start: start,
+            end: end,
+            granularity: TrendGranularity.day,
+            filter: unpaidOnly,
+          )).called(1);
+    },
+  );
 
   test('initial state is EarningsInitial', () {
     expect(build().state, isA<EarningsInitial>());

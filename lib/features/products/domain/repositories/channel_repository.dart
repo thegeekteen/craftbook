@@ -12,6 +12,7 @@ abstract class ChannelRepository {
     required double transactionFeeRate,
     required double flatFee,
     required double shippingPaidByUs,
+    bool paidByDefault,
   });
   Future<Result<void>> updateChannel({
     required int id,
@@ -21,6 +22,7 @@ abstract class ChannelRepository {
     double? flatFee,
     double? shippingPaidByUs,
     bool? isActive,
+    bool? paidByDefault,
   });
   Future<Result<void>> deleteChannel(int id);
 }

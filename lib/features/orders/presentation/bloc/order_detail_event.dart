@@ -54,6 +54,17 @@ class ShipOrderDetail extends OrderDetailEvent {
   List<Object?> get props => [orderId];
 }
 
+/// Mark the order paid or unpaid
+class SetOrderPaidDetail extends OrderDetailEvent {
+  final int orderId;
+  final bool paid;
+
+  const SetOrderPaidDetail(this.orderId, {required this.paid});
+
+  @override
+  List<Object?> get props => [orderId, paid];
+}
+
 /// Cancel the order and give its stock back
 class CancelOrderDetail extends OrderDetailEvent {
   final int orderId;

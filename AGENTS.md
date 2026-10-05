@@ -7,7 +7,8 @@
 ### Core Value Proposition
 - **Offline-first**: No accounts, no sync. All data lives on-device. The one network call is the user-triggered update check (`features/updates`), which only reads public GitHub releases.
 - **BOM-aware orders**: Orders are created with products, but the app expands them into materials behind the scenes.
-- **Real profit tracking**: Profit = Sales − Materials (actual, including waste) − Channel fees − Shipping.
+- **Real profit tracking**: Profit = What the customer paid − Tax − Materials (actual, including waste) − Channel fees − Shipping. Discounts lower what the customer paid.
+- **Getting paid**: Orders are paid or unpaid; unpaid ones show as accounts receivable.
 - **Stock as pips**: Visual representation of stock levels showing free vs. promised pieces.
 
 ### Target Platform
@@ -67,11 +68,69 @@ lib/
 | **Orders** | `/orders`, `/orders/new`, `/orders/:id` | List (tabbed), creation wizard, detail view |
 | **Stock** | `/materials`, `/materials/:id` | Materials list (tabbed, opened from More), detail, receive stock, buy list |
 | **Products** | `/products`, `/products/:id/edit`, `/channels` | List (a bottom-nav tab, with the Buy list shortcut), BOM editor, channels & fees |
-| **Earnings** | `/earnings` | Summary with period nav, per-product breakdown, waste |
-| **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields |
+| **Reports** (`features/earnings`) | `/reports`, `/reports/:productId` | Week/month/year/custom period, `ReportFilter` sheet, money breakdown (discounts, tax), per-product, waste, Waiting for payment card. The bottom-nav tab is labelled "Reports"; the folder and classes keep the `earnings` name |
+| **Receivables** (`features/orders`) | `/receivables` | Unpaid, non-cancelled orders grouped by customer (`GetReceivables`, `ReceivablesCubit`). Opened from Reports and More |
+| **Discounts** | `/discounts` | Discount presets (percent or fixed): list, add/edit sheet, drag to reorder. Orders copy them as lines (`order_discounts`) |
+| **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields, Currency sheet (`CurrencyCubit`), Tax sheet (`TaxSettingsCubit`) |
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
 | **Updates** | (row on `/settings`) | "Check for updates": finds the latest GitHub release, shows its notes, downloads the APK and opens Android's installer. Only runs when tapped |
 | **Social links** | `/social-links` | Shortcuts to the shop's Facebook, TikTok, Shopee, Lazada… pages: brand-tile grid, add/edit sheet, drag to reorder. Links open outside the app via `LinkLauncher` |
+
+---
+
+### Code layout
+
+The UI never touches the database directly:
+
+```mermaid
+flowchart LR
+    UI[Pages & widgets] --> BLoC
+    BLoC --> UC[Use cases]
+    UC --> RI[Repository interfaces]
+    RI -.implemented by.-> Impl[Repository impls]
+    Impl --> DAO[Drift DAOs] --> DB[(SQLite)]
+```
+
+```
+lib/
+├── app.dart              # MaterialApp, light/dark themes, go_router routes
+├── core/
+│   ├── di/               # get_it registrations (everything is wired here)
+│   ├── theme/            # CraftColors (light + dark), type scale, radii/spacing
+│   ├── widgets/          # shared UI: AppCard, PipStrip, MoneyBreakdown, …
+│   └── utils/ error/ constants/ services/
+├── database/             # Drift tables, DAOs, migrations
+└── features/
+    ├── today/            # dashboard + calendar
+    ├── orders/           # list, new/edit wizard, details, pack, adjust, receivables
+    ├── stock/            # materials, receive, buy list
+    ├── products/         # products, BOM editor, channels
+    ├── discounts/        # discount presets
+    ├── earnings/         # Reports tab
+    ├── order_fields/ notes/ social_links/
+    ├── settings/         # More tab, backup/restore, currency, tax, appearance
+    └── updates/          # check GitHub releases, download and install
+```
+
+### Data model
+
+```mermaid
+erDiagram
+    CHANNEL ||--o{ ORDER : "sold through"
+    ORDER ||--|{ ORDER_ITEM : contains
+    ORDER ||--o{ ORDER_MATERIAL : "reserves / uses"
+    ORDER ||--o{ ORDER_PRODUCT : "reserves (resell)"
+    ORDER ||--o{ ORDER_DISCOUNT : "discounted by"
+    ORDER ||--o{ ORDER_FIELD_VALUE : "has"
+    PRODUCT ||--o{ ORDER_ITEM : "sold as"
+    PRODUCT ||--o{ BOM_ITEM : "made from"
+    MATERIAL ||--o{ BOM_ITEM : "used in"
+    MATERIAL ||--o{ ORDER_MATERIAL : ""
+    MATERIAL ||--o{ STOCK_MOVEMENT : history
+    PRODUCT ||--o{ PRODUCT_STOCK_MOVEMENT : history
+```
+
+`ORDER_MATERIAL` keeps both the **planned** and the **actual** quantity; the difference is waste. Discount presets, notes, social links and settings (a key/value table: theme, palette, order amount, currency, tax) stand alone.
 
 ---
 
@@ -88,11 +147,16 @@ lib/
    new_unit_cost = (old_qty × old_cost + new_qty × new_price) / (old_qty + new_qty)
    ```
 
-5. **Profit Calculation**: Always recalculated from components on display:
+5. **Profit Calculation**: `OrderMoney` (`features/orders/domain/entities/order_money.dart`) is the one place order money is worked out. Never write the formula by hand:
    ```
-   profit = sales - actual_material_cost - channel_fees - shipping
+   discount     = Σ discount lines, capped at the items total (orders.total_sales)
+   net          = items total − discount
+   tax          = included: net × r ÷ (1 + r)    added on top: net × r
+   customerPays = included: net                  added on top: net + tax
+   fees         = channel.calculateFees(customerPays)   // after discount
+   profit       = customerPays − tax − materials − fees − shipping
    ```
-   **Do NOT trust stored `order.profit`** — it can become stale after material adjustments. Always compute `sales - materials - fees - shipping` at display time.
+   **Do NOT trust stored `order.profit`**. It can go stale after material adjustments. Use `OrderMoney.fromOrder(order)`, `Order.liveProfit` or `Order.liveTotal` (what the customer pays). `CalculateOrderProfit` returns an `OrderMoney`; reports sum `OrderMoney`s in `EarningsRepositoryImpl`.
 
 6. **Buildable Quantity**: For a product, the maximum buildable quantity is:
    ```
@@ -107,6 +171,12 @@ lib/
 
 10. **Archiving**: Products and materials have `isArchived` (schema v8, which replaced the product's "show in new orders" `isActive`). Archived items stay on past orders, earnings and history, but are left out of list pages (except under their Archived chip), the order wizard's product picker, the BOM editor's material picker, low-stock alerts, the buy list and the Settings counts. Archive is what's offered when a delete is blocked.
 
+11. **Discounts**: An order has any number of discount lines (`order_discounts`: label, percent/fixed, value, worked-out amount); `orders.discount_total` holds their sum for reports. Presets (`discount_presets`) are copied onto orders, never referenced, so they can always be edited or deleted. Discounts can change while an order is pending or packed.
+
+12. **Tax**: Settings hold enabled/rate/inclusive/label. A new order starts with the tax if it's enabled, and the order can switch it off. The order stores its own `tax_rate`, `tax_inclusive` and `tax_amount` (null rate = no tax), so changing the setting never rewrites old orders. Tax included in prices reduces profit; tax added on top is passed through and doesn't.
+
+13. **Paid status**: `orders.is_paid` / `paid_at`. A new order's default comes from its channel's `paid_by_default` (there's no global default, because every order has a channel). `SetOrderPaid` works at any status except cancelled. Unpaid orders still count toward profit in reports; `EarningsSummary.unpaidTotal` shows how much of it is owed. Receivables are all-time, not tied to a report period.
+
 ---
 
 ## UI Conventions
@@ -117,7 +187,7 @@ lib/
 - **Build from shared widgets** in `lib/core/widgets/` before writing a new container: `AppCard`, `CardList`/`CardRow`, `SectionLabel`, `AppTag`, `MoneyBreakdown`, `SummaryBoard`, `StatTile`, `EmptyState`, `BottomActionBar`, `ChoiceChipRow`, `PipStrip`, `showAppSheet`, `showActionSheet`, `ProductPhoto` / `showPhotoViewer` (product thumbnails with an initial as fallback). Rich text (order notes, the notebook) uses `NoteView`, `NoteToolbar` and `NoteStyles` in `lib/core/widgets/note/`, stored as Delta JSON via `NoteCodec`.
 - **Long press** on a list item opens its actions via `showActionSheet`. Each entity's menu lives in one place (`ProductActions`, `MaterialActions`, `OrderActions`, `NoteActions`, or a `_xActions` function on the page) and returns `true` when the caller should reload. A new list of things that can be edited or deleted gets the same menu.
 - **Order status** maps to a pill only through `OrderStatusPill` (`lib/features/orders/presentation/widgets/order_status_ui.dart`). User-facing name for pending is "To pack".
-- **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. Profit is always `MoneyParts(...).profit` or `Order.liveProfit`.
+- **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. The currency is the user's choice: never write `₱` (or any symbol) in code; input prefixes use `'${CurrencyFormatter.symbol} '`. Profit is always `MoneyParts(...).profit`, `OrderMoney.profit` or `Order.liveProfit`; order money is drawn with `OrderMoney.parts` (`order_status_ui.dart`), which carries discount and tax into `MoneyBreakdown`.
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen into `test/screenshots/goldens/` using the sample shop in `test/support/sample_data.dart`. Review them after UI changes.
 
 ---
@@ -181,7 +251,7 @@ Future<void> configureDependencies() async {
 
 ## Navigation
 
-Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Products, Money, More; Materials sits under More) and push routes for detail pages.
+Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Products, Reports, More; Materials sits under More) and push routes for detail pages. Pages that are also pushed from the order wizard (channels, order fields, discounts) are top-level routes outside the shell.
 
 - Tab switches use `context.go()` (replace)
 - Detail pages use `context.push()` (push)
@@ -282,6 +352,11 @@ switch (result) {
 - Document **why**, not **what**
 - Use `///` for public API documentation
 
+### Formatting
+- All Dart code is formatted with `dart format` (default settings, no custom line length). Run `dart format .` before finishing any change; `dart format --output=none --set-exit-if-changed .` must exit cleanly.
+- Generated files (`*.g.dart`) are formatted too, so run it after `dart run build_runner build`.
+- Don't hand-align code or wrap lines to taste; the formatter's output is the standard.
+
 ### Linting
 - Run `flutter analyze` before finishing any change and fix **every** issue it reports, including `info`-level messages. There is no such thing as an acceptable info; the codebase stays at "No issues found!".
 - Try `dart fix --apply` first for mechanical fixes (e.g. `prefer_const_constructors`, `use_super_parameters`), then fix the rest by hand.
@@ -295,11 +370,12 @@ switch (result) {
 
 ## Database Migrations
 
-Every schema change must:
-1. Increment `schemaVersion` in `app_database.dart`
-2. Add a migration step in `migrations.dart`
+The schema is at **v9** (discounts, tax, paid status). Every schema change must:
+1. Increment `currentSchemaVersion` in `app_database.dart`
+2. Add a raw-SQL `if (from < N)` step in `migrations.dart`, matching what Drift would create
 3. Handle data preservation during migration
 4. Run `dart run build_runner build` to regenerate code
+5. Add `test/database/migration_vN_test.dart` and a `downgradeToV(N-1)` in `test/support/legacy_schema.dart` (chained from the older ones)
 
 ---
 
@@ -315,7 +391,15 @@ Raw SQLite file copy via `file_picker` (`lib/core/services/backup_service.dart`)
 
 `.github/workflows/release.yml` runs on every push to `main`: analyze, test, build a signed APK, publish a GitHub release tagged `v<major>.<minor>.<commit count>`. The in-app updater compares that tag with the installed `versionName`, so never publish an APK whose version doesn't match its tag.
 
-- Release signing reads `android/key.properties` (written by CI from repo secrets). Without it, release builds fall back to the debug key, which is fine locally but can't update an installed release.
+- **Version:** major and minor come from `pubspec.yaml`; the patch is the commit count on `main` (`1.0.73` is the 73rd commit). Bump `pubspec.yaml` for a new minor or major.
+- **Signing:** Android only installs an update signed with the same key as the installed app, so every release must use the same keystore. Losing it means users have to uninstall and reinstall. Release signing reads `android/key.properties` (written by CI from repo secrets). Without it, release builds fall back to the debug key, which is fine locally but can't update an installed release.
+- To set up the key once:
+  ```bash
+  keytool -genkeypair -v -keystore craftbook-release.jks -alias craftbook \
+    -keyalg RSA -keysize 2048 -validity 10000
+  base64 -w0 craftbook-release.jks   # paste into ANDROID_KEYSTORE_BASE64
+  ```
+  Then add these repository secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`craftbook`) and `ANDROID_KEY_PASSWORD`. The workflow won't publish without them. To sign a local release build with the same key, create `android/key.properties` (git-ignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
 - The updater plugin declares its own FileProvider. Don't add another one for it in `AndroidManifest.xml`.
 
 ---
@@ -328,17 +412,25 @@ Raw SQLite file copy via `file_picker` (`lib/core/services/backup_service.dart`)
 
 ### Getting Started
 
+Requires Flutter 3.x (Dart SDK ≥ 3.5) and the Android SDK.
+
 ```bash
 flutter pub get
-dart run build_runner build
+dart run build_runner build   # regenerate Drift code after schema changes
 flutter run
-flutter test
+dart format .                 # the whole codebase stays formatted
+flutter analyze               # must report "No issues found!"
+flutter test                  # use cases, BLoCs, widgets, repositories on in-memory SQLite
+flutter test --run-skipped --tags screenshots --update-goldens   # every screen, light + dark
 ```
 
 ---
 
 ## Documentation
 
+**MANDATORY RULE: when a change adds or changes anything a user can see or do, update `README.md` in the same change.** The README is bundled as an asset and shown on the in-app About page, so it is the user guide: write it for shop owners, in plain words, describing what to tap and what happens. Keep developer detail (code, architecture, build, release) out of it; that belongs here. Also update the feature table in `docs/project.md`.
+
+- **[README.md](README.md)**: The user guide, shown in the app under More → About.
 - **This file (AGENTS.md)**: Code architecture, patterns, and technical conventions.
 - **[docs/project.md](docs/project.md)**: Business context, feature status, and current state.
 - **[docs/craftbook-ui-flow.html](docs/craftbook-ui-flow.html)**: Interactive UI flow mockup.

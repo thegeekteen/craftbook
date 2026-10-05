@@ -29,9 +29,9 @@ class AppShell extends StatelessWidget {
       label: 'Products',
     ),
     NavigationDestination(
-      icon: Icon(Icons.payments_outlined),
-      selectedIcon: Icon(Icons.payments_rounded),
-      label: 'Money',
+      icon: Icon(Icons.bar_chart_outlined),
+      selectedIcon: Icon(Icons.bar_chart_rounded),
+      label: 'Reports',
     ),
     NavigationDestination(
       icon: Icon(Icons.grid_view_outlined),
@@ -62,7 +62,10 @@ class AppShell extends StatelessWidget {
   static int selectedIndexFor(String location) {
     if (location.startsWith('/orders')) return 1;
     if (location.startsWith('/products')) return 2;
-    if (location.startsWith('/earnings')) return 3;
+    if (location.startsWith(RouteNames.reports) ||
+        location.startsWith(RouteNames.receivables)) {
+      return 3;
+    }
     if (location.startsWith('/settings') ||
         location.startsWith('/materials') ||
         location.startsWith('/stock') ||
@@ -83,7 +86,7 @@ class AppShell extends StatelessWidget {
       case 2:
         context.go(RouteNames.products);
       case 3:
-        context.go(RouteNames.earnings);
+        context.go(RouteNames.reports);
       case 4:
         context.go(RouteNames.settings);
     }

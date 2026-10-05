@@ -35,7 +35,7 @@ class OrderCard extends StatelessWidget {
     final c = context.colors;
     final order = entry.order;
     final showProfit = amountShown == OrderAmountShown.profit;
-    final amount = showProfit ? order.liveProfit : order.totalSales;
+    final amount = showProfit ? order.liveProfit : order.liveTotal;
     final (whenText, whenUrgent) = whenLabel(order);
     final muted = AppTextStyles.bodySmall.copyWith(color: c.muted);
 
@@ -97,6 +97,10 @@ class OrderCard extends StatelessWidget {
                       Flexible(
                           child: AppTag(entry.channelName!,
                               type: AppTagType.outline)),
+                    ],
+                    if (order.isAwaitingPayment) ...[
+                      const SizedBox(width: 6),
+                      const AppTag('Unpaid', type: AppTagType.warn),
                     ],
                   ],
                 ),

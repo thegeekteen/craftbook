@@ -8,6 +8,8 @@ import '../entities/order_item.dart';
 import '../entities/order_material.dart';
 import '../entities/order_product.dart';
 import '../repositories/order_repository.dart';
+import '../entities/order_discount.dart';
+import '../entities/order_money.dart';
 import 'calculate_order_profit.dart';
 
 /// One thing an order will reserve: a material (BOM products) or a
@@ -37,25 +39,20 @@ class ReservationLine extends Equatable {
 
 /// What saving an order will do: the money split and the stock it takes.
 class OrderPreview extends Equatable {
-  final double sales;
-  final double materialCost;
-  final double channelFees;
-  final double shippingCost;
+  final OrderMoney money;
   final List<ReservationLine> reservations;
 
-  const OrderPreview({
-    required this.sales,
-    required this.materialCost,
-    required this.channelFees,
-    required this.shippingCost,
-    required this.reservations,
-  });
+  const OrderPreview({required this.money, required this.reservations});
 
-  double get profit => sales - materialCost - channelFees - shippingCost;
+  /// Items total before discounts.
+  double get sales => money.itemsTotal;
+  double get materialCost => money.materials;
+  double get channelFees => money.fees;
+  double get shippingCost => money.shipping;
+  double get profit => money.profit;
 
   @override
-  List<Object?> get props =>
-      [sales, materialCost, channelFees, shippingCost, reservations];
+  List<Object?> get props => [money, reservations];
 }
 
 /// Computes an [OrderPreview] the same way [CreateOrder] will: BOM products
@@ -82,6 +79,8 @@ class PreviewOrder {
     required List<OrderItemInput> items,
     required int channelId,
     int? excludeOrderId,
+    List<OrderDiscount> discounts = const [],
+    OrderTax? tax,
   }) async {
     final ownMaterials = <int, int>{};
     final ownProducts = <int, int>{};
@@ -156,15 +155,13 @@ class PreviewOrder {
       totalMaterialCost: materialCost,
       channelId: channelId,
       shippingCost: 0,
+      discounts: discounts,
+      tax: tax,
     );
     if (profitResult case Error(:final failure)) return Error(failure);
-    final breakdown = (profitResult as Success<OrderProfitBreakdown>).value;
 
     return Success(OrderPreview(
-      sales: sales,
-      materialCost: materialCost,
-      channelFees: breakdown.channelFees,
-      shippingCost: breakdown.shippingCost,
+      money: (profitResult as Success<OrderMoney>).value,
       reservations: [...materialLines, ...productLines],
     ));
   }
