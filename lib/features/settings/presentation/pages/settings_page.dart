@@ -137,7 +137,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final rate = tax.rate == tax.rate.roundToDouble()
         ? tax.rate.toStringAsFixed(0)
         : '${tax.rate}';
-    return '${tax.label} $rate% · ${tax.inclusive ? 'in prices' : 'added on top'}';
+    return '${tax.label} $rate% · ${tax.inclusive ? 'in prices' : 'added on top'}'
+        '${tax.onByDefault ? '' : ' · off by default'}';
   }
 
   Future<void> _editTax() async {

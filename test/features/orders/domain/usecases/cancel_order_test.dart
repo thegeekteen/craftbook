@@ -132,18 +132,19 @@ void main() {
       verify(() => orderRepo.cancelOrder(1)).called(1);
     });
 
-    test('shipped: refuses and touches nothing', () async {
+    test('shipped: puts what was used back on the shelf, then cancels',
+        () async {
       stubOrder(OrderStatus.shipped);
 
       final result = await cancelOrder(1);
 
-      expect(
-        result,
-        const Error<void>(
-            ValidationFailure('Shipped orders cannot be cancelled')),
-      );
-      verifyNever(() => orderRepo.getOrderMaterials(any()));
-      verifyNever(() => orderRepo.cancelOrder(any()));
+      expect(result, const Success<void>(null));
+      verify(() => materialRepo.restoreDeductedMaterials(10, 6,
+          reference: reference)).called(1);
+      verify(() => productRepo.restoreDeductedProductStock(30, 2,
+          reference: reference)).called(1);
+      verifyNever(() => materialRepo.releaseReservedMaterials(any(), any()));
+      verify(() => orderRepo.cancelOrder(1)).called(1);
     });
 
     test('already cancelled: refuses so stock is not returned twice', () async {

@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:craftbook/app.dart';
 import 'package:craftbook/core/utils/currency_formatter.dart';
 import 'package:craftbook/core/utils/currency_setting.dart';
+import 'package:craftbook/features/settings/domain/entities/tax_settings.dart';
+import 'package:craftbook/features/settings/presentation/bloc/tax_settings_cubit.dart';
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
 import 'package:craftbook/core/theme/palettes.dart';
@@ -188,6 +190,32 @@ void main() {
     await _settle(tester);
     await expectLater(find.byType(CraftbookApp),
         matchesGoldenFile('goldens/pack_sheet_light.png'));
+    await _teardown(tester);
+  });
+
+  // Without tax the discounts sit straight above the paid switch.
+  testWidgets('new order review without tax', (tester) async {
+    await _boot(tester, RouteNames.newOrder, false);
+    await tester
+        .runAsync(() => getIt<TaxSettingsCubit>().set(const TaxSettings()));
+    // The order form reads tax when it opens, so open it again.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(CraftbookApp(
+        initialLocation: RouteNames.newOrder, themeMode: ThemeMode.light));
+    await _settle(tester);
+    await tester.enterText(find.byType(TextFormField).first, 'Rina Velasco');
+    await tester.tap(find.text('Next: add items'));
+    await _settle(tester);
+    await tester.tap(find.text('Add product').first);
+    await _settle(tester);
+    await tester.tap(find.text('Crochet tulip bouquet'));
+    await _settle(tester);
+    await tester.tap(find.text('Review'));
+    await _settle(tester);
+    await tester.tap(find.text('Bundle −₱50'));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/new_order_review_no_tax_light.png'));
     await _teardown(tester);
   });
 

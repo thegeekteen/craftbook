@@ -5,7 +5,8 @@ import '../entities/order.dart';
 import '../repositories/order_repository.dart';
 
 /// Gives back what an order holds: a pending order's reservations are
-/// released, a packed order's deducted pieces go back on the shelf.
+/// released; a packed or shipped order's deducted pieces go back on the
+/// shelf (a shipped one that's cancelled came back, or never went).
 /// Shared by cancelling and deleting so the two can't drift apart.
 class ReturnOrderStock {
   final OrderRepository orderRepository;
@@ -18,10 +19,12 @@ class ReturnOrderStock {
     required this.productRepository,
   });
 
-  /// [reference] labels the restock in the stock history of a packed order.
+  /// [reference] labels the restock in the stock history of a packed or
+  /// shipped order.
   Future<void> call(Order order, {required String reference}) async {
     final orderId = order.id!;
-    final packed = order.status == OrderStatus.packed;
+    final packed = order.status == OrderStatus.packed ||
+        order.status == OrderStatus.shipped;
     if (order.status != OrderStatus.pending && !packed) return;
 
     final materialsResult = await orderRepository.getOrderMaterials(orderId);

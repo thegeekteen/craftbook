@@ -18,7 +18,7 @@ Future<TaxSettings?> showTaxSheet(
     context: context,
     title: 'Tax',
     subtitle: 'Works out the tax on each order so you know what to set '
-        'aside. Any order can switch it off.',
+        'aside.',
     builder: (_) => TaxForm(current: current),
   );
 }
@@ -35,6 +35,7 @@ class TaxForm extends StatefulWidget {
 
 class _TaxFormState extends State<TaxForm> {
   late bool _enabled = widget.current.enabled;
+  late bool _onByDefault = widget.current.onByDefault;
   late bool _inclusive = widget.current.inclusive;
   late final _rate = TextEditingController(text: _num(widget.current.rate));
   late final _label = TextEditingController(text: widget.current.label);
@@ -57,6 +58,7 @@ class _TaxFormState extends State<TaxForm> {
       context,
       TaxSettings(
         enabled: _enabled && _rateValue > 0,
+        onByDefault: _onByDefault,
         rate: _rateValue.clamp(0, 100).toDouble(),
         inclusive: _inclusive,
         label: label.isEmpty ? TaxSettings.defaultLabel : label,
@@ -93,11 +95,36 @@ class _TaxFormState extends State<TaxForm> {
           contentPadding: EdgeInsets.zero,
           value: _enabled,
           onChanged: (v) => setState(() => _enabled = v),
-          title: Text('Add tax to new orders',
+          title: Text('Use tax',
               style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
-          subtitle: Text('Orders already saved keep what they had',
+          subtitle: Text(
+              _enabled
+                  ? 'Each order gets a tax switch'
+                  : 'Orders have no tax. Saved orders keep what they had',
               style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
         ),
+        if (_enabled) ...[
+          const SizedBox(height: 8),
+          Text('New orders start with tax',
+              style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+          const SizedBox(height: 2),
+          Text(
+            _onByDefault
+                ? 'Switch it off on orders that don\'t need it'
+                : 'Switch it on when a customer needs it, like for an official receipt',
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: 8),
+          ChoiceChipRow<bool>.single(
+            options: const [
+              ChipOption(true, 'On'),
+              ChipOption(false, 'Off'),
+            ],
+            selected: _onByDefault,
+            onSelected: (v) => setState(() => _onByDefault = v),
+          ),
+          const SizedBox(height: 8),
+        ],
         const SizedBox(height: 8),
         Row(
           children: [

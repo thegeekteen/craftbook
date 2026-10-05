@@ -4,8 +4,10 @@ import '../entities/order.dart';
 import '../repositories/order_repository.dart';
 import 'return_order_stock.dart';
 
-/// Cancels a pending or packed order and gives its stock back. The order
-/// stays on record (out of earnings) instead of disappearing.
+/// Cancels an order that isn't already cancelled and gives its stock back:
+/// reservations for a pending one, the used pieces for a packed or shipped
+/// one (returned, or never sent). The order stays on record (out of
+/// reports) and can then be deleted.
 class CancelOrder {
   final OrderRepository orderRepository;
   final ReturnOrderStock returnOrderStock;
@@ -23,14 +25,12 @@ class CancelOrder {
           return const Error<void>(NotFoundFailure('Order not found'));
         }
         switch (order.status) {
-          case OrderStatus.shipped:
-            return const Error<void>(
-                ValidationFailure('Shipped orders cannot be cancelled'));
           case OrderStatus.cancelled:
             return const Error<void>(
                 ValidationFailure('This order is already cancelled'));
           case OrderStatus.pending:
           case OrderStatus.packed:
+          case OrderStatus.shipped:
             await returnOrderStock(order,
                 reference: 'Restored from cancelled order');
             return orderRepository.cancelOrder(orderId);

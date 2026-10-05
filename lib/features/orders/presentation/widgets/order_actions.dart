@@ -93,17 +93,19 @@ abstract final class OrderActions {
     }
   }
 
-  /// Only orders that haven't left the shop can be called off.
-  static bool canCancel(Order order) =>
-      order.status == OrderStatus.pending || order.status == OrderStatus.packed;
+  /// Any order still in play can be called off; a shipped one when it came
+  /// back or never went, so it can then be deleted.
+  static bool canCancel(Order order) => order.status != OrderStatus.cancelled;
 
   static Future<bool> confirmCancel(BuildContext context, Order order) {
     return ConfirmDialog.show(
       context,
       title: 'Cancel order #${order.id}?',
-      message: order.status == OrderStatus.packed
-          ? "Its materials go back on the shelf. The order stays in your list as cancelled and doesn't count toward earnings."
-          : "Its reserved stock is released. The order stays in your list as cancelled and doesn't count toward earnings.",
+      message: order.status == OrderStatus.shipped
+          ? "Use this when it came back or never went out. Its materials go back on the shelf, and the order stays in your list as cancelled, out of your reports. You can delete it after."
+          : order.status == OrderStatus.packed
+              ? "Its materials go back on the shelf. The order stays in your list as cancelled and doesn't count toward earnings."
+              : "Its reserved stock is released. The order stays in your list as cancelled and doesn't count toward earnings.",
       confirmText: 'Cancel order',
       cancelText: 'Keep order',
       isDestructive: true,
