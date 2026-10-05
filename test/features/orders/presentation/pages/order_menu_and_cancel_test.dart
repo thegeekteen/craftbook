@@ -167,14 +167,50 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('shipped orders only offer the note', (tester) async {
+  testWidgets('shipped orders offer the note and cancelling, not deleting',
+      (tester) async {
     await startApp(tester, seed: seed);
     await openAll(tester);
     await longPress(tester, 'Cy');
 
     expect(find.text('Edit note'), findsOneWidget);
-    expect(find.text('Cancel order'), findsNothing);
+    expect(find.text('Cancel order'), findsOneWidget);
     expect(find.text('Delete order'), findsNothing);
+    await closeApp(tester);
+  });
+
+  testWidgets('a cancelled shipped order restocks, then can be deleted',
+      (tester) async {
+    await startApp(tester, seed: seed);
+    await openAll(tester);
+    await longPress(tester, 'Cy');
+    await tester.tap(find.text('Cancel order'));
+    await settle(tester);
+    expect(find.textContaining('came back or never went out'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Cancel order'));
+    await settle(tester);
+
+    expect(await status(tester, cy), OrderStatus.cancelled);
+    var m = await stock(tester);
+    expect((m.quantityOnHand, m.quantityPromised), (8, 2));
+
+    // Let the "cancelled" snackbar go so it doesn't cover the menu.
+    await tester.pump(const Duration(seconds: 6));
+    await settle(tester);
+    final chip = find.widgetWithText(AppChip, 'Cancelled');
+    await tester.ensureVisible(chip);
+    await tester.tap(chip);
+    await settle(tester);
+    await longPress(tester, 'Cy');
+    await tester.tap(find.text('Delete order'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await settle(tester);
+
+    expect(await status(tester, cy), isNull);
+    m = await stock(tester);
+    expect((m.quantityOnHand, m.quantityPromised), (8, 2),
+        reason: 'the stock came back once, on cancel');
     await closeApp(tester);
   });
 
@@ -185,6 +221,9 @@ void main() {
     expect(find.text('Ana'), findsOneWidget);
     expect(find.text('Dee'), findsNothing);
 
+    // Let the "cancelled" snackbar go so it doesn't cover the menu.
+    await tester.pump(const Duration(seconds: 6));
+    await settle(tester);
     final chip = find.widgetWithText(AppChip, 'Cancelled');
     await tester.ensureVisible(chip);
     await tester.tap(chip);

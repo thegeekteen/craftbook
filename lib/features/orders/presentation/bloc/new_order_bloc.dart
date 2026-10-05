@@ -127,7 +127,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       tax: ownTax,
       isPaid: order.isPaid,
     );
-    _availableTax = ownTax ?? taxSettings().forNewOrder;
+    _availableTax = ownTax ?? taxSettings().available;
     // An existing order's paid status is its own, whatever the channel says.
     _paidTouched = true;
     _items = [
@@ -386,7 +386,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   void _startTerms() {
     final tax = taxSettings();
     _terms = OrderTerms(tax: tax.forNewOrder);
-    _availableTax = tax.forNewOrder;
+    _availableTax = tax.available;
     _paidTouched = false;
   }
 

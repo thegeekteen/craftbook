@@ -72,7 +72,7 @@ The app is built around 6 main user flows:
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
 - **Navigation hub**: Links to Materials, Channels, Order fields, Buy List, Waiting for payment, Discounts, Notes, Social shortcuts
 - **Currency**: Pick from common currencies or type a symbol; only the display changes
-- **Tax**: On/off for new orders, rate, name, prices include tax or tax added on top
+- **Tax**: Use tax on/off, new orders start on or off, rate, name, prices include tax or tax added on top
 
 ---
 
@@ -91,7 +91,7 @@ The app is built around 6 main user flows:
 | Material adjustment | ✅ | Actual vs planned, waste tracking, profit recalculation |
 | Pack & Ship | ✅ | Stock deduction, status updates |
 | Delete orders | ✅ | Blocked when shipped, stock reversal for pending/packed |
-| Cancel orders | ✅ | Pending or packed orders, from the detail menu or a long press. Reservations are released, packed stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. The Orders tab's All leaves cancelled orders out; they show under the Cancelled chip. A cancelled order can be restored (back to To pack, reserving its materials again) or deleted |
+| Cancel orders | ✅ | Any order not already cancelled, from the detail menu or a long press. Shipped ones are for parcels that came back or never went, and must be cancelled before they can be deleted. Reservations are released, packed or shipped stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. The Orders tab's All leaves cancelled orders out; they show under the Cancelled chip. A cancelled order can be restored (back to To pack, reserving its materials again) or deleted |
 | Long-press menus | ✅ | Long press any product, material, order (list, Today, calendar), channel, social shortcut, order field or note for its actions: edit, delete, plus shortcuts such as Archive, Receive stock, Mark shipped, Cancel, Restore order, Turn off, Restore |
 | Materials list | ✅ | Tabbed, search, pip visualization |
 | Material detail | ✅ | Stock overview, movements, receive, adjust, delete |
@@ -110,7 +110,7 @@ The app is built around 6 main user flows:
 | Reports | ✅ | Renamed from Money. Week/month/year/custom periods, filters, summary with discounts and tax, per-product, waste |
 | Currency | ✅ | More → Currency. Presets (₱, $, €, £, ¥, Rp, RM, ฿, ₫, ₹…) or a custom symbol, with or without cents. Display only |
 | Discounts | ✅ | Percent or fixed lines on any order, presets under More → Discounts. Fees and tax are on the amount after discount. Added in schema v9 |
-| Tax / VAT | ✅ | More → Tax: on/off, rate, name, included in prices or added on top. Each order keeps its own rate and can switch tax off. Added in schema v9 |
+| Tax / VAT | ✅ | More → Tax: use tax on/off, whether new orders start with it on or off, rate, name, included in prices or added on top. Each order keeps its own rate and has its own switch. Added in schema v9 |
 | Paid / unpaid | ✅ | Per order, default from the channel's "paid when placed". Unpaid tag and filter on Orders, Mark paid on the order page and long press, Waiting for payment list. Existing orders were migrated as paid in schema v9 |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |

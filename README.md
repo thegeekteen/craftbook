@@ -49,7 +49,7 @@ Go to **More** and work down the list. You can change everything later.
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
 | **Materials** | More → Materials → **+ Material** | Pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
 | **Products** | Products → **+ Product** | Sell price and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). The editor shows your profit per piece as you type. |
-| **Tax** (optional) | More → Tax | Turn on **Add tax to new orders** and set the rate and name (VAT, GST…). Choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
+| **Tax** (optional) | More → Tax | Turn on **Use tax**, set the rate and name (VAT, GST…), and choose whether new orders **start with tax on or off**. Also choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
 
@@ -63,7 +63,7 @@ Tap **+ New order** on the Orders tab. There are three steps:
 2. **Items**: pick products. The picker shows how many you can make with the stock you have now.
 3. **Review**: check everything before you save.
    - **Discounts**: tap a saved discount, or **+ Other** to type one just for this order. Add as many as you like; tap ✕ to remove one.
-   - **Tax**: if tax is on, it's added here. Switch it off for this order if it doesn't apply.
+   - **Tax**: if you use tax, there's a switch here. It starts on or off depending on your setting; flip it for this order.
    - **Paid**: this starts from the channel's setting. Flip it if this customer hasn't paid yet.
    - The **order total**, where the money goes, your profit, and which materials will be set aside. If you're short of anything you'll see a warning, but you can still save.
 
@@ -81,11 +81,13 @@ Open the order's **⋮** menu and choose **Edit**. How much you can change depen
 |--------|---------------------|
 | **To pack** | Everything. Changing items releases the old materials and sets aside the new ones. |
 | **Packed** | Customer, order fields, note, dates, channel, discounts, tax and paid. Items are locked because their materials are already used. |
-| **Shipped** | The note only. You can still mark it paid or unpaid. |
+| **Shipped** | The note only. You can still mark it paid or unpaid, or cancel it. |
 
 ### Cancelling
 
-You can cancel an order that hasn't shipped. Whatever it set aside or used goes back into stock, and the order stays in your list under **Cancelled**. If the customer comes back, **Restore** puts it back to *To pack*. Delete a cancelled order only if you don't want it on record at all.
+You can cancel any order. Whatever it set aside or used goes back into stock, and the order stays in your list under **Cancelled**, out of your reports. Cancel a **shipped** order when the parcel came back or never went out; its materials go back on the shelf.
+
+If the customer comes back, **Restore** puts a cancelled order back to *To pack*. A cancelled order can also be deleted if you don't want it on record at all. Shipped orders can't be deleted straight away; cancel them first.
 
 ---
 
@@ -113,7 +115,7 @@ Editing or deleting a saved discount never changes orders that already used it.
 
 ## Tax
 
-Turn tax on under **More → Tax**. Every new order then starts with it, and you can switch it off for any single order.
+Turn tax on under **More → Tax**. Every order then gets a tax switch. Choose whether new orders **start with tax on** (switch it off when it doesn't apply) or **start with it off** (switch it on when a customer needs an official receipt).
 
 | Your prices… | What the customer pays | What it does to profit |
 |--------------|------------------------|------------------------|

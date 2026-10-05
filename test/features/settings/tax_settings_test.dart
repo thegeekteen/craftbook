@@ -21,6 +21,13 @@ void main() {
               .forNewOrder,
           const OrderTax(rate: 12, inclusive: false));
     });
+
+    test('off by default: offered, but new orders start without it', () {
+      const s = TaxSettings(enabled: true, onByDefault: false);
+      expect(s.forNewOrder, isNull);
+      expect(s.available, const OrderTax(rate: 12, inclusive: true));
+      expect(const TaxSettings(onByDefault: false).available, isNull);
+    });
   });
 
   group('repository', () {
@@ -37,8 +44,12 @@ void main() {
     });
 
     test('round-trips every field', () async {
-      const gst =
-          TaxSettings(enabled: true, rate: 7.5, inclusive: false, label: 'GST');
+      const gst = TaxSettings(
+          enabled: true,
+          onByDefault: false,
+          rate: 7.5,
+          inclusive: false,
+          label: 'GST');
       expect(await repo.setTaxSettings(gst), isA<Success<void>>());
       expect(await repo.getTaxSettings(), gst);
     });
@@ -101,7 +112,7 @@ void main() {
 
     testWidgets('turns tax on as added on top', (tester) async {
       final result = await run(tester, const TaxSettings(), () async {
-        await tester.tap(find.text('Add tax to new orders'));
+        await tester.tap(find.text('Use tax'));
         await tester.tap(find.text('Tax added on top'));
         await tester.pump();
         expect(find.textContaining('₱1,120.00'), findsOneWidget);
@@ -110,6 +121,25 @@ void main() {
       });
       expect(
           result, const TaxSettings(enabled: true, rate: 12, inclusive: false));
+    });
+
+    testWidgets('new orders can start without tax', (tester) async {
+      final result =
+          await run(tester, const TaxSettings(enabled: true), () async {
+        await tester.tap(find.text('Off'));
+        await tester.pump();
+        expect(find.textContaining('official receipt'), findsOneWidget);
+        await tester.ensureVisible(find.text('Save'));
+        await tester.tap(find.text('Save'));
+      });
+      expect(result?.enabled, isTrue);
+      expect(result?.onByDefault, isFalse);
+    });
+
+    testWidgets('the start choice hides while tax is off', (tester) async {
+      await run(tester, const TaxSettings(), () async {
+        expect(find.text('New orders start with tax'), findsNothing);
+      });
     });
 
     testWidgets('a zero rate saves as off', (tester) async {

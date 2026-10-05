@@ -114,6 +114,18 @@ void main() {
       await bloc.close();
     });
 
+    test('tax off by default: offered but not on', () async {
+      tax = const TaxSettings(enabled: true, onByDefault: false);
+      final bloc = build()..add(details());
+      await Future<void>.delayed(Duration.zero);
+      expect(termsOf(bloc).tax, isNull);
+      expect((bloc.state as NewOrderDetailsFilled).availableTax, vat);
+      bloc.add(const SetOrderTaxEnabled(true));
+      await Future<void>.delayed(Duration.zero);
+      expect(termsOf(bloc).tax, vat);
+      await bloc.close();
+    });
+
     test('the channel decides paid until the user does', () async {
       final bloc = build()..add(details(paidByDefault: false));
       await Future<void>.delayed(Duration.zero);

@@ -128,8 +128,9 @@ class OrderTermsCard extends StatelessWidget {
               ),
             ],
           ),
+          // Room under the chips whichever rows follow.
+          const SizedBox(height: 12),
           if (tax != null) ...[
-            const SizedBox(height: 8),
             Divider(height: 1, color: c.hair),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

@@ -820,7 +820,7 @@ class _TermsLines extends StatelessWidget {
             ? rate.toStringAsFixed(0)
             : '$rate';
     Widget line(String label, String amount, {Color? color}) => Padding(
-          padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+          padding: const EdgeInsets.symmetric(vertical: 3),
           child: Row(
             children: [
               Expanded(
@@ -852,7 +852,7 @@ class _TermsLines extends StatelessWidget {
         line('$taxLabel $rateText%', '+${CurrencyFormatter.format(money.tax)}'),
       if (order.hasTax && order.taxInclusive)
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+          padding: const EdgeInsets.only(top: 3),
           child: Text(
             'Includes ${CurrencyFormatter.format(money.tax)} $taxLabel ($rateText%)',
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
@@ -860,12 +860,17 @@ class _TermsLines extends StatelessWidget {
         ),
     ];
     if (lines.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        line('Items', CurrencyFormatter.format(order.totalSales)),
-        ...lines,
-      ],
+    // Same breathing room above and below, so the divider under the last
+    // line never touches it, whichever lines are shown.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 9, 14, 9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          line('Items', CurrencyFormatter.format(order.totalSales)),
+          ...lines,
+        ],
+      ),
     );
   }
 }

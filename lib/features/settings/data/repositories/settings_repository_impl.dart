@@ -18,6 +18,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   static const currencySymbolKey = 'currency_symbol';
   static const currencyDecimalsKey = 'currency_decimals';
   static const taxEnabledKey = 'tax_enabled';
+  static const taxOnByDefaultKey = 'tax_on_by_default';
   static const taxRateKey = 'tax_rate';
   static const taxInclusiveKey = 'tax_inclusive';
   static const taxLabelKey = 'tax_label';
@@ -90,6 +91,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final label = (await _read(taxLabelKey))?.trim() ?? '';
     return TaxSettings(
       enabled: await _read(taxEnabledKey) == 'true',
+      onByDefault: await _read(taxOnByDefaultKey) != 'false',
       rate: rate != null && rate >= 0 && rate <= 100 ? rate : fallback.rate,
       inclusive: await _read(taxInclusiveKey) != 'false',
       label: label.isEmpty ? fallback.label : label,
@@ -100,6 +102,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<Result<void>> setTaxSettings(TaxSettings tax) async {
     for (final (key, value) in [
       (taxEnabledKey, '${tax.enabled}'),
+      (taxOnByDefaultKey, '${tax.onByDefault}'),
       (taxRateKey, '${tax.rate}'),
       (taxInclusiveKey, '${tax.inclusive}'),
       (taxLabelKey, tax.label),
