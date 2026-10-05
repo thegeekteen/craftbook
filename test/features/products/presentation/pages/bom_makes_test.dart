@@ -5,6 +5,7 @@ import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/widgets/stepper_input.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
+import 'package:craftbook/features/products/presentation/widgets/product_profit_card.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -77,6 +78,12 @@ void main() {
     await tester.pump();
     // ₱3.00 a sheet, a ninth of it per card.
     expect(find.textContaining('₱0.33'), findsWidgets);
+    // The profit strip follows Makes too.
+    await tester.scrollUntilVisible(find.byType(ProductProfitCard), 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(
+        tester.widget<ProductProfitCard>(find.byType(ProductProfitCard)).cost,
+        closeTo(3 / 9, 1e-9));
 
     final save = find.widgetWithText(FilledButton, 'Save changes');
     await tester.ensureVisible(save);
