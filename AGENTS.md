@@ -352,6 +352,11 @@ switch (result) {
 - Document **why**, not **what**
 - Use `///` for public API documentation
 
+### Formatting
+- All Dart code is formatted with `dart format` (default settings, no custom line length). Run `dart format .` before finishing any change; `dart format --output=none --set-exit-if-changed .` must exit cleanly.
+- Generated files (`*.g.dart`) are formatted too, so run it after `dart run build_runner build`.
+- Don't hand-align code or wrap lines to taste; the formatter's output is the standard.
+
 ### Linting
 - Run `flutter analyze` before finishing any change and fix **every** issue it reports, including `info`-level messages. There is no such thing as an acceptable info; the codebase stays at "No issues found!".
 - Try `dart fix --apply` first for mechanical fixes (e.g. `prefer_const_constructors`, `use_super_parameters`), then fix the rest by hand.
@@ -413,6 +418,7 @@ Requires Flutter 3.x (Dart SDK ≥ 3.5) and the Android SDK.
 flutter pub get
 dart run build_runner build   # regenerate Drift code after schema changes
 flutter run
+dart format .                 # the whole codebase stays formatted
 flutter analyze               # must report "No issues found!"
 flutter test                  # use cases, BLoCs, widgets, repositories on in-memory SQLite
 flutter test --run-skipped --tags screenshots --update-goldens   # every screen, light + dark
