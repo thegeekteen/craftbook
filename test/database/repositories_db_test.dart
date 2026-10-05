@@ -300,6 +300,32 @@ void main() {
       final bom = ok(await repo.getBomItems(id));
       expect(bom.map((b) => b.quantityRequired), [5]);
     });
+
+    test('a BOM line that makes several products', () async {
+      final dao = ProductDao(db);
+      final repo = ProductRepositoryImpl(dao);
+      final id = ok(await repo.createProduct(name: 'Cards', sellPrice: 3));
+      // 50 sheets at ₱3 each (pack of 50 for ₱150); 1 sheet makes 9 cards.
+      final sheet = ok(await materials.createMaterial(
+        name: 'A4 card sheet',
+        packSize: 50,
+        packPrice: 150,
+        unitCost: 3,
+        quantityOnHand: 50,
+        alertLevel: 5,
+      ));
+      ok(await repo.saveBomItems(id,
+          [BomItemInput(materialId: sheet, quantityRequired: 1, makes: 9)]));
+
+      final bom = ok(await repo.getBomItems(id)).single;
+      expect((bom.quantityRequired, bom.makes), (1, 9));
+      expect(ok(await repo.calculateBomCost(id)), closeTo(3 / 9, 1e-9));
+      expect(await dao.calculateBuildableQuantity(id), 450);
+
+      await materials.reserveMaterials(sheet, 46);
+      // 4 sheets left make 36 cards.
+      expect(await dao.calculateBuildableQuantity(id), 36);
+    });
   });
 
   group('setProductPhoto', () {

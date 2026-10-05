@@ -111,7 +111,8 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
       if (material == null) return 0;
 
       final available = material.quantityOnHand - material.quantityPromised;
-      final buildable = available ~/ bomItem.quantityRequired;
+      // One piece can make several products (a sheet makes 9 cards).
+      final buildable = available * bomItem.makes ~/ bomItem.quantityRequired;
 
       if (buildable < minBuildable) {
         minBuildable = buildable;

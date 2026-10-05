@@ -169,6 +169,7 @@ class ProductRepositoryImpl implements ProductRepository {
             productId: Value(productId),
             materialId: Value(item.materialId),
             quantityRequired: Value(item.quantityRequired),
+            makes: Value(item.makes),
           ));
         }
       });
@@ -209,7 +210,7 @@ class ProductRepositoryImpl implements ProductRepository {
       for (final row in bomRows) {
         final material = await dao.getMaterialById(row.materialId);
         if (material != null) {
-          total += row.quantityRequired * material.unitCost;
+          total += row.quantityRequired * material.unitCost / row.makes;
         }
       }
       return Success(total);
@@ -535,6 +536,7 @@ class ProductRepositoryImpl implements ProductRepository {
         materialName: material?.name ?? '',
         materialUnitCost: material?.unitCost ?? 0,
         quantityRequired: row.quantityRequired,
+        makes: row.makes,
         createdAt: row.createdAt,
       );
 

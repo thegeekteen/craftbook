@@ -41,7 +41,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   List<StockMovement> _movements = [];
 
   /// Products using this material and how many pieces each needs.
-  List<(Product, int)> _usedIn = [];
+  List<(Product, String)> _usedIn = [];
   bool _loading = true;
   String? _error;
   bool _changed = false;
@@ -63,19 +63,22 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
         });
       case Success(:final value):
         final repo = getIt<ProductRepository>();
-        final usedIn = <(Product, int)>[];
+        final usedIn = <(Product, String)>[];
         final productsResult =
             await repo.getProductsUsingMaterial(widget.materialId);
         if (productsResult case Success(value: final products)) {
           for (final p in products) {
             final bom = await repo.getBomItems(p.id!);
-            final perPiece = switch (bom) {
+            final usage = switch (bom) {
               Success(:final value) => value
                   .where((b) => b.materialId == widget.materialId)
-                  .fold<int>(0, (s, b) => s + b.quantityRequired),
-              Error() => 0,
+                  .map((b) => b.makes > 1
+                      ? '${b.quantityRequired} per ${b.makes} pieces'
+                      : '${b.quantityRequired} per piece')
+                  .join(' + '),
+              Error() => '',
             };
-            usedIn.add((p, perPiece));
+            usedIn.add((p, usage));
           }
         }
         if (!mounted) return;
@@ -364,11 +367,11 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
             else
               AppCard.flush(
                 child: CardList(children: [
-                  for (final (p, perPiece) in _usedIn)
+                  for (final (p, usage) in _usedIn)
                     CardRow(
                       title: Text(p.name),
                       trailing: Text(
-                        '$perPiece per piece',
+                        usage,
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       ),
                       onTap: () => _openProduct(p.id!),

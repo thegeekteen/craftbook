@@ -139,6 +139,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     materialName: b.materialName,
                     unitCost: b.materialUnitCost,
                     quantity: b.quantityRequired,
+                    makes: b.makes,
                   ),
               ],
             Error() => [],
@@ -245,7 +246,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final alertLevel = int.tryParse(_alertLevel.text) ?? 0;
     final bomInputs = [
       for (final b in _bom)
-        BomItemInput(materialId: b.materialId, quantityRequired: b.quantity),
+        BomItemInput(
+          materialId: b.materialId,
+          quantityRequired: b.quantity,
+          makes: b.makes,
+        ),
     ];
 
     Result<void> outcome;
@@ -471,21 +476,39 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   TextSpan(
                       text: '${CurrencyFormatter.format(b.unitCost)} each · '),
                   TextSpan(
-                    text: CurrencyFormatter.format(b.quantity * b.unitCost),
+                    text: CurrencyFormatter.format(b.lineCost),
                     style:
                         TextStyle(color: c.coin, fontWeight: FontWeight.w600),
                   ),
                 ])),
-                trailing: StepperInput(
-                  value: b.quantity,
-                  min: 0,
-                  onChanged: (v) => setState(() {
-                    if (v.toInt() == 0) {
-                      _bom.remove(b);
-                    } else {
-                      b.quantity = v.toInt();
-                    }
-                  }),
+                trailing: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _labelledStepper(
+                      'Uses',
+                      StepperInput(
+                        value: b.quantity,
+                        min: 0,
+                        onChanged: (v) => setState(() {
+                          if (v.toInt() == 0) {
+                            _bom.remove(b);
+                          } else {
+                            b.quantity = v.toInt();
+                          }
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _labelledStepper(
+                      'Makes',
+                      StepperInput(
+                        value: b.makes,
+                        min: 1,
+                        onChanged: (v) => setState(() => b.makes = v.toInt()),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ]),
@@ -493,7 +516,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
           child: Text(
-            'Set a quantity to 0 to remove a material.',
+            'Uses is how many pieces of the material go in, Makes is how '
+            'many of this product they make (1 sheet makes 9 cards). '
+            'Set Uses to 0 to remove a material.',
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         ),
@@ -501,6 +526,19 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       const SizedBox(height: 16),
       _alertField(digits),
     ];
+  }
+
+  Widget _labelledStepper(String label, Widget stepper) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label,
+            style:
+                AppTextStyles.bodySmall.copyWith(color: context.colors.muted)),
+        const SizedBox(width: 8),
+        stepper,
+      ],
+    );
   }
 
   /// One alert level for both types; only what it counts differs.
@@ -577,10 +615,16 @@ class _EditableBomItem {
   final double unitCost;
   int quantity;
 
+  /// How many products [quantity] pieces make.
+  int makes;
+
   _EditableBomItem({
     required this.materialId,
     required this.materialName,
     required this.unitCost,
     required this.quantity,
+    this.makes = 1,
   });
+
+  double get lineCost => quantity * unitCost / makes;
 }

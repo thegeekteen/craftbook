@@ -50,7 +50,7 @@ Future<ExpandedOrder> expandOrderItems(
       Error() => <BomItem>[],
     };
     for (final bom in bomItems) {
-      final needed = bom.quantityRequired * item.quantity;
+      final needed = bom.piecesFor(item.quantity);
       final index = materials.indexWhere((m) => m.materialId == bom.materialId);
       if (index >= 0) {
         final existing = materials[index];

@@ -124,7 +124,7 @@ class PreviewOrder {
       final bomResult = await productRepository.getBomItems(item.productId);
       if (bomResult case Error(:final failure)) return Error(failure);
       for (final BomItem bom in (bomResult as Success<List<BomItem>>).value) {
-        final needed = bom.quantityRequired * item.quantity;
+        final needed = bom.piecesFor(item.quantity);
         final prev = materialNeeds[bom.materialId];
         materialNeeds[bom.materialId] = (
           bom.materialName,

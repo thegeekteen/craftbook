@@ -78,8 +78,12 @@ class BomItemInput {
   final int materialId;
   final int quantityRequired;
 
+  /// How many products [quantityRequired] pieces make.
+  final int makes;
+
   const BomItemInput({
     required this.materialId,
     required this.quantityRequired,
+    this.makes = 1,
   });
 }
