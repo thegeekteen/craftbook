@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -76,14 +77,14 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
   }
 
   double get _pricePerPack => double.tryParse(_price.text) ?? 0;
-  int get _pieces => _packs * (_material?.packSize ?? 0);
+  double get _pieces => qty(_packs * (_material?.packSize ?? 0));
 
   /// new = (oldQty × oldCost + newQty × newPrice) / (oldQty + newQty)
   double get _newUnitCost {
     final m = _material!;
     final newPrice = m.packSize > 0 ? _pricePerPack / m.packSize : 0.0;
     final total = m.quantityOnHand + _pieces;
-    if (total == 0) return newPrice;
+    if (total <= 0) return newPrice;
     return (m.quantityOnHand * m.unitCost + _pieces * newPrice) / total;
   }
 
@@ -226,7 +227,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('${m.quantityOnHand}',
+                      Text(QuantityFormatter.format(m.quantityOnHand),
                           style: AppTextStyles.amount
                               .copyWith(color: c.muted, fontSize: 20)),
                       Padding(
@@ -235,7 +236,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                             size: 18, color: c.muted),
                       ),
                       Text(
-                        '${m.quantityOnHand + _pieces}',
+                        QuantityFormatter.format(m.quantityOnHand + _pieces),
                         style: AppTextStyles.displayMedium
                             .copyWith(color: c.go, fontSize: 32),
                       ),

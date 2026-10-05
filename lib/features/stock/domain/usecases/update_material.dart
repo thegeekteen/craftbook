@@ -11,9 +11,9 @@ class UpdateMaterial {
     required int id,
     required String name,
     int? unitId,
-    required int packSize,
+    required double packSize,
     required double packPrice,
-    required int alertLevel,
+    required double alertLevel,
     String? supplier,
   }) async {
     if (name.trim().isEmpty) {

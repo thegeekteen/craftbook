@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/quantity.dart';
 
 class BomItem extends Equatable {
   final int? id;
@@ -12,11 +13,11 @@ class BomItem extends Equatable {
   /// counted in the product's own unit instead.
   final String materialUnit;
   final double materialUnitCost;
-  final int quantityRequired;
+  final double quantityRequired;
 
   /// How many products [quantityRequired] pieces make, e.g. one A4 sheet
   /// makes 9 business cards. 1 means one product uses them all.
-  final int makes;
+  final double makes;
   final DateTime createdAt;
 
   const BomItem({
@@ -34,10 +35,10 @@ class BomItem extends Equatable {
   /// Material cost of one product: a sheet that makes 9 costs a ninth each.
   double get lineCost => quantityRequired * materialUnitCost / makes;
 
-  /// Whole pieces of material needed for [products] products. Stock is
-  /// counted in whole pieces, so a part-used sheet counts as one.
-  int piecesFor(int products) =>
-      (quantityRequired * products + makes - 1) ~/ makes;
+  /// How much of the material [products] products take, exactly. Stock is
+  /// fractional now, so a card reserves a ninth of a sheet rather than a
+  /// whole one; rounded to the precision quantities are kept at.
+  double piecesFor(double products) => qty(quantityRequired * products / makes);
 
   @override
   List<Object?> get props => [

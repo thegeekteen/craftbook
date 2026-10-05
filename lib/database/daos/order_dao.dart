@@ -79,7 +79,7 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
 
   /// Product lines for many orders in one query, as
   /// (orderId, productName, quantity).
-  Future<List<(int, String, int)>> getOrderLines(List<int> orderIds) async {
+  Future<List<(int, String, double)>> getOrderLines(List<int> orderIds) async {
     if (orderIds.isEmpty) return const [];
     final query = select(orderItems).join([
       innerJoin(products, products.id.equalsExp(orderItems.productId)),

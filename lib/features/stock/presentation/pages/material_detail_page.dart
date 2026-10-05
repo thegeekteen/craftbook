@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
@@ -130,7 +131,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
           final c = sheetContext.colors;
-          final diff = counted - m.quantityOnHand;
+          final diff = qty(counted - m.quantityOnHand);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -139,24 +140,28 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   value: counted,
                   min: 0,
                   max: 99999,
-                  onChanged: (v) => setSheet(() => counted = v.toInt()),
+                  decimals: quantityDecimals,
+                  onChanged: (v) => setSheet(() => counted = qty(v.toDouble())),
                 ),
               ),
               const SizedBox(height: 10),
               Text(
-                diff == 0
-                    ? 'Matches the app (${m.quantityOnHand})'
-                    : '${diff > 0 ? '+' : '−'}${diff.abs()} from ${m.quantityOnHand} in the app',
+                sameQty(diff, 0)
+                    ? 'Matches the app (${QuantityFormatter.format(m.quantityOnHand)})'
+                    : '${diff > 0 ? '+' : '−'}${QuantityFormatter.format(diff.abs())}'
+                        ' from ${QuantityFormatter.format(m.quantityOnHand)} in the app',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: diff == 0 ? c.muted : (diff > 0 ? c.go : c.alert),
+                  color:
+                      sameQty(diff, 0) ? c.muted : (diff > 0 ? c.go : c.alert),
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 20),
               FilledButton(
-                onPressed:
-                    diff == 0 ? null : () => Navigator.pop(sheetContext, true),
+                onPressed: sameQty(diff, 0)
+                    ? null
+                    : () => Navigator.pop(sheetContext, true),
                 child: const Text('Save count'),
               ),
             ],
@@ -171,7 +176,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
       case Error(:final failure):
         context.showSnackBar(failure.message, isError: true);
       case Success():
-        context.showSnackBar('Stock set to $counted');
+        context.showSnackBar(
+            'Stock set to ${QuantityFormatter.withUnit(counted, m.unit)}');
         _changed = true;
         _load();
     }
@@ -279,7 +285,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        '${m.quantityOnHand}',
+                        QuantityFormatter.format(m.quantityOnHand),
                         style: AppTextStyles.displayLarge.copyWith(
                             color: low ? c.alert : c.ink, fontSize: 44),
                       ),
@@ -312,17 +318,19 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                     m.quantityFree < 0
                         ? StatTile(
                             label: 'Short',
-                            value: '${-m.quantityFree}',
+                            value: QuantityFormatter.format(-m.quantityFree),
                             valueColor: c.alert)
                         : StatTile(
                             label: 'Free',
-                            value: '${m.quantityFree}',
+                            value: QuantityFormatter.format(m.quantityFree),
                             valueColor: c.go),
                     StatTile(
                         label: 'Promised',
-                        value: '${m.quantityPromised}',
+                        value: QuantityFormatter.format(m.quantityPromised),
                         valueColor: m.quantityPromised > 0 ? c.alert : null),
-                    StatTile(label: 'Reorder at', value: '${m.alertLevel}'),
+                    StatTile(
+                        label: 'Reorder at',
+                        value: QuantityFormatter.format(m.alertLevel)),
                   ]),
                   const SizedBox(height: 12),
                   Divider(color: c.hair),
@@ -454,7 +462,7 @@ class _MovementRow extends StatelessWidget {
             : when,
       ),
       trailing: Text(
-        '${adds ? '+' : '−'}$qty',
+        '${adds ? '+' : '−'}${QuantityFormatter.format(qty)}',
         style: AppTextStyles.amount.copyWith(color: color, fontSize: 15),
       ),
     );

@@ -33,7 +33,7 @@ class ProductOrderLine extends Equatable {
 
   /// The product's unit label.
   final String unit;
-  final int quantity;
+  final double quantity;
   final double sales;
   final double profit;
   final DateTime completedAt;

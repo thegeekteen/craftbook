@@ -1,11 +1,12 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/quantity_formatter.dart';
 import 'order.dart';
 
 /// One product line on an order, for list summaries.
 class OrderLine extends Equatable {
   final String productName;
-  final int quantity;
+  final double quantity;
 
   const OrderLine({required this.productName, required this.quantity});
 
@@ -26,10 +27,11 @@ class OrderListEntry extends Equatable {
   });
 
   /// "2× Crochet tulip bouquet · 1× Kraft gift box"
-  String get itemSummary =>
-      lines.map((l) => '${l.quantity}× ${l.productName}').join(' · ');
+  String get itemSummary => lines
+      .map((l) => '${QuantityFormatter.format(l.quantity)}× ${l.productName}')
+      .join(' · ');
 
-  int get pieceCount => lines.fold(0, (sum, l) => sum + l.quantity);
+  double get pieceCount => lines.fold(0, (sum, l) => sum + l.quantity);
 
   @override
   List<Object?> get props => [order, channelName, lines];

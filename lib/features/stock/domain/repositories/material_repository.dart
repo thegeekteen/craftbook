@@ -13,11 +13,11 @@ abstract class MaterialRepository {
 
     /// What it's counted in. Null uses the shop's default unit.
     int? unitId,
-    required int packSize,
+    required double packSize,
     required double packPrice,
     required double unitCost,
-    required int quantityOnHand,
-    required int alertLevel,
+    required double quantityOnHand,
+    required double alertLevel,
     String? supplier,
   });
 
@@ -28,9 +28,9 @@ abstract class MaterialRepository {
     required int id,
     required String name,
     int? unitId,
-    required int packSize,
+    required double packSize,
     required double packPrice,
-    required int alertLevel,
+    required double alertLevel,
     String? supplier,
   });
   Future<Result<void>> receiveStock({
@@ -40,20 +40,21 @@ abstract class MaterialRepository {
     DateTime? receivedAt,
     String? supplier,
   });
-  Future<Result<void>> adjustStock(int materialId, int newQuantityOnHand);
+  Future<Result<void>> adjustStock(int materialId, double newQuantityOnHand);
   Future<Result<void>> setMaterialArchived(int materialId, bool archived);
-  Future<Result<void>> reserveMaterials(int materialId, int quantity);
-  Future<Result<void>> releaseReservedMaterials(int materialId, int quantity);
+  Future<Result<void>> reserveMaterials(int materialId, double quantity);
+  Future<Result<void>> releaseReservedMaterials(
+      int materialId, double quantity);
 
   /// Takes [quantity] off the shelf. [reserved] is how much of it this
   /// order had promised (defaults to [quantity]); only that much is
   /// released from promised, so other orders keep their reservations when
   /// more was used than planned.
-  Future<Result<void>> deductMaterials(int materialId, int quantity,
-      {int? reserved});
+  Future<Result<void>> deductMaterials(int materialId, double quantity,
+      {double? reserved});
 
   /// Puts [quantity] back on hand, logged under [reference] in the history.
-  Future<Result<void>> restoreDeductedMaterials(int materialId, int quantity,
+  Future<Result<void>> restoreDeductedMaterials(int materialId, double quantity,
       {String reference = 'Restored from deleted order'});
   Future<Result<List<BuyListItem>>> getBuyList();
 

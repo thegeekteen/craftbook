@@ -10,7 +10,7 @@ class ReceiveProductStock {
 
   Future<Result<void>> call({
     required int productId,
-    required int quantity,
+    required double quantity,
     required double pricePerUnit,
     String? reference,
   }) async {

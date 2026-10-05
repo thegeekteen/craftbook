@@ -43,7 +43,7 @@ void main() {
         quantityOnHand: 2,
         alertLevel: 1,
       ));
-      Future<int> handmade(String name, {int alert = 0}) async {
+      Future<int> handmade(String name, {double alert = 0}) async {
         final id =
             _ok(await products.createProduct(name: name, sellPrice: 300));
         _ok(await products.saveBomItems(

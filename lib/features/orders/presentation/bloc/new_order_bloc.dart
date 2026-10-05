@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../../settings/domain/entities/tax_settings.dart';
 import '../../domain/entities/order.dart';
@@ -166,7 +167,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
       // Update quantity if item already exists
       final existing = _items[existingIndex];
       _items[existingIndex] =
-          existing.copyWith(quantity: existing.quantity + event.quantity);
+          existing.copyWith(quantity: qty(existing.quantity + event.quantity));
     } else {
       _items = List.from(_items)
         ..add(OrderItemInput(

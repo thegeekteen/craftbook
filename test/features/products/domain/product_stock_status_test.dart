@@ -6,9 +6,9 @@ final _now = DateTime(2026, 1, 1);
 
 Product _product({
   bool standalone = false,
-  int onHand = 0,
-  int promised = 0,
-  int alertLevel = 0,
+  double onHand = 0,
+  double promised = 0,
+  double alertLevel = 0,
 }) =>
     Product(
       id: 1,

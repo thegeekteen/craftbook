@@ -12,9 +12,9 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 entity.Material _material({
-  int onHand = 10,
-  int promised = 4,
-  int alertLevel = 3,
+  double onHand = 10,
+  double promised = 4,
+  double alertLevel = 3,
   double unitCost = 2.5,
 }) {
   final now = DateTime(2026, 1, 1);

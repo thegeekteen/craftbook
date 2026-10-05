@@ -1,4 +1,5 @@
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../entities/order_item.dart';
@@ -57,8 +58,8 @@ Future<ExpandedOrder> expandOrderItems(
         materials[index] = OrderMaterialInput(
           materialId: existing.materialId,
           materialName: existing.materialName,
-          plannedQuantity: existing.plannedQuantity + needed,
-          actualQuantity: existing.actualQuantity + needed,
+          plannedQuantity: qty(existing.plannedQuantity + needed),
+          actualQuantity: qty(existing.actualQuantity + needed),
           unitCost: existing.unitCost,
         );
       } else {

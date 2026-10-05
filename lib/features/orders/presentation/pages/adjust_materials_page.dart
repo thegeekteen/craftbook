@@ -5,6 +5,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -32,7 +33,7 @@ class AdjustMaterialsPage extends StatefulWidget {
 class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
   static const _wasteReasons = ['Cutting', 'Defect', 'Miscount', 'Other'];
 
-  late final Map<int, int> _actual = {
+  late final Map<int, double> _actual = {
     for (final m in widget.materials) m.materialId: m.actualQuantity,
   };
   late final Map<int, String?> _reasons = {
@@ -52,7 +53,7 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
       for (final m in widget.materials)
         () {
           final actual = _actual[m.materialId] ?? m.actualQuantity;
-          final waste = actual - m.plannedQuantity;
+          final waste = qty(actual - m.plannedQuantity);
           return OrderMaterialInput(
             materialId: m.materialId,
             materialName: m.materialName,
@@ -124,10 +125,10 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
 
 class _MaterialAdjustCard extends StatelessWidget {
   final OrderMaterial material;
-  final int actual;
+  final double actual;
   final String? reason;
   final List<String> reasons;
-  final ValueChanged<int> onActualChanged;
+  final ValueChanged<double> onActualChanged;
   final ValueChanged<String> onReasonChanged;
 
   const _MaterialAdjustCard({
@@ -142,7 +143,7 @@ class _MaterialAdjustCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final waste = actual - material.plannedQuantity;
+    final waste = qty(actual - material.plannedQuantity);
     final saved = -waste;
     return AppCard(
       borderColor: waste > 0 ? c.alert.withValues(alpha: 0.5) : null,
@@ -173,7 +174,8 @@ class _MaterialAdjustCard extends StatelessWidget {
                 value: actual,
                 min: 0,
                 max: material.plannedQuantity * 3 + 10,
-                onChanged: (v) => onActualChanged(v.toInt()),
+                decimals: quantityDecimals,
+                onChanged: (v) => onActualChanged(qty(v)),
               ),
             ],
           ),

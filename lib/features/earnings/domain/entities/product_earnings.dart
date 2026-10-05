@@ -8,7 +8,7 @@ class ProductEarnings extends Equatable {
 
   /// The product's unit label, so "3 sold" can read "3 pc sold".
   final String unit;
-  final int quantitySold;
+  final double quantitySold;
   final double totalSales;
   final double totalProfit;
 

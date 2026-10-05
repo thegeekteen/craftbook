@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
@@ -20,10 +21,10 @@ class ReservationLine extends Equatable {
 
   /// What [quantity] and [available] are counted in.
   final String unit;
-  final int quantity;
+  final double quantity;
 
   /// Free pieces before this order reserves anything.
-  final int available;
+  final double available;
   final bool isProduct;
 
   const ReservationLine({
@@ -34,9 +35,9 @@ class ReservationLine extends Equatable {
     this.isProduct = false,
   });
 
-  int get remaining => available - quantity;
+  double get remaining => qty(available - quantity);
   bool get isShort => quantity > available;
-  bool get usesLast => !isShort && remaining == 0;
+  bool get usesLast => !isShort && sameQty(remaining, 0);
 
   @override
   List<Object?> get props => [name, unit, quantity, available, isProduct];
@@ -87,8 +88,8 @@ class PreviewOrder {
     List<OrderDiscount> discounts = const [],
     OrderTax? tax,
   }) async {
-    final ownMaterials = <int, int>{};
-    final ownProducts = <int, int>{};
+    final ownMaterials = <int, double>{};
+    final ownProducts = <int, double>{};
     if (excludeOrderId != null && orderRepository != null) {
       final mats = await orderRepository!.getOrderMaterials(excludeOrderId);
       if (mats case Error(:final failure)) return Error(failure);
@@ -107,7 +108,7 @@ class PreviewOrder {
     var materialCost = 0.0;
     final productLines = <ReservationLine>[];
     // materialId -> (name, needed, unitCost)
-    final materialNeeds = <int, (String, int, double)>{};
+    final materialNeeds = <int, (String, double, double)>{};
 
     for (final item in items) {
       final productResult =
@@ -134,7 +135,7 @@ class PreviewOrder {
         final prev = materialNeeds[bom.materialId];
         materialNeeds[bom.materialId] = (
           bom.materialName,
-          (prev?.$2 ?? 0) + needed,
+          qty((prev?.$2 ?? 0) + needed),
           bom.materialUnitCost,
         );
         materialCost += needed * bom.materialUnitCost;

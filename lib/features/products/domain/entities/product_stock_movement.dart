@@ -22,7 +22,7 @@ class ProductStockMovement extends Equatable {
   final int productId;
   final int? orderId;
   final ProductStockMovementType type;
-  final int quantity;
+  final double quantity;
   final double unitCost;
   final DateTime createdAt;
   final String? reference;

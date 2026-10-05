@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:craftbook/core/error/result.dart';
 import 'package:drift/drift.dart' hide Column;
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/product_dao.dart';
@@ -75,7 +78,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required double sellPrice,
     int? unitId,
     bool isStandalone = false,
-    int initialQuantity = 0,
+    double initialQuantity = 0,
     double initialUnitCost = 0,
   }) async {
     try {
@@ -131,7 +134,7 @@ class ProductRepositoryImpl implements ProductRepository {
     int? unitId,
     bool? isArchived,
     bool? isStandalone,
-    int? alertLevel,
+    double? alertLevel,
   }) async {
     try {
       final existing = await dao.getProductById(id);
@@ -201,7 +204,7 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Result<int>> calculateBuildableQuantity(
+  Future<Result<double>> calculateBuildableQuantity(
     int productId,
   ) async {
     try {
@@ -288,7 +291,7 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> receiveProductStock({
     required int productId,
-    required int quantity,
+    required double quantity,
     required double pricePerUnit,
     String? reference,
   }) async {
@@ -300,7 +303,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
       final oldQty = product.quantityOnHand;
       final oldCost = product.unitCost;
-      final newQty = oldQty + quantity;
+      final newQty = qty(oldQty + quantity);
       final newUnitCost = newQty > 0
           ? (oldQty * oldCost + quantity * pricePerUnit) / newQty
           : 0.0;
@@ -334,7 +337,7 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> adjustProductStock({
     required int productId,
-    required int newQuantityOnHand,
+    required double newQuantityOnHand,
   }) async {
     try {
       final product = await dao.getProductById(productId);
@@ -348,7 +351,7 @@ class ProductRepositoryImpl implements ProductRepository {
         product.quantityPromised,
       );
 
-      final diff = newQuantityOnHand - product.quantityOnHand;
+      final diff = qty(newQuantityOnHand - product.quantityOnHand);
       final unit = await _unitLabel(product.unitId);
       await dao.addProductStockMovement(
         db.ProductStockMovementsCompanion(
@@ -371,7 +374,7 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> reserveProductStock(
     int productId,
-    int quantity,
+    double quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
@@ -381,7 +384,7 @@ class ProductRepositoryImpl implements ProductRepository {
       await dao.updateProductStock(
         productId,
         product.quantityOnHand,
-        product.quantityPromised + quantity,
+        qty(product.quantityPromised + quantity),
       );
       return const Success(null);
     } catch (e) {
@@ -392,19 +395,18 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> releaseReservedProductStock(
     int productId,
-    int quantity,
+    double quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
         return const Error(NotFoundFailure('Product not found'));
       }
-      final newPromised =
-          (product.quantityPromised - quantity).clamp(0, 999999);
+      final newPromised = math.max(0, product.quantityPromised - quantity);
       await dao.updateProductStock(
         productId,
         product.quantityOnHand,
-        newPromised,
+        qty(newPromised),
       );
       return const Success(null);
     } catch (e) {
@@ -415,17 +417,16 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> deductProductStock(
     int productId,
-    int quantity,
+    double quantity,
   ) async {
     try {
       final product = await dao.getProductById(productId);
       if (product == null) {
         return const Error(NotFoundFailure('Product not found'));
       }
-      final newOnHand = (product.quantityOnHand - quantity).clamp(0, 999999);
-      final newPromised =
-          (product.quantityPromised - quantity).clamp(0, 999999);
-      await dao.updateProductStock(productId, newOnHand, newPromised);
+      final newOnHand = math.max(0, product.quantityOnHand - quantity);
+      final newPromised = math.max(0, product.quantityPromised - quantity);
+      await dao.updateProductStock(productId, qty(newOnHand), qty(newPromised));
 
       await dao.addProductStockMovement(
         db.ProductStockMovementsCompanion(
@@ -446,7 +447,7 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Result<void>> restoreDeductedProductStock(
     int productId,
-    int quantity, {
+    double quantity, {
     String reference = 'Restored from deleted order',
   }) async {
     try {
@@ -456,7 +457,7 @@ class ProductRepositoryImpl implements ProductRepository {
       }
       await dao.updateProductStock(
         productId,
-        product.quantityOnHand + quantity,
+        qty(product.quantityOnHand + quantity),
         product.quantityPromised,
       );
 

@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
@@ -44,7 +45,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   List<BomItem> _bom = [];
 
   /// Unclamped: negative when reservations exceed what's on hand.
-  int _buildable = 0;
+  double _buildable = 0;
   int _pendingOrders = 0;
   List<ProductHistoryEntry> _history = [];
   String? _historyError;
@@ -131,12 +132,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 value: counted,
                 min: 0,
                 max: 99999,
-                onChanged: (v) => setSheet(() => counted = v.toInt()),
+                decimals: quantityDecimals,
+                onChanged: (v) => setSheet(() => counted = qty(v.toDouble())),
               ),
             ),
             const SizedBox(height: 20),
             FilledButton(
-              onPressed: counted == p.quantityOnHand
+              onPressed: sameQty(counted, p.quantityOnHand)
                   ? null
                   : () => Navigator.pop(sheetContext, true),
               child: const Text('Save count'),
@@ -153,7 +155,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       case Error(:final failure):
         context.showSnackBar(failure.message, isError: true);
       case Success():
-        context.showSnackBar('Stock set to $counted');
+        context.showSnackBar(
+            'Stock set to ${QuantityFormatter.withUnit(counted, p.unit)}');
         _changed = true;
         _load();
     }

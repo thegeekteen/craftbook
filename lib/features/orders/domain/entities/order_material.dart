@@ -11,9 +11,9 @@ class OrderMaterial extends Equatable {
   /// The material's unit label, looked up with its name. Not stored on the
   /// order, so renaming the unit reaches past orders too.
   final String materialUnit;
-  final int plannedQuantity;
-  final int actualQuantity;
-  final int wasteQuantity;
+  final double plannedQuantity;
+  final double actualQuantity;
+  final double wasteQuantity;
   final String? wasteReason;
   final double unitCost;
   final DateTime createdAt;
@@ -54,9 +54,9 @@ class OrderMaterial extends Equatable {
 class OrderMaterialInput extends Equatable {
   final int materialId;
   final String materialName;
-  final int plannedQuantity;
-  final int actualQuantity;
-  final int wasteQuantity;
+  final double plannedQuantity;
+  final double actualQuantity;
+  final double wasteQuantity;
   final String? wasteReason;
   final double unitCost;
 

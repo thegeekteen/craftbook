@@ -4,6 +4,8 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/money_breakdown.dart';
@@ -24,8 +26,9 @@ class ProductSummaryCard extends StatelessWidget {
   /// Cost of one piece: the BOM total for handmade, unit cost for resell.
   final double cost;
 
-  /// How many can be built from materials on hand. Ignored for resell.
-  final int buildable;
+  /// How much the materials on hand can build, unrounded. Ignored for resell.
+  /// The headline floors it, since you can't pack part of a product.
+  final double buildable;
 
   /// Pending orders want more than stock or materials can cover.
   final bool isShort;
@@ -42,9 +45,9 @@ class ProductSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final p = product;
-    final qty = p.isStandalone ? p.quantityOnHand : buildable;
+    final qty = p.isStandalone ? p.quantityOnHand : buildable.floorToDouble();
     final low = isProductLow(p, buildable);
-    final alertQty = low || isShort || qty == 0;
+    final alertQty = low || isShort || sameQty(qty, 0);
     final margin =
         (MoneyParts(sales: p.sellPrice, materials: cost, fees: 0, shipping: 0)
                     .margin *
@@ -83,7 +86,7 @@ class ProductSummaryCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '$qty',
+                QuantityFormatter.format(qty),
                 style: AppTextStyles.displayLarge
                     .copyWith(color: alertQty ? c.alert : c.ink, fontSize: 44),
               ),
@@ -128,24 +131,28 @@ class ProductSummaryCard extends StatelessWidget {
               p.quantityFree < 0
                   ? StatTile(
                       label: 'Short',
-                      value: '${-p.quantityFree}',
+                      value: QuantityFormatter.format(-p.quantityFree),
                       valueColor: c.alert)
                   : StatTile(
                       label: 'Free',
-                      value: '${p.quantityFree}',
+                      value: QuantityFormatter.format(p.quantityFree),
                       valueColor: c.go),
               StatTile(
                 label: 'Promised',
-                value: '${p.quantityPromised}',
+                value: QuantityFormatter.format(p.quantityPromised),
                 valueColor: p.quantityPromised > 0 ? c.alert : null,
               ),
-              StatTile(label: 'Reorder at', value: '${p.alertLevel}'),
+              StatTile(
+                  label: 'Reorder at',
+                  value: QuantityFormatter.format(p.alertLevel)),
             ]),
           ],
           if (!p.isStandalone && p.alertLevel > 0) ...[
             const SizedBox(height: 14),
             StatRow(children: [
-              StatTile(label: 'Warn at', value: '${p.alertLevel}'),
+              StatTile(
+                  label: 'Warn at',
+                  value: QuantityFormatter.format(p.alertLevel)),
             ]),
           ],
           const SizedBox(height: 12),

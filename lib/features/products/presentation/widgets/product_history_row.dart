@@ -62,7 +62,7 @@ class ProductHistoryRow extends StatelessWidget {
                 : when,
           ),
           trailing: Text(
-            '${adds ? '+' : '−'}${mv.quantity.abs()}',
+            '${adds ? '+' : '−'}${QuantityFormatter.format(mv.quantity.abs())}',
             style: AppTextStyles.amount.copyWith(color: color, fontSize: 15),
           ),
         );

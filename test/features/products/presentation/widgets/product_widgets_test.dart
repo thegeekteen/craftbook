@@ -21,8 +21,8 @@ Product _product({
   double price = 400,
   bool archived = false,
   bool standalone = false,
-  int onHand = 0,
-  int alertLevel = 0,
+  double onHand = 0,
+  double alertLevel = 0,
 }) =>
     Product(
       id: 1,

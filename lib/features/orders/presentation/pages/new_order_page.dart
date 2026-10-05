@@ -10,6 +10,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -555,14 +556,15 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   trailing: StepperInput(
                     value: item.quantity,
                     min: 0,
+                    decimals: quantityDecimals,
                     onChanged: (v) {
                       final bloc = context.read<NewOrderBloc>();
-                      if (v.toInt() == 0) {
+                      if (sameQty(v, 0)) {
                         bloc.add(RemoveItem(item.productId));
                       } else {
                         bloc.add(UpdateItemQuantity(
                           productId: item.productId,
-                          quantity: v.toInt(),
+                          quantity: qty(v),
                         ));
                       }
                     },
@@ -592,7 +594,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
   Widget _buildReviewStep(NewOrderDetailsFilled? d) {
     final c = context.colors;
     if (d == null) return const SizedBox.shrink();
-    final pieces = d.items.fold<int>(0, (s, i) => s + i.quantity);
+    final pieces = d.items.fold<double>(0, (s, i) => s + i.quantity);
     final preview = d.preview;
 
     return ListView(
@@ -618,7 +620,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
               const SizedBox(height: 4),
               Text(
                 'Ships by ${DateFormat('EEE, MMM d').format(d.shipByDate)} · '
-                '$pieces ${pieces == 1 ? 'item' : 'items'}',
+                '${QuantityFormatter.format(pieces)} '
+                '${pieces == 1 ? 'item' : 'items'}',
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
               for (final field in _fields)

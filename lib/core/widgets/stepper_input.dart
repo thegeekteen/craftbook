@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../theme/colors.dart';
 import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
+import '../utils/quantity.dart';
+import '../utils/quantity_formatter.dart';
 
 /// Stepper input with +/- buttons and a text field for manual entry.
 class StepperInput extends StatefulWidget {
@@ -62,7 +64,8 @@ class _StepperInputState extends State<StepperInput> {
 
   String _formatValue(num v) {
     if (widget.decimals <= 0) return v.toInt().toString();
-    return v.toStringAsFixed(widget.decimals);
+    // Trimmed, so 1.25 reads "1.25" rather than "1.250".
+    return QuantityFormatter.format(v);
   }
 
   void _commitText(String text) {
@@ -72,7 +75,7 @@ class _StepperInputState extends State<StepperInput> {
         widget.min.toDouble(),
         widget.max.toDouble(),
       );
-      widget.onChanged(widget.decimals <= 0 ? clamped.toInt() : clamped);
+      widget.onChanged(widget.decimals <= 0 ? clamped.toInt() : qty(clamped));
     } else {
       _controller.text = _formatValue(widget.value);
     }
@@ -90,7 +93,7 @@ class _StepperInputState extends State<StepperInput> {
     _unfocus();
     final next = widget.value + widget.step;
     if (next <= widget.max) {
-      widget.onChanged(widget.decimals <= 0 ? next.toInt() : next);
+      widget.onChanged(widget.decimals <= 0 ? next.toInt() : qty(next));
     }
   }
 
@@ -98,7 +101,7 @@ class _StepperInputState extends State<StepperInput> {
     _unfocus();
     final next = widget.value - widget.step;
     if (next >= widget.min) {
-      widget.onChanged(widget.decimals <= 0 ? next.toInt() : next);
+      widget.onChanged(widget.decimals <= 0 ? next.toInt() : qty(next));
     }
   }
 
@@ -119,7 +122,7 @@ class _StepperInputState extends State<StepperInput> {
             onPressed: widget.value > widget.min ? _decrement : null,
           ),
           SizedBox(
-            width: widget.decimals > 0 ? 52 : 40,
+            width: widget.decimals > 0 ? 56 : 40,
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,

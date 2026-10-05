@@ -10,6 +10,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/note_codec.dart';
@@ -336,7 +337,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                         for (final m in state.materials)
                           _LineDetail(
                             name: m.materialName,
-                            detail: m.actualQuantity == m.plannedQuantity
+                            detail: sameQty(m.actualQuantity, m.plannedQuantity)
                                 ? '${QuantityFormatter.withUnit(m.actualQuantity, m.materialUnit)}'
                                     ' × ${CurrencyFormatter.format(m.unitCost)}'
                                 : 'Planned ${QuantityFormatter.withUnit(m.plannedQuantity, m.materialUnit)}'

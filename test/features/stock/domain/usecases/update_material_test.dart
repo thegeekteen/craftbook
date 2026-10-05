@@ -26,9 +26,9 @@ void main() {
 
   Future<Result<void>> call({
     String name = 'Beads',
-    int packSize = 100,
+    double packSize = 100,
     double packPrice = 50,
-    int alertLevel = 10,
+    double alertLevel = 10,
     String? supplier,
   }) =>
       updateMaterial(

@@ -54,7 +54,9 @@ Go to **More** and work down the list. You can change everything later.
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
 
-> **One material, several products.** Say a pack of 50 A4 card sheets costs ₱150 (₱3.00 a sheet) and each sheet prints 9 business cards. Set the sheet to **Uses 1, Makes 9**: each card costs ₱0.33 in materials, and 50 sheets show as enough for 450 cards. Orders always set aside whole sheets: 5 cards take 1 sheet, 10 cards take 2. If you print a small order on a sheet left over from an earlier one, tap **Adjust** when packing and set the sheets you really used.
+> **One material, several products.** Say a pack of 50 A4 card sheets costs ₱150 (₱3.00 a sheet) and each sheet prints 9 business cards. Set the sheet to **Uses 1, Makes 9**: each card costs ₱0.33 in materials, and 50 sheets show as enough for 450 cards. An order sets aside exactly what its cards need — 9 cards take 1 sheet, 5 take a little over half — so a leftover sheet isn't lost to every small order. If you print on a sheet left over from an earlier order, tap **Adjust** when packing and set what you really used.
+>
+> **Fractions are fine everywhere.** Half a metre of wrap, 1.25 boards a bubble head, 2.5 kg of beads: type them into any count, use, makes or order quantity. Every screen that shows an amount shows the fraction, and the cost follows it.
 
 ---
 

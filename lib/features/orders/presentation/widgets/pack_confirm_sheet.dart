@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
@@ -16,7 +18,7 @@ class PackLine {
 
   /// What [quantity] and the stock counts are measured in.
   final String unit;
-  final int quantity;
+  final double quantity;
   final StockLevel? stock;
 
   const PackLine({
@@ -26,10 +28,10 @@ class PackLine {
     this.stock,
   });
 
-  int get before => stock?.onHand ?? 0;
+  double get before => stock?.onHand ?? 0;
 
   /// Stock never goes below zero (the repository clamps it).
-  int get after => (before - quantity).clamp(0, 1 << 30);
+  double get after => math.max(0, before - quantity);
   bool get isShort => stock != null && quantity > before;
   bool get endsLow => stock != null && after <= stock!.alertLevel;
 }

@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' hide Column;
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/material_dao.dart';
@@ -70,11 +71,11 @@ class MaterialRepositoryImpl implements MaterialRepository {
   Future<Result<int>> createMaterial({
     required String name,
     int? unitId,
-    required int packSize,
+    required double packSize,
     required double packPrice,
     required double unitCost,
-    required int quantityOnHand,
-    required int alertLevel,
+    required double quantityOnHand,
+    required double alertLevel,
     String? supplier,
   }) async {
     try {
@@ -104,9 +105,9 @@ class MaterialRepositoryImpl implements MaterialRepository {
     required int id,
     required String name,
     int? unitId,
-    required int packSize,
+    required double packSize,
     required double packPrice,
-    required int alertLevel,
+    required double alertLevel,
     String? supplier,
   }) async {
     try {
@@ -153,14 +154,14 @@ class MaterialRepositoryImpl implements MaterialRepository {
         return const Error(NotFoundFailure('Material not found'));
       }
 
-      final newQty = packsReceived * current.packSize;
+      final newQty = qty(packsReceived * current.packSize);
       final oldQty = current.quantityOnHand;
       final newUnitPrice = pricePerPack / current.packSize;
 
       // Weighted average unit cost
       final totalQty = oldQty + newQty;
       final double newUnitCost;
-      if (totalQty == 0) {
+      if (totalQty <= 0) {
         newUnitCost = 0;
       } else {
         newUnitCost =
@@ -177,7 +178,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         packSize: current.packSize,
         packPrice: pricePerPack,
         unitCost: newUnitCost,
-        quantityOnHand: current.quantityOnHand + newQty,
+        quantityOnHand: qty(current.quantityOnHand + newQty),
         quantityPromised: current.quantityPromised,
         alertLevel: current.alertLevel,
         supplier: supplier ?? current.supplier,
@@ -219,7 +220,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> adjustStock(
     int materialId,
-    int newQuantityOnHand,
+    double newQuantityOnHand,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
@@ -227,7 +228,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         return const Error(NotFoundFailure('Material not found'));
       }
 
-      final difference = newQuantityOnHand - current.quantityOnHand;
+      final difference = qty(newQuantityOnHand - current.quantityOnHand);
       final unit = (await dao.db.unitLabels())[current.unitId] ?? '';
 
       await dao.updateMaterialStock(
@@ -253,7 +254,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> reserveMaterials(
     int materialId,
-    int quantity,
+    double quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
@@ -264,7 +265,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       await dao.updateMaterialStock(
         materialId,
         current.quantityOnHand,
-        current.quantityPromised + quantity,
+        qty(current.quantityPromised + quantity),
       );
 
       return const Success(null);
@@ -276,7 +277,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> releaseReservedMaterials(
     int materialId,
-    int quantity,
+    double quantity,
   ) async {
     try {
       final current = await dao.getMaterialById(materialId);
@@ -287,7 +288,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       await dao.updateMaterialStock(
         materialId,
         current.quantityOnHand,
-        max(0, current.quantityPromised - quantity),
+        qty(max(0, current.quantityPromised - quantity)),
       );
 
       return const Success(null);
@@ -299,8 +300,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> deductMaterials(
     int materialId,
-    int quantity, {
-    int? reserved,
+    double quantity, {
+    double? reserved,
   }) async {
     try {
       final current = await dao.getMaterialById(materialId);
@@ -310,8 +311,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
       await dao.updateMaterialStock(
         materialId,
-        max(0, current.quantityOnHand - quantity),
-        max(0, current.quantityPromised - (reserved ?? quantity)),
+        qty(max(0, current.quantityOnHand - quantity)),
+        qty(max(0, current.quantityPromised - (reserved ?? quantity))),
       );
 
       // Record stock movement
@@ -332,7 +333,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<void>> restoreDeductedMaterials(
     int materialId,
-    int quantity, {
+    double quantity, {
     String reference = 'Restored from deleted order',
   }) async {
     try {
@@ -343,7 +344,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
       await dao.updateMaterialStock(
         materialId,
-        current.quantityOnHand + quantity,
+        qty(current.quantityOnHand + quantity),
         current.quantityPromised,
       );
 
@@ -433,7 +434,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
           alertLevel: product.alertLevel,
           packSize: 1,
           packPrice: product.unitCost,
-          packsToOrder: max(1, deficit),
+          packsToOrder: max(1, deficit.ceil()),
           blockedProducts: const [],
           ownOpenOrders: pending[product.id] ?? 0,
         ));

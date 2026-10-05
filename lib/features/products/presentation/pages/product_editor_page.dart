@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_sheet.dart';
@@ -23,6 +24,7 @@ import '../../../units/domain/usecases/unit_usecases.dart';
 import '../../../units/presentation/widgets/unit_picker_field.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/bom_validation.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/set_product_photo.dart';
 import '../../domain/usecases/update_product.dart';
@@ -263,10 +265,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final badBom = validateBomMakes([
+      for (final b in _bom) (materialName: b.materialName, makes: b.makes),
+    ]);
+    if (badBom != null) {
+      context.showSnackBar(badBom.message, isError: true);
+      return;
+    }
     setState(() => _saving = true);
     final repo = getIt<ProductRepository>();
     final name = _name.text.trim();
-    final alertLevel = int.tryParse(_alertLevel.text) ?? 0;
+    final alertLevel = double.tryParse(_alertLevel.text) ?? 0;
     final bomInputs = [
       for (final b in _bom)
         BomItemInput(
@@ -284,7 +293,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         unitId: _unit?.id,
         isStandalone: _isStandalone,
         initialQuantity:
-            _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
+            _isStandalone ? double.tryParse(_initialQty.text) ?? 0 : 0,
         description:
             _description.text.trim().isEmpty ? null : _description.text.trim(),
         initialUnitCost:
@@ -355,7 +364,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final money = [
       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
     ];
-    final digits = [FilteringTextInputFormatter.digitsOnly];
+    // Counts can be fractional (1.25 boards), so the field allows a dot.
+    final counts = [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))];
 
     return Scaffold(
       appBar: AppBar(
@@ -446,9 +456,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               ),
             ),
             if (_isStandalone)
-              ..._buildResell(money, digits)
+              ..._buildResell(money, counts)
             else
-              ..._buildHandmade(digits),
+              ..._buildHandmade(counts),
             const SizedBox(height: 12),
             ProductProfitCard(
                 sellPrice: _sellPrice,
@@ -471,7 +481,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     );
   }
 
-  List<Widget> _buildHandmade(List<TextInputFormatter> digits) {
+  List<Widget> _buildHandmade(List<TextInputFormatter> counts) {
     final c = context.colors;
     return [
       SectionLabel(
@@ -525,11 +535,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                       StepperInput(
                         value: b.quantity,
                         min: 0,
+                        decimals: quantityDecimals,
                         onChanged: (v) => setState(() {
-                          if (v.toInt() == 0) {
+                          if (sameQty(v, 0)) {
                             _bom.remove(b);
                           } else {
-                            b.quantity = v.toInt();
+                            b.quantity = qty(v);
                           }
                         }),
                       ),
@@ -539,8 +550,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                       'Makes',
                       StepperInput(
                         value: b.makes,
-                        min: 1,
-                        onChanged: (v) => setState(() => b.makes = v.toInt()),
+                        min: 0,
+                        decimals: quantityDecimals,
+                        onChanged: (v) => setState(() => b.makes = qty(v)),
                       ),
                     ),
                   ],
@@ -559,7 +571,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         ),
       ],
       const SizedBox(height: 16),
-      _alertField(digits),
+      _alertField(counts),
     ];
   }
 
@@ -577,11 +589,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   }
 
   /// One alert level for both types; only what it counts differs.
-  Widget _alertField(List<TextInputFormatter> digits) {
+  Widget _alertField(List<TextInputFormatter> counts) {
     return TextFormField(
       controller: _alertLevel,
-      keyboardType: TextInputType.number,
-      inputFormatters: digits,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: counts,
       decoration: InputDecoration(
         labelText: _isStandalone
             ? 'Reorder at (optional)'
@@ -594,7 +606,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   }
 
   List<Widget> _buildResell(
-      List<TextInputFormatter> money, List<TextInputFormatter> digits) {
+      List<TextInputFormatter> money, List<TextInputFormatter> counts) {
     final p = _product;
     return [
       const SectionLabel('Stock', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
@@ -630,8 +642,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             Expanded(
               child: TextFormField(
                 controller: _initialQty,
-                keyboardType: TextInputType.number,
-                inputFormatters: digits,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: counts,
                 decoration: const InputDecoration(labelText: 'On hand now'),
               ),
             ),
@@ -639,7 +652,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         ),
         const SizedBox(height: 12),
       ],
-      _alertField(digits),
+      _alertField(counts),
     ];
   }
 }
@@ -652,10 +665,10 @@ class _EditableBomItem {
   /// own unit instead.
   final String materialUnit;
   final double unitCost;
-  int quantity;
+  double quantity;
 
   /// How many products [quantity] pieces make.
-  int makes;
+  double makes;
 
   _EditableBomItem({
     required this.materialId,

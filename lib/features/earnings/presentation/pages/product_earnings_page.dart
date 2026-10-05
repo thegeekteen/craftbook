@@ -95,7 +95,7 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
     final c = context.colors;
     final profit = _lines.fold<double>(0, (s, l) => s + l.profit);
     final sales = _lines.fold<double>(0, (s, l) => s + l.sales);
-    final sold = _lines.fold<int>(0, (s, l) => s + l.quantity);
+    final sold = _lines.fold<double>(0, (s, l) => s + l.quantity);
 
     /// Every line is the same product, so they all carry the same unit.
     final unit = _lines.isEmpty ? '' : _lines.first.unit;

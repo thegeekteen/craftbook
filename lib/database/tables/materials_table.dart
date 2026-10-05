@@ -13,12 +13,15 @@ class Materials extends Table {
   /// `AppConstants.defaultUnitId` — Drift copies it into generated code,
   /// which can't see that import, and `migration_v11_test` checks they agree.
   IntColumn get unitId => integer().withDefault(const Constant(1))();
-  IntColumn get packSize => integer()();
+
+  /// Fractions are real stock: a Bubble Head uses 1.25 boards, a card uses a
+  /// ninth of a sheet.
+  RealColumn get packSize => real()();
   RealColumn get packPrice => real()();
   RealColumn get unitCost => real()();
-  IntColumn get quantityOnHand => integer().withDefault(const Constant(0))();
-  IntColumn get quantityPromised => integer().withDefault(const Constant(0))();
-  IntColumn get alertLevel => integer()();
+  RealColumn get quantityOnHand => real().withDefault(const Constant(0))();
+  RealColumn get quantityPromised => real().withDefault(const Constant(0))();
+  RealColumn get alertLevel => real()();
   TextColumn get supplier => text().nullable()();
   DateTimeColumn get lastReceivedAt => dateTime().nullable()();
 

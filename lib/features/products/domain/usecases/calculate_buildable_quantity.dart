@@ -7,7 +7,7 @@ class CalculateBuildableQuantity {
 
   CalculateBuildableQuantity(this.repository);
 
-  Future<Result<int>> call(int productId) async {
+  Future<Result<double>> call(int productId) async {
     return repository.calculateBuildableQuantity(productId);
   }
 }

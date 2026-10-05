@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_list_entry.dart';
@@ -33,7 +34,8 @@ class OrderMiniRow extends StatelessWidget {
     final pieces = entry.pieceCount;
     final parts = [
       '#${o.id ?? '–'}',
-      if (pieces > 0) '$pieces ${pieces == 1 ? 'item' : 'items'}',
+      if (pieces > 0)
+        '${QuantityFormatter.format(pieces)} ${pieces == 1 ? 'item' : 'items'}',
       if (o.status != OrderStatus.cancelled)
         amountShown == OrderAmountShown.profit
             ? '${CurrencyFormatter.formatShort(o.liveProfit)} profit'

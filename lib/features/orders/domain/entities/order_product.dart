@@ -12,7 +12,7 @@ class OrderProduct extends Equatable {
   /// The product's unit label, looked up with its name. Not stored on the
   /// order, so renaming the unit reaches past orders too.
   final String productUnit;
-  final int quantity;
+  final double quantity;
   final double unitCost;
 
   double get totalCost => quantity * unitCost;
@@ -43,7 +43,7 @@ class OrderProduct extends Equatable {
 class OrderProductInput extends Equatable {
   final int productId;
   final String productName;
-  final int quantity;
+  final double quantity;
   final double unitCost;
 
   double get totalCost => quantity * unitCost;

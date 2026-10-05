@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -36,7 +37,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
-  int _quantity = 1;
+  double _quantity = 1;
   final _price = TextEditingController();
 
   @override
@@ -75,7 +76,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
   double get _newUnitCost {
     final p = _product!;
     final total = p.quantityOnHand + _quantity;
-    if (total == 0) return _pricePerUnit;
+    if (total <= 0) return _pricePerUnit;
     return (p.quantityOnHand * p.unitCost + _quantity * _pricePerUnit) / total;
   }
 
@@ -149,7 +150,8 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                       value: _quantity,
                       min: 1,
                       max: 9999,
-                      onChanged: (v) => setState(() => _quantity = v.toInt()),
+                      decimals: quantityDecimals,
+                      onChanged: (v) => setState(() => _quantity = qty(v)),
                     ),
                   ],
                 ),
@@ -181,7 +183,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('${p.quantityOnHand}',
+                    Text(QuantityFormatter.format(p.quantityOnHand),
                         style: AppTextStyles.amount
                             .copyWith(color: c.muted, fontSize: 20)),
                     Padding(
@@ -190,7 +192,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                           size: 18, color: c.muted),
                     ),
                     Text(
-                      '${p.quantityOnHand + _quantity}',
+                      QuantityFormatter.format(p.quantityOnHand + _quantity),
                       style: AppTextStyles.displayMedium
                           .copyWith(color: c.go, fontSize: 32),
                     ),

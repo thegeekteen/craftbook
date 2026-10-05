@@ -28,7 +28,7 @@ class CreateProductEvent extends ProductsEvent {
   /// What it's sold and counted in; null leaves it on the shop's default.
   final int? unitId;
   final bool isStandalone;
-  final int initialQuantity;
+  final double initialQuantity;
   final double initialUnitCost;
 
   const CreateProductEvent({
@@ -63,7 +63,7 @@ class UpdateProductEvent extends ProductsEvent {
   final int? unitId;
   final bool? isArchived;
   final bool? isStandalone;
-  final int? alertLevel;
+  final double? alertLevel;
 
   const UpdateProductEvent({
     required this.id,

@@ -23,7 +23,7 @@ void main() {
   late int cards;
   late int sheet;
 
-  Future<void> start(WidgetTester tester, {int makes = 1}) async {
+  Future<void> start(WidgetTester tester, {double makes = 1}) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);

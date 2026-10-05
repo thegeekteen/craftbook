@@ -53,7 +53,7 @@ class SetCustomerDetails extends NewOrderEvent {
 class AddItem extends NewOrderEvent {
   final int productId;
   final String productName;
-  final int quantity;
+  final double quantity;
   final double unitPrice;
   final Uint8List? photo;
 
@@ -83,7 +83,7 @@ class RemoveItem extends NewOrderEvent {
 /// Update the quantity of an existing item
 class UpdateItemQuantity extends NewOrderEvent {
   final int productId;
-  final int quantity;
+  final double quantity;
 
   const UpdateItemQuantity({
     required this.productId,

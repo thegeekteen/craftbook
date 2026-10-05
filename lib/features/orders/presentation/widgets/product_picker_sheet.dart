@@ -63,7 +63,7 @@ class ProductPickerSheet extends StatefulWidget {
 class _ProductPickerSheetState extends State<ProductPickerSheet> {
   String _query = '';
   List<Product> _products = [];
-  Map<int, int> _buildable = {};
+  Map<int, double> _buildable = {};
   bool _isLoading = true;
   String? _error;
 
@@ -86,7 +86,7 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         return;
       case Success(:final value):
         final calc = getIt<CalculateBuildableQuantity>();
-        final buildable = <int, int>{};
+        final buildable = <int, double>{};
         for (final p in value) {
           final r = await calc(p.id!);
           buildable[p.id!] = switch (r) {
@@ -170,13 +170,15 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         final qty = _buildable[p.id] ?? 0;
         final added = widget.addedProductIds.contains(p.id);
         final available = qty > 0;
+        // You can't add part of a handmade product, so its count floors.
+        final shown = p.isStandalone ? qty : qty.floorToDouble();
         final stockText = !available
             ? (p.isStandalone
                 ? 'Out of stock'
                 : "Can't build: not enough materials")
             : (p.isStandalone
-                ? 'In stock ${QuantityFormatter.withUnit(qty, p.unit)}'
-                : 'Can build ${QuantityFormatter.withUnit(qty, p.unit)}');
+                ? 'In stock ${QuantityFormatter.withUnit(shown, p.unit)}'
+                : 'Can build ${QuantityFormatter.withUnit(shown, p.unit)}');
         return Opacity(
           opacity: available ? 1 : 0.45,
           child: InkWell(

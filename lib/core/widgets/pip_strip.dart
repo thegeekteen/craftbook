@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme/colors.dart';
@@ -17,13 +19,14 @@ enum PipSize { small, large }
 /// then stands for several pieces.
 class PipStrip extends StatelessWidget {
   /// Strip length in pieces; anything beyond the filled pips is drawn
-  /// empty. Usually pieces on hand.
-  final int total;
-  final int free;
-  final int promised;
-  final int incoming;
-  final int removed;
-  final int alertLevel;
+  /// empty. Usually pieces on hand. Fractions draw as a whole pip: a pip is
+  /// a mark on a strip, the number beside it carries the truth.
+  final double total;
+  final double free;
+  final double promised;
+  final double incoming;
+  final double removed;
+  final double alertLevel;
 
   /// What the amounts are counted in. Only the semantics label uses it — a pip
   /// is a mark on a strip, and the number beside the strip carries the unit.
@@ -51,19 +54,21 @@ class PipStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final freeCount = free.clamp(0, 1 << 30);
+    final freeCount = math.max(0.0, free);
     // Only pieces that physically exist get a pip; an overcommitted
     // material shows its shortfall in text, not as extra pips.
     final room = total - freeCount - incoming - removed;
-    final promisedCount = promised.clamp(0, room < 0 ? 0 : room);
+    final promisedCount =
+        math.max(0.0, math.min(promised, room < 0 ? 0.0 : room));
     final filled = freeCount + promisedCount + incoming + removed;
     // Pad with empty pips up to the reorder level (or [total], if larger).
     final empty =
-        ((alertLevel > total ? alertLevel : total) - filled).clamp(0, 1 << 30);
+        math.max(0.0, (alertLevel > total ? alertLevel : total) - filled);
     final pieces = filled + empty;
-    final perPip = pieces <= maxPips ? 1 : (pieces / maxPips).ceil();
+    // Once the strip would get too long, one pip stands for several pieces.
+    final perPip = pieces <= maxPips ? 1.0 : (pieces / maxPips).ceilToDouble();
 
-    int scaled(int n) => n <= 0 ? 0 : (n / perPip).ceil();
+    int scaled(double n) => n <= 0 ? 0 : (n / perPip).ceil();
 
     final kinds = <_Pip>[
       ...List.filled(scaled(freeCount), _Pip.free),

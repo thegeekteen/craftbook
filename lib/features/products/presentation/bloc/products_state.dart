@@ -24,7 +24,8 @@ class ProductsLoaded extends ProductsState {
   final Map<int, double> unitCosts;
 
   /// Pieces that can be built now (BOM) or are free in stock (standalone).
-  final Map<int, int> available;
+  /// Unrounded; the cards floor it for display.
+  final Map<int, double> available;
 
   /// Products whose pending orders their stock or materials can't cover.
   final Set<int> shortIds;
