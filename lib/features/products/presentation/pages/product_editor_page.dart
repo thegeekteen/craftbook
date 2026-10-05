@@ -160,7 +160,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   double get _cost => _isStandalone
       ? double.tryParse(_unitCost.text) ?? 0
-      : _bom.fold(0.0, (s, b) => s + b.quantity * b.unitCost);
+      : _bom.fold(0.0, (s, b) => s + b.lineCost);
 
   Future<void> _addMaterial() async {
     final taken = _bom.map((b) => b.materialId).toSet();
