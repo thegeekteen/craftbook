@@ -103,28 +103,19 @@ class _TaxFormState extends State<TaxForm> {
                   : 'Orders have no tax. Saved orders keep what they had',
               style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
         ),
-        if (_enabled) ...[
-          const SizedBox(height: 8),
-          Text('New orders start with tax',
-              style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
-          const SizedBox(height: 2),
-          Text(
-            _onByDefault
-                ? 'Switch it off on orders that don\'t need it'
-                : 'Switch it on when a customer needs it, like for an official receipt',
-            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+        if (_enabled)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _onByDefault,
+            onChanged: (v) => setState(() => _onByDefault = v),
+            title: Text('New orders start with tax',
+                style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+            subtitle: Text(
+                _onByDefault
+                    ? 'Switch it off on orders that don\'t need it'
+                    : 'Switch it on when a customer needs it, like for an official receipt',
+                style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
           ),
-          const SizedBox(height: 8),
-          ChoiceChipRow<bool>.single(
-            options: const [
-              ChipOption(true, 'On'),
-              ChipOption(false, 'Off'),
-            ],
-            selected: _onByDefault,
-            onSelected: (v) => setState(() => _onByDefault = v),
-          ),
-          const SizedBox(height: 8),
-        ],
         const SizedBox(height: 8),
         Row(
           children: [

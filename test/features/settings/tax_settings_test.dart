@@ -126,7 +126,7 @@ void main() {
     testWidgets('new orders can start without tax', (tester) async {
       final result =
           await run(tester, const TaxSettings(enabled: true), () async {
-        await tester.tap(find.text('Off'));
+        await tester.tap(find.text('New orders start with tax'));
         await tester.pump();
         expect(find.textContaining('official receipt'), findsOneWidget);
         await tester.ensureVisible(find.text('Save'));
