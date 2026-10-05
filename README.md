@@ -188,3 +188,11 @@ Everything on the page then counts only the matching orders. Active filters show
 - **More → Export backup** saves all your data to a file wherever you choose. Do it regularly and keep a copy off your phone.
 - **More → Restore from backup** replaces everything on this phone with a backup file. If you change your mind, **Undo last restore** brings back what you had before.
 - **More → Check for updates** looks for a newer Craftbook. If there is one, it shows what's new. Tap **Update** to download and install it. The first time, Android asks you to allow installs from Craftbook. Your data stays as it is.
+
+---
+
+## License
+
+Copyright © 2026 Gian Lorenzo Abaño.
+
+Craftbook is free software: you can use it, share it and change it under the terms of the GNU General Public License, version 3 (GPL-3.0). If you share a changed version, you must share its source code under the same license. It comes with no warranty. The full text is in the LICENSE file that comes with the source code.
