@@ -213,7 +213,7 @@ class _ProductsListViewState extends State<_ProductsListView> {
       return EmptyState(
         icon: Icons.sell_outlined,
         title: 'No products yet',
-        message: 'Add what you sell and the materials one piece uses.',
+        message: 'Add what you sell and the materials it is made from.',
         actionLabel: 'Add product',
         onAction: () => _open(RouteNames.newProduct),
       );

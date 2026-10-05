@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Order item entity
 class OrderItem extends Equatable {
   final int? id;
@@ -9,9 +11,10 @@ class OrderItem extends Equatable {
   final int productId;
   final String productName;
 
-  /// The product's current photo, looked up with the name. Not stored on
-  /// the order.
+  /// The product's current photo and unit, looked up with the name. Neither
+  /// is stored on the order, so a renamed unit reaches past orders too.
   final Uint8List? productPhoto;
+  final String unit;
   final int quantity;
   final double unitPrice;
   final double subtotal;
@@ -22,6 +25,7 @@ class OrderItem extends Equatable {
     required this.productId,
     required this.productName,
     this.productPhoto,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.quantity,
     required this.unitPrice,
     required this.subtotal,
@@ -34,6 +38,7 @@ class OrderItem extends Equatable {
         productId,
         productName,
         productPhoto,
+        unit,
         quantity,
         unitPrice,
         subtotal,

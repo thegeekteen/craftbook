@@ -1,9 +1,17 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Material entity
 class Material extends Equatable {
   final int? id;
   final String name;
+
+  /// What [packSize] and the quantities below are counted in.
+  final int unitId;
+
+  /// The unit's label, looked up with it. Rendered as typed, never pluralised.
+  final String unit;
   final int packSize;
   final double packPrice;
   final double unitCost;
@@ -21,6 +29,8 @@ class Material extends Equatable {
   const Material({
     this.id,
     required this.name,
+    this.unitId = AppConstants.defaultUnitId,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.packSize,
     required this.packPrice,
     required this.unitCost,
@@ -42,6 +52,8 @@ class Material extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        unitId,
+        unit,
         packSize,
         packPrice,
         unitCost,
@@ -58,6 +70,8 @@ class Material extends Equatable {
   Material copyWith({
     int? id,
     String? name,
+    int? unitId,
+    String? unit,
     int? packSize,
     double? packPrice,
     double? unitCost,
@@ -73,6 +87,8 @@ class Material extends Equatable {
     return Material(
       id: id ?? this.id,
       name: name ?? this.name,
+      unitId: unitId ?? this.unitId,
+      unit: unit ?? this.unit,
       packSize: packSize ?? this.packSize,
       packPrice: packPrice ?? this.packPrice,
       unitCost: unitCost ?? this.unitCost,

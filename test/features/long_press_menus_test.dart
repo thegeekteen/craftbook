@@ -218,7 +218,8 @@ void main() {
       await longPress(tester, 'Glue');
       await tester.tap(find.text('Delete material'));
       await settle(tester);
-      expect(find.textContaining('You still have 2 on hand'), findsOneWidget);
+      expect(
+          find.textContaining('You still have 2 pc on hand'), findsOneWidget);
       await confirm(tester, 'Delete');
 
       expect(find.text('Glue deleted'), findsOneWidget);

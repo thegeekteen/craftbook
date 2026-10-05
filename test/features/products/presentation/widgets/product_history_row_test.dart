@@ -27,7 +27,7 @@ void main() {
   testWidgets('received stock shows as an addition with its cost',
       (tester) async {
     await tester.pumpWidget(_wrap(ProductHistoryRow(
-        entry: _stock(ProductStockMovementType.received, 5))));
+        entry: _stock(ProductStockMovementType.received, 5), unit: 'pc')));
 
     expect(find.text('Received'), findsOneWidget);
     expect(find.text('+5'), findsOneWidget);
@@ -73,12 +73,13 @@ void main() {
         unitPrice: 60,
         subtotal: 120,
       )),
+      unit: 'pc',
       onOrderTap: (id) => opened = id,
     )));
 
     expect(find.text('#12 · Eli Ramos'), findsOneWidget);
     expect(find.text('SHIPPED'), findsOneWidget);
-    expect(find.textContaining('2 ×'), findsOneWidget);
+    expect(find.textContaining('2 pc ×'), findsOneWidget);
     expect(find.textContaining('120'), findsOneWidget);
 
     await tester.tap(find.text('#12 · Eli Ramos'));

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Totals for the packed and shipped orders in a report.
 class EarningsSummary extends Equatable {
   /// Item prices before discounts.
@@ -81,15 +83,20 @@ class WasteSummary extends Equatable {
 
 class WasteItem extends Equatable {
   final String materialName;
+
+  /// The material's unit label, so the amount wasted reads as "2 pc" or
+  /// "0.5 m" rather than a bare number.
+  final String unit;
   final int quantity;
   final double cost;
 
   const WasteItem({
     required this.materialName,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.quantity,
     required this.cost,
   });
 
   @override
-  List<Object?> get props => [materialName, quantity, cost];
+  List<Object?> get props => [materialName, unit, quantity, cost];
 }

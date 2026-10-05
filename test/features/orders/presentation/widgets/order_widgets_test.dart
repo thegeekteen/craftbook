@@ -511,9 +511,9 @@ void main() {
       final results = await pumpLauncher(tester);
       expect(find.byType(PackConfirmSheet), findsOneWidget);
       // actual quantity (with waste) is used, not planned
-      expect(find.text('10 → 5'), findsOneWidget);
+      expect(find.text('10 → 5 pc'), findsOneWidget);
       expect(find.text('Keychain'), findsOneWidget);
-      expect(find.text('6 → 4'), findsOneWidget);
+      expect(find.text('6 → 4 pc'), findsOneWidget);
       await tester.tap(find.text('Pack & deduct'));
       await tester.pumpAndSettle();
       expect(results, [true]);

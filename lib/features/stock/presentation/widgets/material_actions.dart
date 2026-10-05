@@ -5,6 +5,7 @@ import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/material.dart';
@@ -87,7 +88,8 @@ abstract final class MaterialActions {
       message: [
         "This can't be undone. Materials used in a product or an order can't be deleted; archive them instead.",
         if (material.quantityOnHand > 0)
-          'You still have ${material.quantityOnHand} on hand. Its stock history goes too.',
+          'You still have ${QuantityFormatter.withUnit(material.quantityOnHand, material.unit)}'
+              ' on hand. Its stock history goes too.',
       ].join('\n\n'),
       confirmText: 'Delete',
       isDestructive: true,

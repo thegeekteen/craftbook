@@ -18,6 +18,9 @@ import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../stock/domain/entities/material.dart';
 import '../../../stock/domain/usecases/get_materials.dart';
+import '../../../units/domain/entities/unit_of_measure.dart';
+import '../../../units/domain/usecases/unit_usecases.dart';
+import '../../../units/presentation/widgets/unit_picker_field.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
@@ -52,6 +55,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   Product? _product;
   bool _isStandalone = false;
   Uint8List? _photo;
+
+  /// What this is sold and counted in. Labels the cost and materials sections
+  /// below, so it loads with the rest of the form.
+  UnitOfMeasure? _unit;
+
+  String get _unitLabel => _unit?.label ?? '';
+
+  /// "Cost per pc" — the resell cost field and the profit card both mean one
+  /// of this product's own units.
+  String get _costLabel =>
+      _unitLabel.isEmpty ? 'Cost per item' : 'Cost per $_unitLabel';
 
   /// Only write the photo when it changed; it is the largest column.
   bool _photoDirty = false;
@@ -100,9 +114,14 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     };
 
     if (_isNew) {
+      final defaultUnit = await getIt<GetDefaultUnit>()();
       if (!mounted) return;
       setState(() {
         _materials = materials;
+        _unit = switch (defaultUnit) {
+          Success(:final value) => value,
+          Error() => null,
+        };
         _loading = false;
       });
       return;
@@ -129,6 +148,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           _price.text = _money(p.sellPrice);
           _isStandalone = p.isStandalone;
           _photo = p.photo;
+          _unit = UnitOfMeasure(id: p.unitId, label: p.unit);
           _unitCost.text = p.unitCost > 0 ? _money(p.unitCost) : '';
           _alertLevel.text = p.alertLevel > 0 ? '${p.alertLevel}' : '';
           _bom = switch (bomResult) {
@@ -137,6 +157,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   _EditableBomItem(
                     materialId: b.materialId,
                     materialName: b.materialName,
+                    materialUnit: b.materialUnit,
                     unitCost: b.materialUnitCost,
                     quantity: b.quantityRequired,
                     makes: b.makes,
@@ -213,7 +234,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                                   .copyWith(color: c.ink)),
                         ),
                         Text(
-                          '${CurrencyFormatter.format(m.unitCost)}/pc',
+                          '${CurrencyFormatter.format(m.unitCost)}'
+                          '${m.unit.isEmpty ? '' : '/${m.unit}'}',
                           style:
                               AppTextStyles.bodySmall.copyWith(color: c.muted),
                         ),
@@ -233,6 +255,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     setState(() => _bom.add(_EditableBomItem(
           materialId: picked.id!,
           materialName: picked.name,
+          materialUnit: picked.unit,
           unitCost: picked.unitCost,
           quantity: 1,
         )));
@@ -258,6 +281,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       final created = await repo.createProduct(
         name: name,
         sellPrice: _sellPrice,
+        unitId: _unit?.id,
         isStandalone: _isStandalone,
         initialQuantity:
             _isStandalone ? int.tryParse(_initialQty.text) ?? 0 : 0,
@@ -288,6 +312,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         description: _description.text,
         sellPrice: _sellPrice,
         unitCost: _isStandalone ? double.tryParse(_unitCost.text) ?? 0 : null,
+        unitId: _unit?.id,
         isStandalone: _isStandalone,
         alertLevel: alertLevel,
       );
@@ -383,6 +408,12 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   ? 'Enter a price above 0'
                   : null,
             ),
+            const SizedBox(height: 12),
+            UnitPickerField(
+              label: 'Sold and counted in',
+              unit: _unit,
+              onChanged: (u) => setState(() => _unit = u),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -422,7 +453,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             ProductProfitCard(
                 sellPrice: _sellPrice,
                 cost: _cost,
-                isStandalone: _isStandalone),
+                isStandalone: _isStandalone,
+                unit: _unitLabel),
           ],
         ),
       ),
@@ -443,7 +475,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     final c = context.colors;
     return [
       SectionLabel(
-        'Materials per piece',
+        _unitLabel.isEmpty ? 'Materials per item' : 'Materials per $_unitLabel',
         padding: const EdgeInsets.fromLTRB(2, 16, 0, 0),
         trailing: SectionAction(
             label: 'Add', icon: Icons.add_rounded, onTap: _addMaterial),
@@ -458,7 +490,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Add the materials one piece uses so the app can work out cost and reserve stock.',
+                  'Add what this is made from so the app can work out its cost and reserve stock.',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: c.muted, fontSize: 13),
                 ),
@@ -474,7 +506,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 title: Text(b.materialName),
                 subtitle: Text.rich(TextSpan(children: [
                   TextSpan(
-                      text: '${CurrencyFormatter.format(b.unitCost)} each · '),
+                      text: b.materialUnit.isEmpty
+                          ? '${CurrencyFormatter.format(b.unitCost)} each · '
+                          : '${CurrencyFormatter.format(b.unitCost)}'
+                              '/${b.materialUnit} · '),
                   TextSpan(
                     text: CurrencyFormatter.format(b.lineCost),
                     style:
@@ -516,8 +551,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
           child: Text(
-            'Uses is how many pieces of the material go in, Makes is how '
-            'many of this product they make (1 sheet makes 9 cards). '
+            'Uses is how much of the material goes in, Makes is how many of '
+            'this product that makes (1 sheet makes 9 cards). '
             'Set Uses to 0 to remove a material.',
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
@@ -570,7 +605,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: money,
           decoration: InputDecoration(
-            labelText: 'Cost per piece',
+            labelText: _costLabel,
             prefixText: '${CurrencyFormatter.symbol} ',
             helperText: 'Receiving stock recalculates this as an average.',
           ),
@@ -587,7 +622,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
                 decoration: InputDecoration(
-                    labelText: 'Cost per piece',
+                    labelText: _costLabel,
                     prefixText: '${CurrencyFormatter.symbol} '),
               ),
             ),
@@ -612,6 +647,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 class _EditableBomItem {
   final int materialId;
   final String materialName;
+
+  /// The material's unit, for the cost label. [makes] counts this product's
+  /// own unit instead.
+  final String materialUnit;
   final double unitCost;
   int quantity;
 
@@ -621,6 +660,7 @@ class _EditableBomItem {
   _EditableBomItem({
     required this.materialId,
     required this.materialName,
+    this.materialUnit = '',
     required this.unitCost,
     required this.quantity,
     this.makes = 1,

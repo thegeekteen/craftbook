@@ -5,6 +5,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
@@ -160,8 +161,9 @@ class _MaterialAdjustCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Planned ${material.plannedQuantity} · '
-                      '${CurrencyFormatter.format(material.unitCost)} each',
+                      'Planned ${QuantityFormatter.withUnit(material.plannedQuantity, material.materialUnit)}'
+                      ' · ${CurrencyFormatter.format(material.unitCost)}'
+                      '${material.materialUnit.isEmpty ? ' each' : '/${material.materialUnit}'}',
                       style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                     ),
                   ],
@@ -180,7 +182,8 @@ class _MaterialAdjustCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '+$waste waste · ${CurrencyFormatter.format(waste * material.unitCost)}',
+                  '+${QuantityFormatter.withUnit(waste, material.materialUnit)} waste'
+                  ' · ${CurrencyFormatter.format(waste * material.unitCost)}',
                   style: AppTextStyles.bodySmall.copyWith(
                       color: c.alert,
                       fontWeight: FontWeight.w600,
@@ -203,7 +206,8 @@ class _MaterialAdjustCard extends StatelessWidget {
           ] else if (saved > 0) ...[
             const SizedBox(height: 8),
             Text(
-              '$saved fewer than planned',
+              '${QuantityFormatter.withUnit(saved, material.materialUnit)}'
+              ' fewer than planned',
               style: AppTextStyles.bodySmall.copyWith(
                   color: c.go, fontWeight: FontWeight.w600, fontSize: 13),
             ),

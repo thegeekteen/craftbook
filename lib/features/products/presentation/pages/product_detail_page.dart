@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -281,7 +282,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ]),
             ] else ...[
               const SizedBox(height: 8),
-              SectionLabel('Materials per piece · ${_bom.length}'),
+              SectionLabel(
+                  'Materials per ${p.unit.isEmpty ? 'item' : p.unit} · ${_bom.length}'),
               const SizedBox(height: 8),
               if (_bom.isEmpty)
                 _quiet('No materials yet. Edit the product to add them.')
@@ -292,7 +294,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       CardRow(
                         title: Text(b.materialName),
                         subtitle: Text(
-                            '${b.quantityRequired} × ${CurrencyFormatter.format(b.materialUnitCost)}'
+                            '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)}'
+                            ' × ${CurrencyFormatter.format(b.materialUnitCost)}'
                             '${b.makes > 1 ? ' · makes ${b.makes}' : ''}'),
                         trailing: Text(
                           CurrencyFormatter.format(b.lineCost),
@@ -309,7 +312,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ProductProfitCard(
                 sellPrice: p.sellPrice,
                 cost: cost,
-                isStandalone: p.isStandalone),
+                isStandalone: p.isStandalone,
+                unit: p.unit),
             const SectionLabel('History',
                 padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
             const SizedBox(height: 8),
@@ -323,6 +327,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   for (final e in _history.take(30))
                     ProductHistoryRow(
                         entry: e,
+                        unit: p.unit,
                         onOrderTap: (id) => _open(RouteNames.orderPath(id))),
                 ]),
               ),

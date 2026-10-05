@@ -1,9 +1,12 @@
 import 'package:craftbook/core/error/result.dart';
 import 'package:drift/drift.dart' hide Column;
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/product_dao.dart';
+import '../../../../database/unit_lookup.dart';
 import '../../domain/entities/bom_item.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_sale.dart';
@@ -20,7 +23,8 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<List<Product>>> getAllProducts() async {
     try {
       final rows = await dao.getAllProducts();
-      return Success(rows.map(_toEntity).toList());
+      final units = await dao.db.unitLabels();
+      return Success([for (final row in rows) _toEntity(row, units)]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -30,7 +34,8 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<List<Product>>> getUnarchivedProducts() async {
     try {
       final rows = await dao.getUnarchivedProducts();
-      return Success(rows.map(_toEntity).toList());
+      final units = await dao.db.unitLabels();
+      return Success([for (final row in rows) _toEntity(row, units)]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -40,7 +45,8 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<Product?>> getProductById(int id) async {
     try {
       final row = await dao.getProductById(id);
-      return Success(row != null ? _toEntity(row) : null);
+      if (row == null) return const Success(null);
+      return Success(_toEntity(row, await dao.db.unitLabels()));
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -50,10 +56,11 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<List<BomItem>>> getBomItems(int productId) async {
     try {
       final rows = await dao.getBomItems(productId);
+      final units = await dao.db.unitLabels();
       final items = <BomItem>[];
       for (final row in rows) {
         final material = await dao.getMaterialById(row.materialId);
-        items.add(_toBomItemEntity(row, material));
+        items.add(_toBomItemEntity(row, material, units));
       }
       return Success(items);
     } catch (e) {
@@ -66,6 +73,7 @@ class ProductRepositoryImpl implements ProductRepository {
     required String name,
     String? description,
     required double sellPrice,
+    int? unitId,
     bool isStandalone = false,
     int initialQuantity = 0,
     double initialUnitCost = 0,
@@ -75,6 +83,7 @@ class ProductRepositoryImpl implements ProductRepository {
         name: Value(name),
         description: Value(description),
         sellPrice: Value(sellPrice),
+        unitId: Value(await _unitId(unitId)),
         isStandalone: Value(isStandalone),
         quantityOnHand: Value(isStandalone ? initialQuantity : 0),
         unitCost: Value(isStandalone ? initialUnitCost : 0.0),
@@ -119,6 +128,7 @@ class ProductRepositoryImpl implements ProductRepository {
     String? description,
     double? sellPrice,
     double? unitCost,
+    int? unitId,
     bool? isArchived,
     bool? isStandalone,
     int? alertLevel,
@@ -136,6 +146,7 @@ class ProductRepositoryImpl implements ProductRepository {
             ? existing.description
             : (description.trim().isEmpty ? null : description.trim()),
         sellPrice: sellPrice ?? existing.sellPrice,
+        unitId: await _unitId(unitId ?? existing.unitId),
         isArchived: isArchived ?? existing.isArchived,
         isStandalone: isStandalone ?? existing.isStandalone,
         quantityOnHand: existing.quantityOnHand,
@@ -151,6 +162,15 @@ class ProductRepositoryImpl implements ProductRepository {
       return Error(DatabaseFailure(e.toString()));
     }
   }
+
+  /// Falls back to the shop's default unit, which is what a new product
+  /// starts on until the form says otherwise.
+  Future<int> _unitId(int? unitId) async =>
+      unitId ?? await dao.db.defaultUnitId() ?? AppConstants.defaultUnitId;
+
+  /// A unit's label, for the stock history text ("Received 5 pc").
+  Future<String> _unitLabel(int unitId) async =>
+      (await dao.db.unitLabels())[unitId] ?? '';
 
   @override
   Future<Result<void>> saveBomItems(
@@ -225,13 +245,14 @@ class ProductRepositoryImpl implements ProductRepository {
   ) async {
     try {
       final allProducts = await dao.getAllProducts();
+      final units = await dao.db.unitLabels();
       final matchingProducts = <Product>[];
 
       for (final product in allProducts) {
         final bomItems = await dao.getBomItems(product.id);
-        if (bomItems.any((b) => b.materialId == materialId)) {
-          matchingProducts.add(_toEntity(product));
-        }
+        final usesMaterial = bomItems.any((b) => b.materialId == materialId);
+        if (!usesMaterial) continue;
+        matchingProducts.add(_toEntity(product, units));
       }
 
       return Success(matchingProducts);
@@ -283,6 +304,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final newUnitCost = newQty > 0
           ? (oldQty * oldCost + quantity * pricePerUnit) / newQty
           : 0.0;
+      final unit = await _unitLabel(product.unitId);
 
       await (dao.db.update(dao.db.products)
             ..where((t) => t.id.equals(productId)))
@@ -298,7 +320,8 @@ class ProductRepositoryImpl implements ProductRepository {
           type: const Value('received'),
           quantity: Value(quantity),
           unitCost: Value(pricePerUnit),
-          reference: Value(reference ?? 'Received $quantity units'),
+          reference: Value(reference ??
+              'Received ${QuantityFormatter.withUnit(quantity, unit)}'),
         ),
       );
 
@@ -326,14 +349,16 @@ class ProductRepositoryImpl implements ProductRepository {
       );
 
       final diff = newQuantityOnHand - product.quantityOnHand;
+      final unit = await _unitLabel(product.unitId);
       await dao.addProductStockMovement(
         db.ProductStockMovementsCompanion(
           productId: Value(productId),
           type: const Value('adjusted'),
           quantity: Value(diff),
           unitCost: Value(product.unitCost),
-          reference: Value(
-              diff >= 0 ? 'Adjusted +$diff units' : 'Adjusted $diff units'),
+          reference: Value(diff >= 0
+              ? 'Adjusted +${QuantityFormatter.format(diff)} $unit'
+              : 'Adjusted ${QuantityFormatter.format(diff)} $unit'),
         ),
       );
 
@@ -492,7 +517,8 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<List<Product>>> getLowStockProducts() async {
     try {
       final rows = await dao.getLowStockProducts();
-      return Success(rows.map(_toEntity).toList());
+      final units = await dao.db.unitLabels();
+      return Success([for (final row in rows) _toEntity(row, units)]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -509,11 +535,13 @@ class ProductRepositoryImpl implements ProductRepository {
 
   // ── Mappers ────────────────────────────────────────────────────────
 
-  static Product _toEntity(db.Product row) => Product(
+  static Product _toEntity(db.Product row, Map<int, String> units) => Product(
         id: row.id,
         name: row.name,
         description: row.description,
         sellPrice: row.sellPrice,
+        unitId: row.unitId,
+        unit: units[row.unitId] ?? '',
         isArchived: row.isArchived,
         isStandalone: row.isStandalone,
         quantityOnHand: row.quantityOnHand,
@@ -528,12 +556,14 @@ class ProductRepositoryImpl implements ProductRepository {
   static BomItem _toBomItemEntity(
     db.BomItem row,
     db.Material? material,
+    Map<int, String> units,
   ) =>
       BomItem(
         id: row.id,
         productId: row.productId,
         materialId: row.materialId,
         materialName: material?.name ?? '',
+        materialUnit: material == null ? '' : units[material.unitId] ?? '',
         materialUnitCost: material?.unitCost ?? 0,
         quantityRequired: row.quantityRequired,
         makes: row.makes,

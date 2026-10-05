@@ -46,9 +46,10 @@ Go to **More** and work down the list. You can change everything later.
 | What | Where | What you enter |
 |------|-------|----------------|
 | **Currency** | More → Currency | Pick yours from the list, or type any symbol. This only changes the symbol; your amounts aren't converted. |
+| **Units of measure** | More → Units of measure | What you count things in: *pc*, *sheet*, *m*, *kg*… The app starts with the common ones. Add your own, rename them, drag them into the order you like, and choose the one new items start on. Every number in the app is written with one. |
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
-| **Materials** | More → Materials → **+ Material** | Pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
-| **Products** | Products → **+ Product** | Sell price and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how many pieces go in and **Makes** is how many products they make, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
+| **Materials** | More → Materials → **+ Material** | What it's counted in, pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
+| **Products** | Products → **+ Product** | Sell price, what it's sold in, and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how much goes in and **Makes** is how many products it makes, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
 | **Tax** (optional) | More → Tax | Turn on **Use tax**, set the rate and name (VAT, GST…), and choose whether new orders **start with tax on or off**. Also choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
@@ -139,7 +140,7 @@ Each order keeps the rate it was saved with, so changing the setting later doesn
 | Grey | Empty space up to the low-stock level |
 | Thin black tick | The low-stock level |
 
-If orders need more than you have, the card says how many you're short.
+If orders need more than you have, the card says how many you're short. Every count is written with the material's unit — *26 pc*, *14 m*, *350 g* — so a roll of ribbon and a box of beads can't be confused. Renaming a unit under **More → Units of measure** changes it everywhere, including orders you've already taken.
 
 - **Receive** adds packs you bought. The cost per piece is re-averaged with the new price, and you see the new cost before you save.
 - **Count** sets the number on hand after you've physically counted.

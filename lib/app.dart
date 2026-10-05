@@ -34,6 +34,7 @@ import 'features/products/presentation/pages/receive_product_stock_page.dart';
 import 'features/order_fields/presentation/pages/order_fields_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/discounts/presentation/pages/discounts_page.dart';
+import 'features/units/presentation/pages/units_page.dart';
 import 'features/earnings/domain/entities/report_filter.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
@@ -161,6 +162,10 @@ class CraftbookApp extends StatelessWidget {
           GoRoute(
             path: RouteNames.discounts,
             builder: (context, state) => const DiscountsPage(),
+          ),
+          GoRoute(
+            path: RouteNames.units,
+            builder: (context, state) => const UnitsPage(),
           ),
           GoRoute(
             path: RouteNames.socialLinks,

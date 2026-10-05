@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/currency_text.dart';
 import '../../../orders/presentation/widgets/order_status_ui.dart';
@@ -14,10 +15,18 @@ import '../../domain/entities/product_stock_movement.dart';
 class ProductHistoryRow extends StatelessWidget {
   final ProductHistoryEntry entry;
 
+  /// The product's unit, for the per-unit cost and the amount sold.
+  final String unit;
+
   /// Opens the order behind a sale row. Stock rows ignore it.
   final ValueChanged<int>? onOrderTap;
 
-  const ProductHistoryRow({super.key, required this.entry, this.onOrderTap});
+  const ProductHistoryRow({
+    super.key,
+    required this.entry,
+    this.unit = '',
+    this.onOrderTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +57,8 @@ class ProductHistoryRow extends StatelessWidget {
           title: Text(title),
           subtitle: Text(
             mv.type == ProductStockMovementType.received && mv.unitCost > 0
-                ? '$when · ${CurrencyFormatter.format(mv.unitCost)}/pc'
+                ? '$when · ${CurrencyFormatter.format(mv.unitCost)}'
+                    '${unit.isEmpty ? '' : '/$unit'}'
                 : when,
           ),
           trailing: Text(
@@ -66,7 +76,8 @@ class ProductHistoryRow extends StatelessWidget {
           title: Text('#${sale.orderId} · ${sale.customerName}',
               maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
-            '$when · ${sale.quantity} × ${CurrencyFormatter.formatShort(sale.unitPrice)}',
+            '$when · ${QuantityFormatter.withUnit(sale.quantity, unit)}'
+            ' × ${CurrencyFormatter.formatShort(sale.unitPrice)}',
           ),
           trailing: Column(
             mainAxisSize: MainAxisSize.min,

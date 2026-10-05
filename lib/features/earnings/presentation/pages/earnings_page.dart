@@ -8,6 +8,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -304,7 +305,8 @@ class _EarningsViewState extends State<_EarningsView> {
                         CardRow(
                           title: Text(p.productName),
                           subtitle: Text(
-                            '${p.quantitySold} sold · ${CurrencyFormatter.formatShort(p.totalSales)} sales',
+                            '${QuantityFormatter.withUnit(p.quantitySold, p.unit)} sold'
+                            ' · ${CurrencyFormatter.formatShort(p.totalSales)} sales',
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -350,7 +352,7 @@ class _EarningsViewState extends State<_EarningsView> {
                           CardRow(
                             title: Text(w.materialName),
                             subtitle: Text(
-                                '${w.quantity} ${w.quantity == 1 ? 'pc' : 'pcs'} wasted'),
+                                '${QuantityFormatter.withUnit(w.quantity, w.unit)} wasted'),
                             trailing: Text(
                               '−${CurrencyFormatter.format(w.cost)}',
                               style: AppTextStyles.bodyMedium.copyWith(

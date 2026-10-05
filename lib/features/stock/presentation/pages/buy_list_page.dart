@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -58,9 +59,9 @@ class _BuyListViewState extends State<_BuyListView> {
     for (final i in items) {
       final pcs = i.packsToOrder * i.packSize;
       final amount = i.kind == BuyListKind.product
-          ? '$pcs pcs'
+          ? QuantityFormatter.withUnit(pcs, i.unit)
           : '${i.packsToOrder} ${i.packsToOrder == 1 ? 'pack' : 'packs'} '
-              '($pcs pcs)';
+              '(${QuantityFormatter.withUnit(pcs, i.unit)})';
       buffer.writeln(
           '- ${i.name}: $amount, ${CurrencyFormatter.format(i.totalCost)}');
     }
@@ -190,6 +191,7 @@ class _BuyCard extends StatelessWidget {
             free: item.quantityFree,
             promised: item.quantityPromised,
             alertLevel: item.alertLevel,
+            unit: item.unit,
             isLow: true,
           ),
           const SizedBox(height: 10),
@@ -203,14 +205,16 @@ class _BuyCard extends StatelessWidget {
                     const TextSpan(text: 'Buy '),
                     TextSpan(
                       text: isProduct
-                          ? '$pcs pcs'
+                          ? QuantityFormatter.withUnit(pcs, item.unit)
                           : '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
                       style:
                           TextStyle(color: c.ink, fontWeight: FontWeight.w600),
                     ),
                     TextSpan(
-                        text: '${isProduct ? '' : ' · $pcs pcs'}'
-                            ' · ${item.quantityFree < 0 ? 0 : item.quantityFree} free now'),
+                        text:
+                            '${isProduct ? '' : ' · ${QuantityFormatter.withUnit(pcs, item.unit)}'}'
+                            ' · ${QuantityFormatter.withUnit(item.quantityFree < 0 ? 0 : item.quantityFree, item.unit)}'
+                            ' free now'),
                   ]),
                   style: AppTextStyles.bodySmall
                       .copyWith(color: c.muted, fontSize: 13),

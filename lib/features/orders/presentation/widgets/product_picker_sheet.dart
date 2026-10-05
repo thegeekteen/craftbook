@@ -5,6 +5,7 @@ import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -173,7 +174,9 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
             ? (p.isStandalone
                 ? 'Out of stock'
                 : "Can't build: not enough materials")
-            : (p.isStandalone ? 'In stock $qty' : 'Can build $qty');
+            : (p.isStandalone
+                ? 'In stock ${QuantityFormatter.withUnit(qty, p.unit)}'
+                : 'Can build ${QuantityFormatter.withUnit(qty, p.unit)}');
         return Opacity(
           opacity: available ? 1 : 0.45,
           child: InkWell(

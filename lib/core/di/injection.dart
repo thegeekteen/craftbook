@@ -17,6 +17,11 @@ import '../../features/discounts/data/repositories/discount_preset_repository_im
 import '../../features/discounts/domain/repositories/discount_preset_repository.dart';
 import '../../features/discounts/domain/usecases/discount_preset_usecases.dart';
 import '../../features/discounts/presentation/bloc/discount_presets_bloc.dart';
+import '../../database/daos/unit_dao.dart';
+import '../../features/units/data/repositories/unit_repository_impl.dart';
+import '../../features/units/domain/repositories/unit_repository.dart';
+import '../../features/units/domain/usecases/unit_usecases.dart';
+import '../../features/units/presentation/bloc/units_bloc.dart';
 import '../../features/settings/presentation/bloc/order_amount_cubit.dart';
 import '../../features/settings/presentation/bloc/theme_cubit.dart';
 import '../../features/products/data/repositories/channel_repository_impl.dart';
@@ -148,6 +153,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(NoteDao(db));
   getIt.registerSingleton(SocialLinkDao(db));
   getIt.registerSingleton(DiscountPresetDao(db));
+  getIt.registerSingleton(UnitDao(db));
   getIt.registerLazySingleton<LinkLauncher>(() => const LinkLauncher());
   getIt.registerLazySingleton<PhotoPicker>(() => PhotoPicker());
 
@@ -172,6 +178,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   );
   getIt.registerLazySingleton<DiscountPresetRepository>(
     () => DiscountPresetRepositoryImpl(getIt<DiscountPresetDao>()),
+  );
+  getIt.registerLazySingleton<UnitRepository>(
+    () => UnitRepositoryImpl(getIt<UnitDao>()),
   );
   getIt.registerLazySingleton<SocialLinkRepository>(
     () => SocialLinkRepositoryImpl(getIt<SocialLinkDao>()),
@@ -199,6 +208,14 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => SaveDiscountPreset(getIt()));
   getIt.registerFactory(() => DeleteDiscountPreset(getIt()));
   getIt.registerFactory(() => ReorderDiscountPresets(getIt()));
+
+  // Use Cases - Units of measure
+  getIt.registerFactory(() => GetUnits(getIt()));
+  getIt.registerFactory(() => GetDefaultUnit(getIt()));
+  getIt.registerFactory(() => SaveUnit(getIt()));
+  getIt.registerFactory(() => DeleteUnit(getIt()));
+  getIt.registerFactory(() => ReorderUnits(getIt()));
+  getIt.registerFactory(() => SetDefaultUnit(getIt()));
   getIt.registerFactory(() => GetSocialLinks(getIt()));
   getIt.registerFactory(() => SaveSocialLink(getIt()));
   getIt.registerFactory(() => DeleteSocialLink(getIt()));
@@ -346,6 +363,13 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         savePreset: getIt(),
         deletePreset: getIt(),
         reorderPresets: getIt(),
+      ));
+  getIt.registerFactory(() => UnitsBloc(
+        getUnits: getIt(),
+        saveUnit: getIt(),
+        deleteUnit: getIt(),
+        reorderUnits: getIt(),
+        setDefaultUnit: getIt(),
       ));
   getIt.registerFactory(() => SocialLinksBloc(
         getSocialLinks: getIt(),

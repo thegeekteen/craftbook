@@ -16,6 +16,9 @@ abstract class ProductRepository {
     required String name,
     String? description,
     required double sellPrice,
+
+    /// What it's sold and counted in. Null uses the shop's default unit.
+    int? unitId,
     bool isStandalone,
     int initialQuantity,
     double initialUnitCost,
@@ -29,6 +32,7 @@ abstract class ProductRepository {
     String? description,
     double? sellPrice,
     double? unitCost,
+    int? unitId,
     bool? isArchived,
     bool? isStandalone,
     int? alertLevel,

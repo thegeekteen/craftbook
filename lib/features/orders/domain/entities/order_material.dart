@@ -1,10 +1,16 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 class OrderMaterial extends Equatable {
   final int? id;
   final int orderId;
   final int materialId;
   final String materialName;
+
+  /// The material's unit label, looked up with its name. Not stored on the
+  /// order, so renaming the unit reaches past orders too.
+  final String materialUnit;
   final int plannedQuantity;
   final int actualQuantity;
   final int wasteQuantity;
@@ -17,6 +23,7 @@ class OrderMaterial extends Equatable {
     required this.orderId,
     required this.materialId,
     required this.materialName,
+    this.materialUnit = AppConstants.defaultUnitLabel,
     required this.plannedQuantity,
     required this.actualQuantity,
     required this.wasteQuantity,
@@ -33,6 +40,7 @@ class OrderMaterial extends Equatable {
         orderId,
         materialId,
         materialName,
+        materialUnit,
         plannedQuantity,
         actualQuantity,
         wasteQuantity,

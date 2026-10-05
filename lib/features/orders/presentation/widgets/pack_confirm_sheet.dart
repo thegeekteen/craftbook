@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/pip_strip.dart';
@@ -12,10 +13,18 @@ import '../bloc/order_detail_state.dart';
 /// One shelf item that packing will draw down.
 class PackLine {
   final String name;
+
+  /// What [quantity] and the stock counts are measured in.
+  final String unit;
   final int quantity;
   final StockLevel? stock;
 
-  const PackLine({required this.name, required this.quantity, this.stock});
+  const PackLine({
+    required this.name,
+    this.unit = '',
+    required this.quantity,
+    this.stock,
+  });
 
   int get before => stock?.onHand ?? 0;
 
@@ -43,12 +52,14 @@ class PackConfirmSheet extends StatelessWidget {
       for (final m in materials)
         PackLine(
           name: m.materialName,
+          unit: m.materialUnit,
           quantity: m.actualQuantity,
           stock: materialStock[m.materialId],
         ),
       for (final p in products)
         PackLine(
           name: p.productName,
+          unit: p.productUnit,
           quantity: p.quantity,
           stock: productStock[p.productId],
         ),
@@ -170,13 +181,14 @@ class _PackLineRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (line.stock == null)
-              Text('−${line.quantity}', style: numbers)
+              Text('−${QuantityFormatter.withUnit(line.quantity, line.unit)}',
+                  style: numbers)
             else
               Text.rich(
                 TextSpan(children: [
-                  TextSpan(text: '${line.before} → '),
+                  TextSpan(text: '${QuantityFormatter.format(line.before)} → '),
                   TextSpan(
-                    text: '${line.after}',
+                    text: QuantityFormatter.withUnit(line.after, line.unit),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: line.isShort || line.endsLow ? c.alert : c.ink,
@@ -195,6 +207,7 @@ class _PackLineRow extends StatelessWidget {
             promised: 0,
             removed: line.before - line.after,
             alertLevel: line.stock!.alertLevel,
+            unit: line.unit,
             isLow: line.endsLow,
           ),
         ],

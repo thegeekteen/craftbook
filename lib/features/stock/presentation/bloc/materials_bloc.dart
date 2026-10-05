@@ -99,6 +99,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
         event.packSize > 0 ? event.packPrice / event.packSize : 0.0;
     final result = await materialRepository.createMaterial(
       name: event.name,
+      unitId: event.unitId,
       packSize: event.packSize,
       packPrice: event.packPrice,
       unitCost: unitCost,
@@ -122,6 +123,7 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     final result = await updateMaterial(
       id: event.id,
       name: event.name,
+      unitId: event.unitId,
       packSize: event.packSize,
       packPrice: event.packPrice,
       alertLevel: event.alertLevel,

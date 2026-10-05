@@ -60,6 +60,7 @@ void main() {
     ('order_fields', RouteNames.orderFields),
     ('social_shortcuts', RouteNames.socialLinks),
     ('discounts', RouteNames.discounts),
+    ('units', RouteNames.units),
     ('reports', RouteNames.reports),
     ('receivables', RouteNames.receivables),
     (

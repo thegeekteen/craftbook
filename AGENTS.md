@@ -71,6 +71,7 @@ lib/
 | **Reports** (`features/earnings`) | `/reports`, `/reports/:productId` | Week/month/year/custom period, `ReportFilter` sheet, money breakdown (discounts, tax), per-product, waste, Waiting for payment card. The bottom-nav tab is labelled "Reports"; the folder and classes keep the `earnings` name |
 | **Receivables** (`features/orders`) | `/receivables` | Unpaid, non-cancelled orders grouped by customer (`GetReceivables`, `ReceivablesCubit`). Opened from Reports and More |
 | **Discounts** | `/discounts` | Discount presets (percent or fixed): list, add/edit sheet, drag to reorder. Orders copy them as lines (`order_discounts`) |
+| **Units** (`features/units`) | `/units` | Units of measure: list, add/edit sheet, drag to reorder, one flagged as the default for new items. Materials and products hold a `unit_id` foreign key, so renaming a unit reaches every item and every past order that shows it; delete is blocked while anything is counted in it |
 | **Settings** | `/settings`, `/order-fields` | Backup/restore, navigation hub, custom order fields, Currency sheet (`CurrencyCubit`), Tax sheet (`TaxSettingsCubit`) |
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
 | **Updates** | (row on `/settings`) | "Check for updates": finds the latest GitHub release, shows its notes, downloads the APK and opens Android's installer. Only runs when tapped |
@@ -128,9 +129,11 @@ erDiagram
     MATERIAL ||--o{ ORDER_MATERIAL : ""
     MATERIAL ||--o{ STOCK_MOVEMENT : history
     PRODUCT ||--o{ PRODUCT_STOCK_MOVEMENT : history
+    UNIT ||--o{ MATERIAL : "counted in"
+    UNIT ||--o{ PRODUCT : "sold in"
 ```
 
-`ORDER_MATERIAL` keeps both the **planned** and the **actual** quantity; the difference is waste. Discount presets, notes, social links and settings (a key/value table: theme, palette, order amount, currency, tax) stand alone.
+`ORDER_MATERIAL` keeps both the **planned** and the **actual** quantity; the difference is waste. Discount presets, notes, social links and settings (a key/value table: theme, palette, order amount, currency, tax) stand alone. `UNITS` is the shop's own vocabulary (schema v11): it is seeded with `pc` (the default), `sheet`, `m`, `cm`, `g`, `kg`, `ml`, `pack`, and items point at a row rather than storing the text, so a rename propagates. Labels render exactly as typed — never pluralised.
 
 ---
 
@@ -189,6 +192,7 @@ erDiagram
 - **Long press** on a list item opens its actions via `showActionSheet`. Each entity's menu lives in one place (`ProductActions`, `MaterialActions`, `OrderActions`, `NoteActions`, or a `_xActions` function on the page) and returns `true` when the caller should reload. A new list of things that can be edited or deleted gets the same menu.
 - **Order status** maps to a pill only through `OrderStatusPill` (`lib/features/orders/presentation/widgets/order_status_ui.dart`). User-facing name for pending is "To pack".
 - **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. The currency is the user's choice: never write `₱` (or any symbol) in code; input prefixes use `'${CurrencyFormatter.symbol} '`. Profit is always `MoneyParts(...).profit`, `OrderMoney.profit` or `Order.liveProfit`; order money is drawn with `OrderMoney.parts` (`order_status_ui.dart`), which carries discount and tax into `MoneyBreakdown`.
+- **Quantities**: `QuantityFormatter` (`lib/core/utils/quantity_formatter.dart`) — whole numbers bare, fractions trimmed, no grouping — with `.withUnit(n, unit)` to append the unit verbatim. Never pluralise a unit label and never hardcode `pcs`/`/pc`: read `material.unit` / `product.unit` (or `materialUnit` / `productUnit` on order lines, `unit` on `ReservationLine`/`PackLine`/`BuyListItem`), which the repositories resolve through `AppDatabase.unitLabels()` (`lib/database/unit_lookup.dart`). Uppercase captions use `unit.toUpperCase()`.
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen into `test/screenshots/goldens/` using the sample shop in `test/support/sample_data.dart`. Review them after UI changes.
 
 ---
@@ -371,9 +375,9 @@ switch (result) {
 
 ## Database Migrations
 
-The schema is at **v10** (BOM `makes`). Every schema change must:
+The schema is at **v11** (units of measure). Every schema change must:
 1. Increment `currentSchemaVersion` in `app_database.dart`
-2. Add a raw-SQL `if (from < N)` step in `migrations.dart`, matching what Drift would create
+2. Add an `if (from < N)` step in `migrations.dart`, matching what Drift would create. Raw SQL is fine for `CREATE TABLE`/`ALTER TABLE ADD COLUMN`; when a step has to *change* a column (type, constraint) or add a NOT NULL column without a literal default, prefer `Migrator.createTable` / `Migrator.alterTable(TableMigration(...))` — they build their statements from the Drift table definitions, so an upgraded database and a fresh one stay byte-identical (v11 does this; `migration_v11_test` asserts the parity)
 3. Handle data preservation during migration
 4. Run `dart run build_runner build` to regenerate code
 5. Add `test/database/migration_vN_test.dart` and a `downgradeToV(N-1)` in `test/support/legacy_schema.dart` (chained from the older ones)

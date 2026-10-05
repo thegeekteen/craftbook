@@ -88,7 +88,7 @@ class EarningsRepositoryImpl implements EarningsRepository {
   }) async {
     try {
       final orders = await _orders(startDate, endDate, filter);
-      final names = await dao.getProductNames(
+      final info = await dao.getProductInfo(
           [for (final o in orders) ...o.items.map((i) => i.productId)]);
       final byProduct = <int, ({int qty, double sales, double profit})>{};
       for (final o in orders) {
@@ -106,7 +106,8 @@ class EarningsRepositoryImpl implements EarningsRepository {
         for (final MapEntry(key: id, value: v) in byProduct.entries)
           ProductEarnings(
             productId: id,
-            productName: names[id] ?? '',
+            productName: info[id]?.name ?? '',
+            unit: info[id]?.unit ?? '',
             quantitySold: v.qty,
             totalSales: v.sales,
             totalProfit: v.profit,
@@ -138,11 +139,12 @@ class EarningsRepositoryImpl implements EarningsRepository {
           cost: prev.cost + m.wasteQuantity * m.unitCost,
         );
       }
-      final names = await dao.getMaterialNames(byMaterial.keys);
+      final info = await dao.getMaterialInfo(byMaterial.keys);
       final items = [
         for (final MapEntry(key: id, value: v) in byMaterial.entries)
           WasteItem(
-              materialName: names[id] ?? 'Unknown',
+              materialName: info[id]?.name ?? 'Unknown',
+              unit: info[id]?.unit ?? '',
               quantity: v.qty,
               cost: v.cost),
       ]..sort((a, b) => b.cost.compareTo(a.cost));
@@ -182,6 +184,8 @@ class EarningsRepositoryImpl implements EarningsRepository {
   }) async {
     try {
       final orders = await _orders(startDate, endDate, filter);
+      final unit =
+          (await dao.getProductInfo([productId]))[productId]?.unit ?? '';
       final lines = [
         for (final o in orders)
           for (final item in o.items)
@@ -189,6 +193,7 @@ class EarningsRepositoryImpl implements EarningsRepository {
               ProductOrderLine(
                 orderId: o.order.id!,
                 customerName: o.order.customerName,
+                unit: unit,
                 quantity: item.quantity,
                 sales: item.subtotal,
                 profit: o.profitOf(item),

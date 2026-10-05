@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/app_tag.dart';
@@ -73,8 +74,9 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               Success(:final value) => value
                   .where((b) => b.materialId == widget.materialId)
                   .map((b) => b.makes > 1
-                      ? '${b.quantityRequired} per ${b.makes} pieces'
-                      : '${b.quantityRequired} per piece')
+                      ? '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)}'
+                          ' per ${QuantityFormatter.format(b.makes)}'
+                      : '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)} each')
                   .join(' + '),
               Error() => '',
             };
@@ -124,7 +126,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
     final save = await showAppSheet<bool>(
       context: context,
       title: 'Count stock',
-      subtitle: 'Set how many pieces are actually on the shelf.',
+      subtitle: 'Set the real amount on the shelf.',
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
           final c = sheetContext.colors;
@@ -282,7 +284,10 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                             color: low ? c.alert : c.ink, fontSize: 44),
                       ),
                       const SizedBox(width: 8),
-                      Text('PCS ON HAND',
+                      Text(
+                          m.unit.isEmpty
+                              ? 'ON HAND'
+                              : '${m.unit.toUpperCase()} ON HAND',
                           style:
                               AppTextStyles.monoLabel.copyWith(color: c.muted)),
                       const Spacer(),
@@ -296,6 +301,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                     free: m.quantityFree,
                     promised: m.quantityPromised,
                     alertLevel: m.alertLevel,
+                    unit: m.unit,
                     isLow: low,
                     size: PipSize.large,
                   ),
@@ -328,7 +334,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                         compact: true),
                     StatTile(
                         label: 'Pack',
-                        value: '${m.packSize} pcs',
+                        value: QuantityFormatter.withUnit(m.packSize, m.unit),
                         compact: true),
                     StatTile(
                         label: 'Supplier',
@@ -387,7 +393,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               AppCard.flush(
                 child: CardList(children: [
                   for (final mv in _movements.take(30))
-                    _MovementRow(movement: mv),
+                    _MovementRow(movement: mv, unit: m.unit),
                 ]),
               ),
           ],
@@ -407,7 +413,10 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
 class _MovementRow extends StatelessWidget {
   final StockMovement movement;
 
-  const _MovementRow({required this.movement});
+  /// The material's unit, for the per-unit cost on a receive row.
+  final String unit;
+
+  const _MovementRow({required this.movement, this.unit = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -440,7 +449,8 @@ class _MovementRow extends StatelessWidget {
       title: Text(title),
       subtitle: Text(
         mv.type == StockMovementType.received && mv.unitCost > 0
-            ? '$when · ${CurrencyFormatter.format(mv.unitCost)}/pc'
+            ? '$when · ${CurrencyFormatter.format(mv.unitCost)}'
+                '${unit.isEmpty ? '' : '/$unit'}'
             : when,
       ),
       trailing: Text(

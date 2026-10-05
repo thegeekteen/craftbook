@@ -54,7 +54,7 @@ void main() {
       )));
 
       expect(find.text('12'), findsOneWidget);
-      expect(find.text('PCS ON HAND'), findsOneWidget);
+      expect(find.text('PC ON HAND'), findsOneWidget);
       expect(find.byType(PipStrip), findsOneWidget);
       expect(find.text('FREE'), findsOneWidget);
       expect(find.text('9'), findsOneWidget);

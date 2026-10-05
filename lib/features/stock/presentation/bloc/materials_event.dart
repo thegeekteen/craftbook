@@ -43,6 +43,9 @@ class ReceiveStockEvent extends MaterialsEvent {
 /// Create a new material
 class CreateMaterialEvent extends MaterialsEvent {
   final String name;
+
+  /// What it's counted in; null leaves it on the shop's default unit.
+  final int? unitId;
   final int packSize;
   final double packPrice;
   final int alertLevel;
@@ -51,6 +54,7 @@ class CreateMaterialEvent extends MaterialsEvent {
 
   const CreateMaterialEvent({
     required this.name,
+    this.unitId,
     required this.packSize,
     required this.packPrice,
     required this.alertLevel,
@@ -59,14 +63,22 @@ class CreateMaterialEvent extends MaterialsEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [name, packSize, packPrice, alertLevel, supplier, initialQuantity];
+  List<Object?> get props => [
+        name,
+        unitId,
+        packSize,
+        packPrice,
+        alertLevel,
+        supplier,
+        initialQuantity
+      ];
 }
 
-/// Edit a material's name, pack, supplier and reorder level
+/// Edit a material's name, unit, pack, supplier and reorder level
 class UpdateMaterialEvent extends MaterialsEvent {
   final int id;
   final String name;
+  final int? unitId;
   final int packSize;
   final double packPrice;
   final int alertLevel;
@@ -75,6 +87,7 @@ class UpdateMaterialEvent extends MaterialsEvent {
   const UpdateMaterialEvent({
     required this.id,
     required this.name,
+    this.unitId,
     required this.packSize,
     required this.packPrice,
     required this.alertLevel,
@@ -83,7 +96,7 @@ class UpdateMaterialEvent extends MaterialsEvent {
 
   @override
   List<Object?> get props =>
-      [id, name, packSize, packPrice, alertLevel, supplier];
+      [id, name, unitId, packSize, packPrice, alertLevel, supplier];
 }
 
 /// Delete a material

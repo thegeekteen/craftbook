@@ -1,6 +1,9 @@
 import 'package:drift/drift.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../app_database.dart';
+import '../seed_units.dart';
+import '../unit_lookup.dart';
 
 /// Run database migrations
 Future<void> runMigrations(
@@ -210,4 +213,45 @@ Future<void> runMigrations(
     await db.customStatement(
         'ALTER TABLE bom_items ADD COLUMN "makes" INTEGER NOT NULL DEFAULT 1');
   }
+
+  // Version 11: units of measure. A material or product points at a row in
+  // `units` rather than carrying its own text, so renaming a unit updates
+  // every item and every past order that shows it. Everything already in the
+  // database is counted in "pc", which is what the screens said before.
+  if (from < 11) {
+    // createTable and alterTable rather than raw SQL: both build their
+    // statements from the Drift table definitions, so an upgraded database
+    // and a fresh one end up with byte-identical schemas. ADD COLUMN would
+    // have left a DEFAULT clause behind that a fresh install never has.
+    await m.createTable(db.units);
+    final unitId = Constant(await seedUnits(db));
+    await m.alterTable(TableMigration(
+      db.materials,
+      columnTransformer: {db.materials.unitId: unitId},
+      newColumns: [db.materials.unitId],
+    ));
+    await m.alterTable(TableMigration(
+      db.products,
+      columnTransformer: {db.products.unitId: unitId},
+      newColumns: [db.products.unitId],
+    ));
+  }
+}
+
+/// Fills an empty `units` table with the built-in list and returns the id new
+/// items should point at. Called from [AppDatabase.migration]'s onCreate and
+/// from the v11 step, so a fresh database and an upgraded one get the same
+/// units in the same order.
+Future<int> seedUnits(AppDatabase db) async {
+  if ((await db.unitLabels()).isEmpty) {
+    for (final (i, label) in seedUnitLabels.indexed) {
+      await db.into(db.units).insert(UnitsCompanion.insert(
+            label: label,
+            position: Value(i),
+            isDefault: Value(label == AppConstants.defaultUnitLabel),
+          ));
+    }
+  }
+  // Never null: seedUnitLabels is not empty, so the table has a default now.
+  return (await db.defaultUnitId())!;
 }

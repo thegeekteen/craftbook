@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Material;
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/pip_strip.dart';
@@ -26,10 +27,13 @@ class MaterialCard extends StatelessWidget {
     final low = m.isLowStock && !m.isArchived;
     final short = m.quantityFree < 0 ? -m.quantityFree : 0;
     final summary = [
-      '${m.quantityFree < 0 ? 0 : m.quantityFree} free',
-      if (m.quantityPromised > 0) '${m.quantityPromised} promised',
-      'reorder at ${m.alertLevel}',
-      '${CurrencyFormatter.format(m.unitCost)}/pc',
+      '${QuantityFormatter.format(m.quantityFree < 0 ? 0 : m.quantityFree)} free',
+      if (m.quantityPromised > 0)
+        '${QuantityFormatter.format(m.quantityPromised)} promised',
+      'reorder at ${QuantityFormatter.format(m.alertLevel)}',
+      // The unit rides on the cost, so the whole line reads in one unit.
+      '${CurrencyFormatter.format(m.unitCost)}'
+          '${m.unit.isEmpty ? '' : '/${m.unit}'}',
     ].join(' · ');
 
     final card = AppCard(
@@ -72,6 +76,7 @@ class MaterialCard extends StatelessWidget {
             free: m.quantityFree,
             promised: m.quantityPromised,
             alertLevel: m.alertLevel,
+            unit: m.unit,
             isLow: low,
           ),
           const SizedBox(height: 8),
@@ -80,7 +85,7 @@ class MaterialCard extends StatelessWidget {
               TextSpan(text: summary),
               if (short > 0)
                 TextSpan(
-                  text: ' · $short short',
+                  text: ' · ${QuantityFormatter.withUnit(short, m.unit)} short',
                   style: TextStyle(color: c.alert, fontWeight: FontWeight.w600),
                 ),
             ]),

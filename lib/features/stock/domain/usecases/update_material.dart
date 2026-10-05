@@ -10,6 +10,7 @@ class UpdateMaterial {
   Future<Result<void>> call({
     required int id,
     required String name,
+    int? unitId,
     required int packSize,
     required double packPrice,
     required int alertLevel,
@@ -31,6 +32,7 @@ class UpdateMaterial {
     return repository.updateMaterial(
       id: id,
       name: name.trim(),
+      unitId: unitId,
       packSize: packSize,
       packPrice: packPrice,
       alertLevel: alertLevel,

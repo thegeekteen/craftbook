@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/colors.dart';
+import '../utils/quantity_formatter.dart';
 
 enum PipSize { small, large }
 
@@ -23,6 +24,10 @@ class PipStrip extends StatelessWidget {
   final int incoming;
   final int removed;
   final int alertLevel;
+
+  /// What the amounts are counted in. Only the semantics label uses it — a pip
+  /// is a mark on a strip, and the number beside the strip carries the unit.
+  final String? unit;
   final bool isLow;
   final bool isWarning;
   final PipSize size;
@@ -36,6 +41,7 @@ class PipStrip extends StatelessWidget {
     this.incoming = 0,
     this.removed = 0,
     this.alertLevel = 0,
+    this.unit,
     this.isLow = false,
     this.isWarning = false,
     this.size = PipSize.small,
@@ -122,8 +128,11 @@ class PipStrip extends StatelessWidget {
     }
 
     return Semantics(
-      label: '$freeCount free, $promisedCount promised'
-          '${alertLevel > 0 ? ', reorder at $alertLevel' : ''}',
+      // The real amounts, not the scaled pip counts: the strip is a shape and
+      // this is what it stands for.
+      label: '${QuantityFormatter.withUnit(free, unit)} free, '
+          '${QuantityFormatter.withUnit(promised, unit)} promised'
+          '${alertLevel > 0 ? ', reorder at ${QuantityFormatter.withUnit(alertLevel, unit)}' : ''}',
       child: Wrap(spacing: 2, runSpacing: 3, children: children),
     );
   }

@@ -23,6 +23,7 @@ import '../../../updates/presentation/bloc/update_cubit.dart';
 import '../../../updates/presentation/bloc/update_state.dart';
 import '../../../updates/presentation/widgets/update_row.dart';
 import '../../../discounts/domain/repositories/discount_preset_repository.dart';
+import '../../../units/domain/repositories/unit_repository.dart';
 import '../../../orders/domain/usecases/get_receivables.dart';
 import '../../domain/entities/tax_settings.dart';
 import '../bloc/currency_cubit.dart';
@@ -49,6 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _socialHint;
   String? _discountsHint;
   String? _receivablesHint;
+  String? _unitsHint;
   bool _canUndoRestore = false;
 
   @override
@@ -66,6 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final notes = await getIt<NoteRepository>().getNotes();
     final social = await getIt<SocialLinkRepository>().getLinks();
     final discounts = await getIt<DiscountPresetRepository>().getPresets();
+    final units = await getIt<UnitRepository>().getUnits();
     final receivables = await getIt<GetReceivables>()();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
@@ -113,6 +116,14 @@ class _SettingsPageState extends State<SettingsPage> {
       if (discounts case Success(:final value)) {
         _discountsHint =
             value.isEmpty ? null : value.take(3).map((d) => d.label).join(', ');
+      }
+      if (units case Success(:final value) when value.isNotEmpty) {
+        // The default is the flagged one, or the first in the list.
+        var startsOn = value.first.label;
+        for (final u in value) {
+          if (u.isDefault) startsOn = u.label;
+        }
+        _unitsHint = '${value.length} · new items start on $startsOn';
       }
       if (social case Success(:final value)) {
         _socialHint = value.isEmpty
@@ -189,6 +200,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle:
                       _orderFieldsHint ?? 'Extra details to note on each order',
                   onTap: () => _open(RouteNames.orderFields),
+                ),
+                _MoreRow(
+                  icon: Icons.square_foot_outlined,
+                  title: 'Units of measure',
+                  subtitle: _unitsHint ?? 'What you count things in',
+                  onTap: () => _open(RouteNames.units),
                 ),
                 _MoreRow(
                   icon: Icons.shopping_basket_outlined,
