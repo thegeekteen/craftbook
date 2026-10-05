@@ -103,7 +103,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     final p = _product!;
     return p.isStandalone
         ? p.unitCost
-        : _bom.fold(0.0, (s, b) => s + b.quantityRequired * b.materialUnitCost);
+        : _bom.fold(0.0, (s, b) => s + b.lineCost);
   }
 
   /// Pushes [location] and reloads if the child page changed something.
@@ -292,10 +292,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       CardRow(
                         title: Text(b.materialName),
                         subtitle: Text(
-                            '${b.quantityRequired} × ${CurrencyFormatter.format(b.materialUnitCost)}'),
+                            '${b.quantityRequired} × ${CurrencyFormatter.format(b.materialUnitCost)}'
+                            '${b.makes > 1 ? ' · makes ${b.makes}' : ''}'),
                         trailing: Text(
-                          CurrencyFormatter.format(
-                              b.quantityRequired * b.materialUnitCost),
+                          CurrencyFormatter.format(b.lineCost),
                           style: AppTextStyles.bodyMedium.copyWith(
                               color: c.coin, fontWeight: FontWeight.w600),
                         ),

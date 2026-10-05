@@ -160,8 +160,9 @@ erDiagram
 
 6. **Buildable Quantity**: For a product, the maximum buildable quantity is:
    ```
-   min(material.quantity_on_hand / bom_item.quantity_required) for all BOM items
+   min(free × bom_item.makes ÷ bom_item.quantity_required) for all BOM items
    ```
+   A BOM line is "`quantity_required` pieces make `makes` products" (schema v10, default 1), e.g. 1 sheet makes 9 cards. Cost per product is `BomItem.lineCost` (÷ makes); an order line reserves `BomItem.piecesFor(qty)`, rounded up to whole pieces because stock is counted in whole pieces. Use those helpers rather than multiplying `quantityRequired` by hand.
 
 7. **Safe Deletion**: Orders blocked when shipped. Materials blocked when used in a BOM or in any order; their stock history goes with them. Products blocked when in orders or have BOM items; their stock history goes with them too. Channels blocked when orders reference them.
 
@@ -370,7 +371,7 @@ switch (result) {
 
 ## Database Migrations
 
-The schema is at **v9** (discounts, tax, paid status). Every schema change must:
+The schema is at **v10** (BOM `makes`). Every schema change must:
 1. Increment `currentSchemaVersion` in `app_database.dart`
 2. Add a raw-SQL `if (from < N)` step in `migrations.dart`, matching what Drift would create
 3. Handle data preservation during migration

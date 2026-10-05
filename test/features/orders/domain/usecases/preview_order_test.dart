@@ -62,12 +62,15 @@ void main() {
         updatedAt: now,
       );
 
-  BomItem bom(int productId, int materialId, int qty, double cost) => BomItem(
+  BomItem bom(int productId, int materialId, int qty, double cost,
+          {int makes = 1}) =>
+      BomItem(
         productId: productId,
         materialId: materialId,
         materialName: 'M$materialId',
         materialUnitCost: cost,
         quantityRequired: qty,
+        makes: makes,
         createdAt: now,
       );
 
@@ -126,6 +129,27 @@ void main() {
       const ReservationLine(name: 'M10', quantity: 5, available: 7),
       const ReservationLine(name: 'M11', quantity: 3, available: 15),
     ]);
+  });
+
+  test('a line that makes several reserves and costs whole pieces', () async {
+    when(() => products.getProductById(1))
+        .thenAnswer((_) async => Success(product(1)));
+    // One sheet at 3 makes 9 cards.
+    when(() => products.getBomItems(1))
+        .thenAnswer((_) async => Success([bom(1, 10, 1, 3, makes: 9)]));
+    when(() => materials.getMaterialById(10))
+        .thenAnswer((_) async => Success(material(10, onHand: 50)));
+
+    final result = await preview(channelId: 1, items: const [
+      OrderItemInput(
+          productId: 1, productName: 'P1', quantity: 10, unitPrice: 3),
+    ]);
+
+    final p = (result as Success<OrderPreview>).value;
+    // 10 cards need 2 sheets.
+    expect(p.materialCost, 2 * 3);
+    expect(p.reservations,
+        [const ReservationLine(name: 'M10', quantity: 2, available: 50)]);
   });
 
   test('standalone products reserve their own stock and use unit cost',

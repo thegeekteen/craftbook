@@ -3501,6 +3501,13 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
   late final GeneratedColumn<int> quantityRequired = GeneratedColumn<int>(
       'quantity_required', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _makesMeta = const VerificationMeta('makes');
+  @override
+  late final GeneratedColumn<int> makes = GeneratedColumn<int>(
+      'makes', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -3511,7 +3518,7 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, productId, materialId, quantityRequired, createdAt];
+      [id, productId, materialId, quantityRequired, makes, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3547,6 +3554,10 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
     } else if (isInserting) {
       context.missing(_quantityRequiredMeta);
     }
+    if (data.containsKey('makes')) {
+      context.handle(
+          _makesMeta, makes.isAcceptableOrUnknown(data['makes']!, _makesMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -3568,6 +3579,8 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
           .read(DriftSqlType.int, data['${effectivePrefix}material_id'])!,
       quantityRequired: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}quantity_required'])!,
+      makes: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}makes'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3584,12 +3597,17 @@ class BomItem extends DataClass implements Insertable<BomItem> {
   final int productId;
   final int materialId;
   final int quantityRequired;
+
+  /// How many products [quantityRequired] pieces make, e.g. one A4 sheet
+  /// makes 9 business cards. 1 means the pieces go into a single product.
+  final int makes;
   final DateTime createdAt;
   const BomItem(
       {required this.id,
       required this.productId,
       required this.materialId,
       required this.quantityRequired,
+      required this.makes,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3598,6 +3616,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
     map['product_id'] = Variable<int>(productId);
     map['material_id'] = Variable<int>(materialId);
     map['quantity_required'] = Variable<int>(quantityRequired);
+    map['makes'] = Variable<int>(makes);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3608,6 +3627,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       productId: Value(productId),
       materialId: Value(materialId),
       quantityRequired: Value(quantityRequired),
+      makes: Value(makes),
       createdAt: Value(createdAt),
     );
   }
@@ -3620,6 +3640,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       productId: serializer.fromJson<int>(json['productId']),
       materialId: serializer.fromJson<int>(json['materialId']),
       quantityRequired: serializer.fromJson<int>(json['quantityRequired']),
+      makes: serializer.fromJson<int>(json['makes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3631,6 +3652,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       'productId': serializer.toJson<int>(productId),
       'materialId': serializer.toJson<int>(materialId),
       'quantityRequired': serializer.toJson<int>(quantityRequired),
+      'makes': serializer.toJson<int>(makes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3640,12 +3662,14 @@ class BomItem extends DataClass implements Insertable<BomItem> {
           int? productId,
           int? materialId,
           int? quantityRequired,
+          int? makes,
           DateTime? createdAt}) =>
       BomItem(
         id: id ?? this.id,
         productId: productId ?? this.productId,
         materialId: materialId ?? this.materialId,
         quantityRequired: quantityRequired ?? this.quantityRequired,
+        makes: makes ?? this.makes,
         createdAt: createdAt ?? this.createdAt,
       );
   BomItem copyWithCompanion(BomItemsCompanion data) {
@@ -3657,6 +3681,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       quantityRequired: data.quantityRequired.present
           ? data.quantityRequired.value
           : this.quantityRequired,
+      makes: data.makes.present ? data.makes.value : this.makes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3668,14 +3693,15 @@ class BomItem extends DataClass implements Insertable<BomItem> {
           ..write('productId: $productId, ')
           ..write('materialId: $materialId, ')
           ..write('quantityRequired: $quantityRequired, ')
+          ..write('makes: $makes, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, productId, materialId, quantityRequired, createdAt);
+  int get hashCode => Object.hash(
+      id, productId, materialId, quantityRequired, makes, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3684,6 +3710,7 @@ class BomItem extends DataClass implements Insertable<BomItem> {
           other.productId == this.productId &&
           other.materialId == this.materialId &&
           other.quantityRequired == this.quantityRequired &&
+          other.makes == this.makes &&
           other.createdAt == this.createdAt);
 }
 
@@ -3692,12 +3719,14 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
   final Value<int> productId;
   final Value<int> materialId;
   final Value<int> quantityRequired;
+  final Value<int> makes;
   final Value<DateTime> createdAt;
   const BomItemsCompanion({
     this.id = const Value.absent(),
     this.productId = const Value.absent(),
     this.materialId = const Value.absent(),
     this.quantityRequired = const Value.absent(),
+    this.makes = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   BomItemsCompanion.insert({
@@ -3705,6 +3734,7 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
     required int productId,
     required int materialId,
     required int quantityRequired,
+    this.makes = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : productId = Value(productId),
         materialId = Value(materialId),
@@ -3714,6 +3744,7 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
     Expression<int>? productId,
     Expression<int>? materialId,
     Expression<int>? quantityRequired,
+    Expression<int>? makes,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -3721,6 +3752,7 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
       if (productId != null) 'product_id': productId,
       if (materialId != null) 'material_id': materialId,
       if (quantityRequired != null) 'quantity_required': quantityRequired,
+      if (makes != null) 'makes': makes,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -3730,12 +3762,14 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
       Value<int>? productId,
       Value<int>? materialId,
       Value<int>? quantityRequired,
+      Value<int>? makes,
       Value<DateTime>? createdAt}) {
     return BomItemsCompanion(
       id: id ?? this.id,
       productId: productId ?? this.productId,
       materialId: materialId ?? this.materialId,
       quantityRequired: quantityRequired ?? this.quantityRequired,
+      makes: makes ?? this.makes,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -3755,6 +3789,9 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
     if (quantityRequired.present) {
       map['quantity_required'] = Variable<int>(quantityRequired.value);
     }
+    if (makes.present) {
+      map['makes'] = Variable<int>(makes.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3768,6 +3805,7 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
           ..write('productId: $productId, ')
           ..write('materialId: $materialId, ')
           ..write('quantityRequired: $quantityRequired, ')
+          ..write('makes: $makes, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -9228,6 +9266,7 @@ typedef $$BomItemsTableCreateCompanionBuilder = BomItemsCompanion Function({
   required int productId,
   required int materialId,
   required int quantityRequired,
+  Value<int> makes,
   Value<DateTime> createdAt,
 });
 typedef $$BomItemsTableUpdateCompanionBuilder = BomItemsCompanion Function({
@@ -9235,6 +9274,7 @@ typedef $$BomItemsTableUpdateCompanionBuilder = BomItemsCompanion Function({
   Value<int> productId,
   Value<int> materialId,
   Value<int> quantityRequired,
+  Value<int> makes,
   Value<DateTime> createdAt,
 });
 
@@ -9259,6 +9299,9 @@ class $$BomItemsTableFilterComposer
   ColumnFilters<int> get quantityRequired => $composableBuilder(
       column: $table.quantityRequired,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get makes => $composableBuilder(
+      column: $table.makes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -9286,6 +9329,9 @@ class $$BomItemsTableOrderingComposer
       column: $table.quantityRequired,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get makes => $composableBuilder(
+      column: $table.makes, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -9310,6 +9356,9 @@ class $$BomItemsTableAnnotationComposer
 
   GeneratedColumn<int> get quantityRequired => $composableBuilder(
       column: $table.quantityRequired, builder: (column) => column);
+
+  GeneratedColumn<int> get makes =>
+      $composableBuilder(column: $table.makes, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -9342,6 +9391,7 @@ class $$BomItemsTableTableManager extends RootTableManager<
             Value<int> productId = const Value.absent(),
             Value<int> materialId = const Value.absent(),
             Value<int> quantityRequired = const Value.absent(),
+            Value<int> makes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               BomItemsCompanion(
@@ -9349,6 +9399,7 @@ class $$BomItemsTableTableManager extends RootTableManager<
             productId: productId,
             materialId: materialId,
             quantityRequired: quantityRequired,
+            makes: makes,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -9356,6 +9407,7 @@ class $$BomItemsTableTableManager extends RootTableManager<
             required int productId,
             required int materialId,
             required int quantityRequired,
+            Value<int> makes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               BomItemsCompanion.insert(
@@ -9363,6 +9415,7 @@ class $$BomItemsTableTableManager extends RootTableManager<
             productId: productId,
             materialId: materialId,
             quantityRequired: quantityRequired,
+            makes: makes,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0

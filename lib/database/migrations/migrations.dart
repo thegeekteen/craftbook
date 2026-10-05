@@ -203,4 +203,11 @@ Future<void> runMigrations(
       );
     });
   }
+
+  // Version 10: a BOM line can make several products from its pieces
+  // (one sheet makes 9 cards). Existing lines keep meaning one product.
+  if (from < 10) {
+    await db.customStatement(
+        'ALTER TABLE bom_items ADD COLUMN "makes" INTEGER NOT NULL DEFAULT 1');
+  }
 }

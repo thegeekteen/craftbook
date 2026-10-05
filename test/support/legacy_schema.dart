@@ -1,8 +1,16 @@
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+/// Turns a current database back into schema 9, from before a BOM line could
+/// make several products.
+void downgradeToV9(raw.Database db) {
+  db.execute('ALTER TABLE bom_items DROP COLUMN makes');
+  db.execute('PRAGMA user_version = 9');
+}
+
 /// Turns a current database back into schema 8, from before discounts, tax
 /// and paid status.
 void downgradeToV8(raw.Database db) {
+  downgradeToV9(db);
   db.execute('DROP TABLE order_discounts');
   db.execute('DROP TABLE discount_presets');
   for (final column in [

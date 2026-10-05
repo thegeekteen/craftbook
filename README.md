@@ -48,10 +48,12 @@ Go to **More** and work down the list. You can change everything later.
 | **Currency** | More → Currency | Pick yours from the list, or type any symbol. This only changes the symbol; your amounts aren't converted. |
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
 | **Materials** | More → Materials → **+ Material** | Pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
-| **Products** | Products → **+ Product** | Sell price and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). The editor shows your profit per piece as you type. |
+| **Products** | Products → **+ Product** | Sell price and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how many pieces go in and **Makes** is how many products they make, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
 | **Tax** (optional) | More → Tax | Turn on **Use tax**, set the rate and name (VAT, GST…), and choose whether new orders **start with tax on or off**. Also choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
+
+> **One material, several products.** Say a pack of 50 A4 card sheets costs ₱150 (₱3.00 a sheet) and each sheet prints 9 business cards. Set the sheet to **Uses 1, Makes 9**: each card costs ₱0.33 in materials, and 50 sheets show as enough for 450 cards. Orders always set aside whole sheets: 5 cards take 1 sheet, 10 cards take 2. If you print a small order on a sheet left over from an earlier one, tap **Adjust** when packing and set the sheets you really used.
 
 ---
 

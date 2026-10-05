@@ -7,6 +7,10 @@ class BomItem extends Equatable {
   final String materialName;
   final double materialUnitCost;
   final int quantityRequired;
+
+  /// How many products [quantityRequired] pieces make, e.g. one A4 sheet
+  /// makes 9 business cards. 1 means one product uses them all.
+  final int makes;
   final DateTime createdAt;
 
   const BomItem({
@@ -16,10 +20,17 @@ class BomItem extends Equatable {
     required this.materialName,
     required this.materialUnitCost,
     required this.quantityRequired,
+    this.makes = 1,
     required this.createdAt,
   });
 
-  double get lineCost => quantityRequired * materialUnitCost;
+  /// Material cost of one product: a sheet that makes 9 costs a ninth each.
+  double get lineCost => quantityRequired * materialUnitCost / makes;
+
+  /// Whole pieces of material needed for [products] products. Stock is
+  /// counted in whole pieces, so a part-used sheet counts as one.
+  int piecesFor(int products) =>
+      (quantityRequired * products + makes - 1) ~/ makes;
 
   @override
   List<Object?> get props => [
@@ -29,6 +40,7 @@ class BomItem extends Equatable {
         materialName,
         materialUnitCost,
         quantityRequired,
+        makes,
         createdAt,
       ];
 }
