@@ -105,6 +105,9 @@ class AppChip extends StatelessWidget {
   final Color? selectedColor;
   final Color? selectedForeground;
 
+  /// Shown after the label, e.g. a close mark on a removable filter.
+  final IconData? trailingIcon;
+
   const AppChip({
     super.key,
     required this.label,
@@ -113,6 +116,7 @@ class AppChip extends StatelessWidget {
     this.onTap,
     this.selectedColor,
     this.selectedForeground,
+    this.trailingIcon,
   });
 
   @override
@@ -158,6 +162,10 @@ class AppChip extends StatelessWidget {
                       color: fg.withValues(alpha: 0.65),
                     ),
                   ),
+                ],
+                if (trailingIcon != null) ...[
+                  const SizedBox(width: 4),
+                  Icon(trailingIcon, size: 16, color: fg),
                 ],
               ],
             ),

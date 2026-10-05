@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/order_discount.dart';
 
 import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../../products/domain/entities/channel.dart';
@@ -52,6 +53,9 @@ class OrderDetailLoaded extends OrderDetailState {
   /// An action (pack, ship, adjust, delete) is running.
   final bool isBusy;
 
+  /// Discount lines with what each took off.
+  final List<OrderDiscount> discounts;
+
   const OrderDetailLoaded({
     required this.order,
     required this.items,
@@ -62,6 +66,7 @@ class OrderDetailLoaded extends OrderDetailState {
     this.materialStock = const {},
     this.productStock = const {},
     this.isBusy = false,
+    this.discounts = const [],
   });
 
   OrderDetailLoaded copyWith({bool? isBusy}) => OrderDetailLoaded(
@@ -74,6 +79,7 @@ class OrderDetailLoaded extends OrderDetailState {
         materialStock: materialStock,
         productStock: productStock,
         isBusy: isBusy ?? this.isBusy,
+        discounts: discounts,
       );
 
   @override
@@ -87,6 +93,7 @@ class OrderDetailLoaded extends OrderDetailState {
         materialStock,
         productStock,
         isBusy,
+        discounts,
       ];
 }
 

@@ -3,7 +3,9 @@ import '../../../../core/error/result.dart';
 import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
+import '../entities/order_discount.dart';
 import '../entities/order_item.dart';
+import '../entities/order_money.dart';
 import '../repositories/order_repository.dart';
 import 'expand_order_items.dart';
 
@@ -31,6 +33,12 @@ class CreateOrder {
 
     /// Custom field values by field id; blanks are dropped.
     Map<int, String> fieldValues = const {},
+
+    /// Discount lines with their amounts, tax and paid status, as worked
+    /// out by `OrderMoney` along with [discountTotal] and [taxAmount].
+    OrderTerms terms = const OrderTerms(),
+    double discountTotal = 0,
+    double taxAmount = 0,
   }) async {
     if (customerName.trim().isEmpty) {
       return const Error<int>(ValidationFailure('Customer name is required'));
@@ -47,7 +55,15 @@ class CreateOrder {
     // Planned cost: materials + standalone products
     final totalMaterialCost = expanded.totalCost;
 
-    final profit = totalSales - totalMaterialCost - channelFees - shippingCost;
+    final profit = OrderMoney(
+      itemsTotal: totalSales,
+      discount: discountTotal,
+      tax: taxAmount,
+      taxInclusive: terms.tax?.inclusive ?? true,
+      fees: channelFees,
+      shipping: shippingCost,
+      materials: totalMaterialCost,
+    ).profit;
 
     final result = await orderRepository.createOrder(
       customerName: customerName.trim(),
@@ -64,6 +80,9 @@ class CreateOrder {
       materials: expandedMaterials,
       products: expandedProducts,
       fieldValues: OrderFieldCodec.normalize(fieldValues),
+      terms: terms,
+      discountTotal: discountTotal,
+      taxAmount: taxAmount,
     );
 
     switch (result) {

@@ -7,6 +7,7 @@ import '../../../products/domain/repositories/channel_repository.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_discount.dart';
 import '../../domain/entities/order_material.dart';
 import '../../domain/entities/order_product.dart';
 import '../../domain/repositories/order_repository.dart';
@@ -15,6 +16,7 @@ import '../../domain/usecases/cancel_order.dart';
 import '../../domain/usecases/delete_order.dart';
 import '../../domain/usecases/pack_order.dart';
 import '../../domain/usecases/restore_order.dart';
+import '../../domain/usecases/set_order_paid.dart';
 import '../../domain/usecases/ship_order.dart';
 import '../../domain/usecases/update_order_note.dart';
 import 'order_detail_event.dart';
@@ -33,6 +35,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   final RestoreOrder restoreOrder;
   final DeleteOrder deleteOrder;
   final UpdateOrderNote updateOrderNote;
+  final SetOrderPaid setOrderPaid;
 
   OrderDetailBloc({
     required this.orderRepository,
@@ -46,7 +49,9 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     required this.restoreOrder,
     required this.deleteOrder,
     required this.updateOrderNote,
+    required this.setOrderPaid,
   }) : super(OrderDetailInitial()) {
+    on<SetOrderPaidDetail>(_onSetPaid);
     on<LoadOrderDetail>(_onLoadOrderDetail);
     on<AdjustMaterials>(_onAdjustMaterials);
     on<PackOrderDetail>(_onPackOrder);
@@ -146,9 +151,18 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
       Error() => const <OrderFieldEntry>[],
     };
 
+    // Shown as one Discounts line if the lines themselves won't load.
+    final discountsResult =
+        await orderRepository.getOrderDiscounts(event.orderId);
+    final discounts = switch (discountsResult) {
+      Success(:final value) => value,
+      Error() => const <OrderDiscount>[],
+    };
+
     if (emit.isDone) return;
 
     emit(OrderDetailLoaded(
+      discounts: discounts,
       order: order,
       items: items.cast(),
       materials: materials.cast(),
@@ -212,6 +226,17 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
   ) =>
       _runAction(emit, event.orderId, () => shipOrder(event.orderId),
           'Marked as shipped');
+
+  Future<void> _onSetPaid(
+    SetOrderPaidDetail event,
+    Emitter<OrderDetailState> emit,
+  ) =>
+      _runAction(
+        emit,
+        event.orderId,
+        () => setOrderPaid(event.orderId, event.paid),
+        event.paid ? 'Marked as paid' : 'Marked as unpaid',
+      );
 
   Future<void> _onCancelOrder(
     CancelOrderDetail event,

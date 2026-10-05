@@ -37,6 +37,8 @@ class OrdersListPage extends StatelessWidget {
   }
 }
 
+enum _Payment { any, unpaid, paid }
+
 class _OrdersListView extends StatefulWidget {
   const _OrdersListView();
 
@@ -48,6 +50,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
   /// null means "All".
   OrderStatus? _status = OrderStatus.pending;
   String _query = '';
+  _Payment _payment = _Payment.any;
 
   void _reload() => context.read<OrdersListBloc>().add(const LoadOrders());
 
@@ -94,9 +97,19 @@ class _OrdersListViewState extends State<_OrdersListView> {
     // under their own chip.
     final active =
         searched.where((e) => e.order.status != OrderStatus.cancelled).toList();
-    final visible = _status == null
+    final byStatus = _status == null
         ? active
         : searched.where((e) => e.order.status == _status).toList();
+    final unpaid = byStatus.where((e) => e.order.isAwaitingPayment).length;
+    final visible = switch (_payment) {
+      _Payment.any => byStatus,
+      _Payment.unpaid =>
+        byStatus.where((e) => e.order.isAwaitingPayment).toList(),
+      _Payment.paid => byStatus.where((e) => e.order.isPaid).toList(),
+    };
+    // Only worth a row when something is unpaid or a filter is on.
+    final showPayment = _payment != _Payment.any ||
+        active.any((e) => e.order.isAwaitingPayment);
 
     return Column(
       children: [
@@ -120,6 +133,20 @@ class _OrdersListViewState extends State<_OrdersListView> {
             ],
           ),
         ),
+        if (showPayment)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: ChoiceChipRow<_Payment>.single(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              selected: _payment,
+              onSelected: (p) => setState(() => _payment = p),
+              options: [
+                const ChipOption(_Payment.any, 'Paid or not'),
+                ChipOption(_Payment.unpaid, 'Unpaid', count: unpaid),
+                const ChipOption(_Payment.paid, 'Paid'),
+              ],
+            ),
+          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () {
@@ -183,6 +210,14 @@ class _OrdersListViewState extends State<_OrdersListView> {
         icon: Icons.search_off_rounded,
         title: 'No matches',
         message: 'Nothing matches "$_query".',
+      );
+    }
+    if (_payment != _Payment.any) {
+      return EmptyState(
+        icon: Icons.check_circle_outline_rounded,
+        title: _payment == _Payment.unpaid
+            ? 'Nothing waiting for payment'
+            : 'No paid orders here',
       );
     }
     final label = _status?.label.toLowerCase() ?? '';

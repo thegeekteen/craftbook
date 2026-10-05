@@ -5,28 +5,43 @@ import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
 import '../utils/currency_formatter.dart';
 
-/// Where a sale went: materials, fees, shipping and what's left as profit.
+/// Where a sale went: discounts, tax, materials, fees, shipping and what's
+/// left as profit.
 ///
 /// Profit is always derived from the parts (never a stored value), in line
-/// with business rule 5.
+/// with business rule 5, and matches `OrderMoney.profit`.
 class MoneyParts {
+  /// Item prices before discounts.
   final double sales;
+  final double discount;
+
+  /// Tax inside the prices: it comes out of sales.
+  final double includedTax;
+
+  /// Tax the customer paid on top: passed on, so not part of profit.
+  final double addedTax;
   final double materials;
   final double fees;
   final double shipping;
 
   const MoneyParts({
     required this.sales,
+    this.discount = 0,
+    this.includedTax = 0,
+    this.addedTax = 0,
     required this.materials,
     required this.fees,
     required this.shipping,
   });
 
+  /// Sales after discounts.
+  double get netSales => sales - discount;
   double get costs => materials + fees + shipping;
-  double get profit => sales - costs;
+  double get profit => netSales - includedTax - costs;
 
-  /// Profit as a share of sales, 0–1. Zero when there are no sales.
-  double get margin => sales <= 0 ? 0 : profit / sales;
+  /// Profit as a share of sales after discounts, 0–1. Zero when there are
+  /// no sales.
+  double get margin => netSales <= 0 ? 0 : profit / netSales;
 }
 
 /// Horizontal stacked bar: materials (red), fees (amber), shipping (grey),
@@ -45,6 +60,7 @@ class MoneyBreakdownBar extends StatelessWidget {
       (parts.materials, c.alert),
       (parts.fees, c.warn),
       (parts.shipping, c.muted),
+      (parts.includedTax, c.coin),
       (profit, c.go),
     ].where((s) => s.$1 > 0).toList();
     final total = segments.fold<double>(0, (sum, s) => sum + s.$1);
@@ -81,7 +97,8 @@ class MoneyBreakdownBar extends StatelessWidget {
   }
 }
 
-/// Bar plus the Sales / Materials / Fees / Shipping rows.
+/// Bar plus the Sales / Discount / Tax / Materials / Fees / Shipping rows.
+/// Discount and tax rows only show when there is any.
 ///
 /// [feesLabel] lets callers name the channel ("Shopee fees").
 /// [onMaterialsTap] makes the materials row tappable (e.g. to expand lines).
@@ -92,6 +109,9 @@ class MoneyBreakdown extends StatelessWidget {
   final VoidCallback? onMaterialsTap;
   final bool showBar;
 
+  /// What the tax is called ("VAT").
+  final String taxLabel;
+
   const MoneyBreakdown({
     super.key,
     required this.parts,
@@ -99,6 +119,7 @@ class MoneyBreakdown extends StatelessWidget {
     this.materialsLabel = 'Materials',
     this.onMaterialsTap,
     this.showBar = true,
+    this.taxLabel = 'Tax',
   });
 
   @override
@@ -113,6 +134,15 @@ class MoneyBreakdown extends StatelessWidget {
           const SizedBox(height: 10),
         ],
         MoneyRow(label: 'Sales', amount: parts.sales),
+        if (parts.discount > 0)
+          MoneyRow(label: 'Discounts', amount: -parts.discount),
+        if (parts.includedTax > 0)
+          MoneyRow(
+            label: '$taxLabel in prices',
+            amount: -parts.includedTax,
+            dot: c.coin,
+            color: c.coin,
+          ),
         MoneyRow(
           label: materialsLabel,
           amount: -parts.materials,
@@ -128,6 +158,16 @@ class MoneyBreakdown extends StatelessWidget {
           dot: c.muted,
           color: c.muted,
         ),
+        if (parts.addedTax > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '+ ${CurrencyFormatter.format(parts.addedTax)} $taxLabel added '
+              'for the customer to pay. It isn\'t yours, so it\'s not in '
+              'profit.',
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+            ),
+          ),
       ],
     );
   }

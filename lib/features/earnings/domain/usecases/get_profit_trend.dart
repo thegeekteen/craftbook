@@ -1,5 +1,6 @@
 import '../../../../core/error/result.dart';
 import '../entities/profit_trend.dart';
+import '../entities/report_filter.dart';
 import '../repositories/earnings_repository.dart';
 
 /// Profit per day (or per month) across a period, with empty buckets kept
@@ -13,8 +14,10 @@ class GetProfitTrend {
     required DateTime start,
     required DateTime end,
     required TrendGranularity granularity,
+    ReportFilter filter = ReportFilter.none,
   }) async {
-    final result = await repository.getCompletedOrderProfits(start, end);
+    final result =
+        await repository.getCompletedOrderProfits(start, end, filter: filter);
     switch (result) {
       case Error(:final failure):
         return Error(failure);

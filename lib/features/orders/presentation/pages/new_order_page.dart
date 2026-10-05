@@ -37,6 +37,12 @@ import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
 import '../widgets/note_field.dart';
 import '../widgets/product_picker_sheet.dart';
+import '../widgets/order_status_ui.dart';
+import '../widgets/order_terms_card.dart';
+import '../../domain/entities/order_money.dart';
+import '../../../discounts/domain/entities/discount_preset.dart';
+import '../../../discounts/domain/repositories/discount_preset_repository.dart';
+import '../../../settings/presentation/bloc/tax_settings_cubit.dart';
 
 /// New order: Customer → Items → Review. With [orderId] it edits that order
 /// instead: pending orders go through all three steps, packed orders only
@@ -116,6 +122,40 @@ class _NewOrderViewState extends State<_NewOrderView> {
     super.initState();
     _loadChannels();
     _loadFields();
+    _loadPresets();
+  }
+
+  List<DiscountPreset> _presets = [];
+
+  Future<void> _loadPresets() async {
+    final result = await getIt<DiscountPresetRepository>().getPresets();
+    if (!mounted) return;
+    switch (result) {
+      case Success(:final value):
+        setState(() => _presets = value);
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+    }
+  }
+
+  /// Discounts, tax and paid, wired to the bloc.
+  Widget _termsCard(NewOrderDetailsFilled d) {
+    final bloc = context.read<NewOrderBloc>();
+    return OrderTermsCard(
+      itemsTotal: d.totalSales,
+      terms: d.terms,
+      availableTax: d.availableTax,
+      taxLabel: getIt<TaxSettingsCubit>().state.label,
+      presets: _presets,
+      onAddDiscount: (discount) => bloc.add(AddDiscount(discount)),
+      onRemoveDiscount: (i) => bloc.add(RemoveDiscount(i)),
+      onTaxChanged: (on) => bloc.add(SetOrderTaxEnabled(on)),
+      onPaidChanged: (paid) => bloc.add(SetOrderPaidStatus(paid)),
+      onManagePresets: () async {
+        await context.push(RouteNames.discounts);
+        if (mounted) _loadPresets();
+      },
+    );
   }
 
   @override
@@ -185,6 +225,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
           orderDate: _orderDate,
           shipByDate: _shipByDate,
           note: _note,
+          channelPaidByDefault: _channel?.paidByDefault ?? true,
         ));
     _goTo(1);
   }
@@ -218,6 +259,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
       orderDate: _orderDate,
       shipByDate: _shipByDate,
       note: _note,
+      channelPaidByDefault: _channel?.paidByDefault ?? true,
     ));
     bloc.add(SaveOrder());
   }
@@ -307,7 +349,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
               controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildCustomerStep(),
+                _buildCustomerStep(details),
                 if (!_itemsLocked) ...[
                   _buildItemsStep(items),
                   _buildReviewStep(details),
@@ -325,7 +367,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
   // ── Step 1 ───────────────────────────────────────────────────────────
 
-  Widget _buildCustomerStep() {
+  Widget _buildCustomerStep(NewOrderDetailsFilled? details) {
     return Form(
       key: _formKey,
       child: CustomScrollView(
@@ -422,6 +464,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     ),
                   ],
                 )),
+                // Packed orders have no review step, but their money can
+                // still change.
+                if (_editingStatus == OrderStatus.packed &&
+                    details != null) ...[
+                  const SizedBox(height: 16),
+                  _termsCard(details),
+                ],
               ],
             ),
           ),
@@ -583,6 +632,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
           ),
         ),
         const SizedBox(height: 12),
+        _termsCard(d),
+        const SizedBox(height: 12),
         if (d.isPreviewing || (preview == null && d.previewError == null))
           const AppCard(
             child: SizedBox(
@@ -629,7 +680,15 @@ class _NewOrderViewState extends State<_NewOrderView> {
   }
 
   Widget _buildBottomBar(NewOrderDetailsFilled? d, List<OrderItemInput> items) {
-    final total = CurrencyFormatter.formatShort(d?.totalSales ?? 0);
+    final total =
+        CurrencyFormatter.formatShort(d?.preview?.money.customerPays ??
+            (d == null
+                ? 0
+                : OrderMoney.compute(
+                    itemsTotal: d.totalSales,
+                    discounts: d.terms.discounts,
+                    tax: d.terms.tax,
+                  ).customerPays));
     switch (_step) {
       case 0:
         return BottomActionBar(children: [
@@ -727,12 +786,7 @@ class _MoneyPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final parts = MoneyParts(
-      sales: preview.sales,
-      materials: preview.materialCost,
-      fees: preview.channelFees,
-      shipping: preview.shippingCost,
-    );
+    final parts = preview.money.parts;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -743,7 +797,7 @@ class _MoneyPreviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            CurrencyFormatter.format(parts.sales),
+            CurrencyFormatter.format(preview.money.customerPays),
             style: AppTextStyles.displayMedium.copyWith(color: c.ink),
           ),
           const SizedBox(height: 12),
@@ -751,6 +805,7 @@ class _MoneyPreviewCard extends StatelessWidget {
             parts: parts,
             feesLabel:
                 channelName == null ? 'Channel fees' : '$channelName fees',
+            taxLabel: getIt<TaxSettingsCubit>().state.label,
           ),
           ProfitRow(parts: parts),
         ],

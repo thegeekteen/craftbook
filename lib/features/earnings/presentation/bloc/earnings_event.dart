@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/profit_trend.dart';
+import '../../domain/entities/report_filter.dart';
 
 /// Base class for earnings events
 abstract class EarningsEvent extends Equatable {
@@ -10,18 +11,20 @@ abstract class EarningsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load everything the Money screen shows for one period.
+/// Load everything the Reports screen shows for one period.
 class LoadEarnings extends EarningsEvent {
   final DateTime startDate;
   final DateTime endDate;
   final TrendGranularity granularity;
+  final ReportFilter filter;
 
   const LoadEarnings({
     required this.startDate,
     required this.endDate,
     this.granularity = TrendGranularity.day,
+    this.filter = ReportFilter.none,
   });
 
   @override
-  List<Object?> get props => [startDate, endDate, granularity];
+  List<Object?> get props => [startDate, endDate, granularity, filter];
 }

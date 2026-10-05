@@ -7,7 +7,8 @@ Craftbook is an offline-first Android application designed for small craft busin
 ### Core Value Proposition
 - **Offline-first**: No accounts, no sync. All data lives on-device. The only network call is the user-triggered update check against GitHub releases
 - **BOM-aware orders**: Orders are created with products, but the app expands them into materials behind the scenes
-- **Real profit tracking**: Profit = Sales − Materials (actual, including waste) − Channel fees − Shipping
+- **Real profit tracking**: Profit = What the customer paid − Tax − Materials (actual, including waste) − Channel fees − Shipping
+- **Getting paid**: Orders are paid or unpaid, and Reports shows who still owes money
 - **Stock as pips**: Visual representation of stock levels showing free vs. promised pieces
 
 ### Target Platform
@@ -35,7 +36,8 @@ The app is built around 6 main user flows:
 - **Product picker**: Shows buildable quantity from current stock
 - **Channel selection**: Shopee, TikTok, Lazada, Facebook, Walk-in with fee rates
 - **Order fields**: The shop's own extra details (address, size, wrap, event date…) asked for after the customer name
-- **Auto-calculation**: Materials cost, channel fees, and profit calculated automatically
+- **Discounts, tax, paid**: The review step adds discount lines (one-tap presets or typed in), switches the shop's tax on or off for this order, and sets paid (defaulting from the channel). Packed orders edit these on their details form
+- **Auto-calculation**: Materials cost, channel fees (after discount), tax and profit calculated automatically
 
 ### Flow 3: Pack & Ship
 - **Order details**: Full view with dates, channel, items (with names), materials (with names), financial summary
@@ -56,9 +58,11 @@ The app is built around 6 main user flows:
 - **Channel management**: Configure fee rates for each sales channel
 - **Delete product**: Blocked if referenced by orders or has BOM items
 
-### Flow 6: Earnings (Money)
-- **Period selector**: Week / Month / Year tabs with prev/next navigation and date range labels
-- **Summary card**: Net profit, sales, material cost, channel fees, shipping
+### Flow 6: Reports
+- **Period selector**: Week / Month / Year / Custom tabs. Prev/next for the first three; Custom opens a date range picker
+- **Filters**: Channel, products contained, packed/shipped, paid/unpaid, with/without discount, with/without tax, order total range. Active filters show as removable chips and narrow every number on the page
+- **Summary card**: Net profit, sales, discounts, tax (in prices, or added on top and passed on), material cost, channel fees, shipping, and how much is still unpaid
+- **Waiting for payment**: All-time unpaid orders grouped by customer (also under More)
 - **Per-product breakdown**: Product name, quantity sold, sales, profit (allocated by sales proportion)
 - **Waste section**: Per-material breakdown showing name, pcs wasted, cost
 - **Scope**: Includes packed + shipped orders. Profit always recalculated from components
@@ -66,7 +70,9 @@ The app is built around 6 main user flows:
 ### Settings
 - **Export backup**: Raw SQLite file export via file picker (Android SAF compatible)
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
-- **Navigation hub**: Links to Products, Channels, Order fields, Buy List, Notes, Social shortcuts
+- **Navigation hub**: Links to Materials, Channels, Order fields, Buy List, Waiting for payment, Discounts, Notes, Social shortcuts
+- **Currency**: Pick from common currencies or type a symbol; only the display changes
+- **Tax**: On/off for new orders, rate, name, prices include tax or tax added on top
 
 ---
 
@@ -101,7 +107,11 @@ The app is built around 6 main user flows:
 | Notes | ✅ | Shop notebook with title and rich-text body (headings, checklists, lists, quote, code, links, highlight, alignment); pin to Today; search; delete with Undo. Added in schema v5 |
 | Social shortcuts | ✅ | Configurable links to Facebook, TikTok, Shopee, Lazada and more (presets with brand colours, or a custom name and colour); tap to open in the browser or app; drag to reorder. Opens through the phone's own browser, so the app still makes no network calls. Added in schema v6 |
 | Product photos | ✅ | One photo per product, from the camera or gallery, resized to 800px JPEG and stored in the database so backups carry it. Shown in the product list, product page, the order wizard's picker and items, and order details (tap to enlarge). Added in schema v7 |
-| Earnings report | ✅ | Period navigation, summary, per-product, waste |
+| Reports | ✅ | Renamed from Money. Week/month/year/custom periods, filters, summary with discounts and tax, per-product, waste |
+| Currency | ✅ | More → Currency. Presets (₱, $, €, £, ¥, Rp, RM, ฿, ₫, ₹…) or a custom symbol, with or without cents. Display only |
+| Discounts | ✅ | Percent or fixed lines on any order, presets under More → Discounts. Fees and tax are on the amount after discount. Added in schema v9 |
+| Tax / VAT | ✅ | More → Tax: on/off, rate, name, included in prices or added on top. Each order keeps its own rate and can switch tax off. Added in schema v9 |
+| Paid / unpaid | ✅ | Per order, default from the channel's "paid when placed". Unpaid tag and filter on Orders, Mark paid on the order page and long press, Waiting for payment list. Existing orders were migrated as paid in schema v9 |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |
 | Backup/Restore | ✅ | Raw SQLite file copy (Android SAF compatible) |
@@ -109,7 +119,7 @@ The app is built around 6 main user flows:
 
 ### ✅ Infrastructure
 
-- **Database**: 14 tables, 7 DAOs, Drift ORM with code generation
+- **Database**: 17 tables, 9 DAOs, schema v9, Drift ORM with code generation
 - **DI**: get_it with manual registration for all repos, use cases, BLoCs
 - **Navigation**: go_router with ShellRoute bottom nav + push detail pages + auto-refresh on return
 - **Theme**: Light and dark themes built from one token set (`CraftColors`), bundled fonts, three radii; follows the system setting
@@ -122,7 +132,16 @@ The app is built around 6 main user flows:
 ## Key Design Decisions
 
 ### Profit is always recalculated on display
-Stored `order.profit` can become stale after material adjustments. All displays (order detail, order cards, earnings report) compute `profit = sales - materials - fees - shipping` at render time.
+Stored `order.profit` can become stale after material adjustments. All displays (order detail, order cards, reports) recompute profit from its parts through `OrderMoney`, the single place the formula lives: what the customer paid − tax − materials − fees − shipping.
+
+### Orders keep their own tax and discounts
+The tax rate and whether it's included are copied onto each order, and discount presets are copied as lines, so changing Settings or a preset never rewrites past orders.
+
+### Paid defaults come from the channel
+Every order has a channel, so the channel's "paid when placed" is the default. A global setting would always be overridden.
+
+### Unpaid orders still count as profit
+A sale is a sale once packed. Reports counts unpaid orders and shows how much of the profit is still owed; the filter can leave them out.
 
 ### Earnings include packed + shipped orders
 Not just shipped. Waste also scoped to packed/shipped only.
@@ -179,4 +198,4 @@ The app uses a custom design system in `lib/core/theme/`:
 
 ---
 
-*Last updated: 2026-10-04*
+*Last updated: 2026-10-05*

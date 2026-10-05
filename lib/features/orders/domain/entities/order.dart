@@ -37,6 +37,18 @@ class Order extends Equatable {
   final double channelFees;
   final double shippingCost;
   final double profit;
+
+  /// Sum of the discount lines (the lines themselves load separately).
+  final double discountTotal;
+
+  /// Percent; null when the order has no tax.
+  final double? taxRate;
+  final double taxAmount;
+
+  /// True when item prices include the tax, false when it's added on top.
+  final bool taxInclusive;
+  final bool isPaid;
+  final DateTime? paidAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -55,9 +67,22 @@ class Order extends Equatable {
     required this.channelFees,
     required this.shippingCost,
     required this.profit,
+    this.discountTotal = 0,
+    this.taxRate,
+    this.taxAmount = 0,
+    this.taxInclusive = true,
+    this.isPaid = true,
+    this.paidAt,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  bool get hasTax => taxRate != null;
+
+  bool get hasDiscount => discountTotal > 0;
+
+  /// Waiting for the customer's money: unpaid and not called off.
+  bool get isAwaitingPayment => !isPaid && status != OrderStatus.cancelled;
 
   @override
   List<Object?> get props => [
@@ -75,6 +100,12 @@ class Order extends Equatable {
         channelFees,
         shippingCost,
         profit,
+        discountTotal,
+        taxRate,
+        taxAmount,
+        taxInclusive,
+        isPaid,
+        paidAt,
         createdAt,
         updatedAt,
       ];
@@ -94,6 +125,14 @@ class Order extends Equatable {
     double? channelFees,
     double? shippingCost,
     double? profit,
+    double? discountTotal,
+    double? taxRate,
+    bool clearTax = false,
+    double? taxAmount,
+    bool? taxInclusive,
+    bool? isPaid,
+    DateTime? paidAt,
+    bool clearPaidAt = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -112,6 +151,12 @@ class Order extends Equatable {
       channelFees: channelFees ?? this.channelFees,
       shippingCost: shippingCost ?? this.shippingCost,
       profit: profit ?? this.profit,
+      discountTotal: discountTotal ?? this.discountTotal,
+      taxRate: clearTax ? null : (taxRate ?? this.taxRate),
+      taxAmount: taxAmount ?? this.taxAmount,
+      taxInclusive: taxInclusive ?? this.taxInclusive,
+      isPaid: isPaid ?? this.isPaid,
+      paidAt: clearPaidAt ? null : (paidAt ?? this.paidAt),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

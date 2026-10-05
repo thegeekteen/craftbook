@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/status_pill.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_money.dart';
 
 extension OrderStatusLabel on OrderStatus {
   /// User-facing name. Pending orders are called "To pack" everywhere.
@@ -24,8 +26,23 @@ extension OrderUi on Order {
   }
 
   /// Profit from components, never the stored value (business rule 5).
-  double get liveProfit =>
-      totalSales - totalMaterialCost - channelFees - shippingCost;
+  double get liveProfit => OrderMoney.fromOrder(this).profit;
+
+  /// The order total: what the customer pays after discounts and tax.
+  double get liveTotal => OrderMoney.fromOrder(this).customerPays;
+}
+
+extension OrderMoneyUi on OrderMoney {
+  /// The parts the money breakdown draws.
+  MoneyParts get parts => MoneyParts(
+        sales: itemsTotal,
+        discount: discount,
+        includedTax: includedTax,
+        addedTax: addedTax,
+        materials: materials,
+        fees: fees,
+        shipping: shipping,
+      );
 }
 
 /// The one place order status maps to a pill. Overdue pending orders show

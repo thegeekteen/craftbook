@@ -19,7 +19,7 @@ void main() {
 
   Future<void> boot(WidgetTester tester) async {
     // A tall phone, so "Your data" is built without scrolling.
-    tester.view.physicalSize = const Size(1080, 3200);
+    tester.view.physicalSize = const Size(1080, 4800);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
     await tester.runAsync(() async {
@@ -44,6 +44,13 @@ void main() {
     await boot(tester);
     expect(find.text('Restore from backup'), findsOneWidget);
     expect(find.text('Undo last restore'), findsNothing);
+    await teardown(tester);
+  });
+
+  testWidgets('shows the currency under Money & orders', (tester) async {
+    await boot(tester);
+    expect(find.text('Currency'), findsOneWidget);
+    expect(find.text('₱ · Philippine peso'), findsOneWidget);
     await teardown(tester);
   });
 

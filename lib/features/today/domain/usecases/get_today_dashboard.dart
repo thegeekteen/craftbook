@@ -22,18 +22,22 @@ class TodayDashboard extends Equatable {
   /// Profit from orders packed or shipped this week (Mon–Sun).
   final double weekProfit;
 
+  /// The day this was worked out for; null means the phone's today.
+  final DateTime? today;
+
   const TodayDashboard({
     required this.due,
     required this.placedToday,
     required this.alerts,
     required this.weekProfit,
+    this.today,
   });
 
   int get toPackCount =>
       due.where((e) => e.order.status == OrderStatus.pending).length;
 
   int get overdueCount {
-    final today = app_date.DateUtils.startOfDay(DateTime.now());
+    final today = app_date.DateUtils.startOfDay(this.today ?? DateTime.now());
     return due
         .where((e) =>
             e.order.status == OrderStatus.pending &&
@@ -42,7 +46,7 @@ class TodayDashboard extends Equatable {
   }
 
   @override
-  List<Object?> get props => [due, placedToday, alerts, weekProfit];
+  List<Object?> get props => [due, placedToday, alerts, weekProfit, today];
 }
 
 class GetTodayDashboard {
@@ -85,10 +89,7 @@ class GetTodayDashboard {
     if (weekResult case Error(:final failure)) return Error(failure);
     final week = (weekResult as Success<EarningsSummary>).value;
     // Recompute from components rather than trusting a stored total.
-    final weekProfit = week.totalSales -
-        week.totalMaterialCost -
-        week.totalChannelFees -
-        week.totalShippingCost;
+    final weekProfit = week.profit;
 
     // One lookup for both lists so channels/items are fetched once.
     final allOrders = {
@@ -106,6 +107,7 @@ class GetTodayDashboard {
       placedToday: [for (final o in placedOrders) byId[o.id]!],
       alerts: alerts,
       weekProfit: weekProfit,
+      today: now == null ? null : today,
     ));
   }
 }

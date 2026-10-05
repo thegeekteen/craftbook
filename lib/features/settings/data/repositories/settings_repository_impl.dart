@@ -4,14 +4,23 @@ import 'package:flutter/material.dart' show ThemeMode;
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/palettes.dart';
+import '../../../../core/utils/currency_setting.dart';
 import '../../../../database/app_database.dart';
 import '../../domain/entities/order_amount_shown.dart';
+import '../../domain/entities/tax_settings.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   static const themeModeKey = 'theme_mode';
   static const paletteKey = 'palette';
   static const orderAmountKey = 'order_amount';
+  static const currencyCodeKey = 'currency_code';
+  static const currencySymbolKey = 'currency_symbol';
+  static const currencyDecimalsKey = 'currency_decimals';
+  static const taxEnabledKey = 'tax_enabled';
+  static const taxRateKey = 'tax_rate';
+  static const taxInclusiveKey = 'tax_inclusive';
+  static const taxLabelKey = 'tax_label';
 
   final AppDatabase db;
 
@@ -42,6 +51,64 @@ class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Future<Result<void>> setOrderAmountShown(OrderAmountShown shown) =>
       _write(orderAmountKey, shown.name);
+
+  @override
+  Future<CurrencySetting> getCurrency() async {
+    final code = await _read(currencyCodeKey);
+    if (code == null) return CurrencySetting.php;
+    final preset = CurrencySetting.preset(code);
+    if (preset != null) return preset;
+    final symbol = (await _read(currencySymbolKey))?.trim() ?? '';
+    if (code != CurrencySetting.customCode || symbol.isEmpty) {
+      return CurrencySetting.php;
+    }
+    final decimals = int.tryParse(await _read(currencyDecimalsKey) ?? '');
+    return CurrencySetting(
+      code: CurrencySetting.customCode,
+      symbol: symbol,
+      decimals: decimals == 0 ? 0 : 2,
+    );
+  }
+
+  @override
+  Future<Result<void>> setCurrency(CurrencySetting currency) async {
+    for (final (key, value) in [
+      (currencyCodeKey, currency.code),
+      (currencySymbolKey, currency.symbol),
+      (currencyDecimalsKey, '${currency.decimals}'),
+    ]) {
+      final result = await _write(key, value);
+      if (result is Error<void>) return result;
+    }
+    return const Success(null);
+  }
+
+  @override
+  Future<TaxSettings> getTaxSettings() async {
+    const fallback = TaxSettings();
+    final rate = double.tryParse(await _read(taxRateKey) ?? '');
+    final label = (await _read(taxLabelKey))?.trim() ?? '';
+    return TaxSettings(
+      enabled: await _read(taxEnabledKey) == 'true',
+      rate: rate != null && rate >= 0 && rate <= 100 ? rate : fallback.rate,
+      inclusive: await _read(taxInclusiveKey) != 'false',
+      label: label.isEmpty ? fallback.label : label,
+    );
+  }
+
+  @override
+  Future<Result<void>> setTaxSettings(TaxSettings tax) async {
+    for (final (key, value) in [
+      (taxEnabledKey, '${tax.enabled}'),
+      (taxRateKey, '${tax.rate}'),
+      (taxInclusiveKey, '${tax.inclusive}'),
+      (taxLabelKey, tax.label),
+    ]) {
+      final result = await _write(key, value);
+      if (result is Error<void>) return result;
+    }
+    return const Success(null);
+  }
 
   /// Display preferences must never stop the app from starting, so a failed read is
   /// the same as nothing stored.

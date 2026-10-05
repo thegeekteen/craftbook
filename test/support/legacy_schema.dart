@@ -1,8 +1,28 @@
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+/// Turns a current database back into schema 8, from before discounts, tax
+/// and paid status.
+void downgradeToV8(raw.Database db) {
+  db.execute('DROP TABLE order_discounts');
+  db.execute('DROP TABLE discount_presets');
+  for (final column in [
+    'discount_total',
+    'tax_rate',
+    'tax_amount',
+    'tax_inclusive',
+    'is_paid',
+    'paid_at',
+  ]) {
+    db.execute('ALTER TABLE orders DROP COLUMN $column');
+  }
+  db.execute('ALTER TABLE channels DROP COLUMN paid_by_default');
+  db.execute('PRAGMA user_version = 8');
+}
+
 /// Turns a current database back into schema 7, from before archiving:
 /// products get their "show in new orders" switch back, all on.
 void downgradeToV7(raw.Database db) {
+  downgradeToV8(db);
   db.execute('ALTER TABLE products DROP COLUMN is_archived');
   db.execute('ALTER TABLE materials DROP COLUMN is_archived');
   db.execute('ALTER TABLE products ADD COLUMN "is_active" INTEGER NOT NULL '

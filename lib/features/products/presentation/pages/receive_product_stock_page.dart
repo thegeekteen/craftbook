@@ -158,8 +158,9 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
                   ],
-                  decoration: const InputDecoration(
-                      labelText: 'Price per piece', prefixText: '₱ '),
+                  decoration: InputDecoration(
+                      labelText: 'Price per piece',
+                      prefixText: '${CurrencyFormatter.symbol} '),
                 ),
               ],
             ),

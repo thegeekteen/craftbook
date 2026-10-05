@@ -22,7 +22,8 @@ part 'order_dao.g.dart';
   Materials,
   ProductStockMovements,
   OrderFieldDefinitions,
-  OrderFieldValues
+  OrderFieldValues,
+  OrderDiscounts,
 ])
 class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
   OrderDao(super.db);
@@ -236,6 +237,39 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
         value: values[id]!,
       ));
     }
+  }
+
+  /// Every unpaid order that isn't cancelled, oldest first.
+  Future<List<Order>> getUnpaidOrders() {
+    return (select(orders)
+          ..where(
+              (t) => t.isPaid.equals(false) & t.status.isNotValue('cancelled'))
+          ..orderBy([(t) => OrderingTerm.asc(t.orderDate)]))
+        .get();
+  }
+
+  Future<List<OrderDiscount>> getOrderDiscounts(int orderId) {
+    return (select(orderDiscounts)
+          ..where((t) => t.orderId.equals(orderId))
+          ..orderBy([(t) => OrderingTerm.asc(t.position)]))
+        .get();
+  }
+
+  /// Replaces the order's discount lines with [lines], in order.
+  Future<void> replaceOrderDiscounts(
+      int orderId, List<OrderDiscountsCompanion> lines) async {
+    await deleteDiscountsByOrderId(orderId);
+    for (final (i, line) in lines.indexed) {
+      await into(orderDiscounts).insert(line.copyWith(
+        orderId: Value(orderId),
+        position: Value(i),
+      ));
+    }
+  }
+
+  Future<int> deleteDiscountsByOrderId(int orderId) {
+    return (delete(orderDiscounts)..where((t) => t.orderId.equals(orderId)))
+        .go();
   }
 
   Future<int> deleteFieldValuesByOrderId(int orderId) {

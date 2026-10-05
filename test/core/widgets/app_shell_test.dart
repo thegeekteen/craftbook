@@ -21,7 +21,7 @@ void main() {
       expect(AppShell.selectedIndexFor('/orders'), 1);
       expect(AppShell.selectedIndexFor('/products'), 2);
       expect(AppShell.selectedIndexFor('/products/3'), 2);
-      expect(AppShell.selectedIndexFor('/earnings'), 3);
+      expect(AppShell.selectedIndexFor('/reports'), 3);
       expect(AppShell.selectedIndexFor('/settings'), 4);
     });
   });

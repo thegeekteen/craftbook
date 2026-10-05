@@ -9,7 +9,9 @@ import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field_entry.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
+import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/entities/order_money.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/update_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
@@ -53,16 +55,16 @@ void main() {
       AddItem(productId: 11, productName: 'Strap', quantity: 1, unitPrice: 180);
 
   const preview = OrderPreview(
-    sales: 1080,
-    materialCost: 200,
-    channelFees: 100,
-    shippingCost: 40,
+    money:
+        OrderMoney(itemsTotal: 1080, materials: 200, fees: 100, shipping: 40),
     reservations: [ReservationLine(name: 'Yarn', quantity: 6, available: 40)],
   );
 
   setUpAll(() {
     registerFallbackValue(DateTime(2000));
     registerFallbackValue(<OrderItemInput>[]);
+    registerFallbackValue(<OrderDiscount>[]);
+    registerFallbackValue(const OrderTerms());
   });
 
   setUp(() {
@@ -71,6 +73,8 @@ void main() {
     previewOrder = MockPreviewOrder();
     updateOrder = MockUpdateOrder();
     orderRepository = MockOrderRepository();
+    when(() => orderRepository.getOrderDiscounts(any()))
+        .thenAnswer((_) async => const Success(<OrderDiscount>[]));
   });
 
   NewOrderBloc build() => NewOrderBloc(
@@ -109,17 +113,13 @@ void main() {
 
   void stubCreate(Result<int> result) {
     when(() => calculateOrderProfit(
-          totalSales: any(named: 'totalSales'),
-          totalMaterialCost: any(named: 'totalMaterialCost'),
-          channelId: any(named: 'channelId'),
-          shippingCost: any(named: 'shippingCost'),
-        )).thenAnswer((_) async => const Success(OrderProfitBreakdown(
-          totalSales: 1080,
-          totalMaterialCost: 0,
-          channelFees: 100,
-          shippingCost: 40,
-          profit: 940,
-        )));
+              totalSales: any(named: 'totalSales'),
+              totalMaterialCost: any(named: 'totalMaterialCost'),
+              channelId: any(named: 'channelId'),
+              shippingCost: any(named: 'shippingCost'),
+            ))
+        .thenAnswer((_) async => const Success(OrderMoney(
+            itemsTotal: 1080, materials: 0, fees: 100, shipping: 40)));
     when(() => createOrder(
           customerName: any(named: 'customerName'),
           fieldValues: any(named: 'fieldValues'),
@@ -597,6 +597,7 @@ void main() {
           shipByDate: any(named: 'shipByDate'),
           channelId: any(named: 'channelId'),
           items: any(named: 'items'),
+          terms: any(named: 'terms'),
         )).thenAnswer((_) async => const Success(null));
 
     blocTest<NewOrderBloc, NewOrderState>(
@@ -658,6 +659,7 @@ void main() {
             shipByDate: shipBy,
             channelId: 2,
             items: any(named: 'items'),
+            terms: any(named: 'terms'),
           )).called(1),
     );
 
@@ -709,6 +711,7 @@ void main() {
               shipByDate: any(named: 'shipByDate'),
               channelId: any(named: 'channelId'),
               items: any(named: 'items'),
+              terms: any(named: 'terms'),
             )).thenAnswer((_) async => const Success(null));
       },
       build: build,
@@ -735,6 +738,7 @@ void main() {
                     quantity: 2,
                     unitPrice: 450),
               ],
+              terms: const OrderTerms(),
             )).called(1);
         verifyNever(() => createOrder(
               customerName: any(named: 'customerName'),
@@ -764,6 +768,7 @@ void main() {
                   shipByDate: any(named: 'shipByDate'),
                   channelId: any(named: 'channelId'),
                   items: any(named: 'items'),
+                  terms: any(named: 'terms'),
                 ))
             .thenAnswer((_) async =>
                 const Error(ValidationFailure('Customer name is required')));

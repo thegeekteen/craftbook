@@ -23,6 +23,10 @@ import '../../../order_fields/domain/entities/order_field.dart';
 import '../../../order_fields/domain/entities/order_field_entry.dart';
 import '../../../order_fields/domain/order_field_codec.dart';
 import '../../domain/entities/order.dart';
+import '../../domain/entities/order_money.dart';
+import '../../../settings/presentation/bloc/tax_settings_cubit.dart';
+import '../../../discounts/domain/entities/discount_preset.dart';
+import '../../domain/entities/order_discount.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
@@ -135,6 +139,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
               if (value == 'cancel') _confirmCancel(order);
               if (value == 'restore') _confirmRestore(order);
               if (value == 'delete') _confirmDelete(order);
+              if (value == 'paid') _setPaid(order, true);
+              if (value == 'unpaid') _setPaid(order, false);
             },
             itemBuilder: (context) => [
               if (order.status != OrderStatus.cancelled)
@@ -147,6 +153,21 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       Text(order.status == OrderStatus.shipped
                           ? 'Edit note'
                           : 'Edit order'),
+                    ],
+                  ),
+                ),
+              if (order.status != OrderStatus.cancelled)
+                PopupMenuItem(
+                  value: order.isPaid ? 'unpaid' : 'paid',
+                  child: Row(
+                    children: [
+                      Icon(
+                          order.isPaid
+                              ? Icons.money_off_rounded
+                              : Icons.payments_outlined,
+                          size: 20),
+                      const SizedBox(width: 10),
+                      Text(order.isPaid ? 'Mark unpaid' : 'Mark paid'),
                     ],
                   ),
                 ),
@@ -240,7 +261,17 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                             ),
                           ),
                         ),
-                      _OrderTotalRow(total: order.totalSales),
+                      _TermsLines(
+                        order: order,
+                        discounts: state.discounts,
+                        taxLabel: getIt<TaxSettingsCubit>().state.label,
+                      ),
+                      _OrderTotalRow(total: order.liveTotal),
+                      if (order.status != OrderStatus.cancelled)
+                        _PaymentRow(
+                          order: order,
+                          onToggle: () => _setPaid(order, !order.isPaid),
+                        ),
                     ],
                   ),
                 ),
@@ -263,12 +294,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
   Widget _buildMoneyCard(OrderDetailLoaded state) {
     final c = context.colors;
     final order = state.order;
-    final parts = MoneyParts(
-      sales: order.totalSales,
-      materials: order.totalMaterialCost,
-      fees: order.channelFees,
-      shipping: order.shippingCost,
-    );
+    final parts = OrderMoney.fromOrder(order).parts;
     final lineCount = state.materials.length + state.products.length;
     final hasWaste = state.materials.any((m) => m.wasteQuantity > 0);
 
@@ -285,6 +311,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
             feesLabel: state.channel == null
                 ? 'Channel fees'
                 : '${state.channel!.name} fees',
+            taxLabel: getIt<TaxSettingsCubit>().state.label,
             onMaterialsTap: lineCount == 0
                 ? null
                 : () => setState(() => _showMaterials = !_showMaterials),
@@ -331,6 +358,11 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         ],
       ),
     );
+  }
+
+  void _setPaid(Order order, bool paid) {
+    _changed = true;
+    _bloc.add(SetOrderPaidDetail(order.id!, paid: paid));
   }
 
   Future<void> _editNote(Order order) async {
@@ -765,6 +797,119 @@ class _CopyableValue extends StatelessWidget {
 }
 
 /// The last line of the items card: what the customer pays.
+/// Discount lines and tax between the items and the order total.
+class _TermsLines extends StatelessWidget {
+  final Order order;
+  final List<OrderDiscount> discounts;
+  final String taxLabel;
+
+  const _TermsLines({
+    required this.order,
+    required this.discounts,
+    required this.taxLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final money = OrderMoney.fromOrder(order);
+    final rate = order.taxRate;
+    final rateText = rate == null
+        ? ''
+        : rate == rate.roundToDouble()
+            ? rate.toStringAsFixed(0)
+            : '$rate';
+    Widget line(String label, String amount, {Color? color}) => Padding(
+          padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(label,
+                    style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+              ),
+              Text(
+                amount,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: color ?? c.ink,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: AppTextStyles.tabular.fontFeatures,
+                ),
+              ),
+            ],
+          ),
+        );
+
+    final lines = <Widget>[
+      if (discounts.isNotEmpty)
+        for (final d in discounts)
+          line('${d.label} · ${discountValueLabel(d.kind, d.value)}',
+              '−${CurrencyFormatter.format(d.amount)}',
+              color: c.go)
+      else if (order.hasDiscount)
+        line('Discounts', '−${CurrencyFormatter.format(order.discountTotal)}',
+            color: c.go),
+      if (order.hasTax && !order.taxInclusive)
+        line('$taxLabel $rateText%', '+${CurrencyFormatter.format(money.tax)}'),
+      if (order.hasTax && order.taxInclusive)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+          child: Text(
+            'Includes ${CurrencyFormatter.format(money.tax)} $taxLabel ($rateText%)',
+            style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+          ),
+        ),
+    ];
+    if (lines.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        line('Items', CurrencyFormatter.format(order.totalSales)),
+        ...lines,
+      ],
+    );
+  }
+}
+
+/// Paid or waiting for payment, with a one-tap switch.
+class _PaymentRow extends StatelessWidget {
+  final Order order;
+  final VoidCallback onToggle;
+
+  const _PaymentRow({required this.order, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final paidAt = order.paidAt;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 6, 8),
+      child: Row(
+        children: [
+          Icon(
+            order.isPaid ? Icons.check_circle_rounded : Icons.schedule_rounded,
+            size: 18,
+            color: order.isPaid ? c.go : c.warn,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              order.isPaid
+                  ? 'Paid${paidAt == null ? '' : ' ${DateFormat('MMM d').format(paidAt)}'}'
+                  : 'Waiting for payment',
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: order.isPaid ? c.muted : c.warn),
+            ),
+          ),
+          TextButton(
+            onPressed: onToggle,
+            child: Text(order.isPaid ? 'Mark unpaid' : 'Mark paid'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OrderTotalRow extends StatelessWidget {
   final double total;
 

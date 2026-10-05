@@ -19,6 +19,22 @@ void main() {
       expect(parts.margin, closeTo(0.6, 1e-9));
     });
 
+    test('discounts and tax in prices come off profit; tax on top does not',
+        () {
+      const parts = MoneyParts(
+        sales: 1000,
+        discount: 100,
+        includedTax: 50,
+        addedTax: 80,
+        materials: 200,
+        fees: 50,
+        shipping: 0,
+      );
+      expect(parts.netSales, 900);
+      expect(parts.profit, 600);
+      expect(parts.margin, closeTo(600 / 900, 1e-9));
+    });
+
     test('margin is zero when there are no sales', () {
       const parts = MoneyParts(sales: 0, materials: 40, fees: 0, shipping: 0);
       expect(parts.profit, -40);
@@ -209,6 +225,44 @@ void main() {
       final amount = tester.widget<Text>(find.text('−₱50.00'));
       expect(amount.style?.color,
           AppTheme.lightTheme.extension<CraftColors>()!.alert);
+    });
+  });
+
+  group('MoneyBreakdown discount and tax', () {
+    testWidgets('hides the rows when there is none', (tester) async {
+      await tester.pumpWidget(_wrap(const MoneyBreakdown(
+        parts: MoneyParts(sales: 500, materials: 100, fees: 50, shipping: 0),
+      )));
+      expect(find.text('Discounts'), findsNothing);
+      expect(find.textContaining('in prices'), findsNothing);
+    });
+
+    testWidgets('shows them, named by the shop', (tester) async {
+      await tester.pumpWidget(_wrap(const MoneyBreakdown(
+        taxLabel: 'VAT',
+        parts: MoneyParts(
+          sales: 1000,
+          discount: 100,
+          includedTax: 96.43,
+          materials: 120,
+          fees: 50,
+          shipping: 0,
+        ),
+      )));
+      expect(find.text('Discounts'), findsOneWidget);
+      expect(find.text('−₱100.00'), findsOneWidget);
+      expect(find.text('VAT in prices'), findsOneWidget);
+      expect(find.text('−₱96.43'), findsOneWidget);
+    });
+
+    testWidgets('tax added on top is explained, not subtracted',
+        (tester) async {
+      await tester.pumpWidget(_wrap(const MoneyBreakdown(
+        taxLabel: 'VAT',
+        parts: MoneyParts(
+            sales: 1000, addedTax: 120, materials: 0, fees: 0, shipping: 0),
+      )));
+      expect(find.textContaining('+ ₱120.00 VAT added'), findsOneWidget);
     });
   });
 }

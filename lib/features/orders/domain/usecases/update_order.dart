@@ -4,7 +4,9 @@ import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
 import '../entities/order.dart';
+import '../entities/order_discount.dart';
 import '../entities/order_item.dart';
+import '../entities/order_money.dart';
 import '../entities/order_material.dart';
 import '../entities/order_product.dart';
 import '../repositories/order_repository.dart';
@@ -15,8 +17,12 @@ import 'expand_order_items.dart';
 ///
 /// * **pending**: everything. Reservations are released and re-made for the
 ///   new items.
-/// * **packed**: customer, order fields, note, dates and channel. Items are locked
-///   because their stock has already been deducted.
+/// * **packed**: customer, order fields, note, dates, channel, discounts,
+///   tax and paid. Items are locked because their stock has already been
+///   deducted.
+///
+/// Fees, discounts and tax are worked out again for pending and packed
+/// orders, since the channel or the items may have changed.
 /// * **shipped**: the note only.
 /// * **cancelled**: nothing.
 class UpdateOrder {
@@ -44,6 +50,9 @@ class UpdateOrder {
     /// The order's complete set of custom field values by field id; blanks
     /// clear the field.
     Map<int, String> fieldValues = const {},
+
+    /// Discounts, tax and paid status; null keeps the order's own.
+    OrderTerms? terms,
   }) async {
     final orderResult = await orderRepository.getOrderById(orderId);
     final Order? order;
@@ -92,12 +101,28 @@ class UpdateOrder {
           ValidationFailure('Ship-by date cannot be before the order date'));
     }
 
+    final OrderTerms newTerms;
+    if (terms != null) {
+      newTerms = terms;
+    } else {
+      final current = await orderRepository.getOrderDiscounts(orderId);
+      if (current case Error(:final failure)) return Error(failure);
+      final rate = order.taxRate;
+      newTerms = OrderTerms(
+        discounts: (current as Success<List<OrderDiscount>>).value,
+        tax: rate == null
+            ? null
+            : OrderTax(rate: rate, inclusive: order.taxInclusive),
+        isPaid: order.isPaid,
+      );
+    }
+
     if (order.status == OrderStatus.packed) {
       return _updatePacked(order, customerName, cleanFields, cleanNote,
-          orderDate, shipByDate, channelId);
+          orderDate, shipByDate, channelId, newTerms);
     }
     return _updatePending(order, customerName, cleanFields, cleanNote,
-        orderDate, shipByDate, channelId, items);
+        orderDate, shipByDate, channelId, items, newTerms);
   }
 
   Future<Result<void>> _updatePacked(
@@ -108,12 +133,15 @@ class UpdateOrder {
     DateTime orderDate,
     DateTime shipByDate,
     int channelId,
+    OrderTerms terms,
   ) async {
     final breakdown = await calculateOrderProfit(
       totalSales: order.totalSales,
       totalMaterialCost: order.totalMaterialCost,
       channelId: channelId,
       shippingCost: 0,
+      discounts: terms.discounts,
+      tax: terms.tax,
     );
     switch (breakdown) {
       case Error(:final failure):
@@ -129,9 +157,12 @@ class UpdateOrder {
           channelId: channelId,
           totalSales: order.totalSales,
           totalMaterialCost: order.totalMaterialCost,
-          channelFees: value.channelFees,
-          shippingCost: value.shippingCost,
+          channelFees: value.fees,
+          shippingCost: value.shipping,
           profit: value.profit,
+          terms: terms.copyWith(discounts: value.discounts),
+          discountTotal: value.discount,
+          taxAmount: value.tax,
         );
     }
   }
@@ -145,6 +176,7 @@ class UpdateOrder {
     DateTime shipByDate,
     int channelId,
     List<OrderItemInput> items,
+    OrderTerms terms,
   ) async {
     if (items.isEmpty) {
       return const Error(ValidationFailure('At least one item is required'));
@@ -179,8 +211,10 @@ class UpdateOrder {
       totalMaterialCost: materialCost,
       channelId: channelId,
       shippingCost: 0,
+      discounts: terms.discounts,
+      tax: terms.tax,
     );
-    final OrderProfitBreakdown figures;
+    final OrderMoney figures;
     switch (breakdown) {
       case Error(:final failure):
         return Error(failure);
@@ -198,9 +232,12 @@ class UpdateOrder {
       channelId: channelId,
       totalSales: totalSales,
       totalMaterialCost: materialCost,
-      channelFees: figures.channelFees,
-      shippingCost: figures.shippingCost,
+      channelFees: figures.fees,
+      shippingCost: figures.shipping,
       profit: figures.profit,
+      terms: terms.copyWith(discounts: figures.discounts),
+      discountTotal: figures.discount,
+      taxAmount: figures.tax,
       items: items,
       materials: materials,
       products: products,

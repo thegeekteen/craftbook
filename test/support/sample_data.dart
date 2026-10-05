@@ -1,13 +1,19 @@
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/utils/note_codec.dart';
-import 'package:craftbook/database/app_database.dart' hide Note, SocialLink;
+import 'package:craftbook/database/app_database.dart'
+    hide Note, SocialLink, OrderDiscount, DiscountPreset;
 import 'package:craftbook/features/notes/domain/entities/note.dart';
 import 'package:craftbook/features/notes/domain/repositories/note_repository.dart';
 import 'package:craftbook/features/order_fields/domain/entities/order_field.dart';
 import 'package:craftbook/features/order_fields/domain/order_field_codec.dart';
 import 'package:craftbook/features/order_fields/domain/repositories/order_field_repository.dart';
+import 'package:craftbook/features/discounts/domain/usecases/discount_preset_usecases.dart';
+import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
+import 'package:craftbook/features/orders/domain/entities/order_money.dart';
+import 'package:craftbook/features/settings/domain/entities/tax_settings.dart';
+import 'package:craftbook/features/settings/presentation/bloc/tax_settings_cubit.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
@@ -29,8 +35,9 @@ T _ok<T>(Result<T> r) => switch (r) {
     };
 
 /// Fills a fresh database with a small craft shop: channels, materials,
-/// products with BOMs, order fields, orders in every status spread over
-/// recent days, and a few notes.
+/// products with BOMs, order fields, discount presets, 12% VAT in prices,
+/// orders in every status spread over recent days (some discounted, taxed
+/// or unpaid), and a few notes.
 /// Requires [configureDependencies] to have run.
 Future<void> seedSampleShop() async {
   final channels = getIt<ChannelRepository>();
@@ -65,12 +72,25 @@ Future<void> seedSampleShop() async {
       transactionFeeRate: 2,
       flatFee: 0,
       shippingPaidByUs: 30));
+  // Walk-in customers often pay later.
   final walkIn = _ok(await channels.createChannel(
       name: 'Walk-in',
       commissionRate: 0,
       transactionFeeRate: 0,
       flatFee: 0,
-      shippingPaidByUs: 0));
+      shippingPaidByUs: 0,
+      paidByDefault: false));
+
+  await getIt<TaxSettingsCubit>().set(const TaxSettings(enabled: true));
+  final savePreset = getIt<SaveDiscountPreset>();
+  _ok(await savePreset(
+      label: 'Loyal customer', kind: DiscountKind.percent, value: 10));
+  _ok(await savePreset(label: 'Bundle', kind: DiscountKind.fixed, value: 50));
+  const loyal = OrderDiscount(
+      label: 'Loyal customer', kind: DiscountKind.percent, value: 10);
+  const bundle =
+      OrderDiscount(label: 'Bundle', kind: DiscountKind.fixed, value: 50);
+  const vat = OrderTax(rate: 12, inclusive: true);
   final lazada = _ok(await channels.createChannel(
       name: 'Lazada',
       commissionRate: 10,
@@ -175,9 +195,17 @@ Future<void> seedSampleShop() async {
     String? note,
     double fees = 0,
     double shipping = 0,
+    List<OrderDiscount> discounts = const [],
+    OrderTax? tax,
+    bool paid = true,
   }) async {
     final sales = items.fold<double>(0, (s, i) => s + i.subtotal);
+    final money =
+        OrderMoney.compute(itemsTotal: sales, discounts: discounts, tax: tax);
     return _ok(await createOrder(
+      terms: OrderTerms(discounts: money.discounts, tax: tax, isPaid: paid),
+      discountTotal: money.discount,
+      taxAmount: money.tax,
       customerName: customer,
       fieldValues: {addressField: address, ...fields},
       note: note,
@@ -201,7 +229,7 @@ Future<void> seedSampleShop() async {
     ));
   }
 
-  // Finished orders across the last few weeks, for Money.
+  // Finished orders across the last few weeks, for Reports.
   final history = <(String, int, List<OrderItemInput>, int, double, double)>[
     (
       'Bea Garcia',
@@ -262,11 +290,13 @@ Future<void> seedSampleShop() async {
         shipInDays: -daysAgo,
         fees: fees,
         shipping: shipping,
+        discounts: name == 'Eli Ramos' ? const [bundle] : const [],
+        paid: ch != walkIn || name == 'Gio Tan',
         fields: name == 'Bea Garcia'
             ? {cardField: 'Happy anniversary, love!'}
             : const {});
     if (name == 'Eli Ramos') {
-      // Used more yarn than planned: shows waste on Money.
+      // Used more yarn than planned: shows waste on Reports.
       final mats = _ok(await orderRepo.getOrderMaterials(id));
       await orderRepo.adjustMaterialsUsed(id, [
         for (final m in mats)
@@ -302,7 +332,9 @@ Future<void> seedSampleShop() async {
             OrderFieldCodec.encodeDate(today.add(const Duration(days: 4))),
       },
       note: 'Gift wrap please, birthday on the 5th',
-      fees: 98.5,
+      discounts: const [loyal],
+      tax: vat,
+      fees: 88.65,
       shipping: 40);
   await order('Jun Reyes', tiktok, [item(strap, 'Beaded phone strap', 3, 180)],
       placedDaysAgo: 2,
@@ -320,7 +352,7 @@ Future<void> seedSampleShop() async {
     ..insert('Ring the bell twice\n', {'list': 'checked'}))!;
   final ana = await order(
       'Ana Cruz', walkIn, [item(keychain, 'Resin keychain', 1, 120)],
-      placedDaysAgo: 4, shipInDays: 0, note: anaNote);
+      placedDaysAgo: 4, shipInDays: 0, note: anaNote, paid: false);
   await completedOn(ana, today, shipped: false);
   await order(
       'Lea Bautista',
@@ -332,6 +364,7 @@ Future<void> seedSampleShop() async {
       placedDaysAgo: 0,
       shipInDays: 3,
       address: '41 Aguinaldo Hwy, Imus',
+      tax: vat,
       fees: 62,
       shipping: 40,
       fields: {wrapField: 'Kraft'});

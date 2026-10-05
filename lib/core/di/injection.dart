@@ -10,6 +10,13 @@ import '../../database/daos/product_dao.dart';
 
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/repositories/settings_repository.dart';
+import '../../features/settings/presentation/bloc/currency_cubit.dart';
+import '../../features/settings/presentation/bloc/tax_settings_cubit.dart';
+import '../../database/daos/discount_preset_dao.dart';
+import '../../features/discounts/data/repositories/discount_preset_repository_impl.dart';
+import '../../features/discounts/domain/repositories/discount_preset_repository.dart';
+import '../../features/discounts/domain/usecases/discount_preset_usecases.dart';
+import '../../features/discounts/presentation/bloc/discount_presets_bloc.dart';
 import '../../features/settings/presentation/bloc/order_amount_cubit.dart';
 import '../../features/settings/presentation/bloc/theme_cubit.dart';
 import '../../features/products/data/repositories/channel_repository_impl.dart';
@@ -50,6 +57,9 @@ import '../../features/orders/domain/usecases/get_orders.dart';
 import '../../features/orders/domain/usecases/create_order.dart';
 import '../../features/orders/domain/usecases/pack_order.dart';
 import '../../features/orders/domain/usecases/ship_order.dart';
+import '../../features/orders/domain/usecases/get_receivables.dart';
+import '../../features/orders/domain/usecases/set_order_paid.dart';
+import '../../features/orders/presentation/bloc/receivables_cubit.dart';
 import '../../features/orders/domain/usecases/update_order_note.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
 import '../../features/orders/domain/usecases/update_order.dart';
@@ -137,6 +147,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerSingleton(OrderFieldDao(db));
   getIt.registerSingleton(NoteDao(db));
   getIt.registerSingleton(SocialLinkDao(db));
+  getIt.registerSingleton(DiscountPresetDao(db));
   getIt.registerLazySingleton<LinkLauncher>(() => const LinkLauncher());
   getIt.registerLazySingleton<PhotoPicker>(() => PhotoPicker());
 
@@ -158,6 +169,9 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   );
   getIt.registerLazySingleton<NoteRepository>(
     () => NoteRepositoryImpl(getIt<NoteDao>()),
+  );
+  getIt.registerLazySingleton<DiscountPresetRepository>(
+    () => DiscountPresetRepositoryImpl(getIt<DiscountPresetDao>()),
   );
   getIt.registerLazySingleton<SocialLinkRepository>(
     () => SocialLinkRepositoryImpl(getIt<SocialLinkDao>()),
@@ -181,6 +195,10 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => ReorderOrderFields(getIt()));
 
   // Use Cases - Social links
+  getIt.registerFactory(() => GetDiscountPresets(getIt()));
+  getIt.registerFactory(() => SaveDiscountPreset(getIt()));
+  getIt.registerFactory(() => DeleteDiscountPreset(getIt()));
+  getIt.registerFactory(() => ReorderDiscountPresets(getIt()));
   getIt.registerFactory(() => GetSocialLinks(getIt()));
   getIt.registerFactory(() => SaveSocialLink(getIt()));
   getIt.registerFactory(() => DeleteSocialLink(getIt()));
@@ -247,6 +265,11 @@ Future<void> configureDependencies({AppDatabase? database}) async {
       ));
   getIt.registerFactory(() => ShipOrder(getIt()));
   getIt.registerFactory(() => UpdateOrderNote(getIt()));
+  getIt.registerFactory(() => SetOrderPaid(getIt()));
+  getIt.registerFactory(() => GetReceivables(
+        orderRepository: getIt(),
+        getOrderListEntries: getIt(),
+      ));
   getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
   getIt.registerFactory(() => PreviewOrder(
@@ -317,6 +340,13 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         restoreOrderField: getIt(),
         reorderOrderFields: getIt(),
       ));
+  getIt.registerFactory(() => ReceivablesCubit(getIt()));
+  getIt.registerFactory(() => DiscountPresetsBloc(
+        getPresets: getIt(),
+        savePreset: getIt(),
+        deletePreset: getIt(),
+        reorderPresets: getIt(),
+      ));
   getIt.registerFactory(() => SocialLinksBloc(
         getSocialLinks: getIt(),
         saveSocialLink: getIt(),
@@ -359,6 +389,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         orderRepository: getIt(),
         calculateOrderProfit: getIt(),
         previewOrder: getIt(),
+        taxSettings: () => getIt<TaxSettingsCubit>().state,
       ));
   getIt.registerFactory(() => OrderDetailBloc(
         orderRepository: getIt(),
@@ -372,11 +403,16 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         restoreOrder: getIt(),
         deleteOrder: getIt(),
         updateOrderNote: getIt(),
+        setOrderPaid: getIt(),
       ));
   // App-wide: lives above the router, so a singleton.
   getIt.registerSingleton(ThemeCubit(getIt()),
       dispose: (cubit) => cubit.close());
   getIt.registerSingleton(OrderAmountCubit(getIt()),
+      dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(CurrencyCubit(getIt()),
+      dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(TaxSettingsCubit(getIt()),
       dispose: (cubit) => cubit.close());
   getIt.registerFactory(() => UpdateCubit(
         repository: getIt(),

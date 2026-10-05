@@ -189,6 +189,7 @@ class _ChannelSheetState extends State<_ChannelSheet> {
   late final _flat = TextEditingController(text: _num(widget.channel?.flatFee));
   late final _shipping =
       TextEditingController(text: _num(widget.channel?.shippingPaidByUs));
+  late bool _paidByDefault = widget.channel?.paidByDefault ?? true;
 
   static String _num(double? v) {
     if (v == null || v == 0) return '';
@@ -223,6 +224,7 @@ class _ChannelSheetState extends State<_ChannelSheet> {
         transactionFeeRate: _val(_transaction),
         flatFee: _val(_flat),
         shippingPaidByUs: _val(_shipping),
+        paidByDefault: _paidByDefault,
       ));
     } else {
       widget.bloc.add(UpdateChannelEvent(
@@ -232,6 +234,7 @@ class _ChannelSheetState extends State<_ChannelSheet> {
         transactionFeeRate: _val(_transaction),
         flatFee: _val(_flat),
         shippingPaidByUs: _val(_shipping),
+        paidByDefault: _paidByDefault,
       ));
     }
     Navigator.pop(context);
@@ -295,11 +298,28 @@ class _ChannelSheetState extends State<_ChannelSheet> {
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: field(_flat, 'Fixed fee', prefix: '₱ ')),
+            Expanded(
+                child: field(_flat, 'Fixed fee',
+                    prefix: '${CurrencyFormatter.symbol} ')),
             const SizedBox(width: 8),
-            Expanded(child: field(_shipping, 'Shipping you pay', prefix: '₱ ')),
+            Expanded(
+                child: field(_shipping, 'Shipping you pay',
+                    prefix: '${CurrencyFormatter.symbol} ')),
           ]),
-          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _paidByDefault,
+            onChanged: (v) => setState(() => _paidByDefault = v),
+            title: Text('Orders are paid when placed',
+                style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
+            subtitle: Text(
+              _paidByDefault
+                  ? 'Like a marketplace that collects up front'
+                  : 'New orders start unpaid, for cash on delivery or chat sales',
+              style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+            ),
+          ),
+          const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(

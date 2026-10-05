@@ -21,6 +21,7 @@ import 'features/today/presentation/pages/calendar_page.dart';
 import 'features/orders/presentation/pages/orders_list_page.dart';
 import 'features/orders/presentation/pages/new_order_page.dart';
 import 'features/orders/presentation/pages/order_details_page.dart';
+import 'features/orders/presentation/pages/receivables_page.dart';
 import 'features/stock/presentation/pages/materials_list_page.dart';
 import 'features/stock/presentation/pages/material_detail_page.dart';
 import 'features/stock/presentation/pages/new_material_page.dart';
@@ -32,6 +33,8 @@ import 'features/products/presentation/pages/product_editor_page.dart';
 import 'features/products/presentation/pages/receive_product_stock_page.dart';
 import 'features/order_fields/presentation/pages/order_fields_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
+import 'features/discounts/presentation/pages/discounts_page.dart';
+import 'features/earnings/domain/entities/report_filter.dart';
 import 'features/earnings/presentation/pages/earnings_page.dart';
 import 'features/earnings/presentation/pages/product_earnings_page.dart';
 import 'features/notes/presentation/pages/note_edit_page.dart';
@@ -114,8 +117,12 @@ class CraftbookApp extends StatelessWidget {
                 builder: (context, state) => const MaterialsListPage(),
               ),
               GoRoute(
-                path: RouteNames.earnings,
+                path: RouteNames.reports,
                 builder: (context, state) => const EarningsPage(),
+              ),
+              GoRoute(
+                path: RouteNames.receivables,
+                builder: (context, state) => const ReceivablesPage(),
               ),
               GoRoute(
                 path: RouteNames.settings,
@@ -150,6 +157,10 @@ class CraftbookApp extends StatelessWidget {
           GoRoute(
             path: RouteNames.orderFields,
             builder: (context, state) => const OrderFieldsPage(),
+          ),
+          GoRoute(
+            path: RouteNames.discounts,
+            builder: (context, state) => const DiscountsPage(),
           ),
           GoRoute(
             path: RouteNames.socialLinks,
@@ -248,7 +259,7 @@ class CraftbookApp extends StatelessWidget {
             },
           ),
           GoRoute(
-            path: RouteNames.productEarnings,
+            path: RouteNames.productReport,
             builder: (context, state) {
               final id = int.parse(state.pathParameters['productId']!);
               DateTime? at(String key) {
@@ -260,6 +271,10 @@ class CraftbookApp extends StatelessWidget {
 
               return ProductEarningsPage(
                 productId: id,
+                // The report's filter rides along; a deep link has none.
+                filter: state.extra is ReportFilter
+                    ? state.extra as ReportFilter
+                    : ReportFilter.none,
                 startDate: at('start'),
                 endDate: at('end'),
               );

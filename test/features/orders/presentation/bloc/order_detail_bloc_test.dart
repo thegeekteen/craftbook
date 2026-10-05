@@ -17,6 +17,8 @@ import 'package:craftbook/features/orders/domain/usecases/delete_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/restore_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
+import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
+import 'package:craftbook/features/orders/domain/usecases/set_order_paid.dart';
 import 'package:craftbook/features/orders/domain/usecases/update_order_note.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_bloc.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_event.dart';
@@ -189,6 +191,8 @@ void main() {
 
   setUp(() {
     orderRepository = MockOrderRepository();
+    when(() => orderRepository.getOrderDiscounts(any()))
+        .thenAnswer((_) async => const Success(<OrderDiscount>[]));
     channelRepository = MockChannelRepository();
     materialRepository = MockMaterialRepository();
     productRepository = MockProductRepository();
@@ -213,6 +217,7 @@ void main() {
         restoreOrder: restoreOrder,
         deleteOrder: deleteOrder,
         updateOrderNote: updateOrderNote,
+        setOrderPaid: SetOrderPaid(orderRepository),
       );
 
   /// Stubs a full successful load. Material 101 has no row, so it must be

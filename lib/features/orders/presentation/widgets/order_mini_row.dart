@@ -37,7 +37,7 @@ class OrderMiniRow extends StatelessWidget {
       if (o.status != OrderStatus.cancelled)
         amountShown == OrderAmountShown.profit
             ? '${CurrencyFormatter.formatShort(o.liveProfit)} profit'
-            : CurrencyFormatter.formatShort(o.totalSales),
+            : CurrencyFormatter.formatShort(o.liveTotal),
     ];
     return Material(
       color: c.surface,

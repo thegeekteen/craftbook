@@ -1,5 +1,6 @@
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/theme/palettes.dart';
+import 'package:craftbook/core/utils/currency_setting.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:craftbook/features/settings/domain/entities/order_amount_shown.dart';
@@ -88,5 +89,30 @@ void main() {
               key: SettingsRepositoryImpl.orderAmountKey, value: 'margin'),
         );
     expect(await repo.getOrderAmountShown(), OrderAmountShown.total);
+  });
+
+  group('currency', () {
+    test('defaults to pesos', () async {
+      expect(await repo.getCurrency(), CurrencySetting.php);
+    });
+
+    test('round-trips a preset', () async {
+      final usd = CurrencySetting.preset('USD')!;
+      expect(await repo.setCurrency(usd), isA<Success<void>>());
+      expect(await repo.getCurrency(), usd);
+    });
+
+    test('round-trips a custom symbol and its decimals', () async {
+      const kr = CurrencySetting(
+          code: CurrencySetting.customCode, symbol: 'kr', decimals: 0);
+      await repo.setCurrency(kr);
+      expect(await repo.getCurrency(), kr);
+    });
+
+    test('an unknown code falls back to pesos', () async {
+      await db.into(db.settings).insert(SettingsCompanion.insert(
+          key: SettingsRepositoryImpl.currencyCodeKey, value: 'XXX'));
+      expect(await repo.getCurrency(), CurrencySetting.php);
+    });
   });
 }

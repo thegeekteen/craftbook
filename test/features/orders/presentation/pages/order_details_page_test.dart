@@ -4,7 +4,7 @@ import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/error/result.dart';
 import 'package:craftbook/core/utils/currency_formatter.dart';
 import 'package:craftbook/core/widgets/product_photo.dart';
-import 'package:craftbook/database/app_database.dart' hide Order, OrderItem;
+import 'package:craftbook/database/app_database.dart' hide Order, OrderItem, OrderDiscount, DiscountPreset;
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
@@ -42,7 +42,7 @@ void main() {
     expect(
       find.descendant(
           of: totalRow,
-          matching: find.text(CurrencyFormatter.format(order.totalSales))),
+          matching: find.text(CurrencyFormatter.format(order.liveTotal))),
       findsOneWidget,
     );
     expect(find.text('PROFIT'), findsNothing);

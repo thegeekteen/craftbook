@@ -11,9 +11,10 @@ import '../../domain/entities/order.dart';
 import '../../domain/usecases/cancel_order.dart';
 import '../../domain/usecases/delete_order.dart';
 import '../../domain/usecases/restore_order.dart';
+import '../../domain/usecases/set_order_paid.dart';
 import '../../domain/usecases/ship_order.dart';
 
-enum _OrderAction { ship, edit, cancel, restore, delete }
+enum _OrderAction { ship, paid, edit, cancel, restore, delete }
 
 /// What an order can do from wherever it's listed. Mirrors the detail
 /// page's menu: shipped orders only take a note, cancelled ones can be
@@ -33,6 +34,13 @@ abstract final class OrderActions {
               value: _OrderAction.ship,
               icon: Icons.local_shipping_rounded,
               label: 'Mark shipped'),
+        if (!cancelled)
+          SheetAction(
+              value: _OrderAction.paid,
+              icon: order.isPaid
+                  ? Icons.money_off_rounded
+                  : Icons.payments_outlined,
+              label: order.isPaid ? 'Mark unpaid' : 'Mark paid'),
         if (!cancelled)
           SheetAction(
               value: _OrderAction.edit,
@@ -61,6 +69,9 @@ abstract final class OrderActions {
     switch (action) {
       case _OrderAction.ship:
         return _run(context, getIt<ShipOrder>()(id), 'Marked as shipped');
+      case _OrderAction.paid:
+        return _run(context, getIt<SetOrderPaid>()(id, !order.isPaid),
+            order.isPaid ? 'Marked as unpaid' : 'Marked as paid');
       case _OrderAction.edit:
         return await context.push<bool>(RouteNames.editOrderPath(id)) == true;
       case _OrderAction.cancel:

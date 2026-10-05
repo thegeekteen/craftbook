@@ -22,7 +22,14 @@ import '../../../stock/domain/repositories/material_repository.dart';
 import '../../../updates/presentation/bloc/update_cubit.dart';
 import '../../../updates/presentation/bloc/update_state.dart';
 import '../../../updates/presentation/widgets/update_row.dart';
+import '../../../discounts/domain/repositories/discount_preset_repository.dart';
+import '../../../orders/domain/usecases/get_receivables.dart';
+import '../../domain/entities/tax_settings.dart';
+import '../bloc/currency_cubit.dart';
+import '../bloc/tax_settings_cubit.dart';
 import '../widgets/appearance_card.dart';
+import '../widgets/currency_sheet.dart';
+import '../widgets/tax_sheet.dart';
 
 /// More: the catalogue (materials, channels, order fields, buy list), the
 /// notebook and your data.
@@ -40,6 +47,8 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _buyListHint;
   String? _notesHint;
   String? _socialHint;
+  String? _discountsHint;
+  String? _receivablesHint;
   bool _canUndoRestore = false;
 
   @override
@@ -56,6 +65,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final orderFields = await getIt<OrderFieldRepository>().getFields();
     final notes = await getIt<NoteRepository>().getNotes();
     final social = await getIt<SocialLinkRepository>().getLinks();
+    final discounts = await getIt<DiscountPresetRepository>().getPresets();
+    final receivables = await getIt<GetReceivables>()();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
     setState(() {
@@ -93,6 +104,16 @@ class _SettingsPageState extends State<SettingsPage> {
             : '${value.length} ${value.length == 1 ? 'note' : 'notes'}'
                 '${pinned > 0 ? ' · $pinned pinned' : ''}';
       }
+      if (receivables case Success(:final value)) {
+        _receivablesHint = value.isEmpty
+            ? null
+            : '${CurrencyFormatter.format(value.total)} · '
+                '${value.orderCount} ${value.orderCount == 1 ? 'order' : 'orders'}';
+      }
+      if (discounts case Success(:final value)) {
+        _discountsHint =
+            value.isEmpty ? null : value.take(3).map((d) => d.label).join(', ');
+      }
       if (social case Success(:final value)) {
         _socialHint = value.isEmpty
             ? null
@@ -100,6 +121,31 @@ class _SettingsPageState extends State<SettingsPage> {
                 '${value.take(3).map((l) => l.label).join(', ')}';
       }
     });
+  }
+
+  Future<void> _pickCurrency() async {
+    final cubit = getIt<CurrencyCubit>();
+    final picked = await showCurrencySheet(context, current: cubit.state);
+    if (picked == null) return;
+    await cubit.set(picked);
+    // Hints carry amounts, so redraw them in the new symbol.
+    if (mounted) _loadHints();
+  }
+
+  static String _taxHint(TaxSettings tax) {
+    if (!tax.enabled) return 'Off';
+    final rate = tax.rate == tax.rate.roundToDouble()
+        ? tax.rate.toStringAsFixed(0)
+        : '${tax.rate}';
+    return '${tax.label} $rate% · ${tax.inclusive ? 'in prices' : 'added on top'}';
+  }
+
+  Future<void> _editTax() async {
+    final cubit = getIt<TaxSettingsCubit>();
+    final picked = await showTaxSheet(context, current: cubit.state);
+    if (picked == null) return;
+    await cubit.set(picked);
+    if (mounted) setState(() {});
   }
 
   Future<void> _open(String location) async {
@@ -148,6 +194,37 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Buy list',
                   subtitle: _buyListHint ?? 'Things to restock',
                   onTap: () => _open(RouteNames.buyList),
+                ),
+              ]),
+            ),
+            const SectionLabel('Money & orders',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                _MoreRow(
+                  icon: Icons.schedule_rounded,
+                  title: 'Waiting for payment',
+                  subtitle: _receivablesHint ?? 'Everyone has paid',
+                  onTap: () => _open(RouteNames.receivables),
+                ),
+                _MoreRow(
+                  icon: Icons.currency_exchange_rounded,
+                  title: 'Currency',
+                  subtitle: CurrencyFormatter.currency.label,
+                  onTap: _pickCurrency,
+                ),
+                _MoreRow(
+                  icon: Icons.account_balance_outlined,
+                  title: 'Tax',
+                  subtitle: _taxHint(getIt<TaxSettingsCubit>().state),
+                  onTap: _editTax,
+                ),
+                _MoreRow(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Discounts',
+                  subtitle: _discountsHint ?? 'Ones you give often',
+                  onTap: () => _open(RouteNames.discounts),
                 ),
               ]),
             ),

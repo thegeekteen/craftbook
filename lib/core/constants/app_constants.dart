@@ -19,10 +19,6 @@ class AppConstants {
   static const String timeFormat = 'HH:mm';
   static const String dateTimeFormat = 'dd MMM yyyy HH:mm';
 
-  // Currency
-  static const String currencySymbol = '₱';
-  static const String currencyCode = 'PHP';
-
   // App info
   static const String appName = 'CraftBook';
 }

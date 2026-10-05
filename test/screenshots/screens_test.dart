@@ -4,6 +4,8 @@ library;
 import 'dart:io';
 
 import 'package:craftbook/app.dart';
+import 'package:craftbook/core/utils/currency_formatter.dart';
+import 'package:craftbook/core/utils/currency_setting.dart';
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
 import 'package:craftbook/core/theme/palettes.dart';
@@ -55,10 +57,12 @@ void main() {
     ('channels', RouteNames.channels),
     ('order_fields', RouteNames.orderFields),
     ('social_shortcuts', RouteNames.socialLinks),
-    ('money', RouteNames.earnings),
+    ('discounts', RouteNames.discounts),
+    ('reports', RouteNames.reports),
+    ('receivables', RouteNames.receivables),
     (
-      'product_earnings',
-      RouteNames.productEarningsPath(
+      'product_report',
+      RouteNames.productReportPath(
           1, weekStart.subtract(const Duration(days: 28)), weekEnd)
     ),
     ('more', RouteNames.settings),
@@ -92,7 +96,7 @@ void main() {
     for (final (name, route) in [
       ('today', RouteNames.today),
       ('orders', RouteNames.orders),
-      ('money', RouteNames.earnings),
+      ('reports', RouteNames.reports),
       ('more', RouteNames.settings),
     ]) {
       for (final dark in [false, true]) {
@@ -129,6 +133,55 @@ void main() {
     }
   }
 
+  // Sheets and states that only show after a tap.
+  testWidgets('reports filtered', (tester) async {
+    await _boot(tester, RouteNames.reports, false);
+    await tester.tap(find.byTooltip('Filter'));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/reports_filter_sheet_light.png'));
+    await tester.tap(find.text('Walk-in'));
+    await tester.ensureVisible(find.text('Show'));
+    await tester.tap(find.text('Show'));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/reports_filtered_light.png'));
+    await _teardown(tester);
+  });
+
+  testWidgets('reports custom range', (tester) async {
+    await _boot(tester, RouteNames.reports, false);
+    await tester.tap(find.text('Custom'));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/reports_range_picker_light.png'));
+    await _teardown(tester);
+  });
+
+  for (final (name, row) in [
+    ('currency_sheet', 'Currency'),
+    ('tax_sheet', 'Tax')
+  ]) {
+    testWidgets(name, (tester) async {
+      await _boot(tester, RouteNames.settings, false);
+      await tester.tap(find.text(row));
+      await _settle(tester);
+      await expectLater(find.byType(CraftbookApp),
+          matchesGoldenFile('goldens/${name}_light.png'));
+      await _teardown(tester);
+    });
+  }
+
+  // Another currency, to check every amount follows it.
+  testWidgets('reports in dollars', (tester) async {
+    CurrencyFormatter.configure(CurrencySetting.preset('USD')!);
+    addTearDown(() => CurrencyFormatter.configure(CurrencySetting.php));
+    await _boot(tester, RouteNames.reports, false);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/reports_usd_light.png'));
+    await _teardown(tester);
+  });
+
   testWidgets('pack sheet', (tester) async {
     await _boot(tester, RouteNames.orderPath(8), false);
     await tester.tap(find.text('Pack order'));
@@ -164,6 +217,10 @@ void main() {
   for (final dark in [false, true]) {
     testWidgets('note editor ${dark ? 'dark' : 'light'}', (tester) async {
       await _boot(tester, RouteNames.editOrderPath(10), dark);
+      // Packed orders show their money above the note.
+      await tester.drag(
+          find.byType(CustomScrollView).first, const Offset(0, -1500));
+      await _settle(tester);
       await tester.tap(find.byType(NoteField));
       await _settle(tester);
       await expectLater(

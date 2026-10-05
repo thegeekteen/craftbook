@@ -36,7 +36,9 @@ class CurrencyText extends StatelessWidget {
         : short
             ? CurrencyFormatter.formatShort(abs)
             : CurrencyFormatter.format(abs);
-    if (!showSymbol) formatted = formatted.replaceFirst('₱', '');
+    if (!showSymbol) {
+      formatted = formatted.replaceFirst(CurrencyFormatter.symbol, '');
+    }
     final sign = amount < 0 ? '−' : (signed && amount > 0 ? '+' : '');
 
     return Text(

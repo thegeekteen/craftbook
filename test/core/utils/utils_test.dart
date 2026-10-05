@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:craftbook/core/utils/currency_formatter.dart';
+import 'package:craftbook/core/utils/currency_setting.dart';
 import 'package:craftbook/core/utils/date_utils.dart' as app_utils;
 
 void main() {
@@ -33,6 +34,30 @@ void main() {
     test('formatWithoutSymbol returns number only', () {
       final result = CurrencyFormatter.formatWithoutSymbol(99.5);
       expect(result, '99.50');
+    });
+  });
+
+  group('CurrencyFormatter.configure', () {
+    tearDown(() => CurrencyFormatter.configure(CurrencySetting.php));
+
+    test('writes US dollars with their symbol', () {
+      CurrencyFormatter.configure(CurrencySetting.preset('USD')!);
+      expect(CurrencyFormatter.format(1234.5), r'$1,234.50');
+      expect(CurrencyFormatter.formatShort(-20), r'−$20');
+      expect(CurrencyFormatter.formatCompact(2500), r'$2.5K');
+      expect(CurrencyFormatter.symbol, r'$');
+    });
+
+    test('yen has no decimals', () {
+      CurrencyFormatter.configure(CurrencySetting.preset('JPY')!);
+      expect(CurrencyFormatter.format(1234.4), '¥1,234');
+      expect(CurrencyFormatter.formatWithoutSymbol(99.5), '100');
+    });
+
+    test('a custom symbol is used as typed', () {
+      CurrencyFormatter.configure(const CurrencySetting(
+          code: CurrencySetting.customCode, symbol: 'kr'));
+      expect(CurrencyFormatter.format(10), 'kr10.00');
     });
   });
 
