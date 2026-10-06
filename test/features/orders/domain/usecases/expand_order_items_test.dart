@@ -45,29 +45,55 @@ void main() {
         ]));
   });
 
-  Future<ExpandedOrder> expand(int cards) => expandOrderItems(products, [
+  Future<ExpandedOrder> expand(double cards) => expandOrderItems(products, [
         OrderItemInput(
             productId: 1, productName: 'Cards', quantity: cards, unitPrice: 3),
       ]);
 
-  test('reserves whole sheets for a line that makes several', () async {
+  test('a line that makes several reserves the exact fraction', () async {
     final ten = await expand(10);
     final sheet = ten.materials.firstWhere((m) => m.materialId == 10);
-    expect((sheet.plannedQuantity, sheet.actualQuantity), (2, 2));
+    // Ten cards at a ninth of a sheet each.
+    expect((sheet.plannedQuantity, sheet.actualQuantity), (1.111, 1.111));
     final sleeves = ten.materials.firstWhere((m) => m.materialId == 11);
     expect(sleeves.plannedQuantity, 10);
-    expect(ten.totalCost, 2 * 3 + 10 * 1);
+    expect(ten.totalCost, closeTo(1.111 * 3 + 10 * 1, 1e-9));
   });
 
-  test('a single card still takes a whole sheet', () async {
+  test('a single card reserves a ninth of a sheet', () async {
     final one = await expand(1);
     expect(
-        one.materials.firstWhere((m) => m.materialId == 10).plannedQuantity, 1);
+      one.materials.firstWhere((m) => m.materialId == 10).plannedQuantity,
+      closeTo(1 / 9, 1e-3),
+    );
   });
 
-  test('nine cards fit on one sheet', () async {
+  test('nine cards use exactly one sheet', () async {
     final nine = await expand(9);
     expect(nine.materials.firstWhere((m) => m.materialId == 10).plannedQuantity,
         1);
+  });
+
+  test('a fractional use is reserved as typed', () async {
+    // A Bubble Head takes 1.25 boards, so four heads take five.
+    when(() => products.getBomItems(2)).thenAnswer((_) async => Success([
+          BomItem(
+            productId: 2,
+            materialId: 20,
+            materialName: 'Illustration board',
+            materialUnitCost: 40,
+            quantityRequired: 1.25,
+            createdAt: now,
+          ),
+        ]));
+    final four = await expandOrderItems(products, [
+      OrderItemInput(
+          productId: 2,
+          productName: 'Bubble head',
+          quantity: 4,
+          unitPrice: 120),
+    ]);
+    expect(four.materials.single.plannedQuantity, 5);
+    expect(four.totalCost, 200);
   });
 }

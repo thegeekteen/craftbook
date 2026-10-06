@@ -10,7 +10,7 @@ class ProductSale extends Equatable {
 
   /// When the sale last moved: shipped, packed, or the order date.
   final DateTime date;
-  final int quantity;
+  final double quantity;
   final double unitPrice;
   final double subtotal;
 

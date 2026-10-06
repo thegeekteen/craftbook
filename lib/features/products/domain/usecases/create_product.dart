@@ -15,7 +15,7 @@ class CreateProduct {
     required double sellPrice,
     int? unitId,
     bool isStandalone = false,
-    int initialQuantity = 0,
+    double initialQuantity = 0,
     double initialUnitCost = 0,
   }) async {
     if (name.trim().isEmpty) {

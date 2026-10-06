@@ -41,7 +41,10 @@ void main() {
   tearDown(() => db.close());
 
   Future<int> material(
-      {int onHand = 10, int promised = 0, int alert = 5, int pack = 10}) async {
+      {double onHand = 10,
+      double promised = 0,
+      double alert = 5,
+      double pack = 10}) async {
     final id = ok(await materials.createMaterial(
       name: 'Yarn',
       packSize: pack,
@@ -64,7 +67,7 @@ void main() {
     required int product,
     required DateTime shipBy,
     List<OrderMaterialInput> materials = const [],
-    int qty = 1,
+    double qty = 1,
   }) async =>
       ok(await orders.createOrder(
         customerName: 'Maria',
@@ -371,8 +374,8 @@ void main() {
 
   group('resell on the buy list', () {
     Future<int> resell({
-      int onHand = 1,
-      int alert = 3,
+      double onHand = 1,
+      double alert = 3,
       bool archived = false,
       double unitCost = 25,
     }) =>

@@ -33,8 +33,8 @@ void main() {
 
   Product product(int id,
           {bool standalone = false,
-          int onHand = 0,
-          int promised = 0,
+          double onHand = 0,
+          double promised = 0,
           double unitCost = 0}) =>
       Product(
         id: id,
@@ -48,7 +48,7 @@ void main() {
         updatedAt: now,
       );
 
-  Material material(int id, {required int onHand, int promised = 0}) =>
+  Material material(int id, {required double onHand, double promised = 0}) =>
       Material(
         id: id,
         name: 'M$id',
@@ -62,8 +62,8 @@ void main() {
         updatedAt: now,
       );
 
-  BomItem bom(int productId, int materialId, int qty, double cost,
-          {int makes = 1}) =>
+  BomItem bom(int productId, int materialId, double qty, double cost,
+          {double makes = 1}) =>
       BomItem(
         productId: productId,
         materialId: materialId,
@@ -131,7 +131,7 @@ void main() {
     ]);
   });
 
-  test('a line that makes several reserves and costs whole pieces', () async {
+  test('a line that makes several reserves the exact fraction', () async {
     when(() => products.getProductById(1))
         .thenAnswer((_) async => Success(product(1)));
     // One sheet at 3 makes 9 cards.
@@ -146,10 +146,10 @@ void main() {
     ]);
 
     final p = (result as Success<OrderPreview>).value;
-    // 10 cards need 2 sheets.
-    expect(p.materialCost, 2 * 3);
+    // 10 cards take 10/9 of a sheet, not 2 whole ones.
+    expect(p.materialCost, closeTo(1.111 * 3, 1e-9));
     expect(p.reservations,
-        [const ReservationLine(name: 'M10', quantity: 2, available: 50)]);
+        [const ReservationLine(name: 'M10', quantity: 1.111, available: 50)]);
   });
 
   test('standalone products reserve their own stock and use unit cost',

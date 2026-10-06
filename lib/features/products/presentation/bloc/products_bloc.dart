@@ -48,7 +48,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
         emit(ProductsError(failure.message));
       case Success(:final value):
         final costs = <int, double>{};
-        final available = <int, int>{};
+        final available = <int, double>{};
         final shortIds = <int>{};
         // A failed count only hides the Short tag; the list still loads.
         final pending = switch (await getPendingOrderCounts()) {

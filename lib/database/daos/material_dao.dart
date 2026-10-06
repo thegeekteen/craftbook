@@ -52,7 +52,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
 
   /// Update material stock
   Future<int> updateMaterialStock(
-      int materialId, int quantityOnHand, int quantityPromised) {
+      int materialId, double quantityOnHand, double quantityPromised) {
     return (update(materials)..where((t) => t.id.equals(materialId)))
         .write(MaterialsCompanion(
       quantityOnHand: Value(quantityOnHand),

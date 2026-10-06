@@ -20,7 +20,7 @@ abstract class ProductRepository {
     /// What it's sold and counted in. Null uses the shop's default unit.
     int? unitId,
     bool isStandalone,
-    int initialQuantity,
+    double initialQuantity,
     double initialUnitCost,
   });
 
@@ -35,13 +35,16 @@ abstract class ProductRepository {
     int? unitId,
     bool? isArchived,
     bool? isStandalone,
-    int? alertLevel,
+    double? alertLevel,
   });
 
   /// Sets the product photo, or clears it when [photo] is null.
   Future<Result<void>> setProductPhoto(int id, Uint8List? photo);
   Future<Result<void>> saveBomItems(int productId, List<BomItemInput> items);
-  Future<Result<int>> calculateBuildableQuantity(int productId);
+
+  /// Unrounded: how much the materials on hand can build, or a resell
+  /// product's free stock. Callers floor it for display.
+  Future<Result<double>> calculateBuildableQuantity(int productId);
   Future<Result<double>> calculateBomCost(int productId);
   Future<Result<List<Product>>> getProductsUsingMaterial(int materialId);
   Future<Result<bool>> hasOrdersUsingProduct(int productId);
@@ -50,20 +53,22 @@ abstract class ProductRepository {
   // Standalone product stock operations
   Future<Result<void>> receiveProductStock({
     required int productId,
-    required int quantity,
+    required double quantity,
     required double pricePerUnit,
     String? reference,
   });
   Future<Result<void>> adjustProductStock({
     required int productId,
-    required int newQuantityOnHand,
+    required double newQuantityOnHand,
   });
-  Future<Result<void>> reserveProductStock(int productId, int quantity);
-  Future<Result<void>> releaseReservedProductStock(int productId, int quantity);
-  Future<Result<void>> deductProductStock(int productId, int quantity);
+  Future<Result<void>> reserveProductStock(int productId, double quantity);
+  Future<Result<void>> releaseReservedProductStock(
+      int productId, double quantity);
+  Future<Result<void>> deductProductStock(int productId, double quantity);
 
   /// Puts [quantity] back on hand, logged under [reference] in the history.
-  Future<Result<void>> restoreDeductedProductStock(int productId, int quantity,
+  Future<Result<void>> restoreDeductedProductStock(
+      int productId, double quantity,
       {String reference = 'Restored from deleted order'});
   Future<Result<List<ProductStockMovement>>> getProductStockMovements(
       int productId);
@@ -80,10 +85,10 @@ abstract class ProductRepository {
 
 class BomItemInput {
   final int materialId;
-  final int quantityRequired;
+  final double quantityRequired;
 
   /// How many products [quantityRequired] pieces make.
-  final int makes;
+  final double makes;
 
   const BomItemInput({
     required this.materialId,

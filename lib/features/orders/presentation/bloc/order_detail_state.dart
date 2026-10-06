@@ -10,8 +10,8 @@ import '../../domain/entities/order_product.dart';
 
 /// Current shelf stock for something the order uses.
 class StockLevel extends Equatable {
-  final int onHand;
-  final int alertLevel;
+  final double onHand;
+  final double alertLevel;
 
   const StockLevel({required this.onHand, required this.alertLevel});
 

@@ -1034,9 +1034,9 @@ class $OrderItemsTable extends OrderItems
   static const VerificationMeta _quantityMeta =
       const VerificationMeta('quantity');
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
       'quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _unitPriceMeta =
       const VerificationMeta('unitPrice');
   @override
@@ -1123,7 +1123,7 @@ class $OrderItemsTable extends OrderItems
       productId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}product_id'])!,
       quantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
       unitPrice: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_price'])!,
       subtotal: attachedDatabase.typeMapping
@@ -1143,7 +1143,7 @@ class OrderItem extends DataClass implements Insertable<OrderItem> {
   final int id;
   final int orderId;
   final int productId;
-  final int quantity;
+  final double quantity;
   final double unitPrice;
   final double subtotal;
   final DateTime createdAt;
@@ -1161,7 +1161,7 @@ class OrderItem extends DataClass implements Insertable<OrderItem> {
     map['id'] = Variable<int>(id);
     map['order_id'] = Variable<int>(orderId);
     map['product_id'] = Variable<int>(productId);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit_price'] = Variable<double>(unitPrice);
     map['subtotal'] = Variable<double>(subtotal);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1187,7 +1187,7 @@ class OrderItem extends DataClass implements Insertable<OrderItem> {
       id: serializer.fromJson<int>(json['id']),
       orderId: serializer.fromJson<int>(json['orderId']),
       productId: serializer.fromJson<int>(json['productId']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unitPrice: serializer.fromJson<double>(json['unitPrice']),
       subtotal: serializer.fromJson<double>(json['subtotal']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1200,7 +1200,7 @@ class OrderItem extends DataClass implements Insertable<OrderItem> {
       'id': serializer.toJson<int>(id),
       'orderId': serializer.toJson<int>(orderId),
       'productId': serializer.toJson<int>(productId),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unitPrice': serializer.toJson<double>(unitPrice),
       'subtotal': serializer.toJson<double>(subtotal),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1211,7 +1211,7 @@ class OrderItem extends DataClass implements Insertable<OrderItem> {
           {int? id,
           int? orderId,
           int? productId,
-          int? quantity,
+          double? quantity,
           double? unitPrice,
           double? subtotal,
           DateTime? createdAt}) =>
@@ -1270,7 +1270,7 @@ class OrderItemsCompanion extends UpdateCompanion<OrderItem> {
   final Value<int> id;
   final Value<int> orderId;
   final Value<int> productId;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> unitPrice;
   final Value<double> subtotal;
   final Value<DateTime> createdAt;
@@ -1287,7 +1287,7 @@ class OrderItemsCompanion extends UpdateCompanion<OrderItem> {
     this.id = const Value.absent(),
     required int orderId,
     required int productId,
-    required int quantity,
+    required double quantity,
     required double unitPrice,
     required double subtotal,
     this.createdAt = const Value.absent(),
@@ -1300,7 +1300,7 @@ class OrderItemsCompanion extends UpdateCompanion<OrderItem> {
     Expression<int>? id,
     Expression<int>? orderId,
     Expression<int>? productId,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? unitPrice,
     Expression<double>? subtotal,
     Expression<DateTime>? createdAt,
@@ -1320,7 +1320,7 @@ class OrderItemsCompanion extends UpdateCompanion<OrderItem> {
       {Value<int>? id,
       Value<int>? orderId,
       Value<int>? productId,
-      Value<int>? quantity,
+      Value<double>? quantity,
       Value<double>? unitPrice,
       Value<double>? subtotal,
       Value<DateTime>? createdAt}) {
@@ -1348,7 +1348,7 @@ class OrderItemsCompanion extends UpdateCompanion<OrderItem> {
       map['product_id'] = Variable<int>(productId.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unitPrice.present) {
       map['unit_price'] = Variable<double>(unitPrice.value);
@@ -1407,21 +1407,21 @@ class $OrderMaterialsTable extends OrderMaterials
   static const VerificationMeta _plannedQuantityMeta =
       const VerificationMeta('plannedQuantity');
   @override
-  late final GeneratedColumn<int> plannedQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> plannedQuantity = GeneratedColumn<double>(
       'planned_quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _actualQuantityMeta =
       const VerificationMeta('actualQuantity');
   @override
-  late final GeneratedColumn<int> actualQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> actualQuantity = GeneratedColumn<double>(
       'actual_quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _wasteQuantityMeta =
       const VerificationMeta('wasteQuantity');
   @override
-  late final GeneratedColumn<int> wasteQuantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> wasteQuantity = GeneratedColumn<double>(
       'waste_quantity', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _wasteReasonMeta =
@@ -1536,12 +1536,12 @@ class $OrderMaterialsTable extends OrderMaterials
           .read(DriftSqlType.int, data['${effectivePrefix}order_id'])!,
       materialId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}material_id'])!,
-      plannedQuantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}planned_quantity'])!,
-      actualQuantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}actual_quantity'])!,
+      plannedQuantity: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}planned_quantity'])!,
+      actualQuantity: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}actual_quantity'])!,
       wasteQuantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}waste_quantity'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}waste_quantity'])!,
       wasteReason: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}waste_reason']),
       unitCost: attachedDatabase.typeMapping
@@ -1561,9 +1561,9 @@ class OrderMaterial extends DataClass implements Insertable<OrderMaterial> {
   final int id;
   final int orderId;
   final int materialId;
-  final int plannedQuantity;
-  final int actualQuantity;
-  final int wasteQuantity;
+  final double plannedQuantity;
+  final double actualQuantity;
+  final double wasteQuantity;
   final String? wasteReason;
   final double unitCost;
   final DateTime createdAt;
@@ -1583,9 +1583,9 @@ class OrderMaterial extends DataClass implements Insertable<OrderMaterial> {
     map['id'] = Variable<int>(id);
     map['order_id'] = Variable<int>(orderId);
     map['material_id'] = Variable<int>(materialId);
-    map['planned_quantity'] = Variable<int>(plannedQuantity);
-    map['actual_quantity'] = Variable<int>(actualQuantity);
-    map['waste_quantity'] = Variable<int>(wasteQuantity);
+    map['planned_quantity'] = Variable<double>(plannedQuantity);
+    map['actual_quantity'] = Variable<double>(actualQuantity);
+    map['waste_quantity'] = Variable<double>(wasteQuantity);
     if (!nullToAbsent || wasteReason != null) {
       map['waste_reason'] = Variable<String>(wasteReason);
     }
@@ -1617,9 +1617,9 @@ class OrderMaterial extends DataClass implements Insertable<OrderMaterial> {
       id: serializer.fromJson<int>(json['id']),
       orderId: serializer.fromJson<int>(json['orderId']),
       materialId: serializer.fromJson<int>(json['materialId']),
-      plannedQuantity: serializer.fromJson<int>(json['plannedQuantity']),
-      actualQuantity: serializer.fromJson<int>(json['actualQuantity']),
-      wasteQuantity: serializer.fromJson<int>(json['wasteQuantity']),
+      plannedQuantity: serializer.fromJson<double>(json['plannedQuantity']),
+      actualQuantity: serializer.fromJson<double>(json['actualQuantity']),
+      wasteQuantity: serializer.fromJson<double>(json['wasteQuantity']),
       wasteReason: serializer.fromJson<String?>(json['wasteReason']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1632,9 +1632,9 @@ class OrderMaterial extends DataClass implements Insertable<OrderMaterial> {
       'id': serializer.toJson<int>(id),
       'orderId': serializer.toJson<int>(orderId),
       'materialId': serializer.toJson<int>(materialId),
-      'plannedQuantity': serializer.toJson<int>(plannedQuantity),
-      'actualQuantity': serializer.toJson<int>(actualQuantity),
-      'wasteQuantity': serializer.toJson<int>(wasteQuantity),
+      'plannedQuantity': serializer.toJson<double>(plannedQuantity),
+      'actualQuantity': serializer.toJson<double>(actualQuantity),
+      'wasteQuantity': serializer.toJson<double>(wasteQuantity),
       'wasteReason': serializer.toJson<String?>(wasteReason),
       'unitCost': serializer.toJson<double>(unitCost),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1645,9 +1645,9 @@ class OrderMaterial extends DataClass implements Insertable<OrderMaterial> {
           {int? id,
           int? orderId,
           int? materialId,
-          int? plannedQuantity,
-          int? actualQuantity,
-          int? wasteQuantity,
+          double? plannedQuantity,
+          double? actualQuantity,
+          double? wasteQuantity,
           Value<String?> wasteReason = const Value.absent(),
           double? unitCost,
           DateTime? createdAt}) =>
@@ -1722,9 +1722,9 @@ class OrderMaterialsCompanion extends UpdateCompanion<OrderMaterial> {
   final Value<int> id;
   final Value<int> orderId;
   final Value<int> materialId;
-  final Value<int> plannedQuantity;
-  final Value<int> actualQuantity;
-  final Value<int> wasteQuantity;
+  final Value<double> plannedQuantity;
+  final Value<double> actualQuantity;
+  final Value<double> wasteQuantity;
   final Value<String?> wasteReason;
   final Value<double> unitCost;
   final Value<DateTime> createdAt;
@@ -1743,8 +1743,8 @@ class OrderMaterialsCompanion extends UpdateCompanion<OrderMaterial> {
     this.id = const Value.absent(),
     required int orderId,
     required int materialId,
-    required int plannedQuantity,
-    required int actualQuantity,
+    required double plannedQuantity,
+    required double actualQuantity,
     this.wasteQuantity = const Value.absent(),
     this.wasteReason = const Value.absent(),
     required double unitCost,
@@ -1758,9 +1758,9 @@ class OrderMaterialsCompanion extends UpdateCompanion<OrderMaterial> {
     Expression<int>? id,
     Expression<int>? orderId,
     Expression<int>? materialId,
-    Expression<int>? plannedQuantity,
-    Expression<int>? actualQuantity,
-    Expression<int>? wasteQuantity,
+    Expression<double>? plannedQuantity,
+    Expression<double>? actualQuantity,
+    Expression<double>? wasteQuantity,
     Expression<String>? wasteReason,
     Expression<double>? unitCost,
     Expression<DateTime>? createdAt,
@@ -1782,9 +1782,9 @@ class OrderMaterialsCompanion extends UpdateCompanion<OrderMaterial> {
       {Value<int>? id,
       Value<int>? orderId,
       Value<int>? materialId,
-      Value<int>? plannedQuantity,
-      Value<int>? actualQuantity,
-      Value<int>? wasteQuantity,
+      Value<double>? plannedQuantity,
+      Value<double>? actualQuantity,
+      Value<double>? wasteQuantity,
       Value<String?>? wasteReason,
       Value<double>? unitCost,
       Value<DateTime>? createdAt}) {
@@ -1814,13 +1814,13 @@ class OrderMaterialsCompanion extends UpdateCompanion<OrderMaterial> {
       map['material_id'] = Variable<int>(materialId.value);
     }
     if (plannedQuantity.present) {
-      map['planned_quantity'] = Variable<int>(plannedQuantity.value);
+      map['planned_quantity'] = Variable<double>(plannedQuantity.value);
     }
     if (actualQuantity.present) {
-      map['actual_quantity'] = Variable<int>(actualQuantity.value);
+      map['actual_quantity'] = Variable<double>(actualQuantity.value);
     }
     if (wasteQuantity.present) {
-      map['waste_quantity'] = Variable<int>(wasteQuantity.value);
+      map['waste_quantity'] = Variable<double>(wasteQuantity.value);
     }
     if (wasteReason.present) {
       map['waste_reason'] = Variable<String>(wasteReason.value);
@@ -1881,9 +1881,9 @@ class $OrderProductsTable extends OrderProducts
   static const VerificationMeta _quantityMeta =
       const VerificationMeta('quantity');
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
       'quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _unitCostMeta =
       const VerificationMeta('unitCost');
   @override
@@ -1958,7 +1958,7 @@ class $OrderProductsTable extends OrderProducts
       productId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}product_id'])!,
       quantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
       unitCost: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
       createdAt: attachedDatabase.typeMapping
@@ -1976,7 +1976,7 @@ class OrderProduct extends DataClass implements Insertable<OrderProduct> {
   final int id;
   final int orderId;
   final int productId;
-  final int quantity;
+  final double quantity;
   final double unitCost;
   final DateTime createdAt;
   const OrderProduct(
@@ -1992,7 +1992,7 @@ class OrderProduct extends DataClass implements Insertable<OrderProduct> {
     map['id'] = Variable<int>(id);
     map['order_id'] = Variable<int>(orderId);
     map['product_id'] = Variable<int>(productId);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit_cost'] = Variable<double>(unitCost);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -2016,7 +2016,7 @@ class OrderProduct extends DataClass implements Insertable<OrderProduct> {
       id: serializer.fromJson<int>(json['id']),
       orderId: serializer.fromJson<int>(json['orderId']),
       productId: serializer.fromJson<int>(json['productId']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -2028,7 +2028,7 @@ class OrderProduct extends DataClass implements Insertable<OrderProduct> {
       'id': serializer.toJson<int>(id),
       'orderId': serializer.toJson<int>(orderId),
       'productId': serializer.toJson<int>(productId),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unitCost': serializer.toJson<double>(unitCost),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -2038,7 +2038,7 @@ class OrderProduct extends DataClass implements Insertable<OrderProduct> {
           {int? id,
           int? orderId,
           int? productId,
-          int? quantity,
+          double? quantity,
           double? unitCost,
           DateTime? createdAt}) =>
       OrderProduct(
@@ -2092,7 +2092,7 @@ class OrderProductsCompanion extends UpdateCompanion<OrderProduct> {
   final Value<int> id;
   final Value<int> orderId;
   final Value<int> productId;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> unitCost;
   final Value<DateTime> createdAt;
   const OrderProductsCompanion({
@@ -2107,7 +2107,7 @@ class OrderProductsCompanion extends UpdateCompanion<OrderProduct> {
     this.id = const Value.absent(),
     required int orderId,
     required int productId,
-    required int quantity,
+    required double quantity,
     required double unitCost,
     this.createdAt = const Value.absent(),
   })  : orderId = Value(orderId),
@@ -2118,7 +2118,7 @@ class OrderProductsCompanion extends UpdateCompanion<OrderProduct> {
     Expression<int>? id,
     Expression<int>? orderId,
     Expression<int>? productId,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? unitCost,
     Expression<DateTime>? createdAt,
   }) {
@@ -2136,7 +2136,7 @@ class OrderProductsCompanion extends UpdateCompanion<OrderProduct> {
       {Value<int>? id,
       Value<int>? orderId,
       Value<int>? productId,
-      Value<int>? quantity,
+      Value<double>? quantity,
       Value<double>? unitCost,
       Value<DateTime>? createdAt}) {
     return OrderProductsCompanion(
@@ -2162,7 +2162,7 @@ class OrderProductsCompanion extends UpdateCompanion<OrderProduct> {
       map['product_id'] = Variable<int>(productId.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unitCost.present) {
       map['unit_cost'] = Variable<double>(unitCost.value);
@@ -2217,9 +2217,9 @@ class $MaterialsTable extends Materials
   static const VerificationMeta _packSizeMeta =
       const VerificationMeta('packSize');
   @override
-  late final GeneratedColumn<int> packSize = GeneratedColumn<int>(
+  late final GeneratedColumn<double> packSize = GeneratedColumn<double>(
       'pack_size', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _packPriceMeta =
       const VerificationMeta('packPrice');
   @override
@@ -2235,25 +2235,25 @@ class $MaterialsTable extends Materials
   static const VerificationMeta _quantityOnHandMeta =
       const VerificationMeta('quantityOnHand');
   @override
-  late final GeneratedColumn<int> quantityOnHand = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantityOnHand = GeneratedColumn<double>(
       'quantity_on_hand', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _quantityPromisedMeta =
       const VerificationMeta('quantityPromised');
   @override
-  late final GeneratedColumn<int> quantityPromised = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantityPromised = GeneratedColumn<double>(
       'quantity_promised', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _alertLevelMeta =
       const VerificationMeta('alertLevel');
   @override
-  late final GeneratedColumn<int> alertLevel = GeneratedColumn<int>(
+  late final GeneratedColumn<double> alertLevel = GeneratedColumn<double>(
       'alert_level', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _supplierMeta =
       const VerificationMeta('supplier');
   @override
@@ -2410,17 +2410,17 @@ class $MaterialsTable extends Materials
       unitId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}unit_id'])!,
       packSize: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}pack_size'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}pack_size'])!,
       packPrice: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}pack_price'])!,
       unitCost: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
-      quantityOnHand: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_on_hand'])!,
-      quantityPromised: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_promised'])!,
+      quantityOnHand: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}quantity_on_hand'])!,
+      quantityPromised: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}quantity_promised'])!,
       alertLevel: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}alert_level'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}alert_level'])!,
       supplier: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}supplier']),
       lastReceivedAt: attachedDatabase.typeMapping.read(
@@ -2450,12 +2450,15 @@ class Material extends DataClass implements Insertable<Material> {
   /// `AppConstants.defaultUnitId` — Drift copies it into generated code,
   /// which can't see that import, and `migration_v11_test` checks they agree.
   final int unitId;
-  final int packSize;
+
+  /// Fractions are real stock: a Bubble Head uses 1.25 boards, a card uses a
+  /// ninth of a sheet.
+  final double packSize;
   final double packPrice;
   final double unitCost;
-  final int quantityOnHand;
-  final int quantityPromised;
-  final int alertLevel;
+  final double quantityOnHand;
+  final double quantityPromised;
+  final double alertLevel;
   final String? supplier;
   final DateTime? lastReceivedAt;
 
@@ -2485,12 +2488,12 @@ class Material extends DataClass implements Insertable<Material> {
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['unit_id'] = Variable<int>(unitId);
-    map['pack_size'] = Variable<int>(packSize);
+    map['pack_size'] = Variable<double>(packSize);
     map['pack_price'] = Variable<double>(packPrice);
     map['unit_cost'] = Variable<double>(unitCost);
-    map['quantity_on_hand'] = Variable<int>(quantityOnHand);
-    map['quantity_promised'] = Variable<int>(quantityPromised);
-    map['alert_level'] = Variable<int>(alertLevel);
+    map['quantity_on_hand'] = Variable<double>(quantityOnHand);
+    map['quantity_promised'] = Variable<double>(quantityPromised);
+    map['alert_level'] = Variable<double>(alertLevel);
     if (!nullToAbsent || supplier != null) {
       map['supplier'] = Variable<String>(supplier);
     }
@@ -2533,12 +2536,12 @@ class Material extends DataClass implements Insertable<Material> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       unitId: serializer.fromJson<int>(json['unitId']),
-      packSize: serializer.fromJson<int>(json['packSize']),
+      packSize: serializer.fromJson<double>(json['packSize']),
       packPrice: serializer.fromJson<double>(json['packPrice']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
-      quantityOnHand: serializer.fromJson<int>(json['quantityOnHand']),
-      quantityPromised: serializer.fromJson<int>(json['quantityPromised']),
-      alertLevel: serializer.fromJson<int>(json['alertLevel']),
+      quantityOnHand: serializer.fromJson<double>(json['quantityOnHand']),
+      quantityPromised: serializer.fromJson<double>(json['quantityPromised']),
+      alertLevel: serializer.fromJson<double>(json['alertLevel']),
       supplier: serializer.fromJson<String?>(json['supplier']),
       lastReceivedAt: serializer.fromJson<DateTime?>(json['lastReceivedAt']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
@@ -2553,12 +2556,12 @@ class Material extends DataClass implements Insertable<Material> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'unitId': serializer.toJson<int>(unitId),
-      'packSize': serializer.toJson<int>(packSize),
+      'packSize': serializer.toJson<double>(packSize),
       'packPrice': serializer.toJson<double>(packPrice),
       'unitCost': serializer.toJson<double>(unitCost),
-      'quantityOnHand': serializer.toJson<int>(quantityOnHand),
-      'quantityPromised': serializer.toJson<int>(quantityPromised),
-      'alertLevel': serializer.toJson<int>(alertLevel),
+      'quantityOnHand': serializer.toJson<double>(quantityOnHand),
+      'quantityPromised': serializer.toJson<double>(quantityPromised),
+      'alertLevel': serializer.toJson<double>(alertLevel),
       'supplier': serializer.toJson<String?>(supplier),
       'lastReceivedAt': serializer.toJson<DateTime?>(lastReceivedAt),
       'isArchived': serializer.toJson<bool>(isArchived),
@@ -2571,12 +2574,12 @@ class Material extends DataClass implements Insertable<Material> {
           {int? id,
           String? name,
           int? unitId,
-          int? packSize,
+          double? packSize,
           double? packPrice,
           double? unitCost,
-          int? quantityOnHand,
-          int? quantityPromised,
-          int? alertLevel,
+          double? quantityOnHand,
+          double? quantityPromised,
+          double? alertLevel,
           Value<String?> supplier = const Value.absent(),
           Value<DateTime?> lastReceivedAt = const Value.absent(),
           bool? isArchived,
@@ -2687,12 +2690,12 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   final Value<int> id;
   final Value<String> name;
   final Value<int> unitId;
-  final Value<int> packSize;
+  final Value<double> packSize;
   final Value<double> packPrice;
   final Value<double> unitCost;
-  final Value<int> quantityOnHand;
-  final Value<int> quantityPromised;
-  final Value<int> alertLevel;
+  final Value<double> quantityOnHand;
+  final Value<double> quantityPromised;
+  final Value<double> alertLevel;
   final Value<String?> supplier;
   final Value<DateTime?> lastReceivedAt;
   final Value<bool> isArchived;
@@ -2718,12 +2721,12 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     this.id = const Value.absent(),
     required String name,
     this.unitId = const Value.absent(),
-    required int packSize,
+    required double packSize,
     required double packPrice,
     required double unitCost,
     this.quantityOnHand = const Value.absent(),
     this.quantityPromised = const Value.absent(),
-    required int alertLevel,
+    required double alertLevel,
     this.supplier = const Value.absent(),
     this.lastReceivedAt = const Value.absent(),
     this.isArchived = const Value.absent(),
@@ -2738,12 +2741,12 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     Expression<int>? id,
     Expression<String>? name,
     Expression<int>? unitId,
-    Expression<int>? packSize,
+    Expression<double>? packSize,
     Expression<double>? packPrice,
     Expression<double>? unitCost,
-    Expression<int>? quantityOnHand,
-    Expression<int>? quantityPromised,
-    Expression<int>? alertLevel,
+    Expression<double>? quantityOnHand,
+    Expression<double>? quantityPromised,
+    Expression<double>? alertLevel,
     Expression<String>? supplier,
     Expression<DateTime>? lastReceivedAt,
     Expression<bool>? isArchived,
@@ -2772,12 +2775,12 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       {Value<int>? id,
       Value<String>? name,
       Value<int>? unitId,
-      Value<int>? packSize,
+      Value<double>? packSize,
       Value<double>? packPrice,
       Value<double>? unitCost,
-      Value<int>? quantityOnHand,
-      Value<int>? quantityPromised,
-      Value<int>? alertLevel,
+      Value<double>? quantityOnHand,
+      Value<double>? quantityPromised,
+      Value<double>? alertLevel,
       Value<String?>? supplier,
       Value<DateTime?>? lastReceivedAt,
       Value<bool>? isArchived,
@@ -2814,7 +2817,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       map['unit_id'] = Variable<int>(unitId.value);
     }
     if (packSize.present) {
-      map['pack_size'] = Variable<int>(packSize.value);
+      map['pack_size'] = Variable<double>(packSize.value);
     }
     if (packPrice.present) {
       map['pack_price'] = Variable<double>(packPrice.value);
@@ -2823,13 +2826,13 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       map['unit_cost'] = Variable<double>(unitCost.value);
     }
     if (quantityOnHand.present) {
-      map['quantity_on_hand'] = Variable<int>(quantityOnHand.value);
+      map['quantity_on_hand'] = Variable<double>(quantityOnHand.value);
     }
     if (quantityPromised.present) {
-      map['quantity_promised'] = Variable<int>(quantityPromised.value);
+      map['quantity_promised'] = Variable<double>(quantityPromised.value);
     }
     if (alertLevel.present) {
-      map['alert_level'] = Variable<int>(alertLevel.value);
+      map['alert_level'] = Variable<double>(alertLevel.value);
     }
     if (supplier.present) {
       map['supplier'] = Variable<String>(supplier.value);
@@ -2932,17 +2935,17 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   static const VerificationMeta _quantityOnHandMeta =
       const VerificationMeta('quantityOnHand');
   @override
-  late final GeneratedColumn<int> quantityOnHand = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantityOnHand = GeneratedColumn<double>(
       'quantity_on_hand', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _quantityPromisedMeta =
       const VerificationMeta('quantityPromised');
   @override
-  late final GeneratedColumn<int> quantityPromised = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantityPromised = GeneratedColumn<double>(
       'quantity_promised', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _unitCostMeta =
@@ -2956,9 +2959,9 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   static const VerificationMeta _alertLevelMeta =
       const VerificationMeta('alertLevel');
   @override
-  late final GeneratedColumn<int> alertLevel = GeneratedColumn<int>(
+  late final GeneratedColumn<double> alertLevel = GeneratedColumn<double>(
       'alert_level', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   static const VerificationMeta _photoMeta = const VerificationMeta('photo');
@@ -3103,14 +3106,14 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_archived'])!,
       isStandalone: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_standalone'])!,
-      quantityOnHand: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_on_hand'])!,
-      quantityPromised: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_promised'])!,
+      quantityOnHand: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}quantity_on_hand'])!,
+      quantityPromised: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}quantity_promised'])!,
       unitCost: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
       alertLevel: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}alert_level'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}alert_level'])!,
       photo: attachedDatabase.typeMapping
           .read(DriftSqlType.blob, data['${effectivePrefix}photo']),
       createdAt: attachedDatabase.typeMapping
@@ -3142,10 +3145,10 @@ class Product extends DataClass implements Insertable<Product> {
   /// pickers, alerts and the buy list.
   final bool isArchived;
   final bool isStandalone;
-  final int quantityOnHand;
-  final int quantityPromised;
+  final double quantityOnHand;
+  final double quantityPromised;
   final double unitCost;
-  final int alertLevel;
+  final double alertLevel;
 
   /// Resized JPEG. Kept in the database so a raw sqlite backup carries it.
   final Uint8List? photo;
@@ -3178,10 +3181,10 @@ class Product extends DataClass implements Insertable<Product> {
     map['unit_id'] = Variable<int>(unitId);
     map['is_archived'] = Variable<bool>(isArchived);
     map['is_standalone'] = Variable<bool>(isStandalone);
-    map['quantity_on_hand'] = Variable<int>(quantityOnHand);
-    map['quantity_promised'] = Variable<int>(quantityPromised);
+    map['quantity_on_hand'] = Variable<double>(quantityOnHand);
+    map['quantity_promised'] = Variable<double>(quantityPromised);
     map['unit_cost'] = Variable<double>(unitCost);
-    map['alert_level'] = Variable<int>(alertLevel);
+    map['alert_level'] = Variable<double>(alertLevel);
     if (!nullToAbsent || photo != null) {
       map['photo'] = Variable<Uint8List>(photo);
     }
@@ -3223,10 +3226,10 @@ class Product extends DataClass implements Insertable<Product> {
       unitId: serializer.fromJson<int>(json['unitId']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       isStandalone: serializer.fromJson<bool>(json['isStandalone']),
-      quantityOnHand: serializer.fromJson<int>(json['quantityOnHand']),
-      quantityPromised: serializer.fromJson<int>(json['quantityPromised']),
+      quantityOnHand: serializer.fromJson<double>(json['quantityOnHand']),
+      quantityPromised: serializer.fromJson<double>(json['quantityPromised']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
-      alertLevel: serializer.fromJson<int>(json['alertLevel']),
+      alertLevel: serializer.fromJson<double>(json['alertLevel']),
       photo: serializer.fromJson<Uint8List?>(json['photo']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -3243,10 +3246,10 @@ class Product extends DataClass implements Insertable<Product> {
       'unitId': serializer.toJson<int>(unitId),
       'isArchived': serializer.toJson<bool>(isArchived),
       'isStandalone': serializer.toJson<bool>(isStandalone),
-      'quantityOnHand': serializer.toJson<int>(quantityOnHand),
-      'quantityPromised': serializer.toJson<int>(quantityPromised),
+      'quantityOnHand': serializer.toJson<double>(quantityOnHand),
+      'quantityPromised': serializer.toJson<double>(quantityPromised),
       'unitCost': serializer.toJson<double>(unitCost),
-      'alertLevel': serializer.toJson<int>(alertLevel),
+      'alertLevel': serializer.toJson<double>(alertLevel),
       'photo': serializer.toJson<Uint8List?>(photo),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -3261,10 +3264,10 @@ class Product extends DataClass implements Insertable<Product> {
           int? unitId,
           bool? isArchived,
           bool? isStandalone,
-          int? quantityOnHand,
-          int? quantityPromised,
+          double? quantityOnHand,
+          double? quantityPromised,
           double? unitCost,
-          int? alertLevel,
+          double? alertLevel,
           Value<Uint8List?> photo = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -3377,10 +3380,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<int> unitId;
   final Value<bool> isArchived;
   final Value<bool> isStandalone;
-  final Value<int> quantityOnHand;
-  final Value<int> quantityPromised;
+  final Value<double> quantityOnHand;
+  final Value<double> quantityPromised;
   final Value<double> unitCost;
-  final Value<int> alertLevel;
+  final Value<double> alertLevel;
   final Value<Uint8List?> photo;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -3425,10 +3428,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<int>? unitId,
     Expression<bool>? isArchived,
     Expression<bool>? isStandalone,
-    Expression<int>? quantityOnHand,
-    Expression<int>? quantityPromised,
+    Expression<double>? quantityOnHand,
+    Expression<double>? quantityPromised,
     Expression<double>? unitCost,
-    Expression<int>? alertLevel,
+    Expression<double>? alertLevel,
     Expression<Uint8List>? photo,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -3459,10 +3462,10 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       Value<int>? unitId,
       Value<bool>? isArchived,
       Value<bool>? isStandalone,
-      Value<int>? quantityOnHand,
-      Value<int>? quantityPromised,
+      Value<double>? quantityOnHand,
+      Value<double>? quantityPromised,
       Value<double>? unitCost,
-      Value<int>? alertLevel,
+      Value<double>? alertLevel,
       Value<Uint8List?>? photo,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt}) {
@@ -3509,16 +3512,16 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       map['is_standalone'] = Variable<bool>(isStandalone.value);
     }
     if (quantityOnHand.present) {
-      map['quantity_on_hand'] = Variable<int>(quantityOnHand.value);
+      map['quantity_on_hand'] = Variable<double>(quantityOnHand.value);
     }
     if (quantityPromised.present) {
-      map['quantity_promised'] = Variable<int>(quantityPromised.value);
+      map['quantity_promised'] = Variable<double>(quantityPromised.value);
     }
     if (unitCost.present) {
       map['unit_cost'] = Variable<double>(unitCost.value);
     }
     if (alertLevel.present) {
-      map['alert_level'] = Variable<int>(alertLevel.value);
+      map['alert_level'] = Variable<double>(alertLevel.value);
     }
     if (photo.present) {
       map['photo'] = Variable<Uint8List>(photo.value);
@@ -3583,14 +3586,14 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
   static const VerificationMeta _quantityRequiredMeta =
       const VerificationMeta('quantityRequired');
   @override
-  late final GeneratedColumn<int> quantityRequired = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantityRequired = GeneratedColumn<double>(
       'quantity_required', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _makesMeta = const VerificationMeta('makes');
   @override
-  late final GeneratedColumn<int> makes = GeneratedColumn<int>(
+  late final GeneratedColumn<double> makes = GeneratedColumn<double>(
       'makes', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
   static const VerificationMeta _createdAtMeta =
@@ -3662,10 +3665,10 @@ class $BomItemsTable extends BomItems with TableInfo<$BomItemsTable, BomItem> {
           .read(DriftSqlType.int, data['${effectivePrefix}product_id'])!,
       materialId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}material_id'])!,
-      quantityRequired: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_required'])!,
+      quantityRequired: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}quantity_required'])!,
       makes: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}makes'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}makes'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3681,11 +3684,11 @@ class BomItem extends DataClass implements Insertable<BomItem> {
   final int id;
   final int productId;
   final int materialId;
-  final int quantityRequired;
+  final double quantityRequired;
 
   /// How many products [quantityRequired] pieces make, e.g. one A4 sheet
   /// makes 9 business cards. 1 means the pieces go into a single product.
-  final int makes;
+  final double makes;
   final DateTime createdAt;
   const BomItem(
       {required this.id,
@@ -3700,8 +3703,8 @@ class BomItem extends DataClass implements Insertable<BomItem> {
     map['id'] = Variable<int>(id);
     map['product_id'] = Variable<int>(productId);
     map['material_id'] = Variable<int>(materialId);
-    map['quantity_required'] = Variable<int>(quantityRequired);
-    map['makes'] = Variable<int>(makes);
+    map['quantity_required'] = Variable<double>(quantityRequired);
+    map['makes'] = Variable<double>(makes);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3724,8 +3727,8 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       id: serializer.fromJson<int>(json['id']),
       productId: serializer.fromJson<int>(json['productId']),
       materialId: serializer.fromJson<int>(json['materialId']),
-      quantityRequired: serializer.fromJson<int>(json['quantityRequired']),
-      makes: serializer.fromJson<int>(json['makes']),
+      quantityRequired: serializer.fromJson<double>(json['quantityRequired']),
+      makes: serializer.fromJson<double>(json['makes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3736,8 +3739,8 @@ class BomItem extends DataClass implements Insertable<BomItem> {
       'id': serializer.toJson<int>(id),
       'productId': serializer.toJson<int>(productId),
       'materialId': serializer.toJson<int>(materialId),
-      'quantityRequired': serializer.toJson<int>(quantityRequired),
-      'makes': serializer.toJson<int>(makes),
+      'quantityRequired': serializer.toJson<double>(quantityRequired),
+      'makes': serializer.toJson<double>(makes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3746,8 +3749,8 @@ class BomItem extends DataClass implements Insertable<BomItem> {
           {int? id,
           int? productId,
           int? materialId,
-          int? quantityRequired,
-          int? makes,
+          double? quantityRequired,
+          double? makes,
           DateTime? createdAt}) =>
       BomItem(
         id: id ?? this.id,
@@ -3803,8 +3806,8 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
   final Value<int> id;
   final Value<int> productId;
   final Value<int> materialId;
-  final Value<int> quantityRequired;
-  final Value<int> makes;
+  final Value<double> quantityRequired;
+  final Value<double> makes;
   final Value<DateTime> createdAt;
   const BomItemsCompanion({
     this.id = const Value.absent(),
@@ -3818,7 +3821,7 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
     this.id = const Value.absent(),
     required int productId,
     required int materialId,
-    required int quantityRequired,
+    required double quantityRequired,
     this.makes = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : productId = Value(productId),
@@ -3828,8 +3831,8 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
     Expression<int>? id,
     Expression<int>? productId,
     Expression<int>? materialId,
-    Expression<int>? quantityRequired,
-    Expression<int>? makes,
+    Expression<double>? quantityRequired,
+    Expression<double>? makes,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -3846,8 +3849,8 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
       {Value<int>? id,
       Value<int>? productId,
       Value<int>? materialId,
-      Value<int>? quantityRequired,
-      Value<int>? makes,
+      Value<double>? quantityRequired,
+      Value<double>? makes,
       Value<DateTime>? createdAt}) {
     return BomItemsCompanion(
       id: id ?? this.id,
@@ -3872,10 +3875,10 @@ class BomItemsCompanion extends UpdateCompanion<BomItem> {
       map['material_id'] = Variable<int>(materialId.value);
     }
     if (quantityRequired.present) {
-      map['quantity_required'] = Variable<int>(quantityRequired.value);
+      map['quantity_required'] = Variable<double>(quantityRequired.value);
     }
     if (makes.present) {
-      map['makes'] = Variable<int>(makes.value);
+      map['makes'] = Variable<double>(makes.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -4705,9 +4708,9 @@ class $StockMovementsTable extends StockMovements
   static const VerificationMeta _quantityMeta =
       const VerificationMeta('quantity');
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
       'quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _unitCostMeta =
       const VerificationMeta('unitCost');
   @override
@@ -4800,7 +4803,7 @@ class $StockMovementsTable extends StockMovements
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
       quantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
       unitCost: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
       createdAt: attachedDatabase.typeMapping
@@ -4821,7 +4824,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
   final int materialId;
   final int? orderId;
   final String type;
-  final int quantity;
+  final double quantity;
   final double unitCost;
   final DateTime createdAt;
   final String? reference;
@@ -4843,7 +4846,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       map['order_id'] = Variable<int>(orderId);
     }
     map['type'] = Variable<String>(type);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit_cost'] = Variable<double>(unitCost);
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || reference != null) {
@@ -4877,7 +4880,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       materialId: serializer.fromJson<int>(json['materialId']),
       orderId: serializer.fromJson<int?>(json['orderId']),
       type: serializer.fromJson<String>(json['type']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       reference: serializer.fromJson<String?>(json['reference']),
@@ -4891,7 +4894,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       'materialId': serializer.toJson<int>(materialId),
       'orderId': serializer.toJson<int?>(orderId),
       'type': serializer.toJson<String>(type),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unitCost': serializer.toJson<double>(unitCost),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'reference': serializer.toJson<String?>(reference),
@@ -4903,7 +4906,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
           int? materialId,
           Value<int?> orderId = const Value.absent(),
           String? type,
-          int? quantity,
+          double? quantity,
           double? unitCost,
           DateTime? createdAt,
           Value<String?> reference = const Value.absent()}) =>
@@ -4968,7 +4971,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
   final Value<int> materialId;
   final Value<int?> orderId;
   final Value<String> type;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> unitCost;
   final Value<DateTime> createdAt;
   final Value<String?> reference;
@@ -4987,7 +4990,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     required int materialId,
     this.orderId = const Value.absent(),
     required String type,
-    required int quantity,
+    required double quantity,
     required double unitCost,
     this.createdAt = const Value.absent(),
     this.reference = const Value.absent(),
@@ -5000,7 +5003,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     Expression<int>? materialId,
     Expression<int>? orderId,
     Expression<String>? type,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? unitCost,
     Expression<DateTime>? createdAt,
     Expression<String>? reference,
@@ -5022,7 +5025,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
       Value<int>? materialId,
       Value<int?>? orderId,
       Value<String>? type,
-      Value<int>? quantity,
+      Value<double>? quantity,
       Value<double>? unitCost,
       Value<DateTime>? createdAt,
       Value<String?>? reference}) {
@@ -5054,7 +5057,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
       map['type'] = Variable<String>(type.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unitCost.present) {
       map['unit_cost'] = Variable<double>(unitCost.value);
@@ -5119,9 +5122,9 @@ class $ProductStockMovementsTable extends ProductStockMovements
   static const VerificationMeta _quantityMeta =
       const VerificationMeta('quantity');
   @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
       'quantity', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _unitCostMeta =
       const VerificationMeta('unitCost');
   @override
@@ -5213,7 +5216,7 @@ class $ProductStockMovementsTable extends ProductStockMovements
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
       quantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
       unitCost: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}unit_cost'])!,
       createdAt: attachedDatabase.typeMapping
@@ -5235,7 +5238,7 @@ class ProductStockMovement extends DataClass
   final int productId;
   final int? orderId;
   final String type;
-  final int quantity;
+  final double quantity;
   final double unitCost;
   final DateTime createdAt;
   final String? reference;
@@ -5257,7 +5260,7 @@ class ProductStockMovement extends DataClass
       map['order_id'] = Variable<int>(orderId);
     }
     map['type'] = Variable<String>(type);
-    map['quantity'] = Variable<int>(quantity);
+    map['quantity'] = Variable<double>(quantity);
     map['unit_cost'] = Variable<double>(unitCost);
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || reference != null) {
@@ -5291,7 +5294,7 @@ class ProductStockMovement extends DataClass
       productId: serializer.fromJson<int>(json['productId']),
       orderId: serializer.fromJson<int?>(json['orderId']),
       type: serializer.fromJson<String>(json['type']),
-      quantity: serializer.fromJson<int>(json['quantity']),
+      quantity: serializer.fromJson<double>(json['quantity']),
       unitCost: serializer.fromJson<double>(json['unitCost']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       reference: serializer.fromJson<String?>(json['reference']),
@@ -5305,7 +5308,7 @@ class ProductStockMovement extends DataClass
       'productId': serializer.toJson<int>(productId),
       'orderId': serializer.toJson<int?>(orderId),
       'type': serializer.toJson<String>(type),
-      'quantity': serializer.toJson<int>(quantity),
+      'quantity': serializer.toJson<double>(quantity),
       'unitCost': serializer.toJson<double>(unitCost),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'reference': serializer.toJson<String?>(reference),
@@ -5317,7 +5320,7 @@ class ProductStockMovement extends DataClass
           int? productId,
           Value<int?> orderId = const Value.absent(),
           String? type,
-          int? quantity,
+          double? quantity,
           double? unitCost,
           DateTime? createdAt,
           Value<String?> reference = const Value.absent()}) =>
@@ -5382,7 +5385,7 @@ class ProductStockMovementsCompanion
   final Value<int> productId;
   final Value<int?> orderId;
   final Value<String> type;
-  final Value<int> quantity;
+  final Value<double> quantity;
   final Value<double> unitCost;
   final Value<DateTime> createdAt;
   final Value<String?> reference;
@@ -5401,7 +5404,7 @@ class ProductStockMovementsCompanion
     required int productId,
     this.orderId = const Value.absent(),
     required String type,
-    required int quantity,
+    required double quantity,
     required double unitCost,
     this.createdAt = const Value.absent(),
     this.reference = const Value.absent(),
@@ -5414,7 +5417,7 @@ class ProductStockMovementsCompanion
     Expression<int>? productId,
     Expression<int>? orderId,
     Expression<String>? type,
-    Expression<int>? quantity,
+    Expression<double>? quantity,
     Expression<double>? unitCost,
     Expression<DateTime>? createdAt,
     Expression<String>? reference,
@@ -5436,7 +5439,7 @@ class ProductStockMovementsCompanion
       Value<int>? productId,
       Value<int?>? orderId,
       Value<String>? type,
-      Value<int>? quantity,
+      Value<double>? quantity,
       Value<double>? unitCost,
       Value<DateTime>? createdAt,
       Value<String?>? reference}) {
@@ -5468,7 +5471,7 @@ class ProductStockMovementsCompanion
       map['type'] = Variable<String>(type.value);
     }
     if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
+      map['quantity'] = Variable<double>(quantity.value);
     }
     if (unitCost.present) {
       map['unit_cost'] = Variable<double>(unitCost.value);
@@ -8459,7 +8462,7 @@ typedef $$OrderItemsTableCreateCompanionBuilder = OrderItemsCompanion Function({
   Value<int> id,
   required int orderId,
   required int productId,
-  required int quantity,
+  required double quantity,
   required double unitPrice,
   required double subtotal,
   Value<DateTime> createdAt,
@@ -8468,7 +8471,7 @@ typedef $$OrderItemsTableUpdateCompanionBuilder = OrderItemsCompanion Function({
   Value<int> id,
   Value<int> orderId,
   Value<int> productId,
-  Value<int> quantity,
+  Value<double> quantity,
   Value<double> unitPrice,
   Value<double> subtotal,
   Value<DateTime> createdAt,
@@ -8492,7 +8495,7 @@ class $$OrderItemsTableFilterComposer
   ColumnFilters<int> get productId => $composableBuilder(
       column: $table.productId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get unitPrice => $composableBuilder(
@@ -8523,7 +8526,7 @@ class $$OrderItemsTableOrderingComposer
   ColumnOrderings<int> get productId => $composableBuilder(
       column: $table.productId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get unitPrice => $composableBuilder(
@@ -8554,7 +8557,7 @@ class $$OrderItemsTableAnnotationComposer
   GeneratedColumn<int> get productId =>
       $composableBuilder(column: $table.productId, builder: (column) => column);
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get unitPrice =>
@@ -8593,7 +8596,7 @@ class $$OrderItemsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> orderId = const Value.absent(),
             Value<int> productId = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
             Value<double> unitPrice = const Value.absent(),
             Value<double> subtotal = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -8611,7 +8614,7 @@ class $$OrderItemsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int orderId,
             required int productId,
-            required int quantity,
+            required double quantity,
             required double unitPrice,
             required double subtotal,
             Value<DateTime> createdAt = const Value.absent(),
@@ -8653,9 +8656,9 @@ typedef $$OrderMaterialsTableCreateCompanionBuilder = OrderMaterialsCompanion
   Value<int> id,
   required int orderId,
   required int materialId,
-  required int plannedQuantity,
-  required int actualQuantity,
-  Value<int> wasteQuantity,
+  required double plannedQuantity,
+  required double actualQuantity,
+  Value<double> wasteQuantity,
   Value<String?> wasteReason,
   required double unitCost,
   Value<DateTime> createdAt,
@@ -8665,9 +8668,9 @@ typedef $$OrderMaterialsTableUpdateCompanionBuilder = OrderMaterialsCompanion
   Value<int> id,
   Value<int> orderId,
   Value<int> materialId,
-  Value<int> plannedQuantity,
-  Value<int> actualQuantity,
-  Value<int> wasteQuantity,
+  Value<double> plannedQuantity,
+  Value<double> actualQuantity,
+  Value<double> wasteQuantity,
   Value<String?> wasteReason,
   Value<double> unitCost,
   Value<DateTime> createdAt,
@@ -8691,15 +8694,15 @@ class $$OrderMaterialsTableFilterComposer
   ColumnFilters<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get plannedQuantity => $composableBuilder(
+  ColumnFilters<double> get plannedQuantity => $composableBuilder(
       column: $table.plannedQuantity,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get actualQuantity => $composableBuilder(
+  ColumnFilters<double> get actualQuantity => $composableBuilder(
       column: $table.actualQuantity,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get wasteQuantity => $composableBuilder(
+  ColumnFilters<double> get wasteQuantity => $composableBuilder(
       column: $table.wasteQuantity, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get wasteReason => $composableBuilder(
@@ -8730,15 +8733,15 @@ class $$OrderMaterialsTableOrderingComposer
   ColumnOrderings<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get plannedQuantity => $composableBuilder(
+  ColumnOrderings<double> get plannedQuantity => $composableBuilder(
       column: $table.plannedQuantity,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get actualQuantity => $composableBuilder(
+  ColumnOrderings<double> get actualQuantity => $composableBuilder(
       column: $table.actualQuantity,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get wasteQuantity => $composableBuilder(
+  ColumnOrderings<double> get wasteQuantity => $composableBuilder(
       column: $table.wasteQuantity,
       builder: (column) => ColumnOrderings(column));
 
@@ -8770,13 +8773,13 @@ class $$OrderMaterialsTableAnnotationComposer
   GeneratedColumn<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => column);
 
-  GeneratedColumn<int> get plannedQuantity => $composableBuilder(
+  GeneratedColumn<double> get plannedQuantity => $composableBuilder(
       column: $table.plannedQuantity, builder: (column) => column);
 
-  GeneratedColumn<int> get actualQuantity => $composableBuilder(
+  GeneratedColumn<double> get actualQuantity => $composableBuilder(
       column: $table.actualQuantity, builder: (column) => column);
 
-  GeneratedColumn<int> get wasteQuantity => $composableBuilder(
+  GeneratedColumn<double> get wasteQuantity => $composableBuilder(
       column: $table.wasteQuantity, builder: (column) => column);
 
   GeneratedColumn<String> get wasteReason => $composableBuilder(
@@ -8819,9 +8822,9 @@ class $$OrderMaterialsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> orderId = const Value.absent(),
             Value<int> materialId = const Value.absent(),
-            Value<int> plannedQuantity = const Value.absent(),
-            Value<int> actualQuantity = const Value.absent(),
-            Value<int> wasteQuantity = const Value.absent(),
+            Value<double> plannedQuantity = const Value.absent(),
+            Value<double> actualQuantity = const Value.absent(),
+            Value<double> wasteQuantity = const Value.absent(),
             Value<String?> wasteReason = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -8841,9 +8844,9 @@ class $$OrderMaterialsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int orderId,
             required int materialId,
-            required int plannedQuantity,
-            required int actualQuantity,
-            Value<int> wasteQuantity = const Value.absent(),
+            required double plannedQuantity,
+            required double actualQuantity,
+            Value<double> wasteQuantity = const Value.absent(),
             Value<String?> wasteReason = const Value.absent(),
             required double unitCost,
             Value<DateTime> createdAt = const Value.absent(),
@@ -8890,7 +8893,7 @@ typedef $$OrderProductsTableCreateCompanionBuilder = OrderProductsCompanion
   Value<int> id,
   required int orderId,
   required int productId,
-  required int quantity,
+  required double quantity,
   required double unitCost,
   Value<DateTime> createdAt,
 });
@@ -8899,7 +8902,7 @@ typedef $$OrderProductsTableUpdateCompanionBuilder = OrderProductsCompanion
   Value<int> id,
   Value<int> orderId,
   Value<int> productId,
-  Value<int> quantity,
+  Value<double> quantity,
   Value<double> unitCost,
   Value<DateTime> createdAt,
 });
@@ -8922,7 +8925,7 @@ class $$OrderProductsTableFilterComposer
   ColumnFilters<int> get productId => $composableBuilder(
       column: $table.productId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get unitCost => $composableBuilder(
@@ -8950,7 +8953,7 @@ class $$OrderProductsTableOrderingComposer
   ColumnOrderings<int> get productId => $composableBuilder(
       column: $table.productId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get unitCost => $composableBuilder(
@@ -8978,7 +8981,7 @@ class $$OrderProductsTableAnnotationComposer
   GeneratedColumn<int> get productId =>
       $composableBuilder(column: $table.productId, builder: (column) => column);
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get unitCost =>
@@ -9017,7 +9020,7 @@ class $$OrderProductsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> orderId = const Value.absent(),
             Value<int> productId = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
@@ -9033,7 +9036,7 @@ class $$OrderProductsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int orderId,
             required int productId,
-            required int quantity,
+            required double quantity,
             required double unitCost,
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
@@ -9075,12 +9078,12 @@ typedef $$MaterialsTableCreateCompanionBuilder = MaterialsCompanion Function({
   Value<int> id,
   required String name,
   Value<int> unitId,
-  required int packSize,
+  required double packSize,
   required double packPrice,
   required double unitCost,
-  Value<int> quantityOnHand,
-  Value<int> quantityPromised,
-  required int alertLevel,
+  Value<double> quantityOnHand,
+  Value<double> quantityPromised,
+  required double alertLevel,
   Value<String?> supplier,
   Value<DateTime?> lastReceivedAt,
   Value<bool> isArchived,
@@ -9091,12 +9094,12 @@ typedef $$MaterialsTableUpdateCompanionBuilder = MaterialsCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<int> unitId,
-  Value<int> packSize,
+  Value<double> packSize,
   Value<double> packPrice,
   Value<double> unitCost,
-  Value<int> quantityOnHand,
-  Value<int> quantityPromised,
-  Value<int> alertLevel,
+  Value<double> quantityOnHand,
+  Value<double> quantityPromised,
+  Value<double> alertLevel,
   Value<String?> supplier,
   Value<DateTime?> lastReceivedAt,
   Value<bool> isArchived,
@@ -9122,7 +9125,7 @@ class $$MaterialsTableFilterComposer
   ColumnFilters<int> get unitId => $composableBuilder(
       column: $table.unitId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get packSize => $composableBuilder(
+  ColumnFilters<double> get packSize => $composableBuilder(
       column: $table.packSize, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get packPrice => $composableBuilder(
@@ -9131,15 +9134,15 @@ class $$MaterialsTableFilterComposer
   ColumnFilters<double> get unitCost => $composableBuilder(
       column: $table.unitCost, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantityOnHand => $composableBuilder(
+  ColumnFilters<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantityPromised => $composableBuilder(
+  ColumnFilters<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get alertLevel => $composableBuilder(
+  ColumnFilters<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get supplier => $composableBuilder(
@@ -9177,7 +9180,7 @@ class $$MaterialsTableOrderingComposer
   ColumnOrderings<int> get unitId => $composableBuilder(
       column: $table.unitId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get packSize => $composableBuilder(
+  ColumnOrderings<double> get packSize => $composableBuilder(
       column: $table.packSize, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get packPrice => $composableBuilder(
@@ -9186,15 +9189,15 @@ class $$MaterialsTableOrderingComposer
   ColumnOrderings<double> get unitCost => $composableBuilder(
       column: $table.unitCost, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantityOnHand => $composableBuilder(
+  ColumnOrderings<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantityPromised => $composableBuilder(
+  ColumnOrderings<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get alertLevel => $composableBuilder(
+  ColumnOrderings<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get supplier => $composableBuilder(
@@ -9232,7 +9235,7 @@ class $$MaterialsTableAnnotationComposer
   GeneratedColumn<int> get unitId =>
       $composableBuilder(column: $table.unitId, builder: (column) => column);
 
-  GeneratedColumn<int> get packSize =>
+  GeneratedColumn<double> get packSize =>
       $composableBuilder(column: $table.packSize, builder: (column) => column);
 
   GeneratedColumn<double> get packPrice =>
@@ -9241,13 +9244,13 @@ class $$MaterialsTableAnnotationComposer
   GeneratedColumn<double> get unitCost =>
       $composableBuilder(column: $table.unitCost, builder: (column) => column);
 
-  GeneratedColumn<int> get quantityOnHand => $composableBuilder(
+  GeneratedColumn<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand, builder: (column) => column);
 
-  GeneratedColumn<int> get quantityPromised => $composableBuilder(
+  GeneratedColumn<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised, builder: (column) => column);
 
-  GeneratedColumn<int> get alertLevel => $composableBuilder(
+  GeneratedColumn<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => column);
 
   GeneratedColumn<String> get supplier =>
@@ -9292,12 +9295,12 @@ class $$MaterialsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<int> unitId = const Value.absent(),
-            Value<int> packSize = const Value.absent(),
+            Value<double> packSize = const Value.absent(),
             Value<double> packPrice = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
-            Value<int> quantityOnHand = const Value.absent(),
-            Value<int> quantityPromised = const Value.absent(),
-            Value<int> alertLevel = const Value.absent(),
+            Value<double> quantityOnHand = const Value.absent(),
+            Value<double> quantityPromised = const Value.absent(),
+            Value<double> alertLevel = const Value.absent(),
             Value<String?> supplier = const Value.absent(),
             Value<DateTime?> lastReceivedAt = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
@@ -9324,12 +9327,12 @@ class $$MaterialsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required String name,
             Value<int> unitId = const Value.absent(),
-            required int packSize,
+            required double packSize,
             required double packPrice,
             required double unitCost,
-            Value<int> quantityOnHand = const Value.absent(),
-            Value<int> quantityPromised = const Value.absent(),
-            required int alertLevel,
+            Value<double> quantityOnHand = const Value.absent(),
+            Value<double> quantityPromised = const Value.absent(),
+            required double alertLevel,
             Value<String?> supplier = const Value.absent(),
             Value<DateTime?> lastReceivedAt = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
@@ -9383,10 +9386,10 @@ typedef $$ProductsTableCreateCompanionBuilder = ProductsCompanion Function({
   Value<int> unitId,
   Value<bool> isArchived,
   Value<bool> isStandalone,
-  Value<int> quantityOnHand,
-  Value<int> quantityPromised,
+  Value<double> quantityOnHand,
+  Value<double> quantityPromised,
   Value<double> unitCost,
-  Value<int> alertLevel,
+  Value<double> alertLevel,
   Value<Uint8List?> photo,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -9399,10 +9402,10 @@ typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<int> unitId,
   Value<bool> isArchived,
   Value<bool> isStandalone,
-  Value<int> quantityOnHand,
-  Value<int> quantityPromised,
+  Value<double> quantityOnHand,
+  Value<double> quantityPromised,
   Value<double> unitCost,
-  Value<int> alertLevel,
+  Value<double> alertLevel,
   Value<Uint8List?> photo,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -9438,18 +9441,18 @@ class $$ProductsTableFilterComposer
   ColumnFilters<bool> get isStandalone => $composableBuilder(
       column: $table.isStandalone, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantityOnHand => $composableBuilder(
+  ColumnFilters<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantityPromised => $composableBuilder(
+  ColumnFilters<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get unitCost => $composableBuilder(
       column: $table.unitCost, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get alertLevel => $composableBuilder(
+  ColumnFilters<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<Uint8List> get photo => $composableBuilder(
@@ -9493,18 +9496,18 @@ class $$ProductsTableOrderingComposer
       column: $table.isStandalone,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantityOnHand => $composableBuilder(
+  ColumnOrderings<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantityPromised => $composableBuilder(
+  ColumnOrderings<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get unitCost => $composableBuilder(
       column: $table.unitCost, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get alertLevel => $composableBuilder(
+  ColumnOrderings<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<Uint8List> get photo => $composableBuilder(
@@ -9547,16 +9550,16 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<bool> get isStandalone => $composableBuilder(
       column: $table.isStandalone, builder: (column) => column);
 
-  GeneratedColumn<int> get quantityOnHand => $composableBuilder(
+  GeneratedColumn<double> get quantityOnHand => $composableBuilder(
       column: $table.quantityOnHand, builder: (column) => column);
 
-  GeneratedColumn<int> get quantityPromised => $composableBuilder(
+  GeneratedColumn<double> get quantityPromised => $composableBuilder(
       column: $table.quantityPromised, builder: (column) => column);
 
   GeneratedColumn<double> get unitCost =>
       $composableBuilder(column: $table.unitCost, builder: (column) => column);
 
-  GeneratedColumn<int> get alertLevel => $composableBuilder(
+  GeneratedColumn<double> get alertLevel => $composableBuilder(
       column: $table.alertLevel, builder: (column) => column);
 
   GeneratedColumn<Uint8List> get photo =>
@@ -9599,10 +9602,10 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<int> unitId = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
             Value<bool> isStandalone = const Value.absent(),
-            Value<int> quantityOnHand = const Value.absent(),
-            Value<int> quantityPromised = const Value.absent(),
+            Value<double> quantityOnHand = const Value.absent(),
+            Value<double> quantityPromised = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
-            Value<int> alertLevel = const Value.absent(),
+            Value<double> alertLevel = const Value.absent(),
             Value<Uint8List?> photo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -9631,10 +9634,10 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<int> unitId = const Value.absent(),
             Value<bool> isArchived = const Value.absent(),
             Value<bool> isStandalone = const Value.absent(),
-            Value<int> quantityOnHand = const Value.absent(),
-            Value<int> quantityPromised = const Value.absent(),
+            Value<double> quantityOnHand = const Value.absent(),
+            Value<double> quantityPromised = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
-            Value<int> alertLevel = const Value.absent(),
+            Value<double> alertLevel = const Value.absent(),
             Value<Uint8List?> photo = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -9682,16 +9685,16 @@ typedef $$BomItemsTableCreateCompanionBuilder = BomItemsCompanion Function({
   Value<int> id,
   required int productId,
   required int materialId,
-  required int quantityRequired,
-  Value<int> makes,
+  required double quantityRequired,
+  Value<double> makes,
   Value<DateTime> createdAt,
 });
 typedef $$BomItemsTableUpdateCompanionBuilder = BomItemsCompanion Function({
   Value<int> id,
   Value<int> productId,
   Value<int> materialId,
-  Value<int> quantityRequired,
-  Value<int> makes,
+  Value<double> quantityRequired,
+  Value<double> makes,
   Value<DateTime> createdAt,
 });
 
@@ -9713,11 +9716,11 @@ class $$BomItemsTableFilterComposer
   ColumnFilters<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantityRequired => $composableBuilder(
+  ColumnFilters<double> get quantityRequired => $composableBuilder(
       column: $table.quantityRequired,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get makes => $composableBuilder(
+  ColumnFilters<double> get makes => $composableBuilder(
       column: $table.makes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -9742,11 +9745,11 @@ class $$BomItemsTableOrderingComposer
   ColumnOrderings<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantityRequired => $composableBuilder(
+  ColumnOrderings<double> get quantityRequired => $composableBuilder(
       column: $table.quantityRequired,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get makes => $composableBuilder(
+  ColumnOrderings<double> get makes => $composableBuilder(
       column: $table.makes, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
@@ -9771,10 +9774,10 @@ class $$BomItemsTableAnnotationComposer
   GeneratedColumn<int> get materialId => $composableBuilder(
       column: $table.materialId, builder: (column) => column);
 
-  GeneratedColumn<int> get quantityRequired => $composableBuilder(
+  GeneratedColumn<double> get quantityRequired => $composableBuilder(
       column: $table.quantityRequired, builder: (column) => column);
 
-  GeneratedColumn<int> get makes =>
+  GeneratedColumn<double> get makes =>
       $composableBuilder(column: $table.makes, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
@@ -9807,8 +9810,8 @@ class $$BomItemsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> productId = const Value.absent(),
             Value<int> materialId = const Value.absent(),
-            Value<int> quantityRequired = const Value.absent(),
-            Value<int> makes = const Value.absent(),
+            Value<double> quantityRequired = const Value.absent(),
+            Value<double> makes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               BomItemsCompanion(
@@ -9823,8 +9826,8 @@ class $$BomItemsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int productId,
             required int materialId,
-            required int quantityRequired,
-            Value<int> makes = const Value.absent(),
+            required double quantityRequired,
+            Value<double> makes = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               BomItemsCompanion.insert(
@@ -10256,7 +10259,7 @@ typedef $$StockMovementsTableCreateCompanionBuilder = StockMovementsCompanion
   required int materialId,
   Value<int?> orderId,
   required String type,
-  required int quantity,
+  required double quantity,
   required double unitCost,
   Value<DateTime> createdAt,
   Value<String?> reference,
@@ -10267,7 +10270,7 @@ typedef $$StockMovementsTableUpdateCompanionBuilder = StockMovementsCompanion
   Value<int> materialId,
   Value<int?> orderId,
   Value<String> type,
-  Value<int> quantity,
+  Value<double> quantity,
   Value<double> unitCost,
   Value<DateTime> createdAt,
   Value<String?> reference,
@@ -10294,7 +10297,7 @@ class $$StockMovementsTableFilterComposer
   ColumnFilters<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get unitCost => $composableBuilder(
@@ -10328,7 +10331,7 @@ class $$StockMovementsTableOrderingComposer
   ColumnOrderings<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get unitCost => $composableBuilder(
@@ -10362,7 +10365,7 @@ class $$StockMovementsTableAnnotationComposer
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get unitCost =>
@@ -10406,7 +10409,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             Value<int> materialId = const Value.absent(),
             Value<int?> orderId = const Value.absent(),
             Value<String> type = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> reference = const Value.absent(),
@@ -10426,7 +10429,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             required int materialId,
             Value<int?> orderId = const Value.absent(),
             required String type,
-            required int quantity,
+            required double quantity,
             required double unitCost,
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> reference = const Value.absent(),
@@ -10473,7 +10476,7 @@ typedef $$ProductStockMovementsTableCreateCompanionBuilder
   required int productId,
   Value<int?> orderId,
   required String type,
-  required int quantity,
+  required double quantity,
   required double unitCost,
   Value<DateTime> createdAt,
   Value<String?> reference,
@@ -10484,7 +10487,7 @@ typedef $$ProductStockMovementsTableUpdateCompanionBuilder
   Value<int> productId,
   Value<int?> orderId,
   Value<String> type,
-  Value<int> quantity,
+  Value<double> quantity,
   Value<double> unitCost,
   Value<DateTime> createdAt,
   Value<String?> reference,
@@ -10511,7 +10514,7 @@ class $$ProductStockMovementsTableFilterComposer
   ColumnFilters<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get quantity => $composableBuilder(
+  ColumnFilters<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get unitCost => $composableBuilder(
@@ -10545,7 +10548,7 @@ class $$ProductStockMovementsTableOrderingComposer
   ColumnOrderings<String> get type => $composableBuilder(
       column: $table.type, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get quantity => $composableBuilder(
+  ColumnOrderings<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get unitCost => $composableBuilder(
@@ -10579,7 +10582,7 @@ class $$ProductStockMovementsTableAnnotationComposer
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
-  GeneratedColumn<int> get quantity =>
+  GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
   GeneratedColumn<double> get unitCost =>
@@ -10627,7 +10630,7 @@ class $$ProductStockMovementsTableTableManager extends RootTableManager<
             Value<int> productId = const Value.absent(),
             Value<int?> orderId = const Value.absent(),
             Value<String> type = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
             Value<double> unitCost = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> reference = const Value.absent(),
@@ -10647,7 +10650,7 @@ class $$ProductStockMovementsTableTableManager extends RootTableManager<
             required int productId,
             Value<int?> orderId = const Value.absent(),
             required String type,
-            required int quantity,
+            required double quantity,
             required double unitCost,
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> reference = const Value.absent(),

@@ -46,11 +46,11 @@ class CreateMaterialEvent extends MaterialsEvent {
 
   /// What it's counted in; null leaves it on the shop's default unit.
   final int? unitId;
-  final int packSize;
+  final double packSize;
   final double packPrice;
-  final int alertLevel;
+  final double alertLevel;
   final String? supplier;
-  final int initialQuantity;
+  final double initialQuantity;
 
   const CreateMaterialEvent({
     required this.name,
@@ -79,9 +79,9 @@ class UpdateMaterialEvent extends MaterialsEvent {
   final int id;
   final String name;
   final int? unitId;
-  final int packSize;
+  final double packSize;
   final double packPrice;
-  final int alertLevel;
+  final double alertLevel;
   final String? supplier;
 
   const UpdateMaterialEvent({

@@ -64,7 +64,7 @@ class MaterialCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '${m.quantityOnHand}',
+                QuantityFormatter.format(m.quantityOnHand),
                 style: AppTextStyles.amount
                     .copyWith(color: low ? c.alert : c.ink, fontSize: 19),
               ),

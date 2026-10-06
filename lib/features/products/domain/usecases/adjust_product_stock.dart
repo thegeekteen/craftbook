@@ -10,7 +10,7 @@ class AdjustProductStock {
 
   Future<Result<void>> call({
     required int productId,
-    required int newQuantityOnHand,
+    required double newQuantityOnHand,
   }) async {
     if (newQuantityOnHand < 0) {
       return const Error(

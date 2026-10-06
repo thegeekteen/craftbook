@@ -7,7 +7,7 @@ class StockMovements extends Table {
   IntColumn get orderId => integer().nullable()();
   TextColumn get type =>
       text()(); // 'received', 'deducted', 'adjusted', 'waste'
-  IntColumn get quantity => integer()();
+  RealColumn get quantity => real()();
   RealColumn get unitCost => real()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get reference => text().nullable()();

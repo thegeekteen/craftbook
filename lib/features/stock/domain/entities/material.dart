@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/quantity.dart';
 
 /// Material entity
 class Material extends Equatable {
@@ -12,12 +13,14 @@ class Material extends Equatable {
 
   /// The unit's label, looked up with it. Rendered as typed, never pluralised.
   final String unit;
-  final int packSize;
+
+  /// Fractions are real stock: a Bubble Head uses 1.25 boards.
+  final double packSize;
   final double packPrice;
   final double unitCost;
-  final int quantityOnHand;
-  final int quantityPromised;
-  final int alertLevel;
+  final double quantityOnHand;
+  final double quantityPromised;
+  final double alertLevel;
   final String? supplier;
   final DateTime? lastReceivedAt;
 
@@ -44,7 +47,7 @@ class Material extends Equatable {
     required this.updatedAt,
   });
 
-  int get quantityFree => quantityOnHand - quantityPromised;
+  double get quantityFree => qty(quantityOnHand - quantityPromised);
 
   bool get isLowStock => quantityOnHand <= alertLevel;
 
@@ -72,12 +75,12 @@ class Material extends Equatable {
     String? name,
     int? unitId,
     String? unit,
-    int? packSize,
+    double? packSize,
     double? packPrice,
     double? unitCost,
-    int? quantityOnHand,
-    int? quantityPromised,
-    int? alertLevel,
+    double? quantityOnHand,
+    double? quantityPromised,
+    double? alertLevel,
     String? supplier,
     DateTime? lastReceivedAt,
     bool? isArchived,

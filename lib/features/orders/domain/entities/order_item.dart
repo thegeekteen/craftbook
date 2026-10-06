@@ -15,7 +15,7 @@ class OrderItem extends Equatable {
   /// is stored on the order, so a renamed unit reaches past orders too.
   final Uint8List? productPhoto;
   final String unit;
-  final int quantity;
+  final double quantity;
   final double unitPrice;
   final double subtotal;
 
@@ -49,7 +49,7 @@ class OrderItem extends Equatable {
 class OrderItemInput extends Equatable {
   final int productId;
   final String productName;
-  final int quantity;
+  final double quantity;
   final double unitPrice;
 
   /// For display while building the order; never saved with it.
@@ -65,7 +65,7 @@ class OrderItemInput extends Equatable {
 
   double get subtotal => quantity * unitPrice;
 
-  OrderItemInput copyWith({int? quantity}) => OrderItemInput(
+  OrderItemInput copyWith({double? quantity}) => OrderItemInput(
         productId: productId,
         productName: productName,
         quantity: quantity ?? this.quantity,

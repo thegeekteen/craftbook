@@ -17,7 +17,7 @@ class UpdateProduct {
     int? unitId,
     bool? isArchived,
     bool? isStandalone,
-    int? alertLevel,
+    double? alertLevel,
   }) {
     if (name != null && name.trim().isEmpty) {
       return Future.value(const Error(ValidationFailure('Enter a name')));

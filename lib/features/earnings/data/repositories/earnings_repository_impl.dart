@@ -90,7 +90,7 @@ class EarningsRepositoryImpl implements EarningsRepository {
       final orders = await _orders(startDate, endDate, filter);
       final info = await dao.getProductInfo(
           [for (final o in orders) ...o.items.map((i) => i.productId)]);
-      final byProduct = <int, ({int qty, double sales, double profit})>{};
+      final byProduct = <int, ({double qty, double sales, double profit})>{};
       for (final o in orders) {
         for (final item in o.items) {
           final prev =
@@ -130,7 +130,7 @@ class EarningsRepositoryImpl implements EarningsRepository {
       // sales and profit.
       final lines =
           await dao.getMaterialsForOrders(orders.map((o) => o.order.id!));
-      final byMaterial = <int, ({int qty, double cost})>{};
+      final byMaterial = <int, ({double qty, double cost})>{};
       for (final m in lines) {
         if (m.wasteQuantity <= 0) continue;
         final prev = byMaterial[m.materialId] ?? (qty: 0, cost: 0.0);
@@ -149,8 +149,8 @@ class EarningsRepositoryImpl implements EarningsRepository {
               cost: v.cost),
       ]..sort((a, b) => b.cost.compareTo(a.cost));
       return Success(WasteSummary(
-        totalWasteQuantity: items.fold(0, (s, w) => s + w.quantity),
-        totalWasteCost: items.fold(0, (s, w) => s + w.cost),
+        totalWasteQuantity: items.fold(0.0, (s, w) => s + w.quantity),
+        totalWasteCost: items.fold(0.0, (s, w) => s + w.cost),
         items: items,
       ));
     } catch (e) {

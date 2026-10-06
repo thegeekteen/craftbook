@@ -20,17 +20,17 @@ class Product extends Equatable {
   /// Kept for past orders but left out of lists, pickers and alerts.
   final bool isArchived;
   final bool isStandalone;
-  final int quantityOnHand;
-  final int quantityPromised;
+  final double quantityOnHand;
+  final double quantityPromised;
   final double unitCost;
-  final int alertLevel;
+  final double alertLevel;
 
   /// Encoded image bytes (JPEG/PNG), or null when no photo is set.
   final Uint8List? photo;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  int get quantityFree => quantityOnHand - quantityPromised;
+  double get quantityFree => quantityOnHand - quantityPromised;
   bool get isLowStock =>
       isStandalone && alertLevel > 0 && quantityOnHand <= alertLevel;
 
@@ -80,10 +80,10 @@ class Product extends Equatable {
     String? unit,
     bool? isArchived,
     bool? isStandalone,
-    int? quantityOnHand,
-    int? quantityPromised,
+    double? quantityOnHand,
+    double? quantityPromised,
     double? unitCost,
-    int? alertLevel,
+    double? alertLevel,
     Uint8List? photo,
     bool clearPhoto = false,
     DateTime? createdAt,

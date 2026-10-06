@@ -67,7 +67,7 @@ class EarningsSummary extends Equatable {
 }
 
 class WasteSummary extends Equatable {
-  final int totalWasteQuantity;
+  final double totalWasteQuantity;
   final double totalWasteCost;
   final List<WasteItem> items;
 
@@ -87,7 +87,7 @@ class WasteItem extends Equatable {
   /// The material's unit label, so the amount wasted reads as "2 pc" or
   /// "0.5 m" rather than a bare number.
   final String unit;
-  final int quantity;
+  final double quantity;
   final double cost;
 
   const WasteItem({

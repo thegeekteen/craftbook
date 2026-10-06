@@ -7,7 +7,7 @@ class AdjustStock {
 
   AdjustStock(this.repository);
 
-  Future<Result<void>> call(int materialId, int newQuantityOnHand) async {
+  Future<Result<void>> call(int materialId, double newQuantityOnHand) async {
     if (newQuantityOnHand < 0) {
       return const Error(ValidationFailure('Quantity cannot be negative'));
     }

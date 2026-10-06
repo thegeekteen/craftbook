@@ -12,7 +12,7 @@ Widget _wrap(Widget child) => MaterialApp(
       home: Scaffold(body: child),
     );
 
-StockHistoryEntry _stock(ProductStockMovementType type, int qty,
+StockHistoryEntry _stock(ProductStockMovementType type, double qty,
         {String? reference}) =>
     StockHistoryEntry(ProductStockMovement(
       productId: 1,

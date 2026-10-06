@@ -103,7 +103,7 @@ void main() {
 
   tearDown(() => db.close());
 
-  OrderItemInput line(int productId, String name, int qty, double price) =>
+  OrderItemInput line(int productId, String name, double qty, double price) =>
       OrderItemInput(
           productId: productId,
           productName: name,
@@ -142,7 +142,7 @@ void main() {
         items: items,
       );
 
-  Future<int> promisedYarn() async =>
+  Future<double> promisedYarn() async =>
       ok(await materials.getMaterialById(yarn))!.quantityPromised;
 
   group('pending orders', () {

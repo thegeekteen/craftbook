@@ -98,7 +98,8 @@ The app is built around 6 main user flows:
 | Archive products & materials | ✅ | Long press → Archive. Archived items leave the lists (an Archived chip shows them), pickers, low-stock alerts and the buy list, but stay on past orders and earnings. Replaced the product's "Show in new orders" switch; hidden products were migrated to archived in schema v8. Delete still works when nothing blocks it: a material is blocked only by a BOM or an order, not by its stock history |
 | Receive stock | ✅ | Packs + price, weighted avg cost preview, read-only pack size |
 | Products list | ✅ | Search, margin display |
-| Product/BOM editor | ✅ | Material stepper inputs, BOM management. Each line has **Uses** and **Makes** (schema v10), so 1 sheet can make 9 cards: cost per product is uses × cost ÷ makes, orders reserve whole pieces (rounded up) |
+| Product/BOM editor | ✅ | Material stepper inputs, BOM management. Each line has **Uses** and **Makes** (schema v10), so 1 sheet can make 9 cards: cost per product is uses × cost ÷ makes. Uses and Makes accept fractions (schema v12) |
+| Fractional quantities | ✅ | Stock, alert levels, pack sizes, BOM uses/makes, order lines, reservations, waste and history are REAL rounded to 3 decimals on write (`qty()`/`sameQty()` in `core/utils/quantity.dart`). Orders reserve the exact fraction a line needs; buildable is unrounded for the low/short checks and floored for display. Added in schema v12 |
 | Channels & fees | ✅ | CRUD with edit dialog, delete with confirmation |
 | Delete materials | ✅ | Blocked if in BOM or has stock movements |
 | Delete products | ✅ | Blocked if in orders or has BOM items |

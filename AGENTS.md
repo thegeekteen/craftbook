@@ -165,7 +165,7 @@ erDiagram
    ```
    min(free × bom_item.makes ÷ bom_item.quantity_required) for all BOM items
    ```
-   A BOM line is "`quantity_required` pieces make `makes` products" (schema v10, default 1), e.g. 1 sheet makes 9 cards. Cost per product is `BomItem.lineCost` (÷ makes); an order line reserves `BomItem.piecesFor(qty)`, rounded up to whole pieces because stock is counted in whole pieces. Use those helpers rather than multiplying `quantityRequired` by hand.
+   A BOM line is "`quantity_required` of the material make `makes` products" (schema v10, default 1), e.g. 1 sheet makes 9 cards. Cost per product is `BomItem.lineCost` (÷ makes); an order line reserves `BomItem.piecesFor(qty)`, the **exact fraction** (a card takes a ninth of a sheet, not a whole one), rounded to the stored precision. `calculateBuildableQuantity` returns the unrounded value: the low/short checks compare it against the alert level as-is, while cards and pickers floor it for BOM products (you can't pack 0.7 of a thing) and show it raw for resell. Use those helpers rather than multiplying `quantityRequired` by hand.
 
 7. **Safe Deletion**: Orders blocked when shipped. Materials blocked when used in a BOM or in any order; their stock history goes with them. Products blocked when in orders or have BOM items; their stock history goes with them too. Channels blocked when orders reference them.
 
@@ -180,6 +180,8 @@ erDiagram
 12. **Tax**: Settings hold enabled/onByDefault/rate/inclusive/label. `enabled` gives every order a tax switch (`TaxSettings.available`); `onByDefault` decides whether a new order starts with it on (`TaxSettings.forNewOrder`). The order stores its own `tax_rate`, `tax_inclusive` and `tax_amount` (null rate = no tax), so changing the setting never rewrites old orders. Tax included in prices reduces profit; tax added on top is passed through and doesn't.
 
 13. **Paid status**: `orders.is_paid` / `paid_at`. A new order's default comes from its channel's `paid_by_default` (there's no global default, because every order has a channel). `SetOrderPaid` works at any status except cancelled. Unpaid orders still count toward profit in reports; `EarningsSummary.unpaidTotal` shows how much of it is owed. Receivables are all-time, not tied to a report period.
+
+14. **Fractional quantities**: every quantity (stock on hand and promised, alert levels, pack sizes, BOM uses and makes, order lines, reservations, waste, stock history) is a `double` rounded to 3 decimals on write — schema v12. Wrap every stored or compared quantity in `qty()` / `sameQty()` (`lib/core/utils/quantity.dart`): raw `==` on doubles would call 0.999 and 1.0 different and let float hair accumulate across reserve/release cycles. Counts *of things* (packs to order, pending orders, low-stock counts, order line counts) stay `int`. `StepperInput` takes `decimals: quantityDecimals` where fractions are allowed; the +/- buttons still step by 1 and fractions are typed.
 
 ---
 
@@ -375,7 +377,7 @@ switch (result) {
 
 ## Database Migrations
 
-The schema is at **v11** (units of measure). Every schema change must:
+The schema is at **v12** (fractional quantities). Every schema change must:
 1. Increment `currentSchemaVersion` in `app_database.dart`
 2. Add an `if (from < N)` step in `migrations.dart`, matching what Drift would create. Raw SQL is fine for `CREATE TABLE`/`ALTER TABLE ADD COLUMN`; when a step has to *change* a column (type, constraint) or add a NOT NULL column without a literal default, prefer `Migrator.createTable` / `Migrator.alterTable(TableMigration(...))` — they build their statements from the Drift table definitions, so an upgraded database and a fresh one stay byte-identical (v11 does this; `migration_v11_test` asserts the parity)
 3. Handle data preservation during migration

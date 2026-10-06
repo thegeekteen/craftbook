@@ -1,5 +1,6 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity.dart';
 import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../stock/domain/repositories/material_repository.dart';
@@ -268,7 +269,7 @@ class UpdateOrder {
     final match = old
         .where((o) =>
             o.materialId == fresh.materialId &&
-            o.plannedQuantity == fresh.plannedQuantity)
+            sameQty(o.plannedQuantity, fresh.plannedQuantity))
         .firstOrNull;
     if (match == null) return null;
     return OrderMaterialInput(
@@ -286,7 +287,8 @@ class UpdateOrder {
       OrderProductInput fresh, List<OrderProduct> old) {
     final match = old
         .where((o) =>
-            o.productId == fresh.productId && o.quantity == fresh.quantity)
+            o.productId == fresh.productId &&
+            sameQty(o.quantity, fresh.quantity))
         .firstOrNull;
     if (match == null) return null;
     return OrderProductInput(

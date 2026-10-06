@@ -236,6 +236,25 @@ Future<void> runMigrations(
       newColumns: [db.products.unitId],
     ));
   }
+
+  // Version 12: quantities become fractional. A Bubble Head really uses 1.25
+  // boards and a business card a ninth of a sheet, so stock, BOM lines, order
+  // lines and the history are REAL. alterTable rebuilds each table from its
+  // Drift definition, which converts the stored integers losslessly.
+  if (from < 12) {
+    for (final table in <TableInfo>[
+      db.materials,
+      db.products,
+      db.bomItems,
+      db.orderMaterials,
+      db.orderItems,
+      db.orderProducts,
+      db.stockMovements,
+      db.productStockMovements,
+    ]) {
+      await m.alterTable(TableMigration(table));
+    }
+  }
 }
 
 /// Fills an empty `units` table with the built-in list and returns the id new

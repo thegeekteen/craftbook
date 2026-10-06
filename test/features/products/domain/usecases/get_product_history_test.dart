@@ -12,7 +12,7 @@ import 'package:mocktail/mocktail.dart';
 class MockProductRepository extends Mock implements ProductRepository {}
 
 ProductStockMovement _move(ProductStockMovementType type, DateTime at,
-        {int qty = 3}) =>
+        {double qty = 3}) =>
     ProductStockMovement(
         productId: 1, type: type, quantity: qty, unitCost: 28, createdAt: at);
 

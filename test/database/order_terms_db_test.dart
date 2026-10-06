@@ -90,8 +90,12 @@ void main() {
 
   tearDown(() => db.close());
 
-  OrderItemInput line(int productId, int qty, double price) => OrderItemInput(
-      productId: productId, productName: 'P', quantity: qty, unitPrice: price);
+  OrderItemInput line(int productId, double qty, double price) =>
+      OrderItemInput(
+          productId: productId,
+          productName: 'P',
+          quantity: qty,
+          unitPrice: price);
 
   /// Saves an order the way the new-order screen does.
   Future<int> create(

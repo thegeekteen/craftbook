@@ -19,10 +19,10 @@ class Products extends Table {
   /// pickers, alerts and the buy list.
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   BoolColumn get isStandalone => boolean().withDefault(const Constant(false))();
-  IntColumn get quantityOnHand => integer().withDefault(const Constant(0))();
-  IntColumn get quantityPromised => integer().withDefault(const Constant(0))();
+  RealColumn get quantityOnHand => real().withDefault(const Constant(0))();
+  RealColumn get quantityPromised => real().withDefault(const Constant(0))();
   RealColumn get unitCost => real().withDefault(const Constant(0.0))();
-  IntColumn get alertLevel => integer().withDefault(const Constant(0))();
+  RealColumn get alertLevel => real().withDefault(const Constant(0))();
 
   /// Resized JPEG. Kept in the database so a raw sqlite backup carries it.
   BlobColumn get photo => blob().nullable()();

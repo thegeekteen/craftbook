@@ -92,8 +92,10 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Calculate buildable quantity for product.
   /// For standalone products, returns quantityFree (on hand - promised).
-  /// For BOM products, returns min(material available / required) across all BOM items.
-  Future<int> calculateBuildableQuantity(int productId) async {
+  /// For BOM products, returns min(material available / required) across all
+  /// BOM items, unrounded: callers floor it for display, but the raw value is
+  /// what the low and short checks compare against the alert level.
+  Future<double> calculateBuildableQuantity(int productId) async {
     final product = await getProductById(productId);
     if (product == null) return 0;
 
@@ -104,7 +106,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
     final bomItems = await getBomItems(productId);
     if (bomItems.isEmpty) return 0;
 
-    int minBuildable = double.maxFinite.toInt();
+    double? minBuildable;
 
     for (final bomItem in bomItems) {
       final material = await getMaterialById(bomItem.materialId);
@@ -112,14 +114,14 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
       final available = material.quantityOnHand - material.quantityPromised;
       // One piece can make several products (a sheet makes 9 cards).
-      final buildable = available * bomItem.makes ~/ bomItem.quantityRequired;
+      final buildable = available * bomItem.makes / bomItem.quantityRequired;
 
-      if (buildable < minBuildable) {
+      if (minBuildable == null || buildable < minBuildable) {
         minBuildable = buildable;
       }
     }
 
-    return minBuildable == double.maxFinite.toInt() ? 0 : minBuildable;
+    return minBuildable ?? 0;
   }
 
   /// How many pending orders each product appears in, by product id.
@@ -160,7 +162,7 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
 
   /// Update product stock quantities
   Future<int> updateProductStock(
-      int id, int quantityOnHand, int quantityPromised) {
+      int id, double quantityOnHand, double quantityPromised) {
     return (update(products)..where((t) => t.id.equals(id))).write(
       ProductsCompanion(
         quantityOnHand: Value(quantityOnHand),

@@ -37,7 +37,8 @@ void main() {
   late MockGetPendingOrderCounts pending;
   final now = DateTime(2026, 1, 1);
 
-  Product product(int id, {bool standalone = false, int onHand = 0}) => Product(
+  Product product(int id, {bool standalone = false, double onHand = 0}) =>
+      Product(
         id: id,
         name: 'P$id',
         sellPrice: 100,

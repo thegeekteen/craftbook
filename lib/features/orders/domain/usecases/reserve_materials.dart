@@ -6,7 +6,7 @@ class ReserveMaterials {
 
   ReserveMaterials(this.repository);
 
-  Future<Result<void>> call(int materialId, int quantity) {
+  Future<Result<void>> call(int materialId, double quantity) {
     return repository.reserveMaterials(materialId, quantity);
   }
 }

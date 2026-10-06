@@ -18,10 +18,10 @@ class BuyListItem extends Equatable {
 
   /// What the quantities are counted in: the material's or product's unit.
   final String unit;
-  final int quantityOnHand;
-  final int quantityPromised;
-  final int alertLevel;
-  final int packSize;
+  final double quantityOnHand;
+  final double quantityPromised;
+  final double alertLevel;
+  final double packSize;
   final double packPrice;
   final int packsToOrder;
   final List<BlockedProduct> blockedProducts;
@@ -50,7 +50,7 @@ class BuyListItem extends Equatable {
       ? ownOpenOrders
       : blockedProducts.fold(0, (s, p) => s + p.openOrderCount);
 
-  int get quantityFree => quantityOnHand - quantityPromised;
+  double get quantityFree => quantityOnHand - quantityPromised;
   double get totalCost => packsToOrder * packPrice;
   bool get isCritical => quantityFree <= 0;
 
@@ -74,7 +74,9 @@ class BuyListItem extends Equatable {
 class BlockedProduct extends Equatable {
   final int productId;
   final String productName;
-  final int buildableQuantity;
+
+  /// How many the materials on hand can build right now, unrounded.
+  final double buildableQuantity;
   final int openOrderCount;
 
   const BlockedProduct({

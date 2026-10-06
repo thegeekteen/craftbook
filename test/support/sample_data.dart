@@ -109,10 +109,10 @@ Future<void> seedSampleShop() async {
 
   Future<int> material(
     String name,
-    int pack,
+    double pack,
     double price,
-    int onHand,
-    int alert, [
+    double onHand,
+    double alert, [
     String? supplier,
     String unit = 'pc',
   ]) async =>
@@ -132,7 +132,7 @@ Future<void> seedSampleShop() async {
   final wire = await material('Floral wire 18g', 20, 80, 80, 15);
   // Bought by the metre and by weight, so the screenshots show units other
   // than pieces.
-  final wrap = await material('Cellophane wrap', 10, 260, 14, 5, null, 'm');
+  final wrap = await material('Cellophane wrap', 10, 260, 14.5, 5, null, 'm');
   final beads = await material(
       'Glass seed beads 2mm', 50, 120, 16, 10, 'Divisoria Beads', 'g');
   final rings = await material('Jump rings 6mm', 100, 80, 48, 20);
@@ -141,7 +141,7 @@ Future<void> seedSampleShop() async {
   final resin = await material('Resin keychain kit', 5, 350, 6, 3);
   await material('Jute cord 4mm', 10, 220, 0, 5, null, 'm');
 
-  Future<int> product(String name, double price, Map<int, int> bom,
+  Future<int> product(String name, double price, Map<int, double> bom,
       [String unit = 'pc']) async {
     final id = _ok(await products.createProduct(
         name: name, sellPrice: price, unitId: unitId(unit)));
@@ -152,8 +152,8 @@ Future<void> seedSampleShop() async {
     return id;
   }
 
-  final tulip =
-      await product('Crochet tulip bouquet', 450, {yarn: 3, wire: 7, wrap: 1});
+  final tulip = await product(
+      'Crochet tulip bouquet', 450, {yarn: 3, wire: 7, wrap: 0.5});
   // One product with a photo, the rest show their initial.
   _ok(await products.setProductPhoto(tulip, await drawSamplePhoto()));
   final strap = await product(
@@ -201,7 +201,7 @@ Future<void> seedSampleShop() async {
   final ship = getIt<ShipOrder>();
   final orderRepo = getIt<OrderRepository>();
 
-  OrderItemInput item(int id, String name, int qty, double price) =>
+  OrderItemInput item(int id, String name, double qty, double price) =>
       OrderItemInput(
           productId: id, productName: name, quantity: qty, unitPrice: price);
 

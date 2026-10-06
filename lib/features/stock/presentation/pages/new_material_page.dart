@@ -137,7 +137,7 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   }
 
   double? get _unitCost {
-    final size = int.tryParse(_packSize.text);
+    final size = double.tryParse(_packSize.text);
     final price = double.tryParse(_packPrice.text);
     if (size == null || size <= 0 || price == null) return null;
     return price / size;
@@ -154,9 +154,9 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
         id: widget.materialId!,
         name: _name.text.trim(),
         unitId: _unit?.id,
-        packSize: int.parse(_packSize.text),
+        packSize: double.parse(_packSize.text),
         packPrice: double.parse(_packPrice.text),
-        alertLevel: int.tryParse(_alertLevel.text) ?? 0,
+        alertLevel: double.tryParse(_alertLevel.text) ?? 0,
         supplier: supplier,
       ));
       return;
@@ -164,22 +164,22 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
     bloc.add(CreateMaterialEvent(
       name: _name.text.trim(),
       unitId: _unit?.id,
-      packSize: int.parse(_packSize.text),
+      packSize: double.parse(_packSize.text),
       packPrice: double.parse(_packPrice.text),
-      alertLevel: int.tryParse(_alertLevel.text) ?? 0,
-      initialQuantity: int.tryParse(_initialQty.text) ?? 0,
+      alertLevel: double.tryParse(_alertLevel.text) ?? 0,
+      initialQuantity: double.tryParse(_initialQty.text) ?? 0,
       supplier: supplier,
     ));
   }
 
-  String? _positiveInt(String? v) {
-    final n = int.tryParse(v ?? '');
-    if (n == null || n <= 0) return 'Enter a whole number above 0';
+  String? _positiveNumber(String? v) {
+    final n = double.tryParse(v ?? '');
+    if (n == null || n <= 0) return 'Enter a number above 0';
     return null;
   }
 
-  String? _nonNegativeInt(String? v) {
-    final n = int.tryParse(v ?? '');
+  String? _nonNegativeNumber(String? v) {
+    final n = double.tryParse(v ?? '');
     if (n == null || n < 0) return 'Enter 0 or more';
     return null;
   }
@@ -187,7 +187,8 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final digits = [FilteringTextInputFormatter.digitsOnly];
+    // Counts can be fractional (1.25 boards a head), so allow a dot.
+    final counts = [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))];
     final money = [
       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
     ];
@@ -248,13 +249,15 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                             Expanded(
                               child: TextFormField(
                                 controller: _packSize,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: digits,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                inputFormatters: counts,
                                 decoration: InputDecoration(
                                     labelText: _unitLabel.isEmpty
                                         ? 'Per pack'
                                         : '$_unitLabel per pack'),
-                                validator: _positiveInt,
+                                validator: _positiveNumber,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -304,13 +307,15 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _initialQty,
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: digits,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
+                                  inputFormatters: counts,
                                   decoration: InputDecoration(
                                       labelText: _unitLabel.isEmpty
                                           ? 'On hand now'
                                           : '$_unitLabel on hand now'),
-                                  validator: _nonNegativeInt,
+                                  validator: _nonNegativeNumber,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -318,11 +323,13 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                             Expanded(
                               child: TextFormField(
                                 controller: _alertLevel,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: digits,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                inputFormatters: counts,
                                 decoration: const InputDecoration(
                                     labelText: 'Reorder at'),
-                                validator: _nonNegativeInt,
+                                validator: _nonNegativeNumber,
                               ),
                             ),
                           ],
