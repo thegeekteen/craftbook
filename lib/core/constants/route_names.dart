@@ -63,4 +63,8 @@ class RouteNames {
   // Settings
   static const String settings = '/settings';
   static const String about = '/about';
+
+  // Debug tools. Only reachable on a debug build, and top-level like the other
+  // pushed pages, because it has no business showing a bottom bar.
+  static const String debugDatabase = '/debug/database';
 }

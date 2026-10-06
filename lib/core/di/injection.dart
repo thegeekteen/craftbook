@@ -131,6 +131,13 @@ import '../../features/updates/domain/repositories/update_repository.dart';
 import '../../features/updates/domain/usecases/check_for_update.dart';
 import '../../features/updates/domain/usecases/install_update.dart';
 import '../../features/updates/presentation/bloc/update_cubit.dart';
+import '../../features/debug/data/repositories/shop_data_repository_impl.dart';
+import '../../features/debug/domain/repositories/shop_data_repository.dart';
+import '../../features/debug/domain/usecases/clear_shop_data.dart';
+import '../../features/debug/domain/usecases/get_coverage_report.dart';
+import '../../features/debug/domain/usecases/get_database_info.dart';
+import '../../features/debug/domain/usecases/seed_fake_shop.dart';
+import '../../features/debug/presentation/bloc/debug_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -340,6 +347,50 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         getOrderListEntries: getIt(),
       ));
 
+  // Debug tools. The fake-data seeder drives the app's own write path, so it is
+  // handed the same use cases the pages are; only the timestamps it has to
+  // backdate go through ShopDataRepository.
+  getIt.registerLazySingleton<ShopDataRepository>(
+    () => ShopDataRepositoryImpl(getIt<AppDatabase>()),
+  );
+  getIt.registerFactory(() => GetCoverageReport(
+        orders: getIt(),
+        materials: getIt(),
+        products: getIt(),
+        channels: getIt(),
+        fields: getIt(),
+        notes: getIt(),
+        links: getIt(),
+        presets: getIt(),
+        settings: getIt(),
+        getBuyList: getIt(),
+      ));
+  getIt.registerFactory(() => SeedFakeShop(
+        shopData: getIt(),
+        settings: getIt(),
+        units: getIt(),
+        channels: getIt(),
+        materials: getIt(),
+        products: getIt(),
+        fields: getIt(),
+        notes: getIt(),
+        links: getIt(),
+        orders: getIt(),
+        savePreset: getIt(),
+        createOrder: getIt(),
+        packOrder: getIt(),
+        shipOrder: getIt(),
+        cancelOrder: getIt(),
+        restoreOrder: getIt(),
+        adjustMaterialsUsed: getIt(),
+        setOrderPaid: getIt(),
+        getBuyList: getIt(),
+        coverage: getIt(),
+      ));
+  getIt.registerFactory(() => ClearShopData(getIt()));
+  getIt.registerFactory(
+      () => GetDatabaseInfo(shopData: getIt(), coverage: getIt()));
+
   // BLoCs
   getIt.registerFactory(() => ProductsBloc(
         getProducts: getIt(),
@@ -442,6 +493,11 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         repository: getIt(),
         checkForUpdate: getIt(),
         installUpdate: getIt(),
+      ));
+  getIt.registerFactory(() => DebugCubit(
+        seedFakeShop: getIt(),
+        clearShopData: getIt(),
+        getDatabaseInfo: getIt(),
       ));
   getIt.registerFactory(() => TodayBloc(
         getTodayDashboard: getIt(),

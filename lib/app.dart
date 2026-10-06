@@ -32,6 +32,7 @@ import 'features/products/presentation/pages/product_detail_page.dart';
 import 'features/products/presentation/pages/product_editor_page.dart';
 import 'features/products/presentation/pages/receive_product_stock_page.dart';
 import 'features/order_fields/presentation/pages/order_fields_page.dart';
+import 'features/debug/presentation/pages/database_info_page.dart';
 import 'features/products/presentation/pages/channels_page.dart';
 import 'features/discounts/presentation/pages/discounts_page.dart';
 import 'features/units/presentation/pages/units_page.dart';
@@ -166,6 +167,11 @@ class CraftbookApp extends StatelessWidget {
           GoRoute(
             path: RouteNames.units,
             builder: (context, state) => const UnitsPage(),
+          ),
+          // Debug tools, mounted only by the debug section on the More page.
+          GoRoute(
+            path: RouteNames.debugDatabase,
+            builder: (context, state) => const DatabaseInfoPage(),
           ),
           GoRoute(
             path: RouteNames.socialLinks,
