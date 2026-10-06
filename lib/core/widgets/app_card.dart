@@ -83,6 +83,7 @@ class CardRow extends StatelessWidget {
   final Widget? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final EdgeInsetsGeometry padding;
 
   const CardRow({
@@ -92,6 +93,7 @@ class CardRow extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.onTap,
+    this.onLongPress,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   });
 
@@ -100,6 +102,7 @@ class CardRow extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: padding,
         child: Row(

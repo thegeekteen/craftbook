@@ -76,6 +76,7 @@ lib/
 | **Notes** | `/notes`, `/notes/new`, `/notes/:id` | Notebook list with search, full-screen rich-text editor; pinned notes show on Today |
 | **Updates** | (row on `/settings`) | "Check for updates": finds the latest GitHub release, shows its notes, downloads the APK and opens Android's installer. Only runs when tapped |
 | **Social links** | `/social-links` | Shortcuts to the shop's Facebook, TikTok, Shopee, Lazada… pages: brand-tile grid, add/edit sheet, drag to reorder. Links open outside the app via `LinkLauncher` |
+| **Debug** (`features/debug`) | (rows on `/settings`), `/debug/database` | Debug builds only: seed a whole fake shop, clear it, and a page showing schema, row counts and which of the app's options the data exercised (`SeedFakeShop`, `ClearShopData`, `GetDatabaseInfo`, `GetCoverageReport`) |
 
 ---
 
@@ -196,6 +197,7 @@ erDiagram
 - **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. The currency is the user's choice: never write `₱` (or any symbol) in code; input prefixes use `'${CurrencyFormatter.symbol} '`. Profit is always `MoneyParts(...).profit`, `OrderMoney.profit` or `Order.liveProfit`; order money is drawn with `OrderMoney.parts` (`order_status_ui.dart`), which carries discount and tax into `MoneyBreakdown`.
 - **Quantities**: `QuantityFormatter` (`lib/core/utils/quantity_formatter.dart`) — whole numbers bare, fractions trimmed, no grouping — with `.withUnit(n, unit)` to append the unit verbatim. Never pluralise a unit label and never hardcode `pcs`/`/pc`: read `material.unit` / `product.unit` (or `materialUnit` / `productUnit` on order lines, `unit` on `ReservationLine`/`PackLine`/`BuyListItem`), which the repositories resolve through `AppDatabase.unitLabels()` (`lib/database/unit_lookup.dart`). Uppercase captions use `unit.toUpperCase()`.
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen into `test/screenshots/goldens/` using the sample shop in `test/support/sample_data.dart`. Review them after UI changes.
+- **Debug-only UI** is gated by `kDebugMode` (`package:flutter/foundation.dart`), never by a stored setting, so a release build cannot show it or reach its route: it wipes the shop. Build the rows out of `MoreRow` (`lib/core/widgets/more_row.dart`) so the Debug group looks like the rest of More, and hand results back to the page rather than pushing them as state — `AppRestarter.restart()` disposes the cubit that produced them.
 
 ---
 
@@ -327,6 +329,35 @@ switch (result) {
 2. **Every BLoC** — each event handler, verify correct state emissions
 3. **Every new widget** — renders correctly with expected data
 4. **Business logic** — profit calculation, stock reservation/deduction, BOM expansion, weighted average cost
+
+### Factory seed for every feature (MANDATORY)
+Anything a person can see or do has to be reachable with sample data, because
+tests passing does not prove the screens agree with each other. When a feature
+adds an entity, a state or a screen, extend the fake shop in
+`lib/core/factory/` in the same change:
+
+1. **Build its data in a factory** (`material_factory.dart`, `order_factory.dart`
+   and friends): pure Dart, handed a `Random` and a `DateTime`, with no database
+   and no `get_it`. `SeedFakeShop` writes it through the feature's own use cases
+   — never raw SQL — so seeding exercises the rules instead of skipping them. The
+   only direct writes are timestamps the app can't be told to backdate, and those
+   go through `ShopDataRepository`.
+2. **Register the states in `coverage.dart`**: one row per option the app offers
+   (an enum value, a status, a fee shape, a stock position). The rows read the
+   enums themselves, so adding an `OrderStatus` or an `OrderFieldType` without
+   teaching the factory about it fails every seed with
+   `the shop never exercised: …` and rolls back.
+3. **Guarantee the bug-revealing states by construction, not by chance.**
+   `StockRole` is why the buy list is never empty and never all whole numbers;
+   `OrderLifecycle` and the scenario table in `order_factory.dart` are why every
+   status, overdue position, tax mode and discount shape is on screen. A state a
+   dice roll might miss is a state that never gets looked at.
+4. **Test the seed**: a case in
+   `test/features/debug/domain/seed_fake_shop_test.dart` asserting the feature's
+   records came out consistent, and its screens opened in
+   `test/features/debug/seeded_shop_smoke_test.dart`.
+
+`More → Debug → Seed fake data` is how a human gets at all of this.
 
 ### Result Types in Tests
 The custom `Result` sealed class has proper equality, so you can use direct assertions:

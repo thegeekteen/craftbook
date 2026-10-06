@@ -118,6 +118,7 @@ The app is built around 6 main user flows:
 | Settings | ✅ | SQLite export/import, navigation hub |
 | Backup/Restore | ✅ | Raw SQLite file copy (Android SAF compatible) |
 | In-app updates | ✅ | More → Check for updates installs the latest GitHub release APK. A workflow publishes a signed release on every push to `main` |
+| Fake data for debugging | ✅ | Debug builds only. **More → Debug** seeds a whole sample shop, clears it, and shows a Database & coverage page. Seeding writes through the app's own use cases, so the shop has open orders holding stock, packed orders that spent it, waste, every order status and date position, tax on and off and both ways round, discounts capped at what the order is worth, a break-even sale and a loss-making one, fractional quantities, archived items still on past orders, a buy list to restock, notes, social links for every brand and a photo or two. Long-press **Seed fake data** to build a different shop, or to rebuild one by its seed number |
 
 ### ✅ Infrastructure
 
@@ -127,6 +128,7 @@ The app is built around 6 main user flows:
 - **Theme**: Light and dark themes built from one token set (`CraftColors`), bundled fonts, three radii; follows the system setting
 - **Reusable widgets**: AppCard/CardList/CardRow, SectionLabel, AppTag, StatusPill + OrderStatusPill, MoneyBreakdown(Bar), SummaryBoard, StatTile, EmptyState/ErrorState, BottomActionBar, ChoiceChipRow, StatusFilterChips, PipStrip v2, StepperInput, DateField, AppSearchField, InlineBanner, showAppSheet
 - **Test suite**: use cases, BLoCs, widgets, utilities, and repository tests against in-memory SQLite
+- **Fake shop factory**: `lib/core/factory/` — pure generators (no database, no get_it) for every entity, plus `coverage.dart`, the contract of which options the app offers. `SeedFakeShop` writes their output through the app's own use cases and refuses to commit unless the result covers every one of them
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen (light + dark) against a seeded sample shop into `test/screenshots/goldens/`
 
 ---
@@ -171,6 +173,15 @@ Products has its own tab, since products are what orders are made of; it also ca
 
 ### Overcommitted stock is shown, not hidden
 When promised exceeds on hand, pips only draw pieces that exist and the shortfall is stated ("8 short").
+
+### Seeding the fake shop goes through the app's own use cases
+`SeedFakeShop` calls `CreateOrder`, `PackOrder`, `ShipOrder`, `CancelOrder`, `RestoreOrder`, `AdjustMaterialsUsed` and the repositories rather than inserting rows, so a successful seed is evidence the app's rules work and a rule that trips over fractional pieces or a cancelled shipment fails there instead of appearing later as a screen that looks subtly wrong. The only hand-written rows are the timestamps the app can't be told to backdate.
+
+### A seeded shop is a coverage contract, not a fixture
+`coverage.dart` lists every option the app offers, read from the enums themselves, and the seed fails and rolls back if any of them is missing from what it wrote. The states worth looking at are arranged by construction: `StockRole` sets each shelf to be empty, exactly at its reorder level, over-promised, or critical-but-absent-from-the-buy-list, and `OrderLifecycle` plus the scenario table in `order_factory.dart` put every status in every date position. The same seed always builds the same shop, so two builds can be compared piece for piece and a number that moved is a finding rather than noise; a different seed is one long-press away when variety is wanted.
+
+### Debug tools cannot reach a shop owner
+The Debug group on More is behind `kDebugMode`, not a setting, and it wipes the database, so a release build has no way to show it or to route to its page.
 
 ---
 
