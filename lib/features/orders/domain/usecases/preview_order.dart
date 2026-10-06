@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/result.dart';
 import '../../../products/domain/entities/bom_item.dart';
 import '../../../products/domain/repositories/product_repository.dart';
@@ -16,6 +17,9 @@ import 'calculate_order_profit.dart';
 /// standalone product's own stock.
 class ReservationLine extends Equatable {
   final String name;
+
+  /// What [quantity] and [available] are counted in.
+  final String unit;
   final int quantity;
 
   /// Free pieces before this order reserves anything.
@@ -24,6 +28,7 @@ class ReservationLine extends Equatable {
 
   const ReservationLine({
     required this.name,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.quantity,
     required this.available,
     this.isProduct = false,
@@ -34,7 +39,7 @@ class ReservationLine extends Equatable {
   bool get usesLast => !isShort && remaining == 0;
 
   @override
-  List<Object?> get props => [name, quantity, available, isProduct];
+  List<Object?> get props => [name, unit, quantity, available, isProduct];
 }
 
 /// What saving an order will do: the money split and the stock it takes.
@@ -114,6 +119,7 @@ class PreviewOrder {
         materialCost += product.unitCost * item.quantity;
         productLines.add(ReservationLine(
           name: product.name,
+          unit: product.unit,
           quantity: item.quantity,
           available: product.quantityFree + (ownProducts[product.id] ?? 0),
           isProduct: true,
@@ -144,6 +150,7 @@ class PreviewOrder {
       final material = (materialResult as Success).value;
       materialLines.add(ReservationLine(
         name: name,
+        unit: material?.unit ?? '',
         quantity: needed,
         available:
             (material?.quantityFree ?? 0) + (ownMaterials[entry.key] ?? 0),

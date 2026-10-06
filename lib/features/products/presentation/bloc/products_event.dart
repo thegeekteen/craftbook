@@ -24,6 +24,9 @@ class CreateProductEvent extends ProductsEvent {
   final String name;
   final String? description;
   final double sellPrice;
+
+  /// What it's sold and counted in; null leaves it on the shop's default.
+  final int? unitId;
   final bool isStandalone;
   final int initialQuantity;
   final double initialUnitCost;
@@ -32,6 +35,7 @@ class CreateProductEvent extends ProductsEvent {
     required this.name,
     this.description,
     required this.sellPrice,
+    this.unitId,
     this.isStandalone = false,
     this.initialQuantity = 0,
     this.initialUnitCost = 0,
@@ -42,6 +46,7 @@ class CreateProductEvent extends ProductsEvent {
         name,
         description,
         sellPrice,
+        unitId,
         isStandalone,
         initialQuantity,
         initialUnitCost
@@ -55,6 +60,7 @@ class UpdateProductEvent extends ProductsEvent {
   final String? description;
   final double? sellPrice;
   final double? unitCost;
+  final int? unitId;
   final bool? isArchived;
   final bool? isStandalone;
   final int? alertLevel;
@@ -65,6 +71,7 @@ class UpdateProductEvent extends ProductsEvent {
     this.description,
     this.sellPrice,
     this.unitCost,
+    this.unitId,
     this.isArchived,
     this.isStandalone,
     this.alertLevel,
@@ -77,6 +84,7 @@ class UpdateProductEvent extends ProductsEvent {
         description,
         sellPrice,
         unitCost,
+        unitId,
         isArchived,
         isStandalone,
         alertLevel

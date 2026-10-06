@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -91,7 +92,9 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
         setState(() => _saving = false);
         context.showSnackBar(failure.message, isError: true);
       case Success():
-        context.showSnackBar('Added $_quantity to ${_product!.name}');
+        context.showSnackBar(
+            'Added ${QuantityFormatter.withUnit(_quantity, _product!.unit)}'
+            ' to ${_product!.name}');
         context.pop(true);
     }
   }
@@ -159,7 +162,8 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                     FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
                   ],
                   decoration: InputDecoration(
-                      labelText: 'Price per piece',
+                      labelText:
+                          p.unit.isEmpty ? 'Price each' : 'Price per ${p.unit}',
                       prefixText: '${CurrencyFormatter.symbol} '),
                 ),
               ],
@@ -191,7 +195,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                           .copyWith(color: c.go, fontSize: 32),
                     ),
                     const SizedBox(width: 6),
-                    Text('PCS',
+                    Text(p.unit.toUpperCase(),
                         style:
                             AppTextStyles.monoLabel.copyWith(color: c.muted)),
                   ],
@@ -203,6 +207,7 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
                   promised: p.quantityPromised,
                   incoming: _quantity,
                   alertLevel: p.alertLevel,
+                  unit: p.unit,
                 ),
                 const SizedBox(height: 12),
                 Divider(color: c.hair),
@@ -234,7 +239,8 @@ class _ReceiveProductStockPageState extends State<ReceiveProductStockPage> {
           child: FilledButton.icon(
             onPressed: _saving ? null : _submit,
             icon: const Icon(Icons.add_rounded, size: 20),
-            label: Text('Add $_quantity to stock'),
+            label: Text(
+                'Add ${QuantityFormatter.withUnit(_quantity, p.unit)} to stock'),
           ),
         ),
       ]),

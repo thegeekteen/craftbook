@@ -2,11 +2,14 @@ import 'dart:math';
 
 import 'package:drift/drift.dart' hide Column;
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../database/app_database.dart' as db;
 import '../../../../database/daos/material_dao.dart';
 import '../../../../database/daos/product_dao.dart';
+import '../../../../database/unit_lookup.dart';
 import '../../domain/entities/buy_list_item.dart';
 import '../../domain/entities/material.dart';
 import '../../domain/entities/stock_movement.dart';
@@ -22,7 +25,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
   Future<Result<List<Material>>> getAllMaterials() async {
     try {
       final rows = await dao.getAllMaterials();
-      return Success(rows.map(_toEntity).toList());
+      final units = await dao.db.unitLabels();
+      return Success([for (final row in rows) _toEntity(row, units)]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -32,7 +36,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
   Future<Result<Material?>> getMaterialById(int id) async {
     try {
       final row = await dao.getMaterialById(id);
-      return Success(row != null ? _toEntity(row) : null);
+      if (row == null) return const Success(null);
+      return Success(_toEntity(row, await dao.db.unitLabels()));
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -42,7 +47,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
   Future<Result<List<Material>>> getLowStockMaterials() async {
     try {
       final rows = await dao.getLowStockMaterials();
-      return Success(rows.map(_toEntity).toList());
+      final units = await dao.db.unitLabels();
+      return Success([for (final row in rows) _toEntity(row, units)]);
     } catch (e) {
       return Error(DatabaseFailure(e.toString()));
     }
@@ -63,6 +69,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<int>> createMaterial({
     required String name,
+    int? unitId,
     required int packSize,
     required double packPrice,
     required double unitCost,
@@ -73,6 +80,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
     try {
       final id = await dao.createMaterial(db.MaterialsCompanion(
         name: Value(name),
+        unitId: Value(await _unitId(unitId)),
         packSize: Value(packSize),
         packPrice: Value(packPrice),
         unitCost: Value(unitCost),
@@ -86,10 +94,16 @@ class MaterialRepositoryImpl implements MaterialRepository {
     }
   }
 
+  /// Falls back to the shop's default unit, which is what a new material
+  /// starts on until the form says otherwise.
+  Future<int> _unitId(int? unitId) async =>
+      unitId ?? await dao.db.defaultUnitId() ?? AppConstants.defaultUnitId;
+
   @override
   Future<Result<void>> updateMaterial({
     required int id,
     required String name,
+    int? unitId,
     required int packSize,
     required double packPrice,
     required int alertLevel,
@@ -106,6 +120,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       await dao.updateMaterial(db.Material(
         id: current.id,
         name: name,
+        unitId: await _unitId(unitId ?? current.unitId),
         packSize: packSize,
         packPrice: packPrice,
         unitCost: repriced ? packPrice / packSize : current.unitCost,
@@ -158,6 +173,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       await dao.updateMaterial(db.Material(
         id: current.id,
         name: current.name,
+        unitId: current.unitId,
         packSize: current.packSize,
         packPrice: pricePerPack,
         unitCost: newUnitCost,
@@ -212,6 +228,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
       }
 
       final difference = newQuantityOnHand - current.quantityOnHand;
+      final unit = (await dao.db.unitLabels())[current.unitId] ?? '';
 
       await dao.updateMaterialStock(
           materialId, newQuantityOnHand, current.quantityPromised);
@@ -223,7 +240,8 @@ class MaterialRepositoryImpl implements MaterialRepository {
         quantity: Value(difference),
         unitCost: Value(current.unitCost),
         reference: Value(
-            'Adjusted from ${current.quantityOnHand} to $newQuantityOnHand'),
+            'Adjusted from ${QuantityFormatter.withUnit(current.quantityOnHand, unit)}'
+            ' to ${QuantityFormatter.withUnit(newQuantityOnHand, unit)}'),
       ));
 
       return const Success(null);
@@ -346,6 +364,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
   @override
   Future<Result<List<BuyListItem>>> getBuyList() async {
     try {
+      final units = await dao.db.unitLabels();
       final lowStockMaterials = await dao.getLowStockMaterials();
       final allProducts = await productDao.getUnarchivedProducts();
       final buyList = <BuyListItem>[];
@@ -384,6 +403,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
         buyList.add(BuyListItem(
           id: material.id,
           name: material.name,
+          unit: units[material.unitId] ?? '',
           quantityOnHand: material.quantityOnHand,
           quantityPromised: material.quantityPromised,
           alertLevel: material.alertLevel,
@@ -407,6 +427,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
           kind: BuyListKind.product,
           id: product.id,
           name: product.name,
+          unit: units[product.unitId] ?? '',
           quantityOnHand: product.quantityOnHand,
           quantityPromised: product.quantityPromised,
           alertLevel: product.alertLevel,
@@ -464,9 +485,12 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
   // ── Mapping helpers ───────────────────────────────────────────────────
 
-  static Material _toEntity(db.Material row) => Material(
+  static Material _toEntity(db.Material row, Map<int, String> units) =>
+      Material(
         id: row.id,
         name: row.name,
+        unitId: row.unitId,
+        unit: units[row.unitId] ?? '',
         packSize: row.packSize,
         packPrice: row.packPrice,
         unitCost: row.unitCost,

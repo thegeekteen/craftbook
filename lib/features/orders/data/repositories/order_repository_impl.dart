@@ -106,9 +106,9 @@ class OrderRepositoryImpl implements OrderRepository {
       final rows = await dao.getOrderItems(orderId);
       final items = <OrderItem>[];
       for (final row in rows) {
-        final (productName, photo) =
-            await dao.getProductNameAndPhoto(row.productId);
-        items.add(_itemToEntity(row, productName, photo));
+        final (productName, photo, unit) =
+            await dao.getProductNamePhotoAndUnit(row.productId);
+        items.add(_itemToEntity(row, productName, photo, unit));
       }
       return Success(items);
     } catch (e) {
@@ -122,8 +122,9 @@ class OrderRepositoryImpl implements OrderRepository {
       final rows = await dao.getOrderMaterials(orderId);
       final materials = <OrderMaterial>[];
       for (final row in rows) {
-        final materialName = await dao.getMaterialName(row.materialId);
-        materials.add(_materialToEntity(row, materialName));
+        final (materialName, unit) =
+            await dao.getMaterialNameAndUnit(row.materialId);
+        materials.add(_materialToEntity(row, materialName, unit));
       }
       return Success(materials);
     } catch (e) {
@@ -137,8 +138,9 @@ class OrderRepositoryImpl implements OrderRepository {
       final rows = await dao.getOrderProducts(orderId);
       final products = <OrderProduct>[];
       for (final row in rows) {
-        final productName = await dao.getProductName(row.productId);
-        products.add(_productToEntity(row, productName));
+        final (productName, unit) =
+            await dao.getProductNameAndUnit(row.productId);
+        products.add(_productToEntity(row, productName, unit));
       }
       return Success(products);
     } catch (e) {
@@ -647,6 +649,7 @@ class OrderRepositoryImpl implements OrderRepository {
     db.OrderItem row,
     String productName,
     Uint8List? productPhoto,
+    String unit,
   ) =>
       OrderItem(
         id: row.id,
@@ -654,17 +657,23 @@ class OrderRepositoryImpl implements OrderRepository {
         productId: row.productId,
         productName: productName,
         productPhoto: productPhoto,
+        unit: unit,
         quantity: row.quantity,
         unitPrice: row.unitPrice,
         subtotal: row.subtotal,
       );
 
-  OrderMaterial _materialToEntity(db.OrderMaterial row, String materialName) =>
+  OrderMaterial _materialToEntity(
+    db.OrderMaterial row,
+    String materialName,
+    String materialUnit,
+  ) =>
       OrderMaterial(
         id: row.id,
         orderId: row.orderId,
         materialId: row.materialId,
         materialName: materialName,
+        materialUnit: materialUnit,
         plannedQuantity: row.plannedQuantity,
         actualQuantity: row.actualQuantity,
         wasteQuantity: row.wasteQuantity,
@@ -673,12 +682,17 @@ class OrderRepositoryImpl implements OrderRepository {
         createdAt: row.createdAt,
       );
 
-  OrderProduct _productToEntity(db.OrderProduct row, String productName) =>
+  OrderProduct _productToEntity(
+    db.OrderProduct row,
+    String productName,
+    String productUnit,
+  ) =>
       OrderProduct(
         id: row.id,
         orderId: row.orderId,
         productId: row.productId,
         productName: productName,
+        productUnit: productUnit,
         quantity: row.quantity,
         unitCost: row.unitCost,
       );

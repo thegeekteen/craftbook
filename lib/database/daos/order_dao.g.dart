@@ -10,6 +10,7 @@ mixin _$OrderDaoMixin on DatabaseAccessor<AppDatabase> {
   $OrderProductsTable get orderProducts => attachedDatabase.orderProducts;
   $ProductsTable get products => attachedDatabase.products;
   $MaterialsTable get materials => attachedDatabase.materials;
+  $UnitsTable get units => attachedDatabase.units;
   $ProductStockMovementsTable get productStockMovements =>
       attachedDatabase.productStockMovements;
   $OrderFieldDefinitionsTable get orderFieldDefinitions =>
@@ -36,6 +37,8 @@ class OrderDaoManager {
       $$ProductsTableTableManager(_db.attachedDatabase, _db.products);
   $$MaterialsTableTableManager get materials =>
       $$MaterialsTableTableManager(_db.attachedDatabase, _db.materials);
+  $$UnitsTableTableManager get units =>
+      $$UnitsTableTableManager(_db.attachedDatabase, _db.units);
   $$ProductStockMovementsTableTableManager get productStockMovements =>
       $$ProductStockMovementsTableTableManager(
           _db.attachedDatabase, _db.productStockMovements);

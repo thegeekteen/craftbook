@@ -1,6 +1,7 @@
 import 'package:craftbook/core/error/result.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../repositories/product_repository.dart';
 
 class DeleteProduct {
@@ -39,8 +40,9 @@ class DeleteProduct {
         // For standalone products: check stock on hand
         if (product.isStandalone && product.quantityOnHand > 0) {
           return Error(ValidationFailure(
-            'Cannot delete product: has ${product.quantityOnHand} unit(s) in stock. '
-            'Adjust stock to 0 first.',
+            'Cannot delete product: has '
+            '${QuantityFormatter.withUnit(product.quantityOnHand, product.unit)}'
+            ' in stock. Adjust stock to 0 first.',
           ));
         }
 

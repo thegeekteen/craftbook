@@ -89,7 +89,11 @@ class ProductSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                p.isStandalone ? 'PCS ON HAND' : 'CAN BUILD',
+                p.isStandalone
+                    ? (p.unit.isEmpty
+                        ? 'ON HAND'
+                        : '${p.unit.toUpperCase()} ON HAND')
+                    : 'CAN BUILD',
                 style: AppTextStyles.monoLabel.copyWith(color: c.muted),
               ),
               const Spacer(),
@@ -113,6 +117,7 @@ class ProductSummaryCard extends StatelessWidget {
               free: p.quantityFree,
               promised: p.quantityPromised,
               alertLevel: p.alertLevel,
+              unit: p.unit,
               isLow: low,
               size: PipSize.large,
             ),

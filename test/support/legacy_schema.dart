@@ -1,8 +1,17 @@
 import 'package:sqlite3/sqlite3.dart' as raw;
 
+/// Turns a current database back into schema 10, from before units of measure.
+void downgradeToV10(raw.Database db) {
+  db.execute('DROP TABLE units');
+  db.execute('ALTER TABLE materials DROP COLUMN unit_id');
+  db.execute('ALTER TABLE products DROP COLUMN unit_id');
+  db.execute('PRAGMA user_version = 10');
+}
+
 /// Turns a current database back into schema 9, from before a BOM line could
 /// make several products.
 void downgradeToV9(raw.Database db) {
+  downgradeToV10(db);
   db.execute('ALTER TABLE bom_items DROP COLUMN makes');
   db.execute('PRAGMA user_version = 9');
 }

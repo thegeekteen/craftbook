@@ -111,6 +111,7 @@ class ProductCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (p.unit.isNotEmpty) TextSpan(text: ' ${p.unit}'),
                     ]),
                     style: AppTextStyles.bodySmall
                         .copyWith(color: qty == 0 ? c.alert : c.muted),

@@ -93,7 +93,8 @@ void main() {
         material: _material(onHand: 8, promised: 11, alertLevel: 2),
       )));
       expect(
-        find.text('0 free · 11 promised · reorder at 2 · ₱2.50/pc · 3 short'),
+        find.text(
+            '0 free · 11 promised · reorder at 2 · ₱2.50/pc · 3 pc short'),
         findsOneWidget,
       );
       expect(find.text('LOW'), findsNothing);

@@ -9,6 +9,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
@@ -96,6 +97,9 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
     final sales = _lines.fold<double>(0, (s, l) => s + l.sales);
     final sold = _lines.fold<int>(0, (s, l) => s + l.quantity);
 
+    /// Every line is the same product, so they all carry the same unit.
+    final unit = _lines.isEmpty ? '' : _lines.first.unit;
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 64,
@@ -137,12 +141,14 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                           ),
                           const SizedBox(height: 14),
                           StatRow(children: [
-                            StatTile(label: 'Sold', value: '$sold'),
+                            StatTile(
+                                label: 'Sold',
+                                value: QuantityFormatter.withUnit(sold, unit)),
                             StatTile(
                                 label: 'Sales',
                                 value: CurrencyFormatter.formatCompact(sales)),
                             StatTile(
-                              label: 'Per piece',
+                              label: unit.isEmpty ? 'Per item' : 'Per $unit',
                               value: sold == 0
                                   ? '—'
                                   : CurrencyFormatter.formatShort(
@@ -168,7 +174,8 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                             CardRow(
                               title: Text(l.customerName),
                               subtitle: Text(
-                                '#${l.orderId} · ${l.quantity} ${l.quantity == 1 ? 'pc' : 'pcs'} · '
+                                '#${l.orderId} · '
+                                '${QuantityFormatter.withUnit(l.quantity, l.unit)} · '
                                 '${DateFormat('MMM d').format(l.completedAt)}',
                               ),
                               trailing: Text(

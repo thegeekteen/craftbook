@@ -10,6 +10,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -250,7 +251,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                           ),
                           title: Text(item.productName),
                           subtitle: Text(
-                            '${item.quantity} × ${CurrencyFormatter.formatShort(item.unitPrice)}',
+                            '${QuantityFormatter.withUnit(item.quantity, item.unit)}'
+                            ' × ${CurrencyFormatter.formatShort(item.unitPrice)}',
                           ),
                           trailing: Text(
                             CurrencyFormatter.format(item.subtotal),
@@ -335,10 +337,12 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                           _LineDetail(
                             name: m.materialName,
                             detail: m.actualQuantity == m.plannedQuantity
-                                ? '${m.actualQuantity} × ${CurrencyFormatter.format(m.unitCost)}'
-                                : 'Planned ${m.plannedQuantity} · used ${m.actualQuantity}',
+                                ? '${QuantityFormatter.withUnit(m.actualQuantity, m.materialUnit)}'
+                                    ' × ${CurrencyFormatter.format(m.unitCost)}'
+                                : 'Planned ${QuantityFormatter.withUnit(m.plannedQuantity, m.materialUnit)}'
+                                    ' · used ${QuantityFormatter.withUnit(m.actualQuantity, m.materialUnit)}',
                             waste: m.wasteQuantity > 0
-                                ? '+${m.wasteQuantity} waste'
+                                ? '+${QuantityFormatter.withUnit(m.wasteQuantity, m.materialUnit)} waste'
                                     '${m.wasteReason != null ? ' (${m.wasteReason!.toLowerCase()})' : ''}'
                                 : null,
                             amount: m.totalCost,
@@ -347,7 +351,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                           _LineDetail(
                             name: p.productName,
                             detail:
-                                '${p.quantity} × ${CurrencyFormatter.format(p.unitCost)} · from stock',
+                                '${QuantityFormatter.withUnit(p.quantity, p.productUnit)}'
+                                ' × ${CurrencyFormatter.format(p.unitCost)} · from stock',
                             amount: p.totalCost,
                           ),
                       ],

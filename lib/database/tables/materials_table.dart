@@ -1,9 +1,18 @@
 import 'package:drift/drift.dart';
 
+import 'units_table.dart';
+
 /// Materials table - raw materials/inventory
 class Materials extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
+
+  /// What the quantities below are counted in; see [Units]. The repository
+  /// always writes the shop's real default; this one only matches it so a
+  /// fresh database and a migrated one have the same schema. The literal is
+  /// `AppConstants.defaultUnitId` — Drift copies it into generated code,
+  /// which can't see that import, and `migration_v11_test` checks they agree.
+  IntColumn get unitId => integer().withDefault(const Constant(1))();
   IntColumn get packSize => integer()();
   RealColumn get packPrice => real()();
   RealColumn get unitCost => real()();

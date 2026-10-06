@@ -12,6 +12,7 @@ import 'tables/order_products_table.dart';
 import 'tables/materials_table.dart';
 import 'tables/products_table.dart';
 import 'tables/bom_items_table.dart';
+import 'tables/units_table.dart';
 import 'tables/stock_movements_table.dart';
 import 'tables/product_stock_movements_table.dart';
 import 'tables/settings_table.dart';
@@ -36,6 +37,7 @@ const craftbookAppId = 0x43524654;
     Materials,
     Products,
     BomItems,
+    Units,
     Channels,
     StockMovements,
     ProductStockMovements,
@@ -59,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Readable without opening a database, so a backup's version can be
   /// checked before anything touches it.
-  static const currentSchemaVersion = 10;
+  static const currentSchemaVersion = 11;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -69,6 +71,7 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
+        await seedUnits(this);
       },
       onUpgrade: (Migrator m, int from, int to) async {
         await runMigrations(this, m, from, to);

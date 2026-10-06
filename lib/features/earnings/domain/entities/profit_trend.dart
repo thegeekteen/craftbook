@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Profit of one completed order and when it was completed.
 class ProfitPoint extends Equatable {
   final DateTime completedAt;
@@ -28,6 +30,9 @@ class TrendBucket extends Equatable {
 class ProductOrderLine extends Equatable {
   final int orderId;
   final String customerName;
+
+  /// The product's unit label.
+  final String unit;
   final int quantity;
   final double sales;
   final double profit;
@@ -36,6 +41,7 @@ class ProductOrderLine extends Equatable {
   const ProductOrderLine({
     required this.orderId,
     required this.customerName,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.quantity,
     required this.sales,
     required this.profit,
@@ -44,5 +50,5 @@ class ProductOrderLine extends Equatable {
 
   @override
   List<Object?> get props =>
-      [orderId, customerName, quantity, sales, profit, completedAt];
+      [orderId, customerName, unit, quantity, sales, profit, completedAt];
 }

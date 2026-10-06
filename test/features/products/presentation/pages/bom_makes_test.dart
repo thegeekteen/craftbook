@@ -109,7 +109,7 @@ void main() {
     await start(tester, makes: 9);
     await push(tester, RouteNames.materialPath(sheet));
 
-    final usage = find.text('1 per 9 pieces');
+    final usage = find.text('1 pc per 9');
     await tester.ensureVisible(usage);
     expect(usage, findsOneWidget);
     await teardown(tester);

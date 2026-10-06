@@ -1,11 +1,17 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// Persisted order product entry (standalone products in an order)
 class OrderProduct extends Equatable {
   final int? id;
   final int orderId;
   final int productId;
   final String productName;
+
+  /// The product's unit label, looked up with its name. Not stored on the
+  /// order, so renaming the unit reaches past orders too.
+  final String productUnit;
   final int quantity;
   final double unitCost;
 
@@ -16,6 +22,7 @@ class OrderProduct extends Equatable {
     required this.orderId,
     required this.productId,
     required this.productName,
+    this.productUnit = AppConstants.defaultUnitLabel,
     required this.quantity,
     required this.unitCost,
   });
@@ -26,6 +33,7 @@ class OrderProduct extends Equatable {
         orderId,
         productId,
         productName,
+        productUnit,
         quantity,
         unitCost,
       ];

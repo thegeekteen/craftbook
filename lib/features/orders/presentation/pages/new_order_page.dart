@@ -10,6 +10,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
@@ -845,10 +846,12 @@ class _ReservationsCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     r.isShort
-                        ? '${r.quantity} · only ${r.available < 0 ? 0 : r.available} free'
+                        ? '${QuantityFormatter.withUnit(r.quantity, r.unit)}'
+                            ' · only ${QuantityFormatter.withUnit(r.available < 0 ? 0 : r.available, r.unit)} free'
                         : r.usesLast
-                            ? '${r.quantity} · last ${r.quantity == 1 ? 'one' : 'ones'}'
-                            : '${r.quantity} pcs',
+                            ? '${QuantityFormatter.withUnit(r.quantity, r.unit)}'
+                                ' · last ${r.quantity == 1 ? 'one' : 'ones'}'
+                            : QuantityFormatter.withUnit(r.quantity, r.unit),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: r.isShort || r.usesLast ? c.alert : c.ink,
                       fontWeight: FontWeight.w600,

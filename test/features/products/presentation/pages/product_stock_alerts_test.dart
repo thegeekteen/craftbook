@@ -147,8 +147,11 @@ void main() {
 
       final field =
           find.widgetWithText(TextFormField, 'Warn when I can make (optional)');
-      expect(field, findsOneWidget);
       expect(find.text('Reorder at (optional)'), findsNothing);
+      // The editor body is a lazy ListView, so drag the field into view first.
+      await tester.dragUntilVisible(
+          field, find.byType(ListView), const Offset(0, -120));
+      expect(field, findsOneWidget);
       await tester.ensureVisible(field);
       await tester.enterText(field, '5');
       await tester.tap(find.widgetWithText(FilledButton, 'Save changes'));
@@ -178,7 +181,7 @@ void main() {
       expect(find.text('Gift box'), findsOneWidget);
       expect(find.text('RESELL'), findsOneWidget);
       // Reorder at 3, has 1 → buy 2 pieces at ₱25.
-      expect(find.textContaining('2 pcs'), findsOneWidget);
+      expect(find.textContaining('2 pc'), findsOneWidget);
       expect(find.textContaining('pack'), findsNothing);
       await teardown(tester);
     });
@@ -199,7 +202,7 @@ void main() {
 
       await tester.tap(find.text('Copy list'));
       await _settle(tester);
-      expect(copied, contains('- Gift box: 2 pcs, ₱50.00'));
+      expect(copied, contains('- Gift box: 2 pc, ₱50.00'));
       await teardown(tester);
     });
 
@@ -209,7 +212,7 @@ void main() {
 
       await tester.tap(find.text('Gift box'));
       await _settle(tester);
-      expect(find.text('PCS ON HAND'), findsOneWidget);
+      expect(find.text('PC ON HAND'), findsOneWidget);
       await teardown(tester);
     });
   });

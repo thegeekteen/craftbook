@@ -24,6 +24,8 @@ import 'package:craftbook/features/products/domain/repositories/product_reposito
 import 'package:craftbook/features/social_links/domain/entities/social_link.dart';
 import 'package:craftbook/features/social_links/domain/repositories/social_link_repository.dart';
 import 'package:craftbook/features/stock/domain/repositories/material_repository.dart';
+import 'package:craftbook/features/units/domain/entities/unit_of_measure.dart';
+import 'package:craftbook/features/units/domain/repositories/unit_repository.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:drift/drift.dart' hide isNull;
 
@@ -99,11 +101,24 @@ Future<void> seedSampleShop() async {
       shippingPaidByUs: 0));
   await channels.updateChannel(id: lazada, isActive: false);
 
+  final unitRepo = getIt<UnitRepository>();
+  // A unit the shop added itself, so the screenshots show the list isn't fixed.
+  _ok(await unitRepo.createUnit(const UnitOfMeasure(label: 'roll')));
+  final unitList = _ok(await unitRepo.getUnits());
+  int unitId(String label) => unitList.firstWhere((u) => u.label == label).id!;
+
   Future<int> material(
-          String name, int pack, double price, int onHand, int alert,
-          [String? supplier]) async =>
+    String name,
+    int pack,
+    double price,
+    int onHand,
+    int alert, [
+    String? supplier,
+    String unit = 'pc',
+  ]) async =>
       _ok(await materials.createMaterial(
         name: name,
+        unitId: unitId(unit),
         packSize: pack,
         packPrice: price,
         unitCost: price / pack,
@@ -115,17 +130,21 @@ Future<void> seedSampleShop() async {
   final yarn =
       await material('Milk cotton yarn, cream', 10, 180, 40, 8, 'YarnPH');
   final wire = await material('Floral wire 18g', 20, 80, 80, 15);
-  final wrap = await material('Cellophane wrap', 10, 260, 14, 5);
+  // Bought by the metre and by weight, so the screenshots show units other
+  // than pieces.
+  final wrap = await material('Cellophane wrap', 10, 260, 14, 5, null, 'm');
   final beads = await material(
-      'Glass seed beads 2mm', 50, 120, 16, 10, 'Divisoria Beads');
+      'Glass seed beads 2mm', 50, 120, 16, 10, 'Divisoria Beads', 'g');
   final rings = await material('Jump rings 6mm', 100, 80, 48, 20);
   final clasp = await material('Lobster clasp', 50, 150, 12, 10);
   final cord = await material('Phone strap cord', 20, 100, 30, 10);
   final resin = await material('Resin keychain kit', 5, 350, 6, 3);
-  await material('Jute cord 4mm', 10, 220, 0, 5);
+  await material('Jute cord 4mm', 10, 220, 0, 5, null, 'm');
 
-  Future<int> product(String name, double price, Map<int, int> bom) async {
-    final id = _ok(await products.createProduct(name: name, sellPrice: price));
+  Future<int> product(String name, double price, Map<int, int> bom,
+      [String unit = 'pc']) async {
+    final id = _ok(await products.createProduct(
+        name: name, sellPrice: price, unitId: unitId(unit)));
     await products.saveBomItems(id, [
       for (final e in bom.entries)
         BomItemInput(materialId: e.key, quantityRequired: e.value),
@@ -153,10 +172,12 @@ Future<void> seedSampleShop() async {
   _ok(await products.receiveProductStock(
       productId: box, quantity: 4, pricePerUnit: 26));
   _ok(await products.adjustProductStock(productId: box, newQuantityOnHand: 8));
-  // A second resell item that has run low, so it lands on the Buy list.
+  // A second resell item that has run low, so it lands on the Buy list. It is
+  // sold by the roll, a unit the shop added rather than one of the seeded ones.
   final ribbon = _ok(await products.createProduct(
     name: 'Satin ribbon roll',
     sellPrice: 45,
+    unitId: unitId('roll'),
     isStandalone: true,
     initialQuantity: 2,
     initialUnitCost: 22,

@@ -32,6 +32,10 @@ class RouteNames {
   static const String socialLinks = '/social-links';
   static const String discounts = '/discounts';
 
+  // Units of measure. Top-level, like channels and order fields, because the
+  // material and product editors are pushed pages outside the shell.
+  static const String units = '/units';
+
   // Reports (the earnings feature)
   static const String reports = '/reports';
   static const String productReport = '/reports/:productId';

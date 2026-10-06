@@ -10,6 +10,9 @@ abstract class MaterialRepository {
   Future<Result<List<StockMovement>>> getStockMovements(int materialId);
   Future<Result<int>> createMaterial({
     required String name,
+
+    /// What it's counted in. Null uses the shop's default unit.
+    int? unitId,
     required int packSize,
     required double packPrice,
     required double unitCost,
@@ -24,6 +27,7 @@ abstract class MaterialRepository {
   Future<Result<void>> updateMaterial({
     required int id,
     required String name,
+    int? unitId,
     required int packSize,
     required double packPrice,
     required int alertLevel,

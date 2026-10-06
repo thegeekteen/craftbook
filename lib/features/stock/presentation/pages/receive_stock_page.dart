@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -124,7 +125,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
     return BlocListener<MaterialsBloc, MaterialsState>(
       listener: (context, state) {
         if (state is StockReceived) {
-          context.showSnackBar('Added $_pieces pcs of ${m.name}');
+          context.showSnackBar(
+              'Added ${QuantityFormatter.withUnit(_pieces, m.unit)} of ${m.name}');
           context.pop(true);
         }
         if (state is MaterialsError) {
@@ -164,9 +166,13 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                             const SizedBox(height: 2),
                             Text.rich(
                               TextSpan(children: [
-                                TextSpan(text: '${m.packSize} pcs per pack · '),
                                 TextSpan(
-                                  text: '+$_pieces pcs',
+                                    text:
+                                        '${QuantityFormatter.withUnit(m.packSize, m.unit)}'
+                                        ' per pack · '),
+                                TextSpan(
+                                  text:
+                                      '+${QuantityFormatter.withUnit(_pieces, m.unit)}',
                                   style: TextStyle(
                                       color: c.go, fontWeight: FontWeight.w600),
                                 ),
@@ -234,7 +240,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                             .copyWith(color: c.go, fontSize: 32),
                       ),
                       const SizedBox(width: 6),
-                      Text('PCS',
+                      Text(m.unit.toUpperCase(),
                           style:
                               AppTextStyles.monoLabel.copyWith(color: c.muted)),
                     ],
@@ -246,6 +252,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                     promised: m.quantityPromised,
                     incoming: _pieces,
                     alertLevel: m.alertLevel,
+                    unit: m.unit,
                   ),
                   const SizedBox(height: 12),
                   Divider(color: c.hair),
@@ -287,7 +294,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
             child: FilledButton.icon(
               onPressed: _saving ? null : _submit,
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: Text('Add $_pieces pcs to stock'),
+              label: Text(
+                  'Add ${QuantityFormatter.withUnit(_pieces, m.unit)} to stock'),
             ),
           ),
         ]),

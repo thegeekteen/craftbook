@@ -1,10 +1,16 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 class BomItem extends Equatable {
   final int? id;
   final int productId;
   final int materialId;
   final String materialName;
+
+  /// The material's unit label, looked up with its name and cost. [makes] is
+  /// counted in the product's own unit instead.
+  final String materialUnit;
   final double materialUnitCost;
   final int quantityRequired;
 
@@ -18,6 +24,7 @@ class BomItem extends Equatable {
     required this.productId,
     required this.materialId,
     required this.materialName,
+    this.materialUnit = AppConstants.defaultUnitLabel,
     required this.materialUnitCost,
     required this.quantityRequired,
     this.makes = 1,
@@ -38,6 +45,7 @@ class BomItem extends Equatable {
         productId,
         materialId,
         materialName,
+        materialUnit,
         materialUnitCost,
         quantityRequired,
         makes,

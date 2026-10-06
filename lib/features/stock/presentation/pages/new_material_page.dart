@@ -12,6 +12,9 @@ import '../../../../core/utils/extensions.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/error/result.dart';
+import '../../../units/domain/entities/unit_of_measure.dart';
+import '../../../units/domain/usecases/unit_usecases.dart';
+import '../../../units/presentation/widgets/unit_picker_field.dart';
 import '../../domain/repositories/material_repository.dart';
 import '../bloc/materials_bloc.dart';
 import '../bloc/materials_event.dart';
@@ -55,18 +58,39 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
   bool _loading = false;
   String? _loadError;
 
+  /// What this material is counted in. Labels the quantity fields below, so it
+  /// loads before the form shows.
+  UnitOfMeasure? _unit;
+
   bool get _isEditing => widget.materialId != null;
+
+  /// The unit's label, or nothing until it loads.
+  String get _unitLabel => _unit?.label ?? '';
 
   @override
   void initState() {
     super.initState();
+    _loading = true;
     if (_isEditing) {
-      _loading = true;
       _loadMaterial();
+    } else {
+      _loadDefaultUnit();
     }
     for (final ctrl in [_packSize, _packPrice]) {
       ctrl.addListener(() => setState(() {}));
     }
+  }
+
+  Future<void> _loadDefaultUnit() async {
+    final result = await getIt<GetDefaultUnit>()();
+    if (!mounted) return;
+    setState(() {
+      _unit = switch (result) {
+        Success(:final value) => value,
+        Error() => null,
+      };
+      _loading = false;
+    });
   }
 
   Future<void> _loadMaterial() async {
@@ -90,7 +114,10 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
         _packPrice.text = value.packPrice.toStringAsFixed(2);
         _alertLevel.text = '${value.alertLevel}';
         _supplier.text = value.supplier ?? '';
-        setState(() => _loading = false);
+        setState(() {
+          _unit = UnitOfMeasure(id: value.unitId, label: value.unit);
+          _loading = false;
+        });
     }
   }
 
@@ -126,6 +153,7 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
       bloc.add(UpdateMaterialEvent(
         id: widget.materialId!,
         name: _name.text.trim(),
+        unitId: _unit?.id,
         packSize: int.parse(_packSize.text),
         packPrice: double.parse(_packPrice.text),
         alertLevel: int.tryParse(_alertLevel.text) ?? 0,
@@ -135,6 +163,7 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
     }
     bloc.add(CreateMaterialEvent(
       name: _name.text.trim(),
+      unitId: _unit?.id,
       packSize: int.parse(_packSize.text),
       packPrice: double.parse(_packPrice.text),
       alertLevel: int.tryParse(_alertLevel.text) ?? 0,
@@ -205,6 +234,12 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                               ? 'Enter a name'
                               : null,
                         ),
+                        const SizedBox(height: 12),
+                        UnitPickerField(
+                          label: 'Counted in',
+                          unit: _unit,
+                          onChanged: (u) => setState(() => _unit = u),
+                        ),
                         const SectionLabel('How you buy it'),
                         const SizedBox(height: 8),
                         Row(
@@ -215,8 +250,10 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                 controller: _packSize,
                                 keyboardType: TextInputType.number,
                                 inputFormatters: digits,
-                                decoration: const InputDecoration(
-                                    labelText: 'Pieces per pack'),
+                                decoration: InputDecoration(
+                                    labelText: _unitLabel.isEmpty
+                                        ? 'Per pack'
+                                        : '$_unitLabel per pack'),
                                 validator: _positiveInt,
                               ),
                             ),
@@ -245,7 +282,8 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
                             child: Text(
-                              '${CurrencyFormatter.format(_unitCost!)} per piece',
+                              '${CurrencyFormatter.format(_unitCost!)}'
+                              '${_unitLabel.isEmpty ? '' : ' per $_unitLabel'}',
                               style: AppTextStyles.bodySmall.copyWith(
                                   color: c.coin, fontWeight: FontWeight.w600),
                             ),
@@ -268,8 +306,10 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                   controller: _initialQty,
                                   keyboardType: TextInputType.number,
                                   inputFormatters: digits,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Pieces on hand now'),
+                                  decoration: InputDecoration(
+                                      labelText: _unitLabel.isEmpty
+                                          ? 'On hand now'
+                                          : '$_unitLabel on hand now'),
                                   validator: _nonNegativeInt,
                                 ),
                               ),

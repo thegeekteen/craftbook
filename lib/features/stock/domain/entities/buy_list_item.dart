@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_constants.dart';
+
 /// What a buy-list line restocks.
 enum BuyListKind { material, product }
 
@@ -13,6 +15,9 @@ class BuyListItem extends Equatable {
   /// Material id or product id, depending on [kind].
   final int id;
   final String name;
+
+  /// What the quantities are counted in: the material's or product's unit.
+  final String unit;
   final int quantityOnHand;
   final int quantityPromised;
   final int alertLevel;
@@ -29,6 +34,7 @@ class BuyListItem extends Equatable {
     this.kind = BuyListKind.material,
     required this.id,
     required this.name,
+    this.unit = AppConstants.defaultUnitLabel,
     required this.quantityOnHand,
     required this.quantityPromised,
     required this.alertLevel,
@@ -53,6 +59,7 @@ class BuyListItem extends Equatable {
         kind,
         id,
         name,
+        unit,
         quantityOnHand,
         quantityPromised,
         alertLevel,

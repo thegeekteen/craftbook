@@ -79,7 +79,7 @@ void main() {
       expect(find.text('Tulip bouquet'), findsOneWidget);
       expect(find.text('₱400'), findsOneWidget);
       expect(find.text('Cost ₱100 · 75% margin'), findsOneWidget);
-      expect(find.text('Can build 12'), findsOneWidget);
+      expect(find.text('Can build 12 pc'), findsOneWidget);
       expect(find.text('RESELL'), findsNothing);
       expect(find.text('LOW'), findsNothing);
       expect(find.byType(MoneyBreakdownBar), findsOneWidget);
@@ -106,7 +106,7 @@ void main() {
         unitCost: 100,
         available: 3,
       )));
-      expect(find.text('Can build 3'), findsOneWidget);
+      expect(find.text('Can build 3 pc'), findsOneWidget);
       expect(find.text('LOW'), findsOneWidget);
     });
 
@@ -140,7 +140,7 @@ void main() {
         unitCost: 100,
         available: 0,
       )));
-      expect(find.text('Can build 0'), findsOneWidget);
+      expect(find.text('Can build 0 pc'), findsOneWidget);
       expect(find.text('LOW'), findsNothing);
     });
 
@@ -152,7 +152,7 @@ void main() {
         available: 7,
       )));
       expect(find.text('RESELL'), findsOneWidget);
-      expect(find.text('In stock 7'), findsOneWidget);
+      expect(find.text('In stock 7 pc'), findsOneWidget);
       expect(find.text('LOW'), findsNothing);
     });
 
@@ -276,17 +276,23 @@ void main() {
   });
 
   group('ProductProfitCard', () {
-    testWidgets('shows profit per piece, cost and margin', (tester) async {
+    testWidgets('shows profit per unit, cost and margin', (tester) async {
       await tester.pumpWidget(_wrap(const ProductProfitCard(
-          sellPrice: 400, cost: 100, isStandalone: false)));
+          sellPrice: 400, cost: 100, isStandalone: false, unit: 'pc')));
 
       final c = tester.element(find.byType(ProductProfitCard)).colors;
-      expect(find.text('PROFIT PER PIECE'), findsOneWidget);
+      expect(find.text('PROFIT PER PC'), findsOneWidget);
       final profit = find.text(CurrencyFormatter.formatShort(300));
       expect(profit, findsOneWidget);
       expect(tester.widget<Text>(profit).style?.color, c.go);
       expect(find.textContaining('materials · 75% margin'), findsOneWidget);
       expect(find.byType(MoneyBreakdownBar), findsOneWidget);
+    });
+
+    testWidgets('falls back to "item" with no unit', (tester) async {
+      await tester.pumpWidget(_wrap(const ProductProfitCard(
+          sellPrice: 400, cost: 100, isStandalone: false)));
+      expect(find.text('PROFIT PER ITEM'), findsOneWidget);
     });
 
     testWidgets('shows a loss in alert colour and says cost for resell',

@@ -6,17 +6,21 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 
-/// Profit one piece makes before channel fees, with the cost/profit bar.
+/// Profit one unit makes before channel fees, with the cost/profit bar.
 class ProductProfitCard extends StatelessWidget {
   final double sellPrice;
   final double cost;
   final bool isStandalone;
+
+  /// The product's unit, uppercased for the caption.
+  final String unit;
 
   const ProductProfitCard({
     super.key,
     required this.sellPrice,
     required this.cost,
     required this.isStandalone,
+    this.unit = '',
   });
 
   @override
@@ -34,7 +38,8 @@ class ProductProfitCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Expanded(
-                child: Text('PROFIT PER PIECE',
+                child: Text(
+                    'PROFIT PER ${unit.isEmpty ? 'ITEM' : unit.toUpperCase()}',
                     style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               ),
               Text(

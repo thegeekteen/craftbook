@@ -7,6 +7,7 @@ import '../tables/order_materials_table.dart';
 import '../tables/order_products_table.dart';
 import '../tables/products_table.dart';
 import '../tables/materials_table.dart';
+import '../tables/units_table.dart';
 import '../tables/product_stock_movements_table.dart';
 import '../tables/order_fields_table.dart';
 
@@ -20,6 +21,7 @@ part 'order_dao.g.dart';
   OrderProducts,
   Products,
   Materials,
+  Units,
   ProductStockMovements,
   OrderFieldDefinitions,
   OrderFieldValues,
@@ -277,24 +279,35 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
         .go();
   }
 
-  /// Look up product name by ID
-  Future<String> getProductName(int productId) async {
+  /// Look up a product's name and unit by ID.
+  Future<(String, String)> getProductNameAndUnit(int productId) async {
     final row = await (select(products)..where((t) => t.id.equals(productId)))
         .getSingleOrNull();
-    return row?.name ?? '';
+    if (row == null) return ('', '');
+    return (row.name, await _unitLabel(row.unitId));
   }
 
-  /// Look up product name and photo by ID, for showing order lines.
-  Future<(String, Uint8List?)> getProductNameAndPhoto(int productId) async {
+  /// Look up product name, photo and unit by ID, for showing order lines.
+  Future<(String, Uint8List?, String)> getProductNamePhotoAndUnit(
+    int productId,
+  ) async {
     final row = await (select(products)..where((t) => t.id.equals(productId)))
         .getSingleOrNull();
-    return (row?.name ?? '', row?.photo);
+    if (row == null) return ('', null, '');
+    return (row.name, row.photo, await _unitLabel(row.unitId));
   }
 
-  /// Look up material name by ID
-  Future<String> getMaterialName(int materialId) async {
+  /// Look up a material's name and unit by ID.
+  Future<(String, String)> getMaterialNameAndUnit(int materialId) async {
     final row = await (select(materials)..where((t) => t.id.equals(materialId)))
         .getSingleOrNull();
-    return row?.name ?? '';
+    if (row == null) return ('', '');
+    return (row.name, await _unitLabel(row.unitId));
+  }
+
+  Future<String> _unitLabel(int unitId) async {
+    final row = await (select(units)..where((t) => t.id.equals(unitId)))
+        .getSingleOrNull();
+    return row?.label ?? '';
   }
 }
