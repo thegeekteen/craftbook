@@ -416,6 +416,7 @@ Raw SQLite file copy via `file_picker` (`lib/core/services/backup_service.dart`)
 1. **Branch naming**: `feature/feature-name`, `fix/bug-name`, `refactor/description`
 2. **Commit messages**: Conventional commits (`feat:`, `fix:`, `docs:`, etc.)
 3. **After adding plugins**: Run `flutter clean && flutter pub get` then full rebuild (hot restart won't register native code)
+4. **Debug builds are a separate app**: `flutter run` installs `com.thegeekteen.craftbook.debug` ("CraftBook (Debug)"), so it sits beside a release install instead of replacing it, and its SQLite data is its own. Only release keeps `com.thegeekteen.craftbook`
 
 ### Getting Started
 

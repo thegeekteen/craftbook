@@ -31,6 +31,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
+        manifestPlaceholders["appName"] = "CraftBook"
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
         // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
@@ -51,10 +52,24 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Install alongside the release build instead of replacing it: a
+            // distinct package also gets its own data directory, so shop data
+            // entered in a debug run never mixes with (or wipes) the real app.
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["appName"] = "CraftBook (Debug)"
+        }
         release {
             signingConfig = signingConfigs.findByName("release")
                 ?: signingConfigs.getByName("debug")
         }
+    }
+
+    // The Flutter Gradle plugin adds the profile build type after this block
+    // runs, so configure it lazily rather than declaring it above.
+    buildTypes.matching { it.name == "profile" }.configureEach {
+        applicationIdSuffix = ".debug"
+        manifestPlaceholders["appName"] = "CraftBook (Debug)"
     }
 }
 
