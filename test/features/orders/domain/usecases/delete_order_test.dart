@@ -126,7 +126,7 @@ void main() {
 
       expect(result, isA<Success>());
       verify(() => mockMaterialRepo.releaseReservedMaterials(10, 5)).called(1);
-      verify(() => mockMaterialRepo.releaseReservedMaterials(20, 3)).called(1);
+      verify(() => mockMaterialRepo.releaseReservedMaterials(20, 4)).called(1);
       verify(() => mockOrderRepo.deleteOrder(1)).called(1);
     });
 

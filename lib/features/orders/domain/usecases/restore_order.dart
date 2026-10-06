@@ -43,7 +43,7 @@ class RestoreOrder {
       case Success(:final value):
         for (final mat in value) {
           final reserved = await materialRepository.reserveMaterials(
-              mat.materialId, mat.plannedQuantity);
+              mat.materialId, mat.actualQuantity);
           if (reserved case Error(:final failure)) return Error<void>(failure);
         }
     }

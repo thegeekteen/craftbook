@@ -23,6 +23,7 @@ import '../bloc/orders_list_state.dart';
 import '../widgets/order_actions.dart';
 import '../widgets/order_card.dart';
 import '../widgets/order_status_ui.dart';
+import '../widgets/orders_filter_sheet.dart';
 
 /// Every order, filtered by status chips and search.
 class OrdersListPage extends StatelessWidget {
@@ -37,8 +38,6 @@ class OrdersListPage extends StatelessWidget {
   }
 }
 
-enum _Payment { any, unpaid, paid }
-
 class _OrdersListView extends StatefulWidget {
   const _OrdersListView();
 
@@ -50,13 +49,25 @@ class _OrdersListViewState extends State<_OrdersListView> {
   /// null means "All".
   OrderStatus? _status = OrderStatus.pending;
   String _query = '';
-  _Payment _payment = _Payment.any;
+  OrderPaymentFilter _payment = OrderPaymentFilter.any;
 
   void _reload() => context.read<OrdersListBloc>().add(const LoadOrders());
 
   Future<void> _open(String location) async {
     final changed = await context.push<bool>(location);
     if (changed == true && mounted) _reload();
+  }
+
+  /// Orders awaiting payment under the current search, for the sheet's count.
+  int _unpaidCount = 0;
+
+  Future<void> _openFilter() async {
+    final picked = await showOrdersFilterSheet(
+      context,
+      current: _payment,
+      unpaidCount: _unpaidCount,
+    );
+    if (picked != null && mounted) setState(() => _payment = picked);
   }
 
   bool _matches(OrderListEntry e) {
@@ -70,7 +81,20 @@ class _OrdersListViewState extends State<_OrdersListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Orders')),
+      appBar: AppBar(
+        title: const Text('Orders'),
+        actions: [
+          IconButton(
+            tooltip: 'Filter',
+            onPressed: _openFilter,
+            icon: Badge(
+              isLabelVisible: _payment != OrderPaymentFilter.any,
+              label: const Text('1'),
+              child: const Icon(Icons.filter_list_rounded),
+            ),
+          ),
+        ],
+      ),
       body: BlocBuilder<OrdersListBloc, OrdersListState>(
         builder: (context, state) {
           return switch (state) {
@@ -100,17 +124,13 @@ class _OrdersListViewState extends State<_OrdersListView> {
     final byStatus = _status == null
         ? active
         : searched.where((e) => e.order.status == _status).toList();
-    final unpaid = byStatus.where((e) => e.order.isAwaitingPayment).length;
+    _unpaidCount = byStatus.where((e) => e.order.isAwaitingPayment).length;
     final visible = switch (_payment) {
-      _Payment.any => byStatus,
-      _Payment.unpaid =>
+      OrderPaymentFilter.any => byStatus,
+      OrderPaymentFilter.unpaid =>
         byStatus.where((e) => e.order.isAwaitingPayment).toList(),
-      _Payment.paid => byStatus.where((e) => e.order.isPaid).toList(),
+      OrderPaymentFilter.paid => byStatus.where((e) => e.order.isPaid).toList(),
     };
-    // Only worth a row when something is unpaid or a filter is on.
-    final showPayment = _payment != _Payment.any ||
-        active.any((e) => e.order.isAwaitingPayment);
-
     return Column(
       children: [
         Padding(
@@ -133,18 +153,17 @@ class _OrdersListViewState extends State<_OrdersListView> {
             ],
           ),
         ),
-        if (showPayment)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: ChoiceChipRow<_Payment>.single(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              selected: _payment,
-              onSelected: (p) => setState(() => _payment = p),
-              options: [
-                const ChipOption(_Payment.any, 'Paid or not'),
-                ChipOption(_Payment.unpaid, 'Unpaid', count: unpaid),
-                const ChipOption(_Payment.paid, 'Paid'),
-              ],
+        if (_payment != OrderPaymentFilter.any)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+              child: AppChip(
+                label: _payment.label,
+                selected: true,
+                trailingIcon: Icons.close_rounded,
+                onTap: () => setState(() => _payment = OrderPaymentFilter.any),
+              ),
             ),
           ),
         Expanded(
@@ -212,10 +231,10 @@ class _OrdersListViewState extends State<_OrdersListView> {
         message: 'Nothing matches "$_query".',
       );
     }
-    if (_payment != _Payment.any) {
+    if (_payment != OrderPaymentFilter.any) {
       return EmptyState(
         icon: Icons.check_circle_outline_rounded,
-        title: _payment == _Payment.unpaid
+        title: _payment == OrderPaymentFilter.unpaid
             ? 'Nothing waiting for payment'
             : 'No paid orders here',
       );

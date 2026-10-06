@@ -110,7 +110,7 @@ void main() {
       final result = await cancelOrder(1);
 
       expect(result, const Success<void>(null));
-      verify(() => materialRepo.releaseReservedMaterials(10, 5)).called(1);
+      verify(() => materialRepo.releaseReservedMaterials(10, 6)).called(1);
       verify(() => productRepo.releaseReservedProductStock(30, 2)).called(1);
       verifyNever(() => materialRepo.restoreDeductedMaterials(any(), any(),
           reference: any(named: 'reference')));

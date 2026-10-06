@@ -39,7 +39,7 @@ class ReturnOrderStock {
         } else {
           await materialRepository.releaseReservedMaterials(
             mat.materialId,
-            mat.plannedQuantity,
+            mat.actualQuantity,
           );
         }
       }

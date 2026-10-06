@@ -248,15 +248,14 @@ class UpdateOrder {
     // Rows are replaced; now move the reservations from the old plan to the new.
     for (final m in oldMaterials) {
       await materialRepository.releaseReservedMaterials(
-          m.materialId, m.plannedQuantity);
+          m.materialId, m.actualQuantity);
     }
     for (final p in oldProducts) {
       await productRepository.releaseReservedProductStock(
           p.productId, p.quantity);
     }
     for (final m in materials) {
-      await materialRepository.reserveMaterials(
-          m.materialId, m.plannedQuantity);
+      await materialRepository.reserveMaterials(m.materialId, m.actualQuantity);
     }
     for (final p in products) {
       await productRepository.reserveProductStock(p.productId, p.quantity);

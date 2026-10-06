@@ -8,7 +8,9 @@ import 'package:craftbook/features/orders/data/repositories/order_repository_imp
 import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:craftbook/features/orders/domain/entities/order_item.dart';
 import 'package:craftbook/features/orders/domain/entities/order_material.dart';
+import 'package:craftbook/features/orders/domain/usecases/adjust_materials_used.dart';
 import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
+import 'package:craftbook/features/orders/domain/usecases/return_order_stock.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/update_order.dart';
@@ -34,6 +36,8 @@ void main() {
   late CreateOrder createOrder;
   late UpdateOrder updateOrder;
   late PackOrder packOrder;
+  late AdjustMaterialsUsed adjustUsed;
+  late ReturnOrderStock returnStock;
   late int channelA;
   late int channelB;
   late int yarn;
@@ -61,6 +65,12 @@ void main() {
       calculateOrderProfit: profit,
     );
     packOrder = PackOrder(
+        orderRepository: orders,
+        materialRepository: materials,
+        productRepository: products);
+
+    adjustUsed = AdjustMaterialsUsed(orders, materials);
+    returnStock = ReturnOrderStock(
         orderRepository: orders,
         materialRepository: materials,
         productRepository: products);
@@ -234,6 +244,56 @@ void main() {
     test('unknown order fails with NotFound', () async {
       expect(
           await edit(999, [line(tulip, 'Tulip', 1, 450)]), isA<Error<void>>());
+    });
+  });
+
+  group('adjusting materials used', () {
+    Future<void> adjustTo(int id, double actual) async {
+      final m = ok(await orders.getOrderMaterials(id)).single;
+      ok(await adjustUsed(id, [
+        OrderMaterialInput(
+          materialId: yarn,
+          materialName: 'Yarn',
+          plannedQuantity: m.plannedQuantity,
+          actualQuantity: actual,
+          wasteQuantity:
+              actual > m.plannedQuantity ? actual - m.plannedQuantity : 0,
+          unitCost: m.unitCost,
+        ),
+      ]));
+    }
+
+    Future<double> onHandYarn() async =>
+        ok(await materials.getMaterialById(yarn))!.quantityOnHand;
+
+    test('promised follows the adjusted amount, up and down', () async {
+      final id = await create([line(tulip, 'Tulip', 2, 450)]); // 6 yarn
+      await adjustTo(id, 8);
+      expect(await promisedYarn(), 8);
+      await adjustTo(id, 5);
+      expect(await promisedYarn(), 5);
+    });
+
+    test('packing drops on-hand and promised by the adjusted amount', () async {
+      final id = await create([line(tulip, 'Tulip', 2, 450)]);
+      await adjustTo(id, 8);
+      ok(await packOrder(id));
+      expect(await promisedYarn(), 0);
+      expect(await onHandYarn(), 92);
+    });
+
+    test('cancelling after an adjust releases everything', () async {
+      final id = await create([line(tulip, 'Tulip', 2, 450)]);
+      await adjustTo(id, 8);
+      await returnStock(ok(await orders.getOrderById(id))!, reference: 'x');
+      expect(await promisedYarn(), 0);
+    });
+
+    test('editing after an adjust moves the reservation cleanly', () async {
+      final id = await create([line(tulip, 'Tulip', 2, 450)]);
+      await adjustTo(id, 8);
+      ok(await edit(id, [line(tulip, 'Tulip', 3, 450)])); // 9 yarn
+      expect(await promisedYarn(), 9);
     });
   });
 

@@ -113,7 +113,7 @@ The app is built around 6 main user flows:
 | Discounts | ✅ | Percent or fixed lines on any order, presets under More → Discounts. Fees and tax are on the amount after discount. Added in schema v9 |
 | Units of measure | ✅ | More → Units of measure: the shop's own vocabulary (seeded with pc, sheet, m, cm, g, kg, ml, pack), add/rename/reorder, one flagged as the default for new items. Materials and products hold a `unit_id`, so a rename reaches past orders; delete is blocked while anything is counted in it and the last unit can't go. Every quantity on screen is written with it, verbatim — never pluralised. Added in schema v11 |
 | Tax / VAT | ✅ | More → Tax: use tax on/off, whether new orders start with it on or off, rate, name, included in prices or added on top. Each order keeps its own rate and has its own switch. Added in schema v9 |
-| Paid / unpaid | ✅ | Per order, default from the channel's "paid when placed". Unpaid tag and filter on Orders, Mark paid on the order page and long press, Waiting for payment list. Existing orders were migrated as paid in schema v9 |
+| Paid / unpaid | ✅ | Per order, default from the channel's "paid when placed". Unpaid tag and a payment filter (top-right Filter button) on Orders, Mark paid on the order page and long press, Waiting for payment list. Existing orders were migrated as paid in schema v9 |
 | Waste breakdown | ✅ | Per-material: name, pcs wasted, cost |
 | Settings | ✅ | SQLite export/import, navigation hub |
 | Backup/Restore | ✅ | Raw SQLite file copy (Android SAF compatible) |

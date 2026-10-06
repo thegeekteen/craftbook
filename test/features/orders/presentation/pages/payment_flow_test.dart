@@ -56,7 +56,10 @@ void main() {
     await openApp(tester, RouteNames.orders);
 
     expect(find.text('UNPAID'), findsOneWidget);
+    await tester.tap(find.byTooltip('Filter'));
+    await settle(tester);
     await tester.tap(find.text('Unpaid'));
+    await tester.tap(find.text('Show'));
     await settle(tester);
     expect(find.text('Ana'), findsOneWidget);
     expect(find.text('Ben'), findsNothing);

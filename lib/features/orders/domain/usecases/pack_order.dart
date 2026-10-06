@@ -24,11 +24,12 @@ class PackOrder {
             DatabaseFailure('Failed to load order materials'));
       case Success(:final value):
         for (final mat in value) {
-          // On-hand drops by what was used; promised by what was reserved.
+          // Adjust keeps the reservation equal to the actual quantity, so
+          // on-hand and promised both drop by what was used.
           await materialRepository.deductMaterials(
             mat.materialId,
             mat.actualQuantity,
-            reserved: mat.plannedQuantity,
+            reserved: mat.actualQuantity,
           );
         }
     }

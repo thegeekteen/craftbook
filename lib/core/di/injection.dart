@@ -287,7 +287,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         orderRepository: getIt(),
         getOrderListEntries: getIt(),
       ));
-  getIt.registerFactory(() => AdjustMaterialsUsed(getIt()));
+  getIt.registerFactory(() => AdjustMaterialsUsed(getIt(), getIt()));
   getIt.registerFactory(() => CalculateOrderProfit(getIt()));
   getIt.registerFactory(() => PreviewOrder(
         productRepository: getIt(),

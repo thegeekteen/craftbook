@@ -37,7 +37,8 @@ void main() {
         .thenAnswer((_) async => const Success(null));
   });
 
-  test('deducts what was used but releases only what was reserved', () async {
+  test('deducts and releases what was used (the reservation follows Adjust)',
+      () async {
     when(() => orders.getOrderMaterials(1)).thenAnswer((_) async => Success([
           OrderMaterial(
             orderId: 1,
@@ -63,7 +64,7 @@ void main() {
     final result = await pack(1);
 
     expect(result, const Success<void>(null));
-    verify(() => materials.deductMaterials(10, 8, reserved: 6)).called(1);
+    verify(() => materials.deductMaterials(10, 8, reserved: 8)).called(1);
     verify(() => products.deductProductStock(5, 1)).called(1);
     verify(() => orders.packOrder(1)).called(1);
   });

@@ -92,14 +92,14 @@ void main() {
   });
 
   group('RestoreOrder', () {
-    test('reserves the planned materials and products again', () async {
+    test('reserves the materials (as adjusted) and products again', () async {
       stubOrder(OrderStatus.cancelled);
 
       final result = await restoreOrder(1);
 
       expect(result, const Success<void>(null));
-      // Planned, not actual: the order goes back to to pack.
-      verify(() => materialRepo.reserveMaterials(10, 5)).called(1);
+      // Actual: Adjust keeps reservations equal to what was used.
+      verify(() => materialRepo.reserveMaterials(10, 6)).called(1);
       verify(() => productRepo.reserveProductStock(30, 2)).called(1);
       verify(() => orderRepo.restoreOrder(1)).called(1);
     });

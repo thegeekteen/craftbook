@@ -74,7 +74,7 @@ Tap **+ New order** on the Orders tab. There are three steps:
 
 ### Packing and shipping
 
-- **Pack** the order from its page. A sheet shows each material's stock before and after. If you used more than planned, tap **Adjust** first and record what you really used and why (cutting, a defect…). The extra is counted as **waste**.
+- **Pack** the order from its page. A sheet shows each material's stock before and after. If you used more than planned, tap **Adjust** first and record what you really used and why (cutting, a defect…). The extra is counted as **waste**, and the material's **promised** amount moves to match what you recorded.
 - **Mark shipped** when it goes out.
 - **Mark paid** from the order page as soon as the money comes in. You can also do it by long-pressing the order.
 
@@ -101,7 +101,7 @@ If the customer comes back, **Restore** puts a cancelled order back to *To pack*
 Each order is either **paid** or **unpaid**. New orders start out the way their channel is set: paid for marketplaces, unpaid for walk-in or chat sales if you set it up that way.
 
 - Unpaid orders carry an **UNPAID** tag in every list.
-- On the Orders tab, the **Unpaid** chip shows only the orders still waiting for money.
+- On the Orders tab, tap the **Filter** button (top right) and choose **Unpaid** to see only the orders still waiting for money. A small chip under the status chips shows the filter is on; tap it to clear.
 - **Waiting for payment** (on Reports, or More → Waiting for payment) lists everything customers still owe, grouped by customer, with the total. Tap an order to open it, or long-press it to mark it paid.
 
 Unpaid orders still count toward your profit once they're packed, because the sale happened. Reports shows how much of that profit you haven't been paid yet.

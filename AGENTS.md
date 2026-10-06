@@ -139,7 +139,7 @@ erDiagram
 
 ## Key Business Rules
 
-1. **Stock Reservation**: When an order is saved, materials are **reserved** (promised) but not deducted. The `quantity_promised` field on Material tracks this.
+1. **Stock Reservation**: When an order is saved, materials are **reserved** (promised) but not deducted. The `quantity_promised` field on Material tracks this. While the order is pending, Adjust (`AdjustMaterialsUsed`) moves the reservation by the change in the *actual* quantity, so every release (pack, cancel, delete, edit) and re-reserve (restore) uses `actualQuantity`, never `plannedQuantity`.
 
 2. **Stock Deduction**: When an order is **packed**, materials are actually deducted from `quantity_on_hand`. The `quantity_promised` is also reduced.
 
