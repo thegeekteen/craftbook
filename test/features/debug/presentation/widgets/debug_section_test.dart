@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/app_harness.dart';
+import '../../../../support/localized_app.dart';
 
 void main() {
   Future<List<Order>> orders() async =>
@@ -17,8 +18,8 @@ void main() {
   /// The Debug group as the More page mounts it, over a real empty database.
   Future<void> openSection(WidgetTester tester) async {
     await startApp(tester);
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
+    await tester.pumpWidget(localizedApp(
+      Scaffold(
         body: BlocProvider(
           create: (_) => getIt<DebugCubit>(),
           child: const DebugSection(),

@@ -15,6 +15,8 @@ import '../bloc/notes_event.dart';
 import '../bloc/notes_state.dart';
 import '../widgets/note_actions.dart';
 import '../widgets/note_card.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// The shop's notebook.
 class NotesPage extends StatelessWidget {
@@ -34,14 +36,15 @@ class _NotesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bloc = context.read<NotesBloc>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Notes')),
+      appBar: AppBar(title: Text(l10n.commonNotes)),
       body: BlocConsumer<NotesBloc, NotesState>(
         listenWhen: (prev, s) =>
             s is NotesError ||
             (s is NotesLoaded &&
-                s.message != null &&
+                s.hasNotice &&
                 (prev is! NotesLoaded || prev.serial != s.serial)),
         listener: (context, state) {
           if (state is NotesError) {
@@ -50,7 +53,7 @@ class _NotesView extends StatelessWidget {
           if (state is NotesLoaded) {
             final deleted = state.deleted;
             context.showSnackBar(
-              state.message!,
+              noteNotice(l10n, state),
               isError: state.isError,
               onAction: deleted == null
                   ? null
@@ -74,10 +77,9 @@ class _NotesView extends StatelessWidget {
             return Center(
               child: EmptyState(
                 icon: Icons.sticky_note_2_outlined,
-                title: 'No notes yet',
-                message:
-                    'Keep supplier details, product ideas and packing how-tos here.',
-                actionLabel: 'Add note',
+                title: l10n.notesEmptyTitle,
+                message: l10n.notesEmptyMessage,
+                actionLabel: l10n.notesAddNote,
                 onAction: () => _open(context, null),
               ),
             );
@@ -88,10 +90,23 @@ class _NotesView extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(context, null),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Note'),
+        label: Text(l10n.notesFab),
       ),
     );
   }
+}
+
+/// The snackbar text for the last action in [state].
+String noteNotice(AppLocalizations l10n, NotesLoaded state) {
+  final subject = state.subject;
+  final title = subject?.titleOr(l10n.notesUntitled) ?? '';
+  return switch (state.outcome) {
+    NoteOutcome.pinned => l10n.notesOutcomePinned,
+    NoteOutcome.unpinned => l10n.notesOutcomeUnpinned,
+    NoteOutcome.deleted => l10n.notesOutcomeDeleted(title),
+    NoteOutcome.restored => l10n.notesOutcomeRestored(title),
+    null => state.message ?? '',
+  };
 }
 
 /// Opens the editor and reloads once it saved or deleted something.
@@ -104,7 +119,8 @@ Future<void> _open(BuildContext context, int? id) async {
   bloc.add(const LoadNotes());
   if (result is Note && context.mounted) {
     context.showSnackBar(
-      '${result.displayTitle} deleted',
+      context.l10n
+          .notesOutcomeDeleted(result.titleOr(context.l10n.notesUntitled)),
       onAction: () => bloc.add(RestoreNoteEvent(result)),
     );
   }
@@ -117,6 +133,7 @@ class _NoteList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bloc = context.read<NotesBloc>();
     final pinned = state.pinned;
     final others = state.others;
@@ -136,7 +153,7 @@ class _NoteList extends StatelessWidget {
       padding: AppSpacing.page.copyWith(bottom: AppSpacing.fabClearance),
       children: [
         AppSearchField(
-          hint: 'Search notes',
+          hint: l10n.notesSearchHint,
           onChanged: (q) => bloc.add(SearchNotes(q)),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -145,17 +162,17 @@ class _NoteList extends StatelessWidget {
             padding: const EdgeInsets.only(top: AppSpacing.xl),
             child: EmptyState(
               icon: Icons.search_off_rounded,
-              title: 'No matches',
-              message: 'No note mentions "${state.query.trim()}".',
+              title: l10n.notesNoMatches,
+              message: l10n.notesNoMatchesMessage(state.query.trim()),
             ),
           ),
         if (pinned.isNotEmpty) ...[
-          SectionLabel('Pinned · ${pinned.length}'),
+          SectionLabel(l10n.notesPinnedHeader(pinned.length)),
           const SizedBox(height: AppSpacing.sm),
           for (final note in pinned) card(note),
           if (others.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
-            SectionLabel('Others · ${others.length}'),
+            SectionLabel(l10n.notesOthersHeader(others.length)),
             const SizedBox(height: AppSpacing.sm),
           ],
         ],

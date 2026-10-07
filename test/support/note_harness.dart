@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:craftbook/l10n/gen/app_localizations.dart';
 
 /// Quill looks its own strings up through these, so any test that mounts the
 /// note editor or its toolbar has to install them.
 const List<LocalizationsDelegate<Object?>> noteTestDelegates = [
+  AppLocalizations.delegate,
   GlobalMaterialLocalizations.delegate,
   GlobalCupertinoLocalizations.delegate,
   GlobalWidgetsLocalizations.delegate,
@@ -14,8 +16,11 @@ const List<LocalizationsDelegate<Object?>> noteTestDelegates = [
 ];
 
 /// Mounts [child] in the app theme, the way other widget tests do.
-Widget wrapWithTheme(Widget child) => MaterialApp(
+Widget wrapWithTheme(Widget child, {Locale locale = const Locale('en')}) =>
+    MaterialApp(
       theme: AppTheme.lightTheme,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: noteTestDelegates,
       home: Scaffold(body: child),
     );

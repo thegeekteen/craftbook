@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -31,6 +32,7 @@ class ProductHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final when = DateFormat('MMM d, y').format(entry.date);
     switch (entry) {
       case StockHistoryEntry(:final movement):
@@ -40,13 +42,12 @@ class ProductHistoryRow extends StatelessWidget {
         final color = adds ? c.go : c.alert;
         final title = switch (mv.type) {
           ProductStockMovementType.received => switch (mv.reference) {
-              'Initial stock' => 'Initial stock',
-              final r? when r.contains('Restored') =>
-                'Returned from deleted order',
-              _ => 'Received',
+              'Initial stock' => l10n.productsHistInitial,
+              final r? when r.contains('Restored') => l10n.productsHistReturned,
+              _ => l10n.productsHistReceived,
             },
-          ProductStockMovementType.deducted => 'Used in an order',
-          ProductStockMovementType.adjusted => 'Counted',
+          ProductStockMovementType.deducted => l10n.productsHistUsed,
+          ProductStockMovementType.adjusted => l10n.productsHistCounted,
         };
         return CardRow(
           leading: _Badge(

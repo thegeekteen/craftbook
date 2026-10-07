@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../features/orders/domain/entities/order.dart';
-import '../../features/orders/presentation/widgets/order_status_ui.dart';
+import '../../features/orders/presentation/widgets/order_l10n.dart';
 import 'choice_chip_row.dart';
+import '../utils/l10n_extension.dart';
 
 /// Status filter for Today and the calendars.
 ///
@@ -38,9 +39,10 @@ class StatusFilterChips extends StatelessWidget {
     final total = counts?.values.fold<int>(0, (a, b) => a + b);
     return ChoiceChipRow<OrderStatus?>(
       options: [
-        ChipOption<OrderStatus?>(null, 'All', count: total),
+        ChipOption<OrderStatus?>(null, context.l10n.commonAll, count: total),
         for (final s in statuses)
-          ChipOption<OrderStatus?>(s, s.label, count: counts?[s]),
+          ChipOption<OrderStatus?>(s, s.localized(context.l10n),
+              count: counts?[s]),
       ],
       isSelected: (s) => s == null ? _isAll : (!_isAll && selected.contains(s)),
       onTap: (s) {

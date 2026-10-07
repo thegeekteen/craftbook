@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/sample_photo.dart';
+import '../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: Center(child: child)),
-    );
+Widget _wrap(Widget child) => localizedApp(Scaffold(body: Center(child: child)),
+    theme: AppTheme.lightTheme);
 
 void main() {
   group('ProductPhoto', () {

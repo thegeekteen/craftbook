@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import 'currency_formatter.dart';
+import 'l10n_extension.dart';
 
 /// Extension methods for common operations
 extension StringExtension on String {
@@ -100,7 +101,7 @@ extension BuildContextExtension on BuildContext {
           action: onAction == null
               ? null
               : SnackBarAction(
-                  label: actionLabel ?? 'Undo', onPressed: onAction),
+                  label: actionLabel ?? l10n.commonUndo, onPressed: onAction),
         ),
       );
   }

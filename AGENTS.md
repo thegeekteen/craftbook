@@ -31,6 +31,7 @@
 | Date/Time | intl | Date formatting and localization |
 | Charts | fl_chart | Simple charts for earnings visualization |
 | File Picker | file_picker | SQLite backup export/import |
+| Localization | flutter_localizations + gen-l10n (ARB) | English and Filipino (`fil`), chosen in More → Language |
 | Updates | github_release_apk_updater | In-app updates from GitHub releases |
 | Testing | mocktail + bloc_test | Unit and widget testing |
 
@@ -196,6 +197,7 @@ erDiagram
 - **Order status** maps to a pill only through `OrderStatusPill` (`lib/features/orders/presentation/widgets/order_status_ui.dart`). User-facing name for pending is "To pack".
 - **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. The currency is the user's choice: never write `₱` (or any symbol) in code; input prefixes use `'${CurrencyFormatter.symbol} '`. Profit is always `MoneyParts(...).profit`, `OrderMoney.profit` or `Order.liveProfit`; order money is drawn with `OrderMoney.parts` (`order_status_ui.dart`), which carries discount and tax into `MoneyBreakdown`.
 - **Quantities**: `QuantityFormatter` (`lib/core/utils/quantity_formatter.dart`) — whole numbers bare, fractions trimmed, no grouping — with `.withUnit(n, unit)` to append the unit verbatim. Never pluralise a unit label and never hardcode `pcs`/`/pc`: read `material.unit` / `product.unit` (or `materialUnit` / `productUnit` on order lines, `unit` on `ReservationLine`/`PackLine`/`BuyListItem`), which the repositories resolve through `AppDatabase.unitLabels()` (`lib/database/unit_lookup.dart`). Uppercase captions use `unit.toUpperCase()`.
+- **Localization**: never write user-facing text as a literal. Add the key to `lib/l10n/app_en.arb` (template, with `@key` placeholders; counts use ICU `plural`) and `app_fil.arb`, run `flutter gen-l10n`, and read it with `context.l10n.key` (`lib/core/utils/l10n_extension.dart`; output is checked in under `lib/l10n/gen/`). Domain stays pure Dart: expose enums and map them to labels in presentation. User data (unit labels, product names, notes) is never translated. The language is `AppLanguage` (`system`/`en`/`fil`) held by `LanguageCubit` and stored in the settings table. `test/l10n/` enforces en/fil key and placeholder parity and fails on string literals handed to `Text(`, `title:`, `label:`… (allowlist in the test, with reasons). Widget tests pump `localizedApp(...)` (`test/support/localized_app.dart`).
 - **Screenshots**: `flutter test --run-skipped --tags screenshots --update-goldens` renders every screen into `test/screenshots/goldens/` using the sample shop in `test/support/sample_data.dart`. Review them after UI changes.
 - **Debug-only UI** is gated by `kDebugMode` (`package:flutter/foundation.dart`), never by a stored setting, so a release build cannot show it or reach its route: it wipes the shop. Build the rows out of `MoreRow` (`lib/core/widgets/more_row.dart`) so the Debug group looks like the rest of More, and hand results back to the page rather than pushing them as state — `AppRestarter.restart()` disposes the cubit that produced them.
 

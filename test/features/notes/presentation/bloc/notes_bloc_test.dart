@@ -109,8 +109,13 @@ void main() {
       build: build,
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const ToggleNotePinEvent(1)),
-      expect: () =>
-          [const NotesLoaded(all: notes, message: 'Unpinned', serial: 1)],
+      expect: () => [
+        NotesLoaded(
+            all: notes,
+            outcome: NoteOutcome.unpinned,
+            subject: notes.first,
+            serial: 1)
+      ],
       verify: (_) => verify(() => setNotePinned(1, false)).called(1),
     );
 
@@ -122,7 +127,11 @@ void main() {
       seed: () => const NotesLoaded(all: notes),
       act: (bloc) => bloc.add(const ToggleNotePinEvent(2)),
       expect: () => [
-        const NotesLoaded(all: notes, message: 'Pinned to Today', serial: 1)
+        NotesLoaded(
+            all: notes,
+            outcome: NoteOutcome.pinned,
+            subject: notes[1],
+            serial: 1)
       ],
     );
 
@@ -154,7 +163,8 @@ void main() {
       expect: () => [
         const NotesLoaded(
             all: [suppliers],
-            message: 'Ideas deleted',
+            outcome: NoteOutcome.deleted,
+            subject: ideas,
             serial: 1,
             deleted: ideas),
       ],
@@ -177,7 +187,9 @@ void main() {
     build: build,
     seed: () => const NotesLoaded(all: [suppliers]),
     act: (bloc) => bloc.add(const RestoreNoteEvent(ideas)),
-    expect: () =>
-        [const NotesLoaded(all: notes, message: 'Ideas restored', serial: 1)],
+    expect: () => [
+      const NotesLoaded(
+          all: notes, outcome: NoteOutcome.restored, subject: ideas, serial: 1)
+    ],
   );
 }

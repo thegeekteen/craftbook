@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -40,6 +41,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final p = product;
     final cost = unitCost ?? 0;
     final parts =
@@ -73,9 +75,10 @@ class ProductCard extends StatelessWidget {
                       Text(p.name,
                           style:
                               AppTextStyles.bodyLarge.copyWith(color: c.ink)),
-                      if (p.isStandalone) const AppTag('Resell'),
-                      if (p.isArchived) const AppTag('Archived'),
-                      if (isShort) const AppTag.low(text: 'Short for orders'),
+                      if (p.isStandalone) AppTag(l10n.productsTagResell),
+                      if (p.isArchived) AppTag(l10n.productsTagArchived),
+                      if (isShort)
+                        AppTag.low(text: l10n.productsTagShortForOrders),
                     ],
                   ),
                 ),
@@ -96,9 +99,10 @@ class ProductCard extends StatelessWidget {
                     TextSpan(children: [
                       TextSpan(
                           text:
-                              'Cost ${CurrencyFormatter.formatShort(cost)} · '),
+                              '${l10n.productsCardCost(CurrencyFormatter.formatShort(cost))} · '),
                       TextSpan(
-                        text: '${margin < 0 ? '−${-margin}' : margin}% margin',
+                        text: l10n.productsCardMargin(
+                            margin < 0 ? '−${-margin}' : '$margin'),
                         style: TextStyle(
                             color: marginColor, fontWeight: FontWeight.w600),
                       ),
@@ -110,7 +114,8 @@ class ProductCard extends StatelessWidget {
                   Text.rich(
                     TextSpan(children: [
                       TextSpan(
-                          text: p.isStandalone ? 'In stock ' : 'Can build '),
+                          text:
+                              '${p.isStandalone ? l10n.productsInStock : l10n.productsCanBuild} '),
                       TextSpan(
                         text: QuantityFormatter.format(shown),
                         style: TextStyle(

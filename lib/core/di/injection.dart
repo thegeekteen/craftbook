@@ -22,6 +22,7 @@ import '../../features/units/data/repositories/unit_repository_impl.dart';
 import '../../features/units/domain/repositories/unit_repository.dart';
 import '../../features/units/domain/usecases/unit_usecases.dart';
 import '../../features/units/presentation/bloc/units_bloc.dart';
+import '../../features/settings/presentation/bloc/language_cubit.dart';
 import '../../features/settings/presentation/bloc/order_amount_cubit.dart';
 import '../../features/settings/presentation/bloc/theme_cubit.dart';
 import '../../features/products/data/repositories/channel_repository_impl.dart';
@@ -482,6 +483,8 @@ Future<void> configureDependencies({AppDatabase? database}) async {
       ));
   // App-wide: lives above the router, so a singleton.
   getIt.registerSingleton(ThemeCubit(getIt()),
+      dispose: (cubit) => cubit.close());
+  getIt.registerSingleton(LanguageCubit(getIt()),
       dispose: (cubit) => cubit.close());
   getIt.registerSingleton(OrderAmountCubit(getIt()),
       dispose: (cubit) => cubit.close());

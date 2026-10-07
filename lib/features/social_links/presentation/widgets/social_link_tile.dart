@@ -5,6 +5,7 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../domain/entities/social_link.dart';
 import 'social_mark.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// A shortcut as a card in the grid: the mark, its name and the address.
 class SocialLinkTile extends StatelessWidget {
@@ -18,9 +19,10 @@ class SocialLinkTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return Semantics(
       button: true,
-      label: 'Open ${link.label}',
+      label: l10n.socialOpenNamed(link.label),
       child: AppCard(
         onTap: onTap,
         onLongPress: onLongPress,

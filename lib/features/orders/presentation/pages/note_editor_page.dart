@@ -3,6 +3,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/note/note_styles.dart';
@@ -76,10 +77,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
     final discard = await ConfirmDialog.show(
       context,
-      title: 'Discard changes?',
-      message: 'The note stays as it was.',
-      confirmText: 'Discard',
-      cancelText: 'Keep editing',
+      title: context.l10n.ordersDiscardChangesTitle,
+      message: context.l10n.ordersNoteStaysMessage,
+      confirmText: context.l10n.ordersDiscard,
+      cancelText: context.l10n.ordersKeepEditing,
       isDestructive: true,
     );
     if (discard && mounted) Navigator.of(context).pop();
@@ -98,12 +99,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         appBar: AppBar(
           backgroundColor: c.surface,
           leading: IconButton(
-            tooltip: 'Close',
+            tooltip: context.l10n.commonClose,
             icon: const Icon(Icons.close_rounded),
             onPressed: _handleBack,
           ),
-          title: Text(
-              NoteCodec.isBlank(widget.initialNote) ? 'Add note' : 'Edit note'),
+          title: Text(NoteCodec.isBlank(widget.initialNote)
+              ? context.l10n.ordersNoteAdd
+              : context.l10n.ordersEditNote),
           // Up here rather than in a bottom bar, so it stays reachable while
           // the keyboard is open.
           actions: [
@@ -115,7 +117,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   minimumSize: const Size(0, 38),
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                 ),
-                child: const Text('Save'),
+                child: Text(context.l10n.commonSave),
               ),
             ),
           ],
@@ -141,7 +143,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     AppSpacing.gutter + 4,
                     AppSpacing.xl,
                   ),
-                  placeholder: 'Gift wrap, colour requests, packing steps…',
+                  placeholder: context.l10n.ordersNotePlaceholder,
                   textCapitalization: TextCapitalization.sentences,
                   customStyles: NoteStyles.editor(c),
                   customStyleBuilder: NoteStyles.lineStyles(c),

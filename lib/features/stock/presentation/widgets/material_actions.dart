@@ -5,6 +5,7 @@ import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
@@ -19,29 +20,31 @@ abstract final class MaterialActions {
   /// The long-press menu. Returns true when something changed and the
   /// caller should reload.
   static Future<bool> open(BuildContext context, Material material) async {
+    final l10n = context.l10n;
     final action = await showActionSheet<_MaterialAction>(
       context,
       title: material.name,
       actions: [
-        const SheetAction(
+        SheetAction(
             value: _MaterialAction.receive,
             icon: Icons.add_rounded,
-            label: 'Receive stock'),
-        const SheetAction(
+            label: l10n.stockActionReceive),
+        SheetAction(
             value: _MaterialAction.edit,
             icon: Icons.edit_outlined,
-            label: 'Edit material'),
+            label: l10n.stockActionEdit),
         SheetAction(
           value: _MaterialAction.toggleArchived,
           icon: material.isArchived
               ? Icons.unarchive_outlined
               : Icons.archive_outlined,
-          label: material.isArchived ? 'Unarchive' : 'Archive',
+          label:
+              material.isArchived ? l10n.commonUnarchive : l10n.commonArchive,
         ),
-        const SheetAction(
+        SheetAction(
             value: _MaterialAction.delete,
             icon: Icons.delete_outline_rounded,
-            label: 'Delete material',
+            label: l10n.stockActionDelete,
             destructive: true),
       ],
     );
@@ -64,6 +67,7 @@ abstract final class MaterialActions {
   /// Archives or unarchives. Returns true once it changed.
   static Future<bool> setArchived(
       BuildContext context, Material material, bool archived) async {
+    final l10n = context.l10n;
     final result =
         await getIt<SetMaterialArchived>()(material.id!, archived: archived);
     if (!context.mounted) return false;
@@ -73,8 +77,8 @@ abstract final class MaterialActions {
         return false;
       case Success():
         context.showSnackBar(archived
-            ? '${material.name} archived'
-            : '${material.name} is back in your lists');
+            ? l10n.stockArchivedSnack(material.name)
+            : l10n.stockUnarchivedSnack(material.name));
         return true;
     }
   }
@@ -82,16 +86,17 @@ abstract final class MaterialActions {
   /// Confirms, then deletes. Returns true once the material is gone; a
   /// blocked delete explains itself in a snackbar.
   static Future<bool> delete(BuildContext context, Material material) async {
+    final l10n = context.l10n;
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Delete ${material.name}?',
+      title: l10n.stockDeleteTitle(material.name),
       message: [
-        "This can't be undone. Materials used in a product or an order can't be deleted; archive them instead.",
+        l10n.stockDeleteBody,
         if (material.quantityOnHand > 0)
-          'You still have ${QuantityFormatter.withUnit(material.quantityOnHand, material.unit)}'
-              ' on hand. Its stock history goes too.',
+          l10n.stockDeleteOnHand(QuantityFormatter.withUnit(
+              material.quantityOnHand, material.unit)),
       ].join('\n\n'),
-      confirmText: 'Delete',
+      confirmText: l10n.commonDelete,
       isDestructive: true,
     );
     if (!confirmed || !context.mounted) return false;
@@ -102,7 +107,7 @@ abstract final class MaterialActions {
         context.showSnackBar(failure.message, isError: true);
         return false;
       case Success():
-        context.showSnackBar('${material.name} deleted');
+        context.showSnackBar(l10n.stockDeletedSnack(material.name));
         return true;
     }
   }

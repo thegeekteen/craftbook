@@ -5,6 +5,7 @@ import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/action_sheet.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/order.dart';
@@ -25,42 +26,44 @@ abstract final class OrderActions {
   static Future<bool> open(BuildContext context, Order order) async {
     final shipped = order.status == OrderStatus.shipped;
     final cancelled = order.status == OrderStatus.cancelled;
+    final l10n = context.l10n;
     final action = await showActionSheet<_OrderAction>(
       context,
-      title: 'Order #${order.id} · ${order.customerName}',
+      title: context.l10n.ordersActionTitle('${order.id}', order.customerName),
       actions: [
         if (order.status == OrderStatus.packed)
-          const SheetAction(
+          SheetAction(
               value: _OrderAction.ship,
               icon: Icons.local_shipping_rounded,
-              label: 'Mark shipped'),
+              label: l10n.ordersMarkShipped),
         if (!cancelled)
           SheetAction(
               value: _OrderAction.paid,
               icon: order.isPaid
                   ? Icons.money_off_rounded
                   : Icons.payments_outlined,
-              label: order.isPaid ? 'Mark unpaid' : 'Mark paid'),
+              label:
+                  order.isPaid ? l10n.ordersMarkUnpaid : l10n.ordersMarkPaid),
         if (!cancelled)
           SheetAction(
               value: _OrderAction.edit,
               icon: Icons.edit_outlined,
-              label: shipped ? 'Edit note' : 'Edit order'),
+              label: shipped ? l10n.ordersEditNote : l10n.ordersEditOrder),
         if (canCancel(order))
-          const SheetAction(
+          SheetAction(
               value: _OrderAction.cancel,
               icon: Icons.block_rounded,
-              label: 'Cancel order'),
+              label: l10n.ordersCancelOrder),
         if (cancelled)
-          const SheetAction(
+          SheetAction(
               value: _OrderAction.restore,
               icon: Icons.restore_rounded,
-              label: 'Restore order'),
+              label: l10n.ordersRestoreOrder),
         if (!shipped)
-          const SheetAction(
+          SheetAction(
               value: _OrderAction.delete,
               icon: Icons.delete_outline_rounded,
-              label: 'Delete order',
+              label: l10n.ordersDeleteOrder,
               destructive: true),
       ],
     );
@@ -68,28 +71,29 @@ abstract final class OrderActions {
     final id = order.id!;
     switch (action) {
       case _OrderAction.ship:
-        return _run(context, getIt<ShipOrder>()(id), 'Marked as shipped');
+        return _run(context, getIt<ShipOrder>()(id), l10n.ordersToastShipped);
       case _OrderAction.paid:
         return _run(context, getIt<SetOrderPaid>()(id, !order.isPaid),
-            order.isPaid ? 'Marked as unpaid' : 'Marked as paid');
+            order.isPaid ? l10n.ordersToastUnpaid : l10n.ordersToastPaid);
       case _OrderAction.edit:
         return await context.push<bool>(RouteNames.editOrderPath(id)) == true;
       case _OrderAction.cancel:
         if (!await confirmCancel(context, order) || !context.mounted) {
           return false;
         }
-        return _run(context, getIt<CancelOrder>()(id),
-            'Order cancelled. Stock returned.');
+        return _run(
+            context, getIt<CancelOrder>()(id), l10n.ordersToastCancelled);
       case _OrderAction.restore:
         if (!await confirmRestore(context, order) || !context.mounted) {
           return false;
         }
-        return _run(context, getIt<RestoreOrder>()(id), 'Order restored');
+        return _run(
+            context, getIt<RestoreOrder>()(id), l10n.ordersToastRestored);
       case _OrderAction.delete:
         if (!await confirmDelete(context, order) || !context.mounted) {
           return false;
         }
-        return _run(context, getIt<DeleteOrder>()(id), 'Order deleted');
+        return _run(context, getIt<DeleteOrder>()(id), l10n.ordersToastDeleted);
     }
   }
 
@@ -98,41 +102,43 @@ abstract final class OrderActions {
   static bool canCancel(Order order) => order.status != OrderStatus.cancelled;
 
   static Future<bool> confirmCancel(BuildContext context, Order order) {
+    final l10n = context.l10n;
     return ConfirmDialog.show(
       context,
-      title: 'Cancel order #${order.id}?',
+      title: l10n.ordersCancelTitle('${order.id}'),
       message: order.status == OrderStatus.shipped
-          ? "Use this when it came back or never went out. Its materials go back on the shelf, and the order stays in your list as cancelled, out of your reports. You can delete it after."
+          ? l10n.ordersCancelMessageShipped
           : order.status == OrderStatus.packed
-              ? "Its materials go back on the shelf. The order stays in your list as cancelled and doesn't count toward earnings."
-              : "Its reserved stock is released. The order stays in your list as cancelled and doesn't count toward earnings.",
-      confirmText: 'Cancel order',
-      cancelText: 'Keep order',
+              ? l10n.ordersCancelMessagePacked
+              : l10n.ordersCancelMessagePending,
+      confirmText: l10n.ordersCancelConfirm,
+      cancelText: l10n.ordersCancelKeep,
       isDestructive: true,
     );
   }
 
   static Future<bool> confirmRestore(BuildContext context, Order order) {
+    final l10n = context.l10n;
     return ConfirmDialog.show(
       context,
-      title: 'Restore order #${order.id}?',
-      message: 'It goes back to To pack and reserves its materials again.',
-      confirmText: 'Restore',
+      title: l10n.ordersRestoreTitle('${order.id}'),
+      message: l10n.ordersRestoreMessage,
+      confirmText: l10n.commonRestore,
     );
   }
 
   /// Asks before deleting; what happens to the stock depends on status.
   static Future<bool> confirmDelete(BuildContext context, Order order) {
+    final l10n = context.l10n;
     return ConfirmDialog.show(
       context,
-      title: 'Delete order #${order.id}?',
+      title: l10n.ordersDeleteTitle('${order.id}'),
       message: switch (order.status) {
-        OrderStatus.packed =>
-          'The order is removed and its materials go back on the shelf.',
-        OrderStatus.cancelled => 'The cancelled order is removed for good.',
-        _ => 'The order is removed and its reserved stock is released.',
+        OrderStatus.packed => l10n.ordersDeleteMessagePacked,
+        OrderStatus.cancelled => l10n.ordersDeleteMessageCancelled,
+        _ => l10n.ordersDeleteMessagePending,
       },
-      confirmText: 'Delete',
+      confirmText: l10n.commonDelete,
       isDestructive: true,
     );
   }

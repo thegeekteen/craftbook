@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
@@ -47,8 +48,8 @@ class OrderTermsCard extends StatelessWidget {
   Future<void> _addCustom(BuildContext context) async {
     final discount = await showDiscountSheet(
       context,
-      title: 'Add a discount',
-      actionLabel: 'Add',
+      title: context.l10n.ordersAddDiscountTitle,
+      actionLabel: context.l10n.commonAdd,
     );
     if (discount != null) onAddDiscount(discount);
   }
@@ -75,13 +76,13 @@ class OrderTermsCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('DISCOUNTS',
+                child: Text(context.l10n.ordersDiscountsCaps,
                     style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               ),
               if (onManagePresets != null)
                 TextButton(
                   onPressed: onManagePresets,
-                  child: const Text('Manage'),
+                  child: Text(context.l10n.ordersManage),
                 ),
             ],
           ),
@@ -103,7 +104,7 @@ class OrderTermsCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Remove ${d.label}',
+                  tooltip: context.l10n.ordersRemoveDiscount(d.label),
                   visualDensity: VisualDensity.compact,
                   icon: Icon(Icons.close_rounded, size: 18, color: c.muted),
                   onPressed: () => onRemoveDiscount(i),
@@ -122,7 +123,9 @@ class OrderTermsCard extends StatelessWidget {
                   onTap: () => onAddDiscount(p.toDiscount()),
                 ),
               AppChip(
-                label: presets.isEmpty ? '+ Add discount' : '+ Other',
+                label: presets.isEmpty
+                    ? context.l10n.ordersAddDiscountChip
+                    : context.l10n.ordersOtherDiscountChip,
                 selected: false,
                 onTap: () => _addCustom(context),
               ),
@@ -137,15 +140,19 @@ class OrderTermsCard extends StatelessWidget {
               value: terms.tax != null,
               onChanged: onTaxChanged,
               title: Text(
-                '$taxLabel $rate% · ${tax.inclusive ? 'in prices' : 'added on top'}',
+                tax.inclusive
+                    ? context.l10n.ordersTaxInPrices(taxLabel, rate)
+                    : context.l10n.ordersTaxOnTop(taxLabel, rate),
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink),
               ),
               subtitle: Text(
                 terms.tax == null
-                    ? 'Off for this order'
+                    ? context.l10n.ordersTaxOff
                     : tax.inclusive
-                        ? '${CurrencyFormatter.format(money.tax)} of the total is $taxLabel'
-                        : 'Customer pays ${CurrencyFormatter.format(money.tax)} more',
+                        ? context.l10n.ordersTaxPartOfTotal(
+                            CurrencyFormatter.format(money.tax), taxLabel)
+                        : context.l10n.ordersTaxCustomerPays(
+                            CurrencyFormatter.format(money.tax)),
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
             ),
@@ -155,12 +162,13 @@ class OrderTermsCard extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             value: terms.isPaid,
             onChanged: onPaidChanged,
-            title: Text('Paid',
+            title: Text(context.l10n.ordersPaidSwitch,
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
             subtitle: Text(
               terms.isPaid
-                  ? 'The customer has paid'
-                  : 'Waiting for ${CurrencyFormatter.format(money.customerPays)}',
+                  ? context.l10n.ordersPaidHasPaid
+                  : context.l10n.ordersPaidWaitingFor(
+                      CurrencyFormatter.format(money.customerPays)),
               style: AppTextStyles.bodySmall
                   .copyWith(color: terms.isPaid ? c.muted : c.warn),
             ),

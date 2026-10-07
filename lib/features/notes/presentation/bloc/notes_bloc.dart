@@ -57,7 +57,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     final note = _find(event.id);
     if (note == null) return;
     final result = await setNotePinned(event.id, !note.isPinned);
-    await _finish(emit, result, note.isPinned ? 'Unpinned' : 'Pinned to Today');
+    await _finish(emit, result,
+        note.isPinned ? NoteOutcome.unpinned : NoteOutcome.pinned, note);
   }
 
   Future<void> _onDelete(
@@ -65,27 +66,28 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     final note = _find(event.id);
     if (note == null) return;
     final result = await deleteNote(event.id);
-    await _finish(emit, result, '${note.displayTitle} deleted', deleted: note);
+    await _finish(emit, result, NoteOutcome.deleted, note, deleted: note);
   }
 
   Future<void> _onRestore(
       RestoreNoteEvent event, Emitter<NotesState> emit) async {
     final result = await restoreNote(event.note);
-    await _finish(emit, result, '${event.note.displayTitle} restored');
+    await _finish(emit, result, NoteOutcome.restored, event.note);
   }
 
   /// Reloads after a successful action and reports how it went.
   Future<void> _finish(
     Emitter<NotesState> emit,
     Result<Object?> result,
-    String successMessage, {
+    NoteOutcome outcome,
+    Note subject, {
     Note? deleted,
   }) async {
     switch (result) {
       case Error(:final failure):
         final current = state;
         if (current is NotesLoaded) {
-          emit(current.withMessage(failure.message, ++_serial, isError: true));
+          emit(current.withError(failure.message, ++_serial));
         } else {
           emit(NotesError(failure.message));
         }
@@ -96,7 +98,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
             emit(NotesError(failure.message));
           case Success(:final value):
             emit(NotesLoaded(all: value, query: _query)
-                .withMessage(successMessage, ++_serial, deleted: deleted));
+                .withOutcome(outcome, subject, ++_serial, deleted: deleted));
         }
     }
   }

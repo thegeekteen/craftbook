@@ -16,6 +16,7 @@ import '../../../../core/widgets/note/note_styles.dart';
 import '../../../../core/widgets/note/note_toolbar.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/note_edit_cubit.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// Writes a new note ([noteId] null) or edits one, full screen.
 ///
@@ -134,11 +135,12 @@ class _NoteEditorState extends State<_NoteEditor> {
   }
 
   Future<void> _delete() async {
+    final l10n = context.l10n;
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Delete note?',
-      message: '${widget.note.displayTitle} is removed from your notebook.',
-      confirmText: 'Delete',
+      title: l10n.notesDeleteTitle,
+      message: l10n.notesDeleteMessage(widget.note.titleOr(l10n.notesUntitled)),
+      confirmText: l10n.commonDelete,
       isDestructive: true,
     );
     if (!confirmed || !mounted) return;
@@ -157,12 +159,13 @@ class _NoteEditorState extends State<_NoteEditor> {
       context.pop();
       return;
     }
+    final l10n = context.l10n;
     final discard = await ConfirmDialog.show(
       context,
-      title: 'Discard changes?',
-      message: _isNew ? 'The note is not saved.' : 'The note stays as it was.',
-      confirmText: 'Discard',
-      cancelText: 'Keep editing',
+      title: l10n.notesDiscardTitle,
+      message: _isNew ? l10n.notesDiscardNew : l10n.notesDiscardEdit,
+      confirmText: l10n.notesDiscardConfirm,
+      cancelText: l10n.notesKeepEditing,
       isDestructive: true,
     );
     if (discard && mounted) context.pop();
@@ -171,6 +174,7 @@ class _NoteEditorState extends State<_NoteEditor> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     const sidePadding = AppSpacing.gutter + 4;
     return PopScope(
       canPop: false,
@@ -182,14 +186,14 @@ class _NoteEditorState extends State<_NoteEditor> {
         appBar: AppBar(
           backgroundColor: c.surface,
           leading: IconButton(
-            tooltip: 'Close',
+            tooltip: l10n.commonClose,
             icon: const Icon(Icons.close_rounded),
             onPressed: _handleBack,
           ),
-          title: Text(_isNew ? 'New note' : 'Edit note'),
+          title: Text(_isNew ? l10n.notesNewNote : l10n.notesEditNote),
           actions: [
             IconButton(
-              tooltip: _pinned ? 'Unpin' : 'Pin to Today',
+              tooltip: _pinned ? l10n.notesUnpin : l10n.notesPinToToday,
               onPressed: _togglePin,
               icon: Icon(
                 _pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
@@ -198,7 +202,7 @@ class _NoteEditorState extends State<_NoteEditor> {
             ),
             if (!_isNew)
               PopupMenuButton<void>(
-                tooltip: 'More',
+                tooltip: l10n.notesMore,
                 itemBuilder: (_) => [
                   PopupMenuItem(
                     onTap: _delete,
@@ -207,7 +211,8 @@ class _NoteEditorState extends State<_NoteEditor> {
                         Icon(Icons.delete_outline_rounded,
                             size: 20, color: c.alert),
                         const SizedBox(width: AppSpacing.md),
-                        Text('Delete', style: TextStyle(color: c.alert)),
+                        Text(l10n.commonDelete,
+                            style: TextStyle(color: c.alert)),
                       ],
                     ),
                   ),
@@ -224,7 +229,7 @@ class _NoteEditorState extends State<_NoteEditor> {
                   minimumSize: const Size(0, 38),
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                 ),
-                child: const Text('Save'),
+                child: Text(l10n.commonSave),
               ),
             ),
           ],
@@ -248,7 +253,7 @@ class _NoteEditorState extends State<_NoteEditor> {
                 // The app theme outlines every field; a title reads as a
                 // heading, so every border is cleared explicitly.
                 decoration: InputDecoration(
-                  hintText: 'Title',
+                  hintText: l10n.notesTitleHint,
                   hintStyle:
                       AppTextStyles.displaySmall.copyWith(color: c.muted),
                   isCollapsed: true,
@@ -275,7 +280,7 @@ class _NoteEditorState extends State<_NoteEditor> {
                     sidePadding,
                     AppSpacing.xl,
                   ),
-                  placeholder: 'Supplier details, ideas, how-tos…',
+                  placeholder: l10n.notesBodyHint,
                   textCapitalization: TextCapitalization.sentences,
                   customStyles: NoteStyles.editor(c),
                   customStyleBuilder: NoteStyles.lineStyles(c),

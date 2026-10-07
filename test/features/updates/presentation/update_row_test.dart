@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../../support/localized_app.dart';
 
 class _MockRepo extends Mock implements UpdateRepository {}
 
@@ -42,12 +43,21 @@ void main() {
   });
   tearDown(() => cubit.close());
 
-  Future<void> pump(WidgetTester tester) => tester.pumpWidget(MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
+  Future<void> pump(WidgetTester tester,
+          {Locale locale = const Locale('en')}) =>
+      tester.pumpWidget(localizedApp(
+        Scaffold(
           body: BlocProvider.value(value: cubit, child: const UpdateRow()),
         ),
+        locale: locale,
+        theme: AppTheme.lightTheme,
       ));
+
+  testWidgets('reads in Filipino', (tester) async {
+    await pump(tester, locale: const Locale('fil'));
+    expect(find.text('Tingnan kung may update'), findsOneWidget);
+    expect(find.text('Check for updates'), findsNothing);
+  });
 
   testWidgets('starts as a check button', (tester) async {
     await pump(tester);
@@ -60,7 +70,7 @@ void main() {
     await pump(tester);
     await tester.tap(find.text('Check for updates'));
     await tester.pumpAndSettle();
-    expect(find.text("You're on the newest version"), findsOneWidget);
+    expect(find.text('You’re on the newest version'), findsOneWidget);
   });
 
   testWidgets('shows why a check failed', (tester) async {

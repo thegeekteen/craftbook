@@ -6,13 +6,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart'
     show FlutterQuillLocalizations;
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'core/di/injection.dart';
+import 'core/utils/l10n_extension.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/route_names.dart';
 import 'core/widgets/app_shell.dart';
 import 'core/theme/palettes.dart';
+import 'features/settings/domain/entities/app_language.dart';
 import 'features/settings/domain/entities/theme_settings.dart';
+import 'features/settings/presentation/bloc/language_cubit.dart';
+import 'l10n/gen/app_localizations.dart';
 import 'features/settings/presentation/bloc/theme_cubit.dart';
 import 'features/stock/presentation/bloc/materials_bloc.dart';
 
@@ -53,11 +58,15 @@ class CraftbookApp extends StatelessWidget {
     String initialLocation = RouteNames.today,
     this.themeMode,
     this.palette,
+    this.language,
     this.scaffoldMessengerKey,
   }) : _router = _buildRouter(initialLocation);
 
   final ThemeMode? themeMode;
   final AppPalette? palette;
+
+  /// Fixes the language for tests and screenshots; null follows the saved one.
+  final AppLanguage? language;
 
   /// Lets the app restarter show a message in a freshly rebuilt app.
   final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
@@ -65,35 +74,51 @@ class CraftbookApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget app(ThemeSettings look) => MaterialApp.router(
-          title: 'CraftBook',
+    Widget app(ThemeSettings look, AppLanguage language) => MaterialApp.router(
+          onGenerateTitle: (context) => context.l10n.appName,
           theme: AppTheme.light(look.palette),
           darkTheme: AppTheme.dark(look.palette),
           themeMode: look.mode,
           debugShowCheckedModeBanner: false,
           scaffoldMessengerKey: scaffoldMessengerKey,
+          locale: language.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
           // Quill looks its toolbar strings up through these; without them the
           // note editor throws while building.
           localizationsDelegates: const [
+            AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             FlutterQuillLocalizations.delegate,
           ],
+          // Existing DateFormat calls read the default locale, so keep it in
+          // step with the language the app resolved.
+          builder: (context, child) {
+            Intl.defaultLocale = Localizations.localeOf(context).toString();
+            return child ?? const SizedBox.shrink();
+          },
           routerConfig: _router,
         );
 
     final fixedMode = themeMode;
     final fixedPalette = palette;
-    if (fixedMode != null && fixedPalette != null) {
-      return app(ThemeSettings(mode: fixedMode, palette: fixedPalette));
+    final fixedLanguage = language;
+    if (fixedMode != null && fixedPalette != null && fixedLanguage != null) {
+      return app(
+          ThemeSettings(mode: fixedMode, palette: fixedPalette), fixedLanguage);
     }
-    return BlocBuilder<ThemeCubit, ThemeSettings>(
-      bloc: getIt<ThemeCubit>(),
-      builder: (context, saved) => app(
-        ThemeSettings(
-          mode: fixedMode ?? saved.mode,
-          palette: fixedPalette ?? saved.palette,
+    return BlocBuilder<LanguageCubit, AppLanguage>(
+      bloc: getIt<LanguageCubit>(),
+      builder: (context, savedLanguage) =>
+          BlocBuilder<ThemeCubit, ThemeSettings>(
+        bloc: getIt<ThemeCubit>(),
+        builder: (context, saved) => app(
+          ThemeSettings(
+            mode: fixedMode ?? saved.mode,
+            palette: fixedPalette ?? saved.palette,
+          ),
+          fixedLanguage ?? savedLanguage,
         ),
       ),
     );

@@ -2,28 +2,28 @@ import 'package:craftbook/core/theme/app_theme.dart';
 import 'package:craftbook/features/orders/presentation/widgets/orders_filter_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
 
 void main() {
   Future<OrderPaymentFilter?> run(WidgetTester tester,
       OrderPaymentFilter current, Future<void> Function() interact) async {
     OrderPaymentFilter? result;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Builder(
-        builder: (context) => TextButton(
-          onPressed: () async => result = await showOrdersFilterSheet(
-            context,
-            current: current,
-            counts: const {
-              OrderPaymentFilter.any: 7,
-              OrderPaymentFilter.unpaid: 3,
-              OrderPaymentFilter.paid: 4,
-            },
+    await tester.pumpWidget(localizedApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => result = await showOrdersFilterSheet(
+              context,
+              current: current,
+              counts: const {
+                OrderPaymentFilter.any: 7,
+                OrderPaymentFilter.unpaid: 3,
+                OrderPaymentFilter.paid: 4,
+              },
+            ),
+            child: const Text('open'),
           ),
-          child: const Text('open'),
         ),
-      ),
-    ));
+        theme: AppTheme.lightTheme));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await interact();
@@ -57,5 +57,18 @@ void main() {
       await tester.tap(find.text('Show'));
     });
     expect(f, OrderPaymentFilter.any);
+  });
+
+  testWidgets('reads in Filipino', (tester) async {
+    await tester.pumpWidget(localizedApp(
+      const Scaffold(
+        body: OrdersFilterForm(current: OrderPaymentFilter.any),
+      ),
+      locale: const Locale('fil'),
+    ));
+    expect(find.text('Hindi pa bayad'), findsOneWidget);
+    expect(find.text('Bayad na'), findsOneWidget);
+    expect(find.text('Ipakita'), findsOneWidget);
+    expect(find.text('Unpaid'), findsNothing);
   });
 }

@@ -6,6 +6,7 @@ import '../../../../core/widgets/date_field.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../domain/entities/order_field.dart';
 import '../../domain/order_field_codec.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// The order form input for one custom field. [value] and [onChanged] use
 /// the stored encoding (see [OrderFieldCodec]); an empty string means unset.
@@ -76,7 +77,7 @@ class _OrderFieldInputState extends State<OrderFieldInput> {
             if (text.isEmpty || OrderFieldCodec.encodeNumber(text) != null) {
               return null;
             }
-            return 'Enter a number';
+            return context.l10n.orderFieldsEnterNumber;
           },
           onChanged: (v) {
             final text = v.trim();

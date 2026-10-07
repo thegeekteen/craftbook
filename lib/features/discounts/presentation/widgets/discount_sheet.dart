@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -54,11 +55,20 @@ class _DiscountFormState extends State<DiscountForm> {
   }
 
   void _save() {
+    final l10n = context.l10n;
     final value = double.tryParse(_value.text) ?? 0;
     final invalid =
         validateDiscount(label: _label.text, kind: _kind, value: value);
     if (invalid != null) {
-      setState(() => _error = invalid.message);
+      // validateDiscount is domain code with English text; say the same
+      // thing in the user's language here.
+      setState(() => _error = _label.text.trim().isEmpty
+          ? l10n.discountsNameRequired
+          : value <= 0
+              ? l10n.discountsAmountRequired
+              : _kind == DiscountKind.percent && value > 100
+                  ? l10n.discountsPercentMax
+                  : invalid.message);
       return;
     }
     Navigator.pop(
@@ -78,14 +88,15 @@ class _DiscountFormState extends State<DiscountForm> {
           controller: _label,
           autofocus: widget.initial == null,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-              labelText: 'Name', hintText: 'e.g. Loyal customer'),
+          decoration: InputDecoration(
+              labelText: context.l10n.commonName,
+              hintText: context.l10n.discountsNameHint),
         ),
         const SizedBox(height: 12),
         ChoiceChipRow<DiscountKind>.single(
-          options: const [
-            ChipOption(DiscountKind.percent, 'Percent'),
-            ChipOption(DiscountKind.fixed, 'Fixed amount'),
+          options: [
+            ChipOption(DiscountKind.percent, context.l10n.discountsKindPercent),
+            ChipOption(DiscountKind.fixed, context.l10n.discountsKindFixed),
           ],
           selected: _kind,
           onSelected: (k) => setState(() => _kind = k),
@@ -98,12 +109,14 @@ class _DiscountFormState extends State<DiscountForm> {
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
           ],
           decoration: InputDecoration(
-            labelText: percent ? 'Percent off' : 'Amount off',
+            labelText: percent
+                ? context.l10n.discountsPercentOff
+                : context.l10n.discountsAmountOff,
             prefixText: percent ? null : '${CurrencyFormatter.symbol} ',
             suffixText: percent ? '%' : null,
             helperText: percent
-                ? 'Taken off the items total'
-                : 'Taken off the order once',
+                ? context.l10n.discountsPercentHelper
+                : context.l10n.discountsFixedHelper,
           ),
           onSubmitted: (_) => _save(),
         ),

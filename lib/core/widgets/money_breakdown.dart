@@ -4,6 +4,7 @@ import '../theme/colors.dart';
 import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
 import '../utils/currency_formatter.dart';
+import '../utils/l10n_extension.dart';
 
 /// Where a sale went: discounts, tax, materials, fees, shipping and what's
 /// left as profit.
@@ -66,8 +67,9 @@ class MoneyBreakdownBar extends StatelessWidget {
     final total = segments.fold<double>(0, (sum, s) => sum + s.$1);
 
     return Semantics(
-      label: 'Profit ${CurrencyFormatter.format(parts.profit)} of '
-          '${CurrencyFormatter.format(parts.sales)} sales',
+      label: context.l10n.moneyProfitSemantics(
+          CurrencyFormatter.format(parts.profit),
+          CurrencyFormatter.format(parts.sales)),
       child: ClipRRect(
         borderRadius: AppRadii.pillAll,
         child: SizedBox(
@@ -104,27 +106,31 @@ class MoneyBreakdownBar extends StatelessWidget {
 /// [onMaterialsTap] makes the materials row tappable (e.g. to expand lines).
 class MoneyBreakdown extends StatelessWidget {
   final MoneyParts parts;
-  final String feesLabel;
-  final String materialsLabel;
+
+  /// Overrides for the row names; null uses the translated defaults.
+  final String? feesLabel;
+  final String? materialsLabel;
   final VoidCallback? onMaterialsTap;
   final bool showBar;
 
   /// What the tax is called ("VAT").
-  final String taxLabel;
+  final String? taxLabel;
 
   const MoneyBreakdown({
     super.key,
     required this.parts,
-    this.feesLabel = 'Channel fees',
-    this.materialsLabel = 'Materials',
+    this.feesLabel,
+    this.materialsLabel,
     this.onMaterialsTap,
     this.showBar = true,
-    this.taxLabel = 'Tax',
+    this.taxLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
+    final taxLabel = this.taxLabel ?? l10n.moneyTax;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -133,27 +139,30 @@ class MoneyBreakdown extends StatelessWidget {
           MoneyBreakdownBar(parts: parts),
           const SizedBox(height: 10),
         ],
-        MoneyRow(label: 'Sales', amount: parts.sales),
+        MoneyRow(label: l10n.moneySales, amount: parts.sales),
         if (parts.discount > 0)
-          MoneyRow(label: 'Discounts', amount: -parts.discount),
+          MoneyRow(label: l10n.moneyDiscounts, amount: -parts.discount),
         if (parts.includedTax > 0)
           MoneyRow(
-            label: '$taxLabel in prices',
+            label: l10n.moneyTaxInPrices(taxLabel),
             amount: -parts.includedTax,
             dot: c.coin,
             color: c.coin,
           ),
         MoneyRow(
-          label: materialsLabel,
+          label: materialsLabel ?? l10n.moneyMaterials,
           amount: -parts.materials,
           dot: c.alert,
           color: c.alert,
           onTap: onMaterialsTap,
         ),
         MoneyRow(
-            label: feesLabel, amount: -parts.fees, dot: c.warn, color: c.warn),
+            label: feesLabel ?? l10n.moneyChannelFees,
+            amount: -parts.fees,
+            dot: c.warn,
+            color: c.warn),
         MoneyRow(
-          label: 'Shipping',
+          label: l10n.moneyShipping,
           amount: -parts.shipping,
           dot: c.muted,
           color: c.muted,
@@ -162,9 +171,8 @@ class MoneyBreakdown extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              '+ ${CurrencyFormatter.format(parts.addedTax)} $taxLabel added '
-              'for the customer to pay. It isn\'t yours, so it\'s not in '
-              'profit.',
+              l10n.moneyAddedTaxNote(
+                  CurrencyFormatter.format(parts.addedTax), taxLabel),
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ),
@@ -260,7 +268,7 @@ class ProfitRow extends StatelessWidget {
           child: Divider(height: 1, color: c.hair),
         ),
         MoneyRow(
-          label: 'Profit · ${(parts.margin * 100).round()}% margin',
+          label: context.l10n.moneyProfitMargin((parts.margin * 100).round()),
           amount: parts.profit,
           amountStyle: AppTextStyles.amount.copyWith(color: color),
         ),

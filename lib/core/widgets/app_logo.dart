@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/l10n_extension.dart';
 
 /// The CraftBook launcher icon, for in-app places like the About footer.
 ///
@@ -21,7 +22,7 @@ class AppLogo extends StatelessWidget {
         height: size,
         // Decoded at display size; the source is 1024px.
         cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
-        semanticLabel: 'CraftBook logo',
+        semanticLabel: context.l10n.appLogoLabel,
       ),
     );
   }

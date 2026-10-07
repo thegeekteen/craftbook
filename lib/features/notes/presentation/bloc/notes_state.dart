@@ -9,6 +9,9 @@ abstract class NotesState extends Equatable {
   List<Object?> get props => [];
 }
 
+/// What a note action did, so the page can say it in the user's language.
+enum NoteOutcome { pinned, unpinned, deleted, restored }
+
 class NotesInitial extends NotesState {}
 
 class NotesLoading extends NotesState {}
@@ -19,10 +22,16 @@ class NotesLoaded extends NotesState {
   final String query;
 
   /// Outcome of the last action, shown once. [serial] changes with every
-  /// message so the same text twice still shows twice.
+  /// message so the same text twice still shows twice. A success sets
+  /// [outcome] and [subject]; a failure sets [message] and [isError].
   final String? message;
+  final NoteOutcome? outcome;
+  final Note? subject;
   final bool isError;
   final int serial;
+
+  /// Whether there is something to tell the user.
+  bool get hasNotice => message != null || outcome != null;
 
   /// Set when [message] reports a delete, so the snackbar can offer Undo.
   final Note? deleted;
@@ -31,6 +40,8 @@ class NotesLoaded extends NotesState {
     required this.all,
     this.query = '',
     this.message,
+    this.outcome,
+    this.subject,
     this.isError = false,
     this.serial = 0,
     this.deleted,
@@ -53,19 +64,28 @@ class NotesLoaded extends NotesState {
   NotesLoaded copyWith({List<Note>? all, String? query}) =>
       NotesLoaded(all: all ?? this.all, query: query ?? this.query);
 
-  NotesLoaded withMessage(String message, int serial,
-          {bool isError = false, Note? deleted}) =>
-      NotesLoaded(
+  NotesLoaded withError(String message, int serial) => NotesLoaded(
         all: all,
         query: query,
         message: message,
-        isError: isError,
+        isError: true,
+        serial: serial,
+      );
+
+  NotesLoaded withOutcome(NoteOutcome outcome, Note subject, int serial,
+          {Note? deleted}) =>
+      NotesLoaded(
+        all: all,
+        query: query,
+        outcome: outcome,
+        subject: subject,
         serial: serial,
         deleted: deleted,
       );
 
   @override
-  List<Object?> get props => [all, query, message, isError, serial, deleted];
+  List<Object?> get props =>
+      [all, query, message, outcome, subject, isError, serial, deleted];
 }
 
 /// The notes couldn't be loaded.

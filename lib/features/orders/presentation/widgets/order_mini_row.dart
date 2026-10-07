@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/utils/quantity_formatter.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_list_entry.dart';
+import 'order_l10n.dart';
 import 'order_status_ui.dart';
 
 /// Compact order row for calendars: name, "#id · 3 items · ₱412", pill.
@@ -34,11 +35,11 @@ class OrderMiniRow extends StatelessWidget {
     final pieces = entry.pieceCount;
     final parts = [
       '#${o.id ?? '–'}',
-      if (pieces > 0)
-        '${QuantityFormatter.format(pieces)} ${pieces == 1 ? 'item' : 'items'}',
+      if (pieces > 0) itemCountLabel(context.l10n, pieces),
       if (o.status != OrderStatus.cancelled)
         amountShown == OrderAmountShown.profit
-            ? '${CurrencyFormatter.formatShort(o.liveProfit)} profit'
+            ? context.l10n
+                .ordersMiniProfit(CurrencyFormatter.formatShort(o.liveProfit))
             : CurrencyFormatter.formatShort(o.liveTotal),
     ];
     return Material(

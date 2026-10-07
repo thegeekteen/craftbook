@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
@@ -23,7 +24,7 @@ import '../bloc/orders_list_event.dart';
 import '../bloc/orders_list_state.dart';
 import '../widgets/order_actions.dart';
 import '../widgets/order_card.dart';
-import '../widgets/order_status_ui.dart';
+import '../widgets/order_l10n.dart';
 import '../widgets/orders_filter_sheet.dart';
 
 /// Every order, filtered by status chips and search.
@@ -84,7 +85,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Orders'),
+        title: Text(context.l10n.ordersTitle),
         actions: [
           FilterButton(
             activeCount: _payment == OrderPaymentFilter.any ? 0 : 1,
@@ -105,7 +106,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(RouteNames.newOrder),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New order'),
+        label: Text(context.l10n.ordersNewOrder),
       ),
     );
   }
@@ -137,7 +138,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
           child: AppSearchField(
-            hint: 'Search name, # or channel',
+            hint: context.l10n.ordersSearchHint,
             onChanged: (v) => setState(() => _query = v.trim()),
           ),
         ),
@@ -148,9 +149,9 @@ class _OrdersListViewState extends State<_OrdersListView> {
             selected: _status,
             onSelected: (s) => setState(() => _status = s),
             options: [
-              ChipOption(null, 'All', count: active.length),
+              ChipOption(null, context.l10n.commonAll, count: active.length),
               for (final s in OrderStatus.values)
-                ChipOption(s, s.label, count: count(s)),
+                ChipOption(s, s.localized(context.l10n), count: count(s)),
             ],
           ),
         ),
@@ -159,7 +160,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
           filters: [
             if (_payment != OrderPaymentFilter.any)
               (
-                _payment.label,
+                _payment.labelOf(context.l10n),
                 () => setState(() => _payment = OrderPaymentFilter.any),
               ),
           ],
@@ -216,35 +217,35 @@ class _OrdersListViewState extends State<_OrdersListView> {
     if (noOrdersAtAll) {
       return EmptyState(
         icon: Icons.receipt_long_outlined,
-        title: 'No orders yet',
-        message: 'Your first order will show up here.',
-        actionLabel: 'New order',
+        title: context.l10n.ordersEmptyNoneTitle,
+        message: context.l10n.ordersEmptyNoneMessage,
+        actionLabel: context.l10n.ordersNewOrder,
         onAction: () => _open(RouteNames.newOrder),
       );
     }
     if (_query.isNotEmpty) {
       return EmptyState(
         icon: Icons.search_off_rounded,
-        title: 'No matches',
-        message: 'Nothing matches "$_query".',
+        title: context.l10n.ordersNoMatches,
+        message: context.l10n.ordersNoMatchesFor(_query),
       );
     }
     if (_payment != OrderPaymentFilter.any) {
       return EmptyState(
         icon: Icons.check_circle_outline_rounded,
         title: _payment == OrderPaymentFilter.unpaid
-            ? 'Nothing waiting for payment'
-            : 'No paid orders here',
+            ? context.l10n.ordersNothingWaiting
+            : context.l10n.ordersNoPaidHere,
       );
     }
-    final label = _status?.label.toLowerCase() ?? '';
+    final label = _status?.localized(context.l10n).toLowerCase() ?? '';
     return EmptyState(
       icon: Icons.check_circle_outline_rounded,
       title: _status == OrderStatus.pending
-          ? 'Nothing to pack'
-          : 'No $label orders',
+          ? context.l10n.ordersNothingToPack
+          : context.l10n.ordersNoStatusOrders(label),
       message: _status == OrderStatus.pending
-          ? 'Every order is packed. Nice work.'
+          ? context.l10n.ordersAllPackedMessage
           : null,
     );
   }
@@ -252,6 +253,8 @@ class _OrdersListViewState extends State<_OrdersListView> {
   /// Groups that make the list scannable: urgency for open orders, month
   /// for finished ones.
   List<_Group> _group(List<OrderListEntry> entries) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toString();
     final today = app_date.DateUtils.startOfDay(DateTime.now());
     final weekEnd = today.add(const Duration(days: 7));
     final groups = <String, List<OrderListEntry>>{};
@@ -267,13 +270,13 @@ class _OrdersListViewState extends State<_OrdersListView> {
     for (final e in open) {
       final due = app_date.DateUtils.startOfDay(e.order.shipByDate);
       if (e.order.status == OrderStatus.packed) {
-        add('Packed, ready to ship', e);
+        add(l10n.ordersGroupPacked, e);
       } else if (due.isBefore(today)) {
-        add('Overdue', e);
+        add(l10n.ordersOverdue, e);
       } else if (due.isBefore(weekEnd)) {
-        add('Due this week', e);
+        add(l10n.ordersGroupDueThisWeek, e);
       } else {
-        add('Later', e);
+        add(l10n.ordersGroupLater, e);
       }
     }
 
@@ -284,7 +287,7 @@ class _OrdersListViewState extends State<_OrdersListView> {
         .toList()
       ..sort((a, b) => _closedAt(b.order).compareTo(_closedAt(a.order)));
     for (final e in closed) {
-      add(DateFormat('MMMM y').format(_closedAt(e.order)), e);
+      add(DateFormat('MMMM y', locale).format(_closedAt(e.order)), e);
     }
 
     return [for (final g in groups.entries) _Group(g.key, g.value)];

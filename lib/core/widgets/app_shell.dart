@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../constants/route_names.dart';
 import '../theme/colors.dart';
+import '../utils/l10n_extension.dart';
 
 /// Bottom-nav shell for the five tabs. Inventory holds Products (what
 /// orders are made of) and Materials as two tabs; the buy list it opens
@@ -12,33 +13,33 @@ class AppShell extends StatelessWidget {
 
   const AppShell({super.key, required this.child});
 
-  static const _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.wb_sunny_outlined),
-      selectedIcon: Icon(Icons.wb_sunny_rounded),
-      label: 'Today',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.receipt_long_outlined),
-      selectedIcon: Icon(Icons.receipt_long_rounded),
-      label: 'Orders',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.inventory_2_outlined),
-      selectedIcon: Icon(Icons.inventory_2_rounded),
-      label: 'Inventory',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.bar_chart_outlined),
-      selectedIcon: Icon(Icons.bar_chart_rounded),
-      label: 'Reports',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.grid_view_outlined),
-      selectedIcon: Icon(Icons.grid_view_rounded),
-      label: 'More',
-    ),
-  ];
+  static List<NavigationDestination> _destinations(BuildContext context) => [
+        NavigationDestination(
+          icon: const Icon(Icons.wb_sunny_outlined),
+          selectedIcon: Icon(Icons.wb_sunny_rounded),
+          label: context.l10n.navToday,
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.receipt_long_outlined),
+          selectedIcon: Icon(Icons.receipt_long_rounded),
+          label: context.l10n.navOrders,
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.inventory_2_outlined),
+          selectedIcon: Icon(Icons.inventory_2_rounded),
+          label: context.l10n.navInventory,
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.bar_chart_outlined),
+          selectedIcon: Icon(Icons.bar_chart_rounded),
+          label: context.l10n.navReports,
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.grid_view_outlined),
+          selectedIcon: Icon(Icons.grid_view_rounded),
+          label: context.l10n.navMore,
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +53,7 @@ class AppShell extends StatelessWidget {
         child: NavigationBar(
           selectedIndex: selectedIndexFor(GoRouterState.of(context).uri.path),
           onDestinationSelected: (index) => _onTabSelected(context, index),
-          destinations: _destinations,
+          destinations: _destinations(context),
         ),
       ),
     );

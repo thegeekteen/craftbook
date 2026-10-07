@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../theme/colors.dart';
 import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
+import '../utils/l10n_extension.dart';
 
 /// Tappable date box that opens the date picker. Shows "Wed, Oct 7", or
 /// [placeholder] when [value] is null.
@@ -13,7 +14,9 @@ class DateField extends StatelessWidget {
   final ValueChanged<DateTime> onChanged;
   final DateTime? firstDate;
   final DateTime? lastDate;
-  final String placeholder;
+
+  /// Shown when no date is picked; defaults to a translated "Not set".
+  final String? placeholder;
 
   /// When set and a date is picked, the trailing icon clears it instead.
   final VoidCallback? onCleared;
@@ -25,7 +28,7 @@ class DateField extends StatelessWidget {
     required this.onChanged,
     this.firstDate,
     this.lastDate,
-    this.placeholder = 'Not set',
+    this.placeholder,
     this.onCleared,
   });
 
@@ -75,15 +78,15 @@ class DateField extends StatelessWidget {
                     const SizedBox(height: 1),
                     if (value == null)
                       Text(
-                        placeholder,
+                        placeholder ?? context.l10n.commonNotSet,
                         style:
                             AppTextStyles.bodyMedium.copyWith(color: c.muted),
                       )
                     else
                       Text(
-                        DateFormat(value.year == DateTime.now().year
-                                ? 'EEE, MMM d'
-                                : 'MMM d, y')
+                        (value.year == DateTime.now().year
+                                ? DateFormat.MMMEd()
+                                : DateFormat.yMMMd())
                             .format(value),
                         style: AppTextStyles.bodyMedium.copyWith(
                             color: c.ink, fontWeight: FontWeight.w600),
@@ -93,7 +96,7 @@ class DateField extends StatelessWidget {
               ),
               if (value != null && onCleared != null)
                 IconButton(
-                  tooltip: 'Clear $label',
+                  tooltip: context.l10n.commonClearField(label),
                   visualDensity: VisualDensity.compact,
                   onPressed: onCleared,
                   icon: Icon(Icons.close_rounded, size: 18, color: c.muted),

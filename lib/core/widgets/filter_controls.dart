@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'choice_chip_row.dart';
+import '../utils/l10n_extension.dart';
 
 /// The app-bar Filter button that opens a page's filter sheet, with a badge
 /// counting how many filters are on.
@@ -14,7 +15,7 @@ class FilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Filter',
+      tooltip: context.l10n.commonFilter,
       onPressed: onPressed,
       icon: Badge(
         isLabelVisible: activeCount > 0,
@@ -66,7 +67,8 @@ class ActiveFilterChips extends StatelessWidget {
                 onTap: onRemove,
               ),
             if (onClearAll != null && filters.length > 1)
-              TextButton(onPressed: onClearAll, child: const Text('Clear')),
+              TextButton(
+                  onPressed: onClearAll, child: Text(context.l10n.commonClear)),
           ],
         ),
       ),

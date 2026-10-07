@@ -182,7 +182,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
     int orderId,
     Future<Result<void>> Function() action,
-    String successMessage,
+    OrderNotice notice,
   ) async {
     final loaded =
         state is OrderDetailLoaded ? state as OrderDetailLoaded : null;
@@ -196,7 +196,8 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
             isError: true, serial: ++_serial));
         if (loaded != null) emit(loaded.copyWith(isBusy: false));
       case Success():
-        emit(OrderDetailMessage(successMessage, serial: ++_serial));
+        emit(OrderDetailMessage(notice.message,
+            serial: ++_serial, notice: notice));
         if (loaded != null) emit(loaded.copyWith(isBusy: false));
         await _onLoadOrderDetail(LoadOrderDetail(orderId), emit);
     }
@@ -210,7 +211,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
         emit,
         event.orderId,
         () => adjustMaterialsUsed(event.orderId, event.materials),
-        'Materials updated',
+        OrderNotice.materialsUpdated,
       );
 
   Future<void> _onPackOrder(
@@ -218,14 +219,14 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) =>
       _runAction(emit, event.orderId, () => packOrder(event.orderId),
-          'Packed. Stock updated.');
+          OrderNotice.packed);
 
   Future<void> _onShipOrder(
     ShipOrderDetail event,
     Emitter<OrderDetailState> emit,
   ) =>
       _runAction(emit, event.orderId, () => shipOrder(event.orderId),
-          'Marked as shipped');
+          OrderNotice.shipped);
 
   Future<void> _onSetPaid(
     SetOrderPaidDetail event,
@@ -235,7 +236,7 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
         emit,
         event.orderId,
         () => setOrderPaid(event.orderId, event.paid),
-        event.paid ? 'Marked as paid' : 'Marked as unpaid',
+        event.paid ? OrderNotice.paid : OrderNotice.unpaid,
       );
 
   Future<void> _onCancelOrder(
@@ -243,14 +244,14 @@ class OrderDetailBloc extends Bloc<OrderDetailEvent, OrderDetailState> {
     Emitter<OrderDetailState> emit,
   ) =>
       _runAction(emit, event.orderId, () => cancelOrder(event.orderId),
-          'Order cancelled. Stock returned.');
+          OrderNotice.cancelled);
 
   Future<void> _onRestoreOrder(
     RestoreOrderDetail event,
     Emitter<OrderDetailState> emit,
   ) =>
       _runAction(emit, event.orderId, () => restoreOrder(event.orderId),
-          'Order restored');
+          OrderNotice.restored);
 
   /// Quiet on success: ticking a to-do shouldn't flash a progress bar or a
   /// snackbar. The reload hands the note view back what was stored, which

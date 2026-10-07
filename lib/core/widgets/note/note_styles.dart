@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../l10n/gen/app_localizations.dart';
 import '../../theme/colors.dart';
 import '../../theme/dimens.dart';
 import '../../theme/text_styles.dart';
@@ -95,12 +96,15 @@ abstract final class NoteStyles {
         'alert': c.alertSoft,
       };
 
-  static const highlightLabels = {
-    'warn': 'Sand',
-    'go': 'Green',
-    'coin': 'Lavender',
-    'alert': 'Rose',
-  };
+  /// What a highlight is called in the picker, by its stored name.
+  static String highlightLabel(AppLocalizations l10n, String name) =>
+      switch (name) {
+        'warn' => l10n.noteHighlightSand,
+        'go' => l10n.noteHighlightGreen,
+        'coin' => l10n.noteHighlightLavender,
+        'alert' => l10n.noteHighlightRose,
+        _ => name,
+      };
 
   /// Line-level extras Quill can't express through [DefaultStyles]: a ticked
   /// to-do fades and is struck through, so what's left to do stands out.

@@ -57,9 +57,13 @@ class SocialLinksBloc extends Bloc<SocialLinksEvent, SocialLinksState> {
     );
     final name = event.label.trim().isNotEmpty
         ? event.label.trim()
-        : SocialPlatform.byKey(event.platform)?.name ?? 'Shortcut';
+        : SocialPlatform.byKey(event.platform)?.name;
     await _finish(
-        emit, result, event.id == null ? '$name added' : '$name saved');
+      emit,
+      result,
+      event.id == null ? SocialOutcome.added : SocialOutcome.saved,
+      name,
+    );
   }
 
   Future<void> _onDelete(
@@ -71,7 +75,7 @@ class SocialLinksBloc extends Bloc<SocialLinksEvent, SocialLinksState> {
         ? current.links.where((l) => l.id == event.id).firstOrNull?.label
         : null;
     final result = await deleteSocialLink(event.id);
-    await _finish(emit, result, '${name ?? 'Shortcut'} removed');
+    await _finish(emit, result, SocialOutcome.removed, name);
   }
 
   Future<void> _onReorder(
@@ -87,7 +91,7 @@ class SocialLinksBloc extends Bloc<SocialLinksEvent, SocialLinksState> {
     emit(SocialLinksLoaded(links: links));
     final result = await reorderSocialLinks([for (final l in links) l.id!]);
     if (result case Error(:final failure)) {
-      emit(current.withMessage(failure.message, ++_serial, isError: true));
+      emit(current.withError(failure.message, ++_serial));
     }
   }
 
@@ -95,13 +99,14 @@ class SocialLinksBloc extends Bloc<SocialLinksEvent, SocialLinksState> {
   Future<void> _finish(
     Emitter<SocialLinksState> emit,
     Result<Object?> result,
-    String successMessage,
+    SocialOutcome outcome,
+    String? subject,
   ) async {
     switch (result) {
       case Error(:final failure):
         final current = state;
         if (current is SocialLinksLoaded) {
-          emit(current.withMessage(failure.message, ++_serial, isError: true));
+          emit(current.withError(failure.message, ++_serial));
         } else {
           emit(SocialLinksError(failure.message));
         }
@@ -112,7 +117,7 @@ class SocialLinksBloc extends Bloc<SocialLinksEvent, SocialLinksState> {
             emit(SocialLinksError(failure.message));
           case Success(:final value):
             emit(SocialLinksLoaded(links: value)
-                .withMessage(successMessage, ++_serial));
+                .withOutcome(outcome, subject, ++_serial));
         }
     }
   }

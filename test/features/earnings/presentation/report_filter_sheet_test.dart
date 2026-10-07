@@ -4,16 +4,18 @@ import 'package:craftbook/features/earnings/presentation/widgets/report_filter_s
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/localized_app.dart';
+
 void main() {
   Future<ReportFilter?> run(WidgetTester tester, ReportFilter current,
-      Future<void> Function() interact) async {
+      Future<void> Function() interact,
+      {Locale locale = const Locale('en')}) async {
     tester.view.physicalSize = const Size(1080, 3600);
     tester.view.devicePixelRatio = 2.75;
     addTearDown(tester.view.reset);
     ReportFilter? result;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Builder(
+    await tester.pumpWidget(localizedApp(
+      Builder(
         builder: (context) => TextButton(
           onPressed: () async => result = await showReportFilterSheet(
             context,
@@ -24,6 +26,8 @@ void main() {
           child: const Text('open'),
         ),
       ),
+      theme: AppTheme.lightTheme,
+      locale: locale,
     ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -31,6 +35,14 @@ void main() {
     await tester.pumpAndSettle();
     return result;
   }
+
+  testWidgets('shows Filipino labels', (tester) async {
+    await run(tester, ReportFilter.none, () async {
+      expect(find.text('Hindi pa bayad'), findsOneWidget);
+      expect(find.text('May diskwento'), findsOneWidget);
+      expect(find.text('Unpaid'), findsNothing);
+    }, locale: const Locale('fil'));
+  });
 
   testWidgets('picks channels, payment and a minimum', (tester) async {
     final f = await run(tester, ReportFilter.none, () async {

@@ -1,28 +1,36 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/entities/product.dart';
 import '../domain/product_stock_status.dart';
 
 /// Handmade (built from a BOM) or resell (bought ready-made).
 enum ProductTypeFilter {
-  any('Any'),
-  handmade('Handmade'),
-  resell('Resell');
+  any,
+  handmade,
+  resell;
 
-  final String label;
-  const ProductTypeFilter(this.label);
+  String label(AppLocalizations l10n) => switch (this) {
+        any => l10n.productsTypeAny,
+        handmade => l10n.productsTypeHandmade,
+        resell => l10n.productsTypeResell,
+      };
 }
 
 /// Where a product's stock stands. Archived swaps the list for the
 /// archived products, which are left out of every other option.
 enum ProductStockFilter {
-  any('Any'),
-  low('Low'),
-  short('Short'),
-  archived('Archived');
+  any,
+  low,
+  short,
+  archived;
 
-  final String label;
-  const ProductStockFilter(this.label);
+  String label(AppLocalizations l10n) => switch (this) {
+        any => l10n.productsStockAny,
+        low => l10n.productsStockLow,
+        short => l10n.productsStockShort,
+        archived => l10n.productsStockArchived,
+      };
 }
 
 /// What the Products tab's filter sheet has picked. The two groups combine,

@@ -4,6 +4,7 @@ import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_terms_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
 
 void main() {
   const loyal = DiscountPreset(
@@ -17,24 +18,23 @@ void main() {
       OrderTax? availableTax,
       List<DiscountPreset> presets = const [loyal]}) async {
     calls = [];
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: OrderTermsCard(
-            itemsTotal: 1000,
-            terms: terms,
-            availableTax: availableTax,
-            taxLabel: 'VAT',
-            presets: presets,
-            onAddDiscount: calls.add,
-            onRemoveDiscount: (i) => calls.add('remove $i'),
-            onTaxChanged: (on) => calls.add('tax $on'),
-            onPaidChanged: (paid) => calls.add('paid $paid'),
+    await tester.pumpWidget(localizedApp(
+        Scaffold(
+          body: SingleChildScrollView(
+            child: OrderTermsCard(
+              itemsTotal: 1000,
+              terms: terms,
+              availableTax: availableTax,
+              taxLabel: 'VAT',
+              presets: presets,
+              onAddDiscount: calls.add,
+              onRemoveDiscount: (i) => calls.add('remove $i'),
+              onTaxChanged: (on) => calls.add('tax $on'),
+              onPaidChanged: (paid) => calls.add('paid $paid'),
+            ),
           ),
         ),
-      ),
-    ));
+        theme: AppTheme.lightTheme));
   }
 
   testWidgets('a preset chip adds that discount', (tester) async {

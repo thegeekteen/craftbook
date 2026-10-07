@@ -13,6 +13,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
@@ -38,6 +39,7 @@ import '../bloc/new_order_bloc.dart';
 import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
 import '../widgets/note_field.dart';
+import '../widgets/order_l10n.dart';
 import '../widgets/product_picker_sheet.dart';
 import '../widgets/order_status_ui.dart';
 import '../widgets/order_terms_card.dart';
@@ -110,8 +112,13 @@ class _NewOrderViewState extends State<_NewOrderView> {
   /// Shipped orders are history; only the note can change.
   bool get _noteOnly => _editingStatus == OrderStatus.shipped;
 
-  List<String> get _stepNames =>
-      _itemsLocked ? const ['Details'] : const ['Customer', 'Items', 'Review'];
+  List<String> _stepNames(BuildContext context) => _itemsLocked
+      ? [context.l10n.ordersStepDetails]
+      : [
+          context.l10n.ordersStepCustomer,
+          context.l10n.ordersStepItems,
+          context.l10n.ordersStepReview,
+        ];
 
   /// Inactive channels are hidden, except the one this order already uses.
   List<Channel> get _visibleChannels => [
@@ -217,7 +224,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
   void _submitDetails() {
     if (!_formKey.currentState!.validate()) return;
     if (_channelId == null) {
-      context.showSnackBar('Pick a sales channel', isError: true);
+      context.showSnackBar(context.l10n.ordersPickChannel, isError: true);
       return;
     }
     context.read<NewOrderBloc>().add(SetCustomerDetails(
@@ -250,7 +257,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
   void _saveDetailsOnly() {
     if (!_formKey.currentState!.validate()) return;
     if (_channelId == null) {
-      context.showSnackBar('Pick a sales channel', isError: true);
+      context.showSnackBar(context.l10n.ordersPickChannel, isError: true);
       return;
     }
     final bloc = context.read<NewOrderBloc>();
@@ -275,12 +282,14 @@ class _NewOrderViewState extends State<_NewOrderView> {
     if (!dirty) return true;
     return ConfirmDialog.show(
       context,
-      title: _isEditing ? 'Discard your changes?' : 'Discard this order?',
+      title: _isEditing
+          ? context.l10n.ordersDiscardEditTitle
+          : context.l10n.ordersDiscardNewTitle,
       message: _isEditing
-          ? 'The order stays as it was.'
-          : "What you've entered so far will be lost.",
-      confirmText: 'Discard',
-      cancelText: 'Keep editing',
+          ? context.l10n.ordersDiscardEditMessage
+          : context.l10n.ordersDiscardNewMessage,
+      confirmText: context.l10n.ordersDiscard,
+      cancelText: context.l10n.ordersKeepEditing,
       isDestructive: true,
     );
   }
@@ -302,8 +311,8 @@ class _NewOrderViewState extends State<_NewOrderView> {
         }
         if (state is NewOrderSaved) {
           context.showSnackBar(_isEditing
-              ? 'Order #${state.orderId} updated'
-              : 'Order #${state.orderId} saved');
+              ? context.l10n.ordersUpdated('${state.orderId}')
+              : context.l10n.ordersSaved('${state.orderId}'));
           context.pop(true);
         }
         if (state is NewOrderError) {
@@ -319,7 +328,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
 
         if (_isEditing && !_seeded) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Edit order')),
+            appBar: AppBar(title: Text(context.l10n.ordersEditTitle)),
             body: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -332,19 +341,23 @@ class _NewOrderViewState extends State<_NewOrderView> {
           child: Scaffold(
             appBar: AppBar(
               leading: IconButton(
-                tooltip: _step == 0 ? 'Close' : 'Back',
+                tooltip: _step == 0
+                    ? context.l10n.commonClose
+                    : context.l10n.commonBack,
                 icon: Icon(_step == 0
                     ? Icons.close_rounded
                     : Icons.arrow_back_rounded),
                 onPressed: () => _handleBack(items),
               ),
-              title: Text(
-                  _isEditing ? 'Edit order #${widget.orderId}' : 'New order'),
+              title: Text(_isEditing
+                  ? context.l10n.ordersEditTitleId('${widget.orderId}')
+                  : context.l10n.ordersNewOrder),
               bottom: _itemsLocked
                   ? null
                   : PreferredSize(
                       preferredSize: const Size.fromHeight(40),
-                      child: _StepHeader(names: _stepNames, current: _step),
+                      child: _StepHeader(
+                          names: _stepNames(context), current: _step),
                     ),
             ),
             body: PageView(
@@ -383,9 +396,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   enabled: !_noteOnly,
-                  decoration: const InputDecoration(labelText: 'Customer name'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.ordersCustomerName),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Enter the customer name'
+                      ? context.l10n.ordersEnterCustomerName
                       : null,
                 ),
                 for (final field in _fields) ...[
@@ -404,7 +418,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     alignment: AlignmentDirectional.centerStart,
                     child: TextButton.icon(
                       icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Add order fields (address, size…)'),
+                      label: Text(context.l10n.ordersAddOrderFields),
                       onPressed: () async {
                         await context.push(RouteNames.orderFields);
                         if (mounted) _loadFields();
@@ -413,7 +427,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   )
                 else
                   const SizedBox(height: 8),
-                const SectionLabel('Channel'),
+                SectionLabel(context.l10n.ordersChannel),
                 const SizedBox(height: 8),
                 if (!_channelsLoaded)
                   const Padding(
@@ -424,9 +438,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   InlineBanner(
                     icon: Icons.storefront_outlined,
                     tone: BannerTone.warn,
-                    title: 'No sales channels yet.',
-                    message: 'Add one to work out fees.',
-                    actionLabel: 'Add',
+                    title: context.l10n.ordersNoChannelsTitle,
+                    message: context.l10n.ordersNoChannelsMessage,
+                    actionLabel: context.l10n.commonAdd,
                     onTap: () async {
                       await context.push(RouteNames.channels);
                       if (mounted) _loadChannels();
@@ -447,7 +461,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                   children: [
                     Expanded(
                       child: DateField(
-                        label: 'Order date',
+                        label: context.l10n.ordersOrderDate,
                         value: _orderDate,
                         onChanged: (d) => setState(() {
                           _orderDate = d;
@@ -458,7 +472,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: DateField(
-                        label: 'Ship by',
+                        label: context.l10n.ordersShipBy,
                         value: _shipByDate,
                         firstDate: _orderDate,
                         onChanged: (d) => setState(() => _shipByDate = d),
@@ -531,9 +545,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
       return Center(
         child: EmptyState(
           icon: Icons.add_shopping_cart_rounded,
-          title: 'No items yet',
-          message: 'Add the products this customer ordered.',
-          actionLabel: 'Add product',
+          title: context.l10n.ordersNoItemsTitle,
+          message: context.l10n.ordersNoItemsMessage,
+          actionLabel: context.l10n.ordersAddProduct,
           onAction: () => _openPicker(items),
         ),
       );
@@ -550,8 +564,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
                       ProductPhoto(bytes: item.photo, name: item.productName),
                   title: Text(item.productName),
                   subtitle: Text(
-                    '${CurrencyFormatter.formatShort(item.unitPrice)} each · '
-                    '${CurrencyFormatter.formatShort(item.subtotal)}',
+                    context.l10n.ordersEachSubtotal(
+                      CurrencyFormatter.formatShort(item.unitPrice),
+                      CurrencyFormatter.formatShort(item.subtotal),
+                    ),
                   ),
                   trailing: StepperInput(
                     value: item.quantity,
@@ -577,11 +593,11 @@ class _NewOrderViewState extends State<_NewOrderView> {
         OutlinedButton.icon(
           onPressed: () => _openPicker(items),
           icon: const Icon(Icons.add_rounded, size: 20),
-          label: const Text('Add product'),
+          label: Text(context.l10n.ordersAddProduct),
         ),
         const SizedBox(height: 10),
         Text(
-          'Set a quantity to 0 to remove it.',
+          context.l10n.ordersRemoveHint,
           textAlign: TextAlign.center,
           style: AppTextStyles.bodySmall.copyWith(color: c.muted),
         ),
@@ -619,9 +635,12 @@ class _NewOrderViewState extends State<_NewOrderView> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Ships by ${DateFormat('EEE, MMM d').format(d.shipByDate)} · '
-                '${QuantityFormatter.format(pieces)} '
-                '${pieces == 1 ? 'item' : 'items'}',
+                context.l10n.ordersShipsByItems(
+                  DateFormat('EEE, MMM d',
+                          Localizations.localeOf(context).toString())
+                      .format(d.shipByDate),
+                  itemCountLabel(context.l10n, pieces),
+                ),
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
               for (final field in _fields)
@@ -654,11 +673,10 @@ class _NewOrderViewState extends State<_NewOrderView> {
           _MoneyPreviewCard(preview: preview!, channelName: _channel?.name),
           const SizedBox(height: 12),
           if (preview.reservations.any((r) => r.isShort)) ...[
-            const InlineBanner(
+            InlineBanner(
               icon: Icons.warning_amber_rounded,
-              title: 'Not enough stock for some pieces.',
-              message:
-                  'You can still save; the buy list will show what to get.',
+              title: context.l10n.ordersShortBannerTitle,
+              message: context.l10n.ordersShortBannerMessage,
             ),
             const SizedBox(height: 12),
           ],
@@ -677,7 +695,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
       Expanded(
         child: FilledButton(
           onPressed: saving ? null : _saveDetailsOnly,
-          child: Text(saving ? 'Saving…' : 'Save changes'),
+          child: Text(saving
+              ? context.l10n.ordersSaving
+              : context.l10n.ordersSaveChanges),
         ),
       ),
     ]);
@@ -699,22 +719,22 @@ class _NewOrderViewState extends State<_NewOrderView> {
           Expanded(
             child: FilledButton(
               onPressed: _submitDetails,
-              child: const Text('Next: add items'),
+              child: Text(context.l10n.ordersNextAddItems),
             ),
           ),
         ]);
       case 1:
         return BottomActionBar(children: [
-          BarTotal(label: 'Total', value: total),
+          BarTotal(label: context.l10n.ordersTotal, value: total),
           FilledButton(
             onPressed: items.isEmpty ? null : () => _goTo(2),
-            child: const Text('Review'),
+            child: Text(context.l10n.ordersReview),
           ),
         ]);
       default:
         final saving = d?.isSaving ?? false;
         return BottomActionBar(children: [
-          BarTotal(label: 'Total', value: total),
+          BarTotal(label: context.l10n.ordersTotal, value: total),
           FilledButton.icon(
             onPressed: saving || d?.preview == null
                 ? null
@@ -726,7 +746,9 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check_rounded, size: 20),
-            label: Text(_isEditing ? 'Save changes' : 'Save order'),
+            label: Text(_isEditing
+                ? context.l10n.ordersSaveChanges
+                : context.l10n.ordersSaveOrder),
           ),
         ]);
     }
@@ -796,7 +818,7 @@ class _MoneyPreviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'ORDER TOTAL',
+            context.l10n.ordersTotalCaps,
             style: AppTextStyles.monoLabel.copyWith(color: c.muted),
           ),
           const SizedBox(height: 4),
@@ -807,8 +829,9 @@ class _MoneyPreviewCard extends StatelessWidget {
           const SizedBox(height: 12),
           MoneyBreakdown(
             parts: parts,
-            feesLabel:
-                channelName == null ? 'Channel fees' : '$channelName fees',
+            feesLabel: channelName == null
+                ? context.l10n.ordersChannelFees
+                : context.l10n.ordersChannelFeesNamed(channelName!),
             taxLabel: getIt<TaxSettingsCubit>().state.label,
           ),
           ProfitRow(parts: parts),
@@ -831,7 +854,7 @@ class _ReservationsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'RESERVES FROM STOCK',
+            context.l10n.ordersReservesCaps,
             style: AppTextStyles.monoLabel.copyWith(color: c.muted),
           ),
           const SizedBox(height: 6),
@@ -849,11 +872,13 @@ class _ReservationsCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     r.isShort
-                        ? '${QuantityFormatter.withUnit(r.quantity, r.unit)}'
-                            ' · only ${QuantityFormatter.withUnit(r.available < 0 ? 0 : r.available, r.unit)} free'
+                        ? context.l10n.ordersOnlyFree(
+                            QuantityFormatter.withUnit(r.quantity, r.unit),
+                            QuantityFormatter.withUnit(
+                                r.available < 0 ? 0 : r.available, r.unit))
                         : r.usesLast
-                            ? '${QuantityFormatter.withUnit(r.quantity, r.unit)}'
-                                ' · last ${r.quantity == 1 ? 'one' : 'ones'}'
+                            ? context.l10n.ordersLastOne(r.quantity,
+                                QuantityFormatter.withUnit(r.quantity, r.unit))
                             : QuantityFormatter.withUnit(r.quantity, r.unit),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: r.isShort || r.usesLast ? c.alert : c.ink,

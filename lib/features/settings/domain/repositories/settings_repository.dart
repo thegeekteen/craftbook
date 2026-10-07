@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/palettes.dart';
 import '../../../../core/utils/currency_setting.dart';
+import '../entities/app_language.dart';
 import '../entities/order_amount_shown.dart';
 import '../entities/tax_settings.dart';
 
@@ -26,6 +27,11 @@ abstract class SettingsRepository {
   Future<CurrencySetting> getCurrency();
 
   Future<Result<void>> setCurrency(CurrencySetting currency);
+
+  /// Falls back to [AppLanguage.system] when nothing valid is stored.
+  Future<AppLanguage> getLanguage();
+
+  Future<Result<void>> setLanguage(AppLanguage language);
 
   /// Falls back to tax off at 12% included when nothing valid is stored.
   Future<TaxSettings> getTaxSettings();

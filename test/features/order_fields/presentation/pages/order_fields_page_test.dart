@@ -129,7 +129,7 @@ void main() {
       await tester.tap(find.text('Address'));
       await tester.pumpAndSettle();
       expect(
-          find.text("Type can't change once orders use it."), findsOneWidget);
+          find.text('Type can’t change once orders use it.'), findsOneWidget);
       await tester.tap(find.widgetWithText(TextButton, 'Archive'));
       await tester.pumpAndSettle();
       expect(find.text('Archive Address?'), findsOneWidget);

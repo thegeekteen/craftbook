@@ -13,6 +13,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
@@ -34,6 +35,7 @@ import '../bloc/order_detail_event.dart';
 import '../bloc/order_detail_state.dart';
 import '../../../../core/widgets/note/note_view.dart';
 import '../widgets/order_actions.dart';
+import '../widgets/order_l10n.dart';
 import '../widgets/order_status_ui.dart';
 import '../widgets/pack_confirm_sheet.dart';
 import 'adjust_materials_page.dart';
@@ -81,10 +83,13 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         listener: (context, state) {
           if (state is OrderDetailMessage) {
             if (!state.isError) _changed = true;
-            context.showSnackBar(state.message, isError: state.isError);
+            context.showSnackBar(
+              state.notice?.localized(context.l10n) ?? state.message,
+              isError: state.isError,
+            );
           }
           if (state is OrderDeleted) {
-            context.showSnackBar('Order deleted');
+            context.showSnackBar(context.l10n.ordersToastDeleted);
             context.pop(true);
           }
         },
@@ -125,7 +130,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'ORDER #${order.id}',
+              context.l10n.ordersDetailHeader('${order.id}'),
               style: AppTextStyles.monoLabel.copyWith(color: c.muted),
             ),
             Text(order.customerName,
@@ -134,7 +139,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
         ),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'More',
+            tooltip: context.l10n.ordersMenuMore,
             icon: const Icon(Icons.more_vert_rounded),
             onSelected: (value) {
               if (value == 'edit') _edit(order);
@@ -153,8 +158,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       const Icon(Icons.edit_outlined, size: 20),
                       const SizedBox(width: 10),
                       Text(order.status == OrderStatus.shipped
-                          ? 'Edit note'
-                          : 'Edit order'),
+                          ? context.l10n.ordersEditNote
+                          : context.l10n.ordersEditOrder),
                     ],
                   ),
                 ),
@@ -169,29 +174,31 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                               : Icons.payments_outlined,
                           size: 20),
                       const SizedBox(width: 10),
-                      Text(order.isPaid ? 'Mark unpaid' : 'Mark paid'),
+                      Text(order.isPaid
+                          ? context.l10n.ordersMarkUnpaid
+                          : context.l10n.ordersMarkPaid),
                     ],
                   ),
                 ),
               if (OrderActions.canCancel(order))
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'cancel',
                   child: Row(
                     children: [
-                      Icon(Icons.block_rounded, size: 20),
-                      SizedBox(width: 10),
-                      Text('Cancel order'),
+                      const Icon(Icons.block_rounded, size: 20),
+                      const SizedBox(width: 10),
+                      Text(context.l10n.ordersCancelOrder),
                     ],
                   ),
                 ),
               if (order.status == OrderStatus.cancelled)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'restore',
                   child: Row(
                     children: [
-                      Icon(Icons.restore_rounded, size: 20),
-                      SizedBox(width: 10),
-                      Text('Restore order'),
+                      const Icon(Icons.restore_rounded, size: 20),
+                      const SizedBox(width: 10),
+                      Text(context.l10n.ordersRestoreOrder),
                     ],
                   ),
                 ),
@@ -203,7 +210,8 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       Icon(Icons.delete_outline_rounded,
                           size: 20, color: c.alert),
                       const SizedBox(width: 10),
-                      Text('Delete order', style: TextStyle(color: c.alert)),
+                      Text(context.l10n.ordersDeleteOrder,
+                          style: TextStyle(color: c.alert)),
                     ],
                   ),
                 ),
@@ -233,7 +241,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
                         child: Text(
-                          'ITEMS',
+                          context.l10n.ordersItemsCaps,
                           style:
                               AppTextStyles.monoLabel.copyWith(color: c.muted),
                         ),
@@ -300,6 +308,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
     final parts = OrderMoney.fromOrder(order).parts;
     final lineCount = state.materials.length + state.products.length;
     final hasWaste = state.materials.any((m) => m.wasteQuantity > 0);
+    final l10n = context.l10n;
 
     return AppCard(
       child: Column(
@@ -308,12 +317,15 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           MoneyBreakdown(
             parts: parts,
             materialsLabel: lineCount == 0
-                ? 'Materials'
-                : 'Materials · $lineCount ${lineCount == 1 ? 'line' : 'lines'}'
-                    '${hasWaste ? ' · waste' : ''}',
+                ? l10n.ordersMaterials
+                : hasWaste
+                    ? l10n.ordersMaterialsLinesWaste(
+                        l10n.ordersLineCount(lineCount))
+                    : l10n
+                        .ordersMaterialsLines(l10n.ordersLineCount(lineCount)),
             feesLabel: state.channel == null
-                ? 'Channel fees'
-                : '${state.channel!.name} fees',
+                ? l10n.ordersChannelFees
+                : l10n.ordersChannelFeesNamed(state.channel!.name),
             taxLabel: getIt<TaxSettingsCubit>().state.label,
             onMaterialsTap: lineCount == 0
                 ? null
@@ -340,20 +352,31 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                             detail: sameQty(m.actualQuantity, m.plannedQuantity)
                                 ? '${QuantityFormatter.withUnit(m.actualQuantity, m.materialUnit)}'
                                     ' × ${CurrencyFormatter.format(m.unitCost)}'
-                                : 'Planned ${QuantityFormatter.withUnit(m.plannedQuantity, m.materialUnit)}'
-                                    ' · used ${QuantityFormatter.withUnit(m.actualQuantity, m.materialUnit)}',
+                                : l10n.ordersPlannedUsed(
+                                    QuantityFormatter.withUnit(
+                                        m.plannedQuantity, m.materialUnit),
+                                    QuantityFormatter.withUnit(
+                                        m.actualQuantity, m.materialUnit)),
                             waste: m.wasteQuantity > 0
-                                ? '+${QuantityFormatter.withUnit(m.wasteQuantity, m.materialUnit)} waste'
-                                    '${m.wasteReason != null ? ' (${m.wasteReason!.toLowerCase()})' : ''}'
+                                ? m.wasteReason != null
+                                    ? l10n.ordersWasteQtyReason(
+                                        QuantityFormatter.withUnit(
+                                            m.wasteQuantity, m.materialUnit),
+                                        wasteReasonLabel(l10n, m.wasteReason!)
+                                            .toLowerCase())
+                                    : l10n.ordersWasteQty(
+                                        QuantityFormatter.withUnit(
+                                            m.wasteQuantity, m.materialUnit))
                                 : null,
                             amount: m.totalCost,
                           ),
                         for (final p in state.products)
                           _LineDetail(
                             name: p.productName,
-                            detail:
-                                '${QuantityFormatter.withUnit(p.quantity, p.productUnit)}'
-                                ' × ${CurrencyFormatter.format(p.unitCost)} · from stock',
+                            detail: l10n.ordersFromStock(
+                                QuantityFormatter.withUnit(
+                                    p.quantity, p.productUnit),
+                                CurrencyFormatter.format(p.unitCost)),
                             amount: p.totalCost,
                           ),
                       ],
@@ -400,13 +423,13 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
           if (state.materials.isNotEmpty)
             OutlinedButton(
               onPressed: busy ? null : () => _openAdjust(state),
-              child: const Text('Adjust'),
+              child: Text(context.l10n.ordersAdjust),
             ),
           Expanded(
             child: FilledButton.icon(
               onPressed: busy ? null : () => _pack(state),
               icon: const Icon(Icons.inventory_2_rounded, size: 18),
-              label: const Text('Pack order'),
+              label: Text(context.l10n.ordersPackOrder),
             ),
           ),
         ]);
@@ -418,7 +441,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
                   busy ? null : () => _bloc.add(ShipOrderDetail(order.id!)),
               style: FilledButton.styleFrom(backgroundColor: c.coin),
               icon: const Icon(Icons.local_shipping_rounded, size: 18),
-              label: const Text('Mark shipped'),
+              label: Text(context.l10n.ordersMarkShipped),
             ),
           ),
         ]);
@@ -482,7 +505,8 @@ class _StatusTrack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final fmt = DateFormat('MMM d');
+    final l10n = context.l10n;
+    final fmt = DateFormat('MMM d', Localizations.localeOf(context).toString());
     if (order.status == OrderStatus.cancelled) {
       return AppCard(
         child: Row(
@@ -490,7 +514,7 @@ class _StatusTrack extends StatelessWidget {
             const OrderStatusPill(status: OrderStatus.cancelled),
             const SizedBox(width: 10),
             Text(
-              'Placed ${fmt.format(order.orderDate)}',
+              l10n.ordersPlacedOn(fmt.format(order.orderDate)),
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ],
@@ -505,16 +529,16 @@ class _StatusTrack extends StatelessWidget {
     };
     final overdue = order.isOverdue;
     final steps = [
-      ('Placed', fmt.format(order.orderDate), false),
+      (l10n.ordersPlaced, fmt.format(order.orderDate), false),
       (
-        'Packed',
+        l10n.ordersStatusPacked,
         order.packedAt != null
             ? fmt.format(order.packedAt!)
-            : 'due ${fmt.format(order.shipByDate)}',
+            : l10n.ordersDueOn(fmt.format(order.shipByDate)),
         overdue,
       ),
       (
-        'Shipped',
+        l10n.ordersStatusShipped,
         order.shippedAt != null ? fmt.format(order.shippedAt!) : '',
         false,
       ),
@@ -643,8 +667,9 @@ class _CustomerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
-                  child: SectionLabel('Customer', padding: EdgeInsets.zero)),
+              Expanded(
+                  child: SectionLabel(context.l10n.ordersCustomer,
+                      padding: EdgeInsets.zero)),
               if (channelName != null)
                 AppTag(channelName!, type: AppTagType.outline),
             ],
@@ -690,7 +715,7 @@ class _CustomerCard extends StatelessWidget {
                       child:
                           NoteView(raw: order.note!, onChanged: onNoteChanged)),
                   IconButton(
-                    tooltip: 'Edit note',
+                    tooltip: context.l10n.ordersEditNote,
                     onPressed: onEditNote,
                     icon: Icon(Icons.edit_outlined, size: 16, color: c.warn),
                     visualDensity: VisualDensity.compact,
@@ -785,7 +810,7 @@ class _CopyableValue extends StatelessWidget {
       borderRadius: BorderRadius.circular(6),
       onTap: () {
         Clipboard.setData(ClipboardData(text: text));
-        context.showSnackBar('$label copied');
+        context.showSnackBar(context.l10n.ordersFieldCopied(label));
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
@@ -818,6 +843,7 @@ class _TermsLines extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final money = OrderMoney.fromOrder(order);
     final rate = order.taxRate;
     final rateText = rate == null
@@ -852,7 +878,8 @@ class _TermsLines extends StatelessWidget {
               '−${CurrencyFormatter.format(d.amount)}',
               color: c.go)
       else if (order.hasDiscount)
-        line('Discounts', '−${CurrencyFormatter.format(order.discountTotal)}',
+        line(l10n.ordersDiscountsLine,
+            '−${CurrencyFormatter.format(order.discountTotal)}',
             color: c.go),
       if (order.hasTax && !order.taxInclusive)
         line('$taxLabel $rateText%', '+${CurrencyFormatter.format(money.tax)}'),
@@ -860,7 +887,8 @@ class _TermsLines extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 3),
           child: Text(
-            'Includes ${CurrencyFormatter.format(money.tax)} $taxLabel ($rateText%)',
+            l10n.ordersIncludesTax(
+                CurrencyFormatter.format(money.tax), taxLabel, rateText),
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         ),
@@ -873,7 +901,8 @@ class _TermsLines extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          line('Items', CurrencyFormatter.format(order.totalSales)),
+          line(
+              l10n.ordersItemsLine, CurrencyFormatter.format(order.totalSales)),
           ...lines,
         ],
       ),
@@ -905,15 +934,21 @@ class _PaymentRow extends StatelessWidget {
           Expanded(
             child: Text(
               order.isPaid
-                  ? 'Paid${paidAt == null ? '' : ' ${DateFormat('MMM d').format(paidAt)}'}'
-                  : 'Waiting for payment',
+                  ? paidAt == null
+                      ? context.l10n.ordersPaid
+                      : context.l10n.ordersPaidOn(DateFormat('MMM d',
+                              Localizations.localeOf(context).toString())
+                          .format(paidAt))
+                  : context.l10n.ordersWaitingForPayment,
               style: AppTextStyles.bodyMedium
                   .copyWith(color: order.isPaid ? c.muted : c.warn),
             ),
           ),
           TextButton(
             onPressed: onToggle,
-            child: Text(order.isPaid ? 'Mark unpaid' : 'Mark paid'),
+            child: Text(order.isPaid
+                ? context.l10n.ordersMarkUnpaid
+                : context.l10n.ordersMarkPaid),
           ),
         ],
       ),
@@ -937,7 +972,7 @@ class _OrderTotalRow extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'ORDER TOTAL',
+              context.l10n.ordersTotalCaps,
               style: AppTextStyles.monoLabel.copyWith(color: c.muted),
             ),
           ),

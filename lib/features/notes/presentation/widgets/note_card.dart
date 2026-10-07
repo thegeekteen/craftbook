@@ -7,6 +7,7 @@ import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../domain/entities/note.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// One note in the notebook or on Today: title, a peek at the body, checklist
 /// progress and when it was last edited.
@@ -34,9 +35,11 @@ class NoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
+    final title = note.titleOr(l10n.notesUntitled);
     final preview = note.preview;
     // An untitled note shows its first line as the title; don't repeat it.
-    final showPreview = preview.isNotEmpty && preview != note.displayTitle;
+    final showPreview = preview.isNotEmpty && preview != title;
     final checklist = note.checklist;
     final updated = note.updatedAt;
     return AppCard(
@@ -51,7 +54,7 @@ class NoteCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  note.displayTitle,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodyLarge
@@ -72,7 +75,8 @@ class NoteCard extends StatelessWidget {
                     children: [
                       if (checklist.total > 0) ...[
                         AppTag(
-                          '${checklist.done}/${checklist.total} done',
+                          l10n.notesChecklistDone(
+                              checklist.done, checklist.total),
                           type: checklist.done == checklist.total
                               ? AppTagType.ok
                               : AppTagType.neutral,
@@ -92,7 +96,7 @@ class NoteCard extends StatelessWidget {
           ),
           if (onTogglePin != null)
             IconButton(
-              tooltip: note.isPinned ? 'Unpin' : 'Pin',
+              tooltip: note.isPinned ? l10n.notesUnpin : l10n.notesPin,
               onPressed: onTogglePin,
               visualDensity: VisualDensity.compact,
               icon: Icon(
@@ -107,7 +111,7 @@ class NoteCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
               child: Icon(Icons.push_pin_rounded,
-                  size: 16, color: c.go, semanticLabel: 'Pinned'),
+                  size: 16, color: c.go, semanticLabel: l10n.notesPinnedLabel),
             ),
         ],
       ),

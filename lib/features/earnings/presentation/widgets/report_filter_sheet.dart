@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../orders/domain/entities/order.dart';
@@ -21,8 +23,8 @@ Future<ReportFilter?> showReportFilterSheet(
 }) {
   return showAppSheet<ReportFilter>(
     context: context,
-    title: 'Filter report',
-    subtitle: 'Only orders that match every choice are counted.',
+    title: context.l10n.earningsFilterTitle,
+    subtitle: context.l10n.earningsFilterSubtitle,
     builder: (_) => ReportFilterForm(
         current: current, channels: channels, products: products),
   );
@@ -32,53 +34,64 @@ Future<ReportFilter?> showReportFilterSheet(
 /// Each comes with the filter it would leave if removed.
 List<(String, ReportFilter)> describeFilter(
   ReportFilter f, {
+  required AppLocalizations l10n,
   required Map<int, String> channelNames,
   required Map<int, String> productNames,
 }) {
-  String names(Set<int> ids, Map<int, String> all, String noun) =>
-      ids.length == 1 ? all[ids.first] ?? noun : '${ids.length} ${noun}s';
+  String names(Set<int> ids, Map<int, String> all, String noun,
+          String Function(int) many) =>
+      ids.length == 1 ? all[ids.first] ?? noun : many(ids.length);
   return [
     if (f.channelIds.isNotEmpty)
       (
-        names(f.channelIds, channelNames, 'channel'),
+        names(f.channelIds, channelNames, l10n.earningsChipChannel,
+            l10n.earningsChipChannels),
         f.copyWith(channelIds: const {})
       ),
     if (f.productIds.isNotEmpty)
       (
-        names(f.productIds, productNames, 'product'),
+        names(f.productIds, productNames, l10n.earningsChipProduct,
+            l10n.earningsChipProducts),
         f.copyWith(productIds: const {})
       ),
     if (f.statuses.isNotEmpty)
       (
         f.statuses.length == 1
             ? (f.statuses.first == OrderStatus.packed
-                ? 'Packed only'
-                : 'Shipped only')
-            : 'Packed or shipped',
+                ? l10n.earningsChipPackedOnly
+                : l10n.earningsChipShippedOnly)
+            : l10n.earningsChipPackedOrShipped,
         f.copyWith(statuses: const {})
       ),
     if (f.payment != PaymentFilter.any)
       (
-        f.payment == PaymentFilter.paid ? 'Paid' : 'Unpaid',
+        f.payment == PaymentFilter.paid
+            ? l10n.earningsPaid
+            : l10n.earningsUnpaid,
         f.copyWith(payment: PaymentFilter.any)
       ),
     if (f.discount != Presence.any)
       (
-        f.discount == Presence.with_ ? 'With discount' : 'No discount',
+        f.discount == Presence.with_
+            ? l10n.earningsWithDiscount
+            : l10n.earningsNoDiscount,
         f.copyWith(discount: Presence.any)
       ),
     if (f.tax != Presence.any)
       (
-        f.tax == Presence.with_ ? 'With tax' : 'No tax',
+        f.tax == Presence.with_ ? l10n.earningsWithTax : l10n.earningsNoTax,
         f.copyWith(tax: Presence.any)
       ),
     if (f.minTotal != null || f.maxTotal != null)
       (
         switch ((f.minTotal, f.maxTotal)) {
-          (final min?, final max?) =>
-            '${CurrencyFormatter.formatShort(min)}–${CurrencyFormatter.formatShort(max)}',
-          (final min?, null) => '${CurrencyFormatter.formatShort(min)} and up',
-          (null, final max?) => 'Up to ${CurrencyFormatter.formatShort(max)}',
+          (final min?, final max?) => l10n.earningsChipRange(
+              CurrencyFormatter.formatShort(min),
+              CurrencyFormatter.formatShort(max)),
+          (final min?, null) =>
+            l10n.earningsChipAndUp(CurrencyFormatter.formatShort(min)),
+          (null, final max?) =>
+            l10n.earningsChipUpTo(CurrencyFormatter.formatShort(max)),
           _ => '',
         },
         f.copyWith(clearMinTotal: true, clearMaxTotal: true)
@@ -146,6 +159,7 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     Widget label(String text) => Padding(
           padding: const EdgeInsets.only(top: 16, bottom: 8),
           child: Text(text,
@@ -159,7 +173,7 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.channels.isNotEmpty) ...[
-          label('Channel'),
+          label(l10n.earningsFilterChannel),
           ChoiceChipRow<int>(
             wrap: true,
             options: [
@@ -171,7 +185,7 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
           ),
         ],
         if (widget.products.isNotEmpty) ...[
-          label('Has any of these products'),
+          label(l10n.earningsFilterProducts),
           ChoiceChipRow<int>(
             wrap: true,
             options: [
@@ -182,51 +196,51 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
                 () => _f = _f.copyWith(productIds: _toggle(_f.productIds, id))),
           ),
         ],
-        label('Status'),
+        label(l10n.earningsFilterStatus),
         ChoiceChipRow<OrderStatus>(
           wrap: true,
-          options: const [
-            ChipOption(OrderStatus.packed, 'Packed'),
-            ChipOption(OrderStatus.shipped, 'Shipped'),
+          options: [
+            ChipOption(OrderStatus.packed, l10n.earningsPacked),
+            ChipOption(OrderStatus.shipped, l10n.earningsShipped),
           ],
           isSelected: _f.statuses.contains,
           onTap: (s) => setState(
               () => _f = _f.copyWith(statuses: _toggle(_f.statuses, s))),
         ),
-        label('Payment'),
+        label(l10n.earningsFilterPayment),
         ChoiceChipRow<PaymentFilter>.single(
           wrap: true,
-          options: const [
-            ChipOption(PaymentFilter.any, 'Any'),
-            ChipOption(PaymentFilter.paid, 'Paid'),
-            ChipOption(PaymentFilter.unpaid, 'Unpaid'),
+          options: [
+            ChipOption(PaymentFilter.any, l10n.earningsAny),
+            ChipOption(PaymentFilter.paid, l10n.earningsPaid),
+            ChipOption(PaymentFilter.unpaid, l10n.earningsUnpaid),
           ],
           selected: _f.payment,
           onSelected: (p) => setState(() => _f = _f.copyWith(payment: p)),
         ),
-        label('Discount'),
+        label(l10n.earningsFilterDiscount),
         ChoiceChipRow<Presence>.single(
           wrap: true,
-          options: const [
-            ChipOption(Presence.any, 'Any'),
-            ChipOption(Presence.with_, 'With discount'),
-            ChipOption(Presence.without, 'No discount'),
+          options: [
+            ChipOption(Presence.any, l10n.earningsAny),
+            ChipOption(Presence.with_, l10n.earningsWithDiscount),
+            ChipOption(Presence.without, l10n.earningsNoDiscount),
           ],
           selected: _f.discount,
           onSelected: (p) => setState(() => _f = _f.copyWith(discount: p)),
         ),
-        label('Tax'),
+        label(l10n.earningsFilterTax),
         ChoiceChipRow<Presence>.single(
           wrap: true,
-          options: const [
-            ChipOption(Presence.any, 'Any'),
-            ChipOption(Presence.with_, 'With tax'),
-            ChipOption(Presence.without, 'No tax'),
+          options: [
+            ChipOption(Presence.any, l10n.earningsAny),
+            ChipOption(Presence.with_, l10n.earningsWithTax),
+            ChipOption(Presence.without, l10n.earningsNoTax),
           ],
           selected: _f.tax,
           onSelected: (p) => setState(() => _f = _f.copyWith(tax: p)),
         ),
-        label('Order total'),
+        label(l10n.earningsFilterTotal),
         Row(
           children: [
             Expanded(
@@ -236,7 +250,7 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
                 decoration: InputDecoration(
-                    labelText: 'From',
+                    labelText: l10n.earningsFilterFrom,
                     prefixText: '${CurrencyFormatter.symbol} '),
               ),
             ),
@@ -248,7 +262,7 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: money,
                 decoration: InputDecoration(
-                    labelText: 'To',
+                    labelText: l10n.earningsFilterTo,
                     prefixText: '${CurrencyFormatter.symbol} '),
               ),
             ),
@@ -257,9 +271,11 @@ class _ReportFilterFormState extends State<ReportFilterForm> {
         const SizedBox(height: 20),
         Row(
           children: [
-            TextButton(onPressed: _clear, child: const Text('Clear all')),
+            TextButton(
+                onPressed: _clear, child: Text(l10n.earningsFilterClear)),
             const Spacer(),
-            FilledButton(onPressed: _apply, child: const Text('Show')),
+            FilledButton(
+                onPressed: _apply, child: Text(l10n.earningsFilterShow)),
           ],
         ),
       ],

@@ -6,6 +6,8 @@ import 'package:craftbook/features/products/presentation/widgets/products_filter
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/localized_app.dart';
+
 final _at = DateTime(2026, 1, 1);
 
 Product _product(int id, String name,
@@ -43,16 +45,17 @@ void main() {
     ProductListFilter current = ProductListFilter.none,
   }) async {
     ProductListFilter? result;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Builder(
-        builder: (context) => TextButton(
-          onPressed: () async => result =
-              await showProductsFilterSheet(context, current: current, view: v),
-          child: const Text('open'),
+    await tester.pumpWidget(localizedApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => result = await showProductsFilterSheet(
+                context,
+                current: current,
+                view: v),
+            child: const Text('open'),
+          ),
         ),
-      ),
-    ));
+        theme: AppTheme.lightTheme));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await interact();

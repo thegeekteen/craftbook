@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
@@ -54,20 +55,22 @@ class _BuyListViewState extends State<_BuyListView> {
   }
 
   Future<void> _copy(List<BuyListItem> items) async {
+    final l10n = context.l10n;
     final total = items.fold<double>(0, (s, i) => s + i.totalCost);
-    final buffer = StringBuffer('CraftBook buy list\n\n');
+    final buffer = StringBuffer('${l10n.stockBuyListCopyHeader}\n\n');
     for (final i in items) {
       final pcs = i.packsToOrder * i.packSize;
       final amount = i.kind == BuyListKind.product
           ? QuantityFormatter.withUnit(pcs, i.unit)
-          : '${i.packsToOrder} ${i.packsToOrder == 1 ? 'pack' : 'packs'} '
+          : '${l10n.stockPacks(i.packsToOrder)} '
               '(${QuantityFormatter.withUnit(pcs, i.unit)})';
-      buffer.writeln(
-          '- ${i.name}: $amount, ${CurrencyFormatter.format(i.totalCost)}');
+      buffer.writeln(l10n.stockBuyListCopyLine(
+          i.name, amount, CurrencyFormatter.format(i.totalCost)));
     }
-    buffer.write('\nTotal: ${CurrencyFormatter.format(total)}');
+    buffer.write(
+        '\n${l10n.stockBuyListCopyTotal(CurrencyFormatter.format(total))}');
     await Clipboard.setData(ClipboardData(text: buffer.toString()));
-    if (mounted) context.showSnackBar('Buy list copied');
+    if (mounted) context.showSnackBar(l10n.stockBuyListCopied);
   }
 
   @override
@@ -85,14 +88,14 @@ class _BuyListViewState extends State<_BuyListView> {
           return Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: () => context.pop(_changed)),
-              title: const Text('Buy list'),
+              title: Text(context.l10n.stockBuyListTitle),
             ),
             body: switch (state) {
-              BuyListLoaded() when items!.isEmpty => const Center(
+              BuyListLoaded() when items!.isEmpty => Center(
                   child: EmptyState(
                     icon: Icons.shopping_basket_outlined,
-                    title: 'Nothing to buy',
-                    message: 'Everything is above its reorder level.',
+                    title: context.l10n.stockBuyEmptyTitle,
+                    message: context.l10n.stockBuyEmptyMessage,
                   ),
                 ),
               BuyListLoaded() => RefreshIndicator(
@@ -125,15 +128,14 @@ class _BuyListViewState extends State<_BuyListView> {
                 ? null
                 : BottomActionBar(children: [
                     BarTotal(
-                      label:
-                          '${items.length} ${items.length == 1 ? 'item' : 'items'}',
+                      label: context.l10n.stockBuyItemCount(items.length),
                       value: CurrencyFormatter.format(
                           items.fold<double>(0, (s, i) => s + i.totalCost)),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => _copy(items),
                       icon: const Icon(Icons.copy_rounded, size: 17),
-                      label: const Text('Copy list'),
+                      label: Text(context.l10n.stockBuyCopyList),
                     ),
                   ]),
           );
@@ -152,6 +154,7 @@ class _BuyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final holdingUp =
         item.blockedProducts.where((p) => p.openOrderCount > 0).toList();
     final blockedOrders = item.blockingOrders;
@@ -172,17 +175,16 @@ class _BuyCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               if (isProduct) ...[
-                const AppTag('Resell'),
+                AppTag(l10n.stockBuyTagResell),
                 const SizedBox(width: 6),
               ],
               if (item.isCritical && blockedOrders > 0)
-                AppTag(
-                    'Blocking $blockedOrders ${blockedOrders == 1 ? 'order' : 'orders'}',
+                AppTag(l10n.stockBuyTagBlocking(blockedOrders),
                     type: AppTagType.low)
               else if (item.isCritical)
-                const AppTag('Out of free stock', type: AppTagType.low)
+                AppTag(l10n.stockBuyTagOutOfFree, type: AppTagType.low)
               else
-                const AppTag('Below reorder', type: AppTagType.warn),
+                AppTag(l10n.stockBuyTagBelowReorder, type: AppTagType.warn),
             ],
           ),
           const SizedBox(height: 10),
@@ -202,19 +204,18 @@ class _BuyCard extends StatelessWidget {
               Expanded(
                 child: Text.rich(
                   TextSpan(children: [
-                    const TextSpan(text: 'Buy '),
+                    TextSpan(text: '${l10n.stockBuyVerb} '),
                     TextSpan(
                       text: isProduct
                           ? QuantityFormatter.withUnit(pcs, item.unit)
-                          : '${item.packsToOrder} ${item.packsToOrder == 1 ? 'pack' : 'packs'}',
+                          : l10n.stockPacks(item.packsToOrder),
                       style:
                           TextStyle(color: c.ink, fontWeight: FontWeight.w600),
                     ),
                     TextSpan(
                         text:
                             '${isProduct ? '' : ' · ${QuantityFormatter.withUnit(pcs, item.unit)}'}'
-                            ' · ${QuantityFormatter.withUnit(item.quantityFree < 0 ? 0 : item.quantityFree, item.unit)}'
-                            ' free now'),
+                            ' · ${l10n.stockBuyFreeNow(QuantityFormatter.withUnit(item.quantityFree < 0 ? 0 : item.quantityFree, item.unit))}'),
                   ]),
                   style: AppTextStyles.bodySmall
                       .copyWith(color: c.muted, fontSize: 13),
@@ -230,7 +231,9 @@ class _BuyCard extends StatelessWidget {
           if (holdingUp.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Holds up: ${holdingUp.map((p) => '${p.productName} (${p.openOrderCount})').join(', ')}',
+              l10n.stockBuyHoldsUp(holdingUp
+                  .map((p) => '${p.productName} (${p.openOrderCount})')
+                  .join(', ')),
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
@@ -74,7 +75,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         case Error(:final failure):
           _error = failure.message;
         case Success(:final value) when value == null:
-          _error = 'Product not found';
+          // No error text: the build shows the translated "not found".
+          _error = null;
         case Success(:final value):
           _product = value;
           _error = null;
@@ -119,10 +121,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   Future<void> _count(Product p) async {
     var counted = p.quantityOnHand;
+    final l10n = context.l10n;
     final save = await showAppSheet<bool>(
       context: context,
-      title: 'Count stock',
-      subtitle: 'Set how many are actually on the shelf.',
+      title: l10n.productsCountTitle,
+      subtitle: l10n.productsCountSubtitle,
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,7 +144,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               onPressed: sameQty(counted, p.quantityOnHand)
                   ? null
                   : () => Navigator.pop(sheetContext, true),
-              child: const Text('Save count'),
+              child: Text(l10n.productsCountSave),
             ),
           ],
         ),
@@ -156,7 +159,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         context.showSnackBar(failure.message, isError: true);
       case Success():
         context.showSnackBar(
-            'Stock set to ${QuantityFormatter.withUnit(counted, p.unit)}');
+            l10n.productsStockSet(QuantityFormatter.withUnit(counted, p.unit)));
         _changed = true;
         _load();
     }
@@ -186,6 +189,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Widget _buildScaffold() {
+    final l10n = context.l10n;
     final back = BackButton(onPressed: () => context.pop(_changed));
     if (_loading) {
       return Scaffold(
@@ -197,7 +201,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         appBar: AppBar(leading: back),
         body: Center(
             child: ErrorState(
-                message: _error ?? 'Product not found', onRetry: _load)),
+                message: _error ?? l10n.productsNotFound, onRetry: _load)),
       );
     }
     final c = context.colors;
@@ -219,12 +223,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               if (v == 'delete') _delete(p);
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
                 child: Row(children: [
-                  Icon(Icons.edit_outlined, size: 20),
-                  SizedBox(width: 10),
-                  Text('Edit product'),
+                  const Icon(Icons.edit_outlined, size: 20),
+                  const SizedBox(width: 10),
+                  Text(l10n.productsActionEdit),
                 ]),
               ),
               PopupMenuItem(
@@ -236,7 +240,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           : Icons.archive_outlined,
                       size: 20),
                   const SizedBox(width: 10),
-                  Text(p.isArchived ? 'Unarchive' : 'Archive'),
+                  Text(
+                      p.isArchived ? l10n.commonUnarchive : l10n.commonArchive),
                 ]),
               ),
               PopupMenuItem(
@@ -244,7 +249,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 child: Row(children: [
                   Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
                   const SizedBox(width: 10),
-                  Text('Delete product', style: TextStyle(color: c.alert)),
+                  Text(l10n.productsActionDelete,
+                      style: TextStyle(color: c.alert)),
                 ]),
               ),
             ],
@@ -271,7 +277,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     onPressed: () => _open(
                         RouteNames.receiveProductStockPath(widget.productId)),
                     icon: const Icon(Icons.add_rounded, size: 20),
-                    label: const Text('Receive'),
+                    label: Text(l10n.productsReceive),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -279,17 +285,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   child: OutlinedButton.icon(
                     onPressed: () => _count(p),
                     icon: const Icon(Icons.fact_check_outlined, size: 18),
-                    label: const Text('Count'),
+                    label: Text(l10n.productsCount),
                   ),
                 ),
               ]),
             ] else ...[
               const SizedBox(height: 8),
-              SectionLabel(
-                  'Materials per ${p.unit.isEmpty ? 'item' : p.unit} · ${_bom.length}'),
+              SectionLabel(p.unit.isEmpty
+                  ? l10n.productsMaterialsPerItem('${_bom.length}')
+                  : l10n.productsMaterialsPerUnit(p.unit, '${_bom.length}')),
               const SizedBox(height: 8),
               if (_bom.isEmpty)
-                _quiet('No materials yet. Edit the product to add them.')
+                _quiet(l10n.productsNoMaterialsYet)
               else
                 AppCard.flush(
                   child: CardList(children: [
@@ -299,7 +306,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         subtitle: Text(
                             '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)}'
                             ' × ${CurrencyFormatter.format(b.materialUnitCost)}'
-                            '${b.makes > 1 ? ' · makes ${b.makes}' : ''}'),
+                            '${b.makes > 1 ? ' · ${l10n.productsMakesCount(QuantityFormatter.format(b.makes))}' : ''}'),
                         trailing: Text(
                           CurrencyFormatter.format(b.lineCost),
                           style: AppTextStyles.bodyMedium.copyWith(
@@ -317,13 +324,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 cost: cost,
                 isStandalone: p.isStandalone,
                 unit: p.unit),
-            const SectionLabel('History',
-                padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
+            SectionLabel(l10n.productsHistoryTitle,
+                padding: const EdgeInsets.fromLTRB(2, 16, 2, 0)),
             const SizedBox(height: 8),
             if (_historyError != null)
-              _quiet("Couldn't load history: $_historyError")
+              _quiet(l10n.productsHistoryError(_historyError!))
             else if (_history.isEmpty)
-              _quiet('No sales or stock changes yet.')
+              _quiet(l10n.productsHistoryEmpty)
             else
               AppCard.flush(
                 child: CardList(children: [

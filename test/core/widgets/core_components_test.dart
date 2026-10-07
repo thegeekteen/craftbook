@@ -17,11 +17,10 @@ import 'package:craftbook/features/orders/domain/entities/order.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
+import '../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 void main() {
   group('StatusPill', () {
@@ -337,7 +336,7 @@ void main() {
         message: 'Database locked',
         onRetry: () => retries++,
       )));
-      expect(find.text("Couldn't load this"), findsOneWidget);
+      expect(find.text('Couldn’t load this'), findsOneWidget);
       expect(find.text('Database locked'), findsOneWidget);
       await tester.tap(find.text('Try again'));
       expect(retries, 1);

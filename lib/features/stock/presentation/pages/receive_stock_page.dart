@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -90,7 +91,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
 
   void _submit() {
     if (_pricePerPack <= 0) {
-      context.showSnackBar('Enter what you paid per pack', isError: true);
+      context.showSnackBar(context.l10n.stockReceiveEnterPrice, isError: true);
       return;
     }
     setState(() => _saving = true);
@@ -115,19 +116,21 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
         appBar: AppBar(),
         body: Center(
             child: ErrorState(
-                message: _error ?? 'Material not found', onRetry: _load)),
+                message: _error ?? context.l10n.stockMaterialNotFound,
+                onRetry: _load)),
       );
     }
 
     final c = context.colors;
+    final l10n = context.l10n;
     final m = _material!;
     final costUp = _newUnitCost > m.unitCost + 0.005;
 
     return BlocListener<MaterialsBloc, MaterialsState>(
       listener: (context, state) {
         if (state is StockReceived) {
-          context.showSnackBar(
-              'Added ${QuantityFormatter.withUnit(_pieces, m.unit)} of ${m.name}');
+          context.showSnackBar(l10n.stockReceiveAdded(
+              QuantityFormatter.withUnit(_pieces, m.unit), m.name));
           context.pop(true);
         }
         if (state is MaterialsError) {
@@ -142,7 +145,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('RECEIVE',
+              Text(l10n.stockReceiveCaption,
                   style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               Text(m.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
@@ -161,7 +164,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('PACKS RECEIVED',
+                            Text(l10n.stockReceivePacksCaption,
                                 style: AppTextStyles.monoLabel
                                     .copyWith(color: c.muted)),
                             const SizedBox(height: 2),
@@ -169,8 +172,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                               TextSpan(children: [
                                 TextSpan(
                                     text:
-                                        '${QuantityFormatter.withUnit(m.packSize, m.unit)}'
-                                        ' per pack · '),
+                                        '${l10n.stockReceivePerPack(QuantityFormatter.withUnit(m.packSize, m.unit))}'
+                                        ' · '),
                                 TextSpan(
                                   text:
                                       '+${QuantityFormatter.withUnit(_pieces, m.unit)}',
@@ -202,7 +205,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                           RegExp(r'^\d*\.?\d{0,2}'))
                     ],
                     decoration: InputDecoration(
-                        labelText: 'Price per pack',
+                        labelText: l10n.stockReceivePriceLabel,
                         prefixText: '${CurrencyFormatter.symbol} '),
                   ),
                   const SizedBox(height: 10),
@@ -210,7 +213,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                     controller: _supplier,
                     textCapitalization: TextCapitalization.words,
                     decoration:
-                        const InputDecoration(labelText: 'Supplier (optional)'),
+                        InputDecoration(labelText: l10n.stockSupplierOptional),
                   ),
                 ],
               ),
@@ -220,7 +223,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('AFTER RECEIVING',
+                  Text(l10n.stockReceiveAfterCaption,
                       style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
                   const SizedBox(height: 6),
                   Row(
@@ -261,7 +264,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('Unit cost (weighted)',
+                        child: Text(l10n.stockReceiveUnitCost,
                             style: AppTextStyles.bodyMedium
                                 .copyWith(color: c.ink)),
                       ),
@@ -281,7 +284,7 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Products using this will cost a bit more to make.',
+                        l10n.stockReceiveCostUp,
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       ),
                     ),
@@ -295,8 +298,8 @@ class _ReceiveStockPageState extends State<ReceiveStockPage> {
             child: FilledButton.icon(
               onPressed: _saving ? null : _submit,
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: Text(
-                  'Add ${QuantityFormatter.withUnit(_pieces, m.unit)} to stock'),
+              label: Text(l10n.stockReceiveAddButton(
+                  QuantityFormatter.withUnit(_pieces, m.unit))),
             ),
           ),
         ]),

@@ -3,6 +3,7 @@ import 'package:craftbook/core/theme/colors.dart';
 import 'package:craftbook/core/widgets/action_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
 enum _Pick { edit, delete }
 
@@ -19,21 +20,20 @@ void main() {
   /// A button that opens the sheet and records what it returned.
   Future<List<_Pick?>> host(WidgetTester tester) async {
     final picks = <_Pick?>[];
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(
-        body: Builder(
-          builder: (context) => TextButton(
-            onPressed: () async => picks.add(await showActionSheet<_Pick>(
-                context,
-                title: 'Tulip bouquet',
-                subtitle: 'Handmade',
-                actions: actions)),
-            child: const Text('open'),
+    await tester.pumpWidget(localizedApp(
+        Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async => picks.add(await showActionSheet<_Pick>(
+                  context,
+                  title: 'Tulip bouquet',
+                  subtitle: 'Handmade',
+                  actions: actions)),
+              child: const Text('open'),
+            ),
           ),
         ),
-      ),
-    ));
+        theme: AppTheme.lightTheme));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     return picks;

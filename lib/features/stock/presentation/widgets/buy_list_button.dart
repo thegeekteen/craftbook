@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// App-bar shortcut to the buy list, red with a count when something is
 /// low. Sits on the Inventory page beside the Filter button; it carries no
@@ -26,7 +27,9 @@ class BuyListButton extends StatelessWidget {
       ),
       icon: Icon(Icons.shopping_basket_outlined,
           size: 17, color: lowCount > 0 ? c.alert : c.muted),
-      label: Text(lowCount > 0 ? 'Buy list · $lowCount' : 'Buy list'),
+      label: Text(lowCount > 0
+          ? context.l10n.stockBuyListButtonCount(lowCount)
+          : context.l10n.stockBuyListButton),
     );
   }
 }

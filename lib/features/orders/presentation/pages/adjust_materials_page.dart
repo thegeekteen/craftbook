@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
@@ -14,6 +15,7 @@ import '../../../../core/widgets/stepper_input.dart';
 import '../../domain/entities/order_material.dart';
 import '../bloc/order_detail_bloc.dart';
 import '../bloc/order_detail_event.dart';
+import '../widgets/order_l10n.dart';
 
 /// Record what was actually used. Anything over plan counts as waste.
 class AdjustMaterialsPage extends StatefulWidget {
@@ -76,15 +78,14 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
     final c = context.colors;
     final delta = _actualCost - _plannedCost;
     return Scaffold(
-      appBar: AppBar(title: const Text('Materials used')),
+      appBar: AppBar(title: Text(context.l10n.ordersAdjustTitle)),
       body: ListView(
         padding: AppSpacing.page.copyWith(top: 4),
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Record what you actually used. Anything over plan counts as waste '
-              'and comes out of this order\'s profit.',
+              context.l10n.ordersAdjustIntro,
               style: AppTextStyles.bodySmall
                   .copyWith(color: c.muted, fontSize: 13),
             ),
@@ -105,7 +106,7 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
       ),
       bottomNavigationBar: BottomActionBar(children: [
         BarTotal(
-          label: 'Materials',
+          label: context.l10n.ordersMaterials,
           value: CurrencyFormatter.format(_actualCost),
           trailing: delta.abs() < 0.005
               ? null
@@ -117,7 +118,7 @@ class _AdjustMaterialsPageState extends State<AdjustMaterialsPage> {
                   ),
                 ),
         ),
-        FilledButton(onPressed: _save, child: const Text('Save')),
+        FilledButton(onPressed: _save, child: Text(context.l10n.commonSave)),
       ]),
     );
   }
@@ -162,9 +163,18 @@ class _MaterialAdjustCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Planned ${QuantityFormatter.withUnit(material.plannedQuantity, material.materialUnit)}'
-                      ' · ${CurrencyFormatter.format(material.unitCost)}'
-                      '${material.materialUnit.isEmpty ? ' each' : '/${material.materialUnit}'}',
+                      material.materialUnit.isEmpty
+                          ? context.l10n.ordersPlannedEach(
+                              QuantityFormatter.withUnit(
+                                  material.plannedQuantity,
+                                  material.materialUnit),
+                              CurrencyFormatter.format(material.unitCost))
+                          : context.l10n.ordersPlannedPerUnit(
+                              QuantityFormatter.withUnit(
+                                  material.plannedQuantity,
+                                  material.materialUnit),
+                              CurrencyFormatter.format(material.unitCost),
+                              material.materialUnit),
                       style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                     ),
                   ],
@@ -184,22 +194,26 @@ class _MaterialAdjustCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '+${QuantityFormatter.withUnit(waste, material.materialUnit)} waste'
-                  ' · ${CurrencyFormatter.format(waste * material.unitCost)}',
+                  context.l10n.ordersWasteCost(
+                      QuantityFormatter.withUnit(waste, material.materialUnit),
+                      CurrencyFormatter.format(waste * material.unitCost)),
                   style: AppTextStyles.bodySmall.copyWith(
                       color: c.alert,
                       fontWeight: FontWeight.w600,
                       fontSize: 13),
                 ),
                 const Spacer(),
-                Text('Why?',
+                Text(context.l10n.ordersWhy,
                     style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
               ],
             ),
             const SizedBox(height: 8),
             ChoiceChipRow<String>(
               wrap: true,
-              options: [for (final r in reasons) ChipOption(r, r)],
+              options: [
+                for (final r in reasons)
+                  ChipOption(r, wasteReasonLabel(context.l10n, r))
+              ],
               isSelected: (r) => r == reason,
               onTap: onReasonChanged,
               selectedColor: c.alertSoft,
@@ -208,8 +222,8 @@ class _MaterialAdjustCard extends StatelessWidget {
           ] else if (saved > 0) ...[
             const SizedBox(height: 8),
             Text(
-              '${QuantityFormatter.withUnit(saved, material.materialUnit)}'
-              ' fewer than planned',
+              context.l10n.ordersFewerThanPlanned(
+                  QuantityFormatter.withUnit(saved, material.materialUnit)),
               style: AppTextStyles.bodySmall.copyWith(
                   color: c.go, fontWeight: FontWeight.w600, fontSize: 13),
             ),

@@ -22,6 +22,8 @@ import '../bloc/social_links_event.dart';
 import '../bloc/social_links_state.dart';
 import '../widgets/social_link_tile.dart';
 import '../widgets/social_mark.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// Shortcuts to the shop's pages on Facebook, TikTok, Shopee and the like.
 class SocialLinksPage extends StatelessWidget {
@@ -50,7 +52,7 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
     final opened = await getIt<LinkLauncher>().open(link.url);
     if (!opened && mounted) {
       context.showSnackBar(
-        "Couldn't open ${link.label}. Check the link.",
+        context.l10n.socialCouldntOpen(link.label),
         isError: true,
       );
     }
@@ -58,19 +60,21 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bloc = context.read<SocialLinksBloc>();
     return BlocConsumer<SocialLinksBloc, SocialLinksState>(
       listenWhen: (prev, s) =>
           s is SocialLinksError ||
           (s is SocialLinksLoaded &&
-              s.message != null &&
+              s.hasNotice &&
               (prev is! SocialLinksLoaded || prev.serial != s.serial)),
       listener: (context, state) {
         if (state is SocialLinksError) {
           context.showSnackBar(state.message, isError: true);
         }
         if (state is SocialLinksLoaded) {
-          context.showSnackBar(state.message!, isError: state.isError);
+          context.showSnackBar(socialNotice(l10n, state),
+              isError: state.isError);
         }
       },
       builder: (context, state) {
@@ -80,12 +84,12 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
         final editing = _editing && links.isNotEmpty;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Social shortcuts'),
+            title: Text(l10n.socialTitle),
             actions: [
               if (links.isNotEmpty)
                 TextButton(
                   onPressed: () => setState(() => _editing = !editing),
-                  child: Text(editing ? 'Done' : 'Edit'),
+                  child: Text(editing ? l10n.commonDone : l10n.commonEdit),
                 ),
             ],
           ),
@@ -99,10 +103,9 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
             SocialLinksLoaded(links: final l) when l.isEmpty => Center(
                 child: EmptyState(
                   icon: Icons.share_outlined,
-                  title: 'No shortcuts yet',
-                  message:
-                      'Keep your Facebook, TikTok, Shopee or Lazada page one tap away.',
-                  actionLabel: 'Add shortcut',
+                  title: l10n.socialEmptyTitle,
+                  message: l10n.socialEmptyMessage,
+                  actionLabel: l10n.socialAddShortcut,
                   onAction: () => _SocialLinkSheet.open(context, bloc),
                 ),
               ),
@@ -114,7 +117,7 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _SocialLinkSheet.open(context, bloc),
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Shortcut'),
+            label: Text(l10n.socialFab),
           ),
         );
       },
@@ -122,28 +125,40 @@ class _SocialLinksViewState extends State<_SocialLinksView> {
   }
 }
 
+/// The snackbar text for the last action in [state].
+String socialNotice(AppLocalizations l10n, SocialLinksLoaded state) {
+  final name = state.subject ?? l10n.socialFallbackName;
+  return switch (state.outcome) {
+    SocialOutcome.added => l10n.socialOutcomeAdded(name),
+    SocialOutcome.saved => l10n.socialOutcomeSaved(name),
+    SocialOutcome.removed => l10n.socialOutcomeRemoved(name),
+    null => state.message ?? '',
+  };
+}
+
 enum _LinkAction { open, edit, remove }
 
 /// The long-press menu on a shortcut, in the grid and in edit mode.
 Future<void> _linkActions(BuildContext context, SocialLinksBloc bloc,
     SocialLink link, ValueChanged<SocialLink> onOpen) async {
+  final l10n = context.l10n;
   final action = await showActionSheet<_LinkAction>(
     context,
     title: link.label,
     subtitle: link.displayUrl,
-    actions: const [
+    actions: [
       SheetAction(
           value: _LinkAction.open,
           icon: Icons.open_in_new_rounded,
-          label: 'Open'),
+          label: l10n.socialOpen),
       SheetAction(
           value: _LinkAction.edit,
           icon: Icons.edit_outlined,
-          label: 'Edit shortcut'),
+          label: l10n.socialEditShortcut),
       SheetAction(
           value: _LinkAction.remove,
           icon: Icons.delete_outline_rounded,
-          label: 'Remove',
+          label: l10n.commonRemove,
           destructive: true),
     ],
   );
@@ -161,11 +176,12 @@ Future<void> _linkActions(BuildContext context, SocialLinksBloc bloc,
 }
 
 Future<bool> _confirmRemove(BuildContext context, SocialLink link) {
+  final l10n = context.l10n;
   return ConfirmDialog.show(
     context,
-    title: 'Remove ${link.label}?',
-    message: 'Only the shortcut goes; the page itself is untouched.',
-    confirmText: 'Remove',
+    title: l10n.socialRemoveTitle(link.label),
+    message: l10n.socialRemoveMessage,
+    confirmText: l10n.commonRemove,
     isDestructive: true,
   );
 }
@@ -180,6 +196,7 @@ class _Grid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -209,8 +226,7 @@ class _Grid extends StatelessWidget {
               const EdgeInsets.fromLTRB(20, 16, 20, AppSpacing.fabClearance),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Tap a shortcut to open it in your browser or the app. '
-              'Tap Edit to rearrange or change them.',
+              l10n.socialHint,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ),
@@ -232,6 +248,7 @@ class _EditList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -296,7 +313,7 @@ class _EditList extends StatelessWidget {
                             Icons.drag_indicator_rounded,
                             size: 20,
                             color: c.muted,
-                            semanticLabel: 'Drag to reorder',
+                            semanticLabel: l10n.socialDragReorder,
                           ),
                         ),
                       ),
@@ -323,7 +340,9 @@ class _SocialLinkSheet extends StatefulWidget {
       {SocialLink? link}) {
     return showAppSheet(
       context: context,
-      title: link == null ? 'New shortcut' : 'Edit ${link.label}',
+      title: link == null
+          ? context.l10n.socialNewShortcut
+          : context.l10n.socialEditNamed(link.label),
       builder: (_) => _SocialLinkSheet(link: link, bloc: bloc),
     );
   }
@@ -381,6 +400,7 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final preset = SocialPlatform.byKey(_platform);
     final name = _label.text.trim();
     final previewColor = preset?.color ?? _color;
@@ -396,7 +416,7 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
               child: SocialMark(
                   color: previewColor, glyph: previewGlyph, size: 64)),
           const SizedBox(height: 16),
-          const SectionLabel('Site'),
+          SectionLabel(l10n.socialSite),
           const SizedBox(height: 8),
           ChoiceChipRow<String>.single(
             wrap: true,
@@ -404,7 +424,7 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
             onSelected: (p) => setState(() => _platform = p),
             options: [
               for (final p in SocialPlatform.presets) ChipOption(p.key, p.name),
-              const ChipOption(SocialPlatform.customKey, 'Other'),
+              ChipOption(SocialPlatform.customKey, l10n.socialOther),
             ],
           ),
           const SizedBox(height: 12),
@@ -412,12 +432,13 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
             TextFormField(
               controller: _label,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                hintText: 'e.g. My website',
+              decoration: InputDecoration(
+                labelText: l10n.commonName,
+                hintText: l10n.socialNameHint,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.socialNameRequired
+                  : null,
             ),
             const SizedBox(height: 12),
           ],
@@ -426,16 +447,16 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
             keyboardType: TextInputType.url,
             autocorrect: false,
             decoration: InputDecoration(
-              labelText: 'Link',
+              labelText: l10n.socialLinkLabel,
               hintText: preset?.urlHint ?? 'yourshop.com',
             ),
             validator: (v) => normalizeSocialUrl(v ?? '') == null
-                ? 'Enter a web address like ${preset?.urlHint ?? 'yourshop.com'}'
+                ? l10n.socialLinkInvalid(preset?.urlHint ?? 'yourshop.com')
                 : null,
           ),
           if (_isCustom) ...[
             const SizedBox(height: 16),
-            const SectionLabel('Colour'),
+            SectionLabel(l10n.socialColour),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -457,12 +478,14 @@ class _SocialLinkSheetState extends State<_SocialLinkSheet> {
                 TextButton(
                   onPressed: _remove,
                   style: TextButton.styleFrom(foregroundColor: c.alert),
-                  child: const Text('Remove'),
+                  child: Text(l10n.commonRemove),
                 ),
               const Spacer(),
               FilledButton(
                 onPressed: _save,
-                child: Text(widget.link == null ? 'Add shortcut' : 'Save'),
+                child: Text(widget.link == null
+                    ? l10n.socialAddShortcut
+                    : l10n.commonSave),
               ),
             ],
           ),
@@ -487,7 +510,7 @@ class _Swatch extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Colour',
+      label: context.l10n.socialColour,
       child: GestureDetector(
         onTap: onTap,
         child: Container(

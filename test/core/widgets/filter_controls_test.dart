@@ -3,9 +3,10 @@ import 'package:craftbook/core/widgets/choice_chip_row.dart';
 import 'package:craftbook/core/widgets/filter_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) => tester.pumpWidget(
-    MaterialApp(theme: AppTheme.lightTheme, home: Scaffold(body: child)));
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme));
 
 void main() {
   group('FilterButton', () {

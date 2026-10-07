@@ -4,11 +4,14 @@ import 'package:craftbook/features/order_fields/presentation/widgets/order_field
 import 'package:craftbook/features/order_fields/presentation/widgets/order_field_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
+import 'package:craftbook/l10n/gen/app_localizations_en.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
+Widget _wrap(Widget child, {Locale locale = const Locale('en')}) =>
+    localizedApp(
+      Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+      locale: locale,
       theme: AppTheme.lightTheme,
-      home: Scaffold(
-          body: Padding(padding: const EdgeInsets.all(16), child: child)),
     );
 
 void main() {
@@ -132,19 +135,39 @@ void main() {
     });
 
     test('describe counts choices and unused fields', () {
+      final l10n = AppLocalizationsEn();
       expect(
-        OrderFieldTile.describe(const OrderField(
-          name: 'Wrap',
-          type: OrderFieldType.choice,
-          options: ['A', 'B', 'C'],
-        )),
+        OrderFieldTile.describe(
+            l10n,
+            const OrderField(
+              name: 'Wrap',
+              type: OrderFieldType.choice,
+              options: ['A', 'B', 'C'],
+            )),
         '3 choices · not used yet',
       );
       expect(
-        OrderFieldTile.describe(const OrderField(
-            name: 'Size', type: OrderFieldType.number, usageCount: 1)),
+        OrderFieldTile.describe(
+            l10n,
+            const OrderField(
+                name: 'Size', type: OrderFieldType.number, usageCount: 1)),
         'Used on 1 order',
       );
+    });
+
+    testWidgets('reads in Filipino', (tester) async {
+      await tester.pumpWidget(_wrap(
+        const OrderFieldTile(
+          field: OrderField(
+              name: 'Address',
+              type: OrderFieldType.choice,
+              options: ['A', 'B'],
+              usageCount: 4),
+        ),
+        locale: const Locale('fil'),
+      ));
+      expect(find.text('Pagpipilian'), findsOneWidget);
+      expect(find.text('2 pagpipilian · ginamit sa 4 order'), findsOneWidget);
     });
 
     testWidgets('taps through', (tester) async {

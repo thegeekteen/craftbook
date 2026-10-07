@@ -178,7 +178,7 @@ void main() {
     await _settle(tester);
 
     expect(
-        find.text("Couldn't open Facebook. Check the link."), findsOneWidget);
+        find.text('Couldn’t open Facebook. Check the link.'), findsOneWidget);
     await teardown(tester);
   });
 

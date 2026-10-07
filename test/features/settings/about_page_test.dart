@@ -5,6 +5,7 @@ import 'package:craftbook/features/settings/presentation/pages/about_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
 class _FakeBundle extends CachingAssetBundle {
   final String? readme;
@@ -23,8 +24,7 @@ void main() {
   Future<void> pump(WidgetTester tester, String? readme) => tester.pumpWidget(
         DefaultAssetBundle(
           bundle: _FakeBundle(readme),
-          child:
-              MaterialApp(theme: AppTheme.lightTheme, home: const AboutPage()),
+          child: localizedApp(const AboutPage(), theme: AppTheme.lightTheme),
         ),
       );
 
@@ -44,6 +44,6 @@ void main() {
     await pump(tester, null);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("Couldn't load the guide"), findsOneWidget);
+    expect(find.textContaining('Couldn’t load the guide'), findsOneWidget);
   });
 }

@@ -107,6 +107,21 @@ class OrderDetailError extends OrderDetailState {
   List<Object?> get props => [message];
 }
 
+/// Which action succeeded, so the page can word it in the user's language.
+enum OrderNotice {
+  materialsUpdated('Materials updated'),
+  packed('Packed. Stock updated.'),
+  shipped('Marked as shipped'),
+  paid('Marked as paid'),
+  unpaid('Marked as unpaid'),
+  cancelled('Order cancelled. Stock returned.'),
+  restored('Order restored');
+
+  /// English wording, kept as the message for logs and tests.
+  final String message;
+  const OrderNotice(this.message);
+}
+
 /// One-shot result of an action, shown as a snackbar. The loaded state is
 /// re-emitted right after so the screen stays in place.
 class OrderDetailMessage extends OrderDetailState {
@@ -116,11 +131,15 @@ class OrderDetailMessage extends OrderDetailState {
   /// Guarantees two identical messages in a row are both delivered.
   final int serial;
 
+  /// Set on success: the page words it in the user's language instead of
+  /// showing [message].
+  final OrderNotice? notice;
+
   const OrderDetailMessage(this.message,
-      {this.isError = false, this.serial = 0});
+      {this.isError = false, this.serial = 0, this.notice});
 
   @override
-  List<Object?> get props => [message, isError, serial];
+  List<Object?> get props => [message, isError, serial, notice];
 }
 
 /// Order was deleted successfully

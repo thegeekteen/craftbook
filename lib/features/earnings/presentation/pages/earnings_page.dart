@@ -8,6 +8,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_card.dart';
@@ -23,6 +24,7 @@ import '../../../products/domain/usecases/get_channels.dart';
 import '../../../settings/presentation/bloc/tax_settings_cubit.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_period.dart';
+import '../report_period_labels.dart';
 import '../widgets/report_filter_sheet.dart';
 import '../bloc/earnings_bloc.dart';
 import '../bloc/earnings_event.dart';
@@ -134,8 +136,8 @@ class _EarningsViewState extends State<_EarningsView> {
       initialDateRange: _period.isCustom
           ? DateTimeRange(start: current.start, end: current.end)
           : null,
-      helpText: 'Report on',
-      saveText: 'Show',
+      helpText: context.l10n.earningsPickerHelp,
+      saveText: context.l10n.earningsPickerShow,
     );
     if (picked == null || !mounted) return;
     setState(() => _period = ReportPeriod.custom(picked.start, picked.end));
@@ -151,7 +153,7 @@ class _EarningsViewState extends State<_EarningsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reports'),
+        title: Text(context.l10n.earningsTitle),
         actions: [
           FilterButton(
               activeCount: _filter.activeCount, onPressed: _openFilter),
@@ -172,6 +174,7 @@ class _EarningsViewState extends State<_EarningsView> {
 
   Widget _buildLoaded(EarningsLoaded s) {
     final c = context.colors;
+    final l10n = context.l10n;
     final sum = s.summary;
     final parts = MoneyParts(
       sales: sum.totalSales,
@@ -193,11 +196,19 @@ class _EarningsViewState extends State<_EarningsView> {
             width: double.infinity,
             child: SegmentedButton<ReportRange>(
               showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(value: ReportRange.week, label: Text('Week')),
-                ButtonSegment(value: ReportRange.month, label: Text('Month')),
-                ButtonSegment(value: ReportRange.year, label: Text('Year')),
-                ButtonSegment(value: ReportRange.custom, label: Text('Custom')),
+              segments: [
+                ButtonSegment(
+                    value: ReportRange.week,
+                    label: Text(l10n.earningsRangeWeek)),
+                ButtonSegment(
+                    value: ReportRange.month,
+                    label: Text(l10n.earningsRangeMonth)),
+                ButtonSegment(
+                    value: ReportRange.year,
+                    label: Text(l10n.earningsRangeYear)),
+                ButtonSegment(
+                    value: ReportRange.custom,
+                    label: Text(l10n.earningsRangeCustom)),
               ],
               selected: {_period.range},
               // Re-tapping Custom picks a new range.
@@ -215,6 +226,7 @@ class _EarningsViewState extends State<_EarningsView> {
               filters: [
                 for (final (label, without) in describeFilter(
                   _filter,
+                  l10n: l10n,
                   channelNames: {for (final c in _channels) c.id: c.name},
                   productNames: {for (final p in _products) p.id: p.name},
                 ))
@@ -232,8 +244,7 @@ class _EarningsViewState extends State<_EarningsView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SummaryBoard(
-                  label:
-                      'Net profit · $orders ${orders == 1 ? 'order' : 'orders'}',
+                  label: l10n.earningsNetProfit(l10n.earningsOrders(orders)),
                   value: CurrencyFormatter.formatShort(parts.profit),
                   valueColor: parts.profit < 0 ? c.alert : null,
                   child: ProfitTrendChart(
@@ -246,8 +257,8 @@ class _EarningsViewState extends State<_EarningsView> {
                   AppCard(
                     child: Text(
                       _filter.isEmpty
-                          ? 'No packed or shipped orders in this period. Profit counts once an order is packed.'
-                          : 'No packed or shipped orders in this period match the filter.',
+                          ? l10n.earningsNoOrders
+                          : l10n.earningsNoOrdersFiltered,
                       style: AppTextStyles.bodySmall
                           .copyWith(color: c.muted, fontSize: 13),
                     ),
@@ -263,15 +274,16 @@ class _EarningsViewState extends State<_EarningsView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${(parts.margin * 100).round()}% of sales is profit',
+                          l10n.earningsMargin(
+                              '${(parts.margin * 100).round()}'),
                           style:
                               AppTextStyles.bodySmall.copyWith(color: c.muted),
                         ),
                         if (sum.unpaidCount > 0)
                           Text(
-                            '${CurrencyFormatter.format(sum.unpaidTotal)} of '
-                            'it is still unpaid (${sum.unpaidCount} '
-                            '${sum.unpaidCount == 1 ? 'order' : 'orders'})',
+                            l10n.earningsUnpaidLine(
+                                CurrencyFormatter.format(sum.unpaidTotal),
+                                l10n.earningsOrders(sum.unpaidCount)),
                             style:
                                 AppTextStyles.bodySmall.copyWith(color: c.warn),
                           ),
@@ -279,7 +291,8 @@ class _EarningsViewState extends State<_EarningsView> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  SectionLabel('By product · ${s.productEarnings.length}'),
+                  SectionLabel(
+                      l10n.earningsByProduct(s.productEarnings.length)),
                   const SizedBox(height: 8),
                   AppCard.flush(
                     child: CardList(children: [
@@ -287,8 +300,11 @@ class _EarningsViewState extends State<_EarningsView> {
                         CardRow(
                           title: Text(p.productName),
                           subtitle: Text(
-                            '${QuantityFormatter.withUnit(p.quantitySold, p.unit)} sold'
-                            ' · ${CurrencyFormatter.formatShort(p.totalSales)} sales',
+                            l10n.earningsSoldSales(
+                              QuantityFormatter.withUnit(
+                                  p.quantitySold, p.unit),
+                              CurrencyFormatter.formatShort(p.totalSales),
+                            ),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -315,15 +331,16 @@ class _EarningsViewState extends State<_EarningsView> {
                   const SizedBox(height: 4),
                   SectionLabel(
                     s.wasteSummary.totalWasteCost > 0
-                        ? 'Waste · ${CurrencyFormatter.format(s.wasteSummary.totalWasteCost)}'
-                        : 'Waste',
+                        ? l10n.earningsWasteWithCost(CurrencyFormatter.format(
+                            s.wasteSummary.totalWasteCost))
+                        : l10n.earningsWaste,
                   ),
                   const SizedBox(height: 8),
                   if (s.wasteSummary.items.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
                       child: Text(
-                        'No waste recorded in this period.',
+                        l10n.earningsNoWaste,
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       ),
                     )
@@ -333,8 +350,9 @@ class _EarningsViewState extends State<_EarningsView> {
                         for (final w in s.wasteSummary.items)
                           CardRow(
                             title: Text(w.materialName),
-                            subtitle: Text(
-                                '${QuantityFormatter.withUnit(w.quantity, w.unit)} wasted'),
+                            subtitle: Text(l10n.earningsWasted(
+                                QuantityFormatter.withUnit(
+                                    w.quantity, w.unit))),
                             trailing: Text(
                               '−${CurrencyFormatter.format(w.cost)}',
                               style: AppTextStyles.bodyMedium.copyWith(
@@ -373,15 +391,16 @@ class _PeriodBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final now = DateTime.now();
-    final detail = period.detail(now);
+    final detail = period.detail(now, l10n);
     final label = Column(
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: Text(period.label(now),
+              child: Text(period.label(now, l10n),
                   style: AppTextStyles.bodyLarge.copyWith(color: c.ink)),
             ),
             if (period.isCustom) ...[
@@ -409,13 +428,13 @@ class _PeriodBar extends StatelessWidget {
     return Row(
       children: [
         IconButton(
-          tooltip: 'Previous',
+          tooltip: l10n.earningsPrevious,
           icon: const Icon(Icons.chevron_left_rounded),
           onPressed: () => onShift(-1),
         ),
         Expanded(child: label),
         IconButton(
-          tooltip: 'Next',
+          tooltip: l10n.commonNext,
           icon: const Icon(Icons.chevron_right_rounded),
           onPressed: period.canGoForward ? () => onShift(1) : null,
         ),
@@ -432,6 +451,7 @@ class _WaitingForPaymentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return BlocBuilder<ReceivablesCubit, ReceivablesState>(
       builder: (context, state) {
         if (state is! ReceivablesLoaded || state.receivables.isEmpty) {
@@ -455,13 +475,13 @@ class _WaitingForPaymentCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Waiting for payment',
+                      Text(l10n.earningsWaiting,
                           style:
                               AppTextStyles.bodyLarge.copyWith(color: c.ink)),
                       Text(
-                        '${r.orderCount} ${r.orderCount == 1 ? 'order' : 'orders'}'
-                        ' · ${r.groups.length} '
-                        '${r.groups.length == 1 ? 'customer' : 'customers'}',
+                        l10n.earningsWaitingSubtitle(
+                            l10n.earningsOrders(r.orderCount),
+                            l10n.earningsCustomers(r.groups.length)),
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       ),
                     ],

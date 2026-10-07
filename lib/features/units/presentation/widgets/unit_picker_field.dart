@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
@@ -36,7 +37,7 @@ class UnitPickerField extends StatelessWidget {
     final picked = await showAppSheet<UnitOfMeasure>(
       context: context,
       title: label,
-      subtitle: 'Every number for this is written with it.',
+      subtitle: context.l10n.unitsPickerSubtitle,
       builder: (sheetContext) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -65,7 +66,7 @@ class UnitPickerField extends StatelessWidget {
         isEmpty: false,
         decoration: InputDecoration(
           labelText: label,
-          helperText: 'Add more in More → Units of measure',
+          helperText: context.l10n.unitsPickerHelper,
           suffixIcon: const Icon(Icons.unfold_more_rounded),
         ),
         child: Text(

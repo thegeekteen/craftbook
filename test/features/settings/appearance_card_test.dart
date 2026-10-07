@@ -11,6 +11,7 @@ import 'package:craftbook/features/settings/presentation/widgets/appearance_card
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import '../../support/localized_app.dart';
 
 class _MockSettings extends Mock implements SettingsRepository {}
 
@@ -41,11 +42,9 @@ void main() {
   });
   tearDown(() => getIt.reset());
 
-  Future<void> pump(WidgetTester tester) => tester.pumpWidget(MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: const Scaffold(
-            body: SingleChildScrollView(child: AppearanceCard())),
-      ));
+  Future<void> pump(WidgetTester tester) => tester.pumpWidget(localizedApp(
+      const Scaffold(body: SingleChildScrollView(child: AppearanceCard())),
+      theme: AppTheme.lightTheme));
 
   testWidgets('shows every colour scheme and the dark mode options',
       (tester) async {

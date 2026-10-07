@@ -7,15 +7,17 @@ import 'package:craftbook/features/products/domain/entities/product.dart';
 import 'package:craftbook/features/products/presentation/widgets/channel_card.dart';
 import 'package:craftbook/features/products/presentation/widgets/product_card.dart';
 import 'package:craftbook/features/products/presentation/widgets/product_profit_card.dart';
+import 'package:craftbook/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+import '../../../../support/localized_app.dart';
+
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 final _now = DateTime(2026, 1, 1);
+final AppLocalizations _l10n = lookupAppLocalizations(const Locale('en'));
 
 Product _product({
   double price = 400,
@@ -183,14 +185,14 @@ void main() {
 
   group('ChannelCard.recipe', () {
     test('lists every fee and the shipping we pay', () {
-      expect(ChannelCard.recipe(_channel()),
+      expect(ChannelCard.recipe(_channel(), _l10n),
           '8% + 2% + ₱5 · you pay ₱40 shipping');
     });
 
     test('no fees', () {
       expect(
         ChannelCard.recipe(
-            _channel(commission: 0, txn: 0, flat: 0, shipping: 0)),
+            _channel(commission: 0, txn: 0, flat: 0, shipping: 0), _l10n),
         'No fees',
       );
     });
@@ -198,7 +200,7 @@ void main() {
     test('no fees but shipping', () {
       expect(
         ChannelCard.recipe(
-            _channel(commission: 0, txn: 0, flat: 0, shipping: 130)),
+            _channel(commission: 0, txn: 0, flat: 0, shipping: 130), _l10n),
         'No fees · you pay ₱130 shipping',
       );
     });
@@ -206,7 +208,7 @@ void main() {
     test('fractional rates keep one decimal', () {
       expect(
         ChannelCard.recipe(
-            _channel(commission: 5.5, txn: 0, flat: 0, shipping: 0)),
+            _channel(commission: 5.5, txn: 0, flat: 0, shipping: 0), _l10n),
         '5.5%',
       );
     });
@@ -214,7 +216,7 @@ void main() {
     test('flat fee with centavos keeps them', () {
       expect(
         ChannelCard.recipe(
-            _channel(commission: 0, txn: 0, flat: 2.5, shipping: 0)),
+            _channel(commission: 0, txn: 0, flat: 2.5, shipping: 0), _l10n),
         '₱2.50',
       );
     });

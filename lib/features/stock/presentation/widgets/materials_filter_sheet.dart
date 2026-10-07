@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../material_list_filter.dart';
@@ -12,8 +13,8 @@ Future<MaterialStockFilter?> showMaterialsFilterSheet(
 }) {
   return showAppSheet<MaterialStockFilter>(
     context: context,
-    title: 'Filter materials',
-    subtitle: 'Works together with search.',
+    title: context.l10n.stockFilterTitle,
+    subtitle: context.l10n.stockFilterSubtitle,
     builder: (_) => MaterialsFilterForm(current: current, view: view),
   );
 }
@@ -38,11 +39,13 @@ class _MaterialsFilterFormState extends State<MaterialsFilterForm> {
   @override
   Widget build(BuildContext context) {
     final view = widget.view;
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Stock', style: Theme.of(context).textTheme.bodyMedium),
+        Text(l10n.stockFilterStock,
+            style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 8),
         ChoiceChipRow<MaterialStockFilter>.single(
           wrap: true,
@@ -51,7 +54,7 @@ class _MaterialsFilterFormState extends State<MaterialsFilterForm> {
           options: [
             for (final s in MaterialStockFilter.values)
               if (s != MaterialStockFilter.archived || view.hasArchived)
-                ChipOption(s, s.label, count: view.count(s)),
+                ChipOption(s, s.label(l10n), count: view.count(s)),
           ],
         ),
         const SizedBox(height: 20),
@@ -59,12 +62,12 @@ class _MaterialsFilterFormState extends State<MaterialsFilterForm> {
           children: [
             TextButton(
               onPressed: () => setState(() => _stock = MaterialStockFilter.any),
-              child: const Text('Clear all'),
+              child: Text(l10n.stockFilterClear),
             ),
             const Spacer(),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_stock),
-              child: const Text('Show'),
+              child: Text(l10n.stockFilterShow),
             ),
           ],
         ),

@@ -103,7 +103,8 @@ void main() {
       expect: () => [
         const SocialLinksLoaded(
             links: [facebook, shopee, tiktok],
-            message: 'Lazada added',
+            outcome: SocialOutcome.added,
+            subject: 'Lazada',
             serial: 1),
       ],
     );
@@ -121,7 +122,8 @@ void main() {
       expect: () => [
         const SocialLinksLoaded(
             links: [facebook, shopee, tiktok],
-            message: 'My blog saved',
+            outcome: SocialOutcome.saved,
+            subject: 'My blog',
             serial: 1),
       ],
     );
@@ -156,7 +158,8 @@ void main() {
       expect: () => [
         const SocialLinksLoaded(
             links: [facebook, shopee, tiktok],
-            message: 'Shopee removed',
+            outcome: SocialOutcome.removed,
+            subject: 'Shopee',
             serial: 1),
       ],
     );

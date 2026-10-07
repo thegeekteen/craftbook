@@ -5,6 +5,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_setting.dart';
 import '../../../../core/widgets/app_sheet.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// Picks the shop's currency. Returns null when dismissed.
 Future<CurrencySetting?> showCurrencySheet(
@@ -13,8 +14,8 @@ Future<CurrencySetting?> showCurrencySheet(
 }) {
   return showAppSheet<CurrencySetting>(
     context: context,
-    title: 'Currency',
-    subtitle: 'Changes the symbol only. Amounts aren\'t converted.',
+    title: context.l10n.currencySheetTitle,
+    subtitle: context.l10n.currencySheetSubtitle,
     builder: (_) => CurrencyPicker(current: current),
   );
 }
@@ -92,7 +93,7 @@ class _CurrencyPickerState extends State<CurrencyPicker> {
             ),
           ),
         const SizedBox(height: 12),
-        Text('Something else',
+        Text(context.l10n.currencySomethingElse,
             style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
         const SizedBox(height: 8),
         Row(
@@ -102,9 +103,9 @@ class _CurrencyPickerState extends State<CurrencyPicker> {
               child: TextField(
                 controller: _symbol,
                 maxLength: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Symbol',
-                  hintText: 'e.g. kr',
+                decoration: InputDecoration(
+                  labelText: context.l10n.currencySymbol,
+                  hintText: context.l10n.currencySymbolHint,
                   counterText: '',
                 ),
                 onChanged: (_) => setState(() {}),
@@ -114,7 +115,7 @@ class _CurrencyPickerState extends State<CurrencyPicker> {
             const SizedBox(width: 12),
             FilledButton(
               onPressed: _symbol.text.trim().isEmpty ? null : _saveCustom,
-              child: const Text('Use'),
+              child: Text(context.l10n.currencyUse),
             ),
           ],
         ),
@@ -122,9 +123,9 @@ class _CurrencyPickerState extends State<CurrencyPicker> {
           contentPadding: EdgeInsets.zero,
           value: _wholeNumbers,
           onChanged: (v) => setState(() => _wholeNumbers = v),
-          title: Text('No cents',
+          title: Text(context.l10n.currencyNoCents,
               style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
-          subtitle: Text('Show 1,200 instead of 1,200.00',
+          subtitle: Text(context.l10n.currencyNoCentsHint,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
         ),
       ],

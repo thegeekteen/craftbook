@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
+import '../utils/l10n_extension.dart';
 
 /// Centered icon, title, one-line hint and optional action.
 class EmptyState extends StatelessWidget {
@@ -70,9 +71,9 @@ class ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return EmptyState(
       icon: Icons.cloud_off_rounded,
-      title: "Couldn't load this",
+      title: context.l10n.commonCouldntLoad,
       message: message,
-      actionLabel: onRetry != null ? 'Try again' : null,
+      actionLabel: onRetry != null ? context.l10n.commonTryAgain : null,
       onAction: onRetry,
     );
   }

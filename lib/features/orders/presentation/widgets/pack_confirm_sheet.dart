@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../../../core/widgets/inline_banner.dart';
@@ -89,7 +90,7 @@ class PackConfirmSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
             child: Text(
-              'Pack this order?',
+              context.l10n.ordersPackTitle,
               style: AppTextStyles.displaySmall.copyWith(color: c.ink),
             ),
           ),
@@ -97,8 +98,8 @@ class PackConfirmSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Text(
               lines.isEmpty
-                  ? 'Nothing to take from stock for this order.'
-                  : 'These pieces come off your shelf.',
+                  ? context.l10n.ordersPackNothing
+                  : context.l10n.ordersPackIntro,
               style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
             ),
           ),
@@ -116,8 +117,9 @@ class PackConfirmSheet extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
               child: InlineBanner(
                 icon: Icons.warning_amber_rounded,
-                title: 'Short on ${short.map((l) => l.name).join(', ')}.',
-                message: 'Stock will stop at 0.',
+                title: context.l10n
+                    .ordersPackShort(short.map((l) => l.name).join(', ')),
+                message: context.l10n.ordersPackShortMessage,
               ),
             ),
           SafeArea(
@@ -129,14 +131,14 @@ class PackConfirmSheet extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: TextButton.styleFrom(foregroundColor: c.muted),
-                    child: const Text('Cancel'),
+                    child: Text(context.l10n.commonCancel),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: () => Navigator.pop(context, true),
                       icon: const Icon(Icons.inventory_2_rounded, size: 18),
-                      label: const Text('Pack & deduct'),
+                      label: Text(context.l10n.ordersPackConfirm),
                     ),
                   ),
                 ],
