@@ -394,6 +394,7 @@ void main() {
         loaded(isBusy: true),
         isA<OrderDetailMessage>()
             .having((m) => m.message, 'message', 'Packed. Stock updated.')
+            .having((m) => m.notice, 'notice', OrderNotice.packed)
             .having((m) => m.isError, 'isError', false),
         loaded(isBusy: false),
         loaded(status: OrderStatus.packed),

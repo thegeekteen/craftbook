@@ -1,15 +1,20 @@
+import '../../../l10n/gen/app_localizations.dart';
 import '../domain/entities/material.dart';
 
 /// Where a material's stock stands. Archived swaps the list for the
 /// archived materials, which are left out of every other option.
 enum MaterialStockFilter {
-  any('Any'),
-  low('Low'),
-  promised('Promised'),
-  archived('Archived');
+  any,
+  low,
+  promised,
+  archived;
 
-  final String label;
-  const MaterialStockFilter(this.label);
+  String label(AppLocalizations l10n) => switch (this) {
+        any => l10n.stockFilterAny,
+        low => l10n.stockFilterLow,
+        promised => l10n.stockFilterPromised,
+        archived => l10n.stockFilterArchived,
+      };
 }
 
 /// The materials under a search, answering what each filter would show.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
@@ -44,6 +45,7 @@ class ProductSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final p = product;
     final qty = p.isStandalone ? p.quantityOnHand : buildable.floorToDouble();
     final low = isProductLow(p, buildable);
@@ -64,7 +66,7 @@ class ProductSummaryCard extends StatelessWidget {
           if (photo != null) ...[
             Semantics(
               image: true,
-              label: 'Photo of ${p.name}',
+              label: l10n.productsPhotoOf(p.name),
               button: true,
               child: GestureDetector(
                 onTap: () =>
@@ -94,20 +96,20 @@ class ProductSummaryCard extends StatelessWidget {
               Text(
                 p.isStandalone
                     ? (p.unit.isEmpty
-                        ? 'ON HAND'
-                        : '${p.unit.toUpperCase()} ON HAND')
-                    : 'CAN BUILD',
+                        ? l10n.productsOnHandCaps
+                        : l10n.productsUnitOnHandCaps(p.unit.toUpperCase()))
+                    : l10n.productsCanBuildCaps,
                 style: AppTextStyles.monoLabel.copyWith(color: c.muted),
               ),
               const Spacer(),
               Wrap(
                 spacing: 6,
                 children: [
-                  if (p.isStandalone) const AppTag('Resell'),
-                  if (p.isArchived) const AppTag('Archived'),
+                  if (p.isStandalone) AppTag(l10n.productsTagResell),
+                  if (p.isArchived) AppTag(l10n.productsTagArchived),
                   // Resell already shows its shortfall as a stat below.
                   if (isShort && !p.isStandalone)
-                    const AppTag.low(text: 'Short'),
+                    AppTag.low(text: l10n.productsStatShort),
                   if (low) const AppTag.low(),
                 ],
               ),
@@ -130,20 +132,20 @@ class ProductSummaryCard extends StatelessWidget {
             StatRow(children: [
               p.quantityFree < 0
                   ? StatTile(
-                      label: 'Short',
+                      label: l10n.productsStatShort,
                       value: QuantityFormatter.format(-p.quantityFree),
                       valueColor: c.alert)
                   : StatTile(
-                      label: 'Free',
+                      label: l10n.productsStatFree,
                       value: QuantityFormatter.format(p.quantityFree),
                       valueColor: c.go),
               StatTile(
-                label: 'Promised',
+                label: l10n.productsStatPromised,
                 value: QuantityFormatter.format(p.quantityPromised),
                 valueColor: p.quantityPromised > 0 ? c.alert : null,
               ),
               StatTile(
-                  label: 'Reorder at',
+                  label: l10n.productsStatReorderAt,
                   value: QuantityFormatter.format(p.alertLevel)),
             ]),
           ],
@@ -151,7 +153,7 @@ class ProductSummaryCard extends StatelessWidget {
             const SizedBox(height: 14),
             StatRow(children: [
               StatTile(
-                  label: 'Warn at',
+                  label: l10n.productsStatWarnAt,
                   value: QuantityFormatter.format(p.alertLevel)),
             ]),
           ],
@@ -160,15 +162,15 @@ class ProductSummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           StatRow(children: [
             StatTile(
-                label: 'Sell price',
+                label: l10n.productsStatSellPrice,
                 value: CurrencyFormatter.format(p.sellPrice),
                 compact: true),
             StatTile(
-                label: 'Cost',
+                label: l10n.productsStatCost,
                 value: CurrencyFormatter.format(cost),
                 compact: true),
             StatTile(
-              label: 'Margin',
+              label: l10n.productsStatMargin,
               value: '${margin < 0 ? '−${-margin}' : margin}%',
               valueColor: marginColor,
               compact: true,

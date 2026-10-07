@@ -7,6 +7,7 @@ import 'package:craftbook/features/orders/presentation/widgets/product_picker_sh
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
 
 import '../../../../support/sample_data.dart';
 
@@ -21,10 +22,9 @@ void main() {
     });
 
     final picked = <OrderItemInput>[];
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: ProductPickerSheet(onSelected: picked.add)),
-    ));
+    await tester.pumpWidget(localizedApp(
+        Scaffold(body: ProductPickerSheet(onSelected: picked.add)),
+        theme: AppTheme.lightTheme));
     for (var i = 0; i < 10; i++) {
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 30)));

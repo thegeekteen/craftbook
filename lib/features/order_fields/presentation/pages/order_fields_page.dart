@@ -17,6 +17,9 @@ import '../bloc/order_fields_bloc.dart';
 import '../bloc/order_fields_event.dart';
 import '../bloc/order_fields_state.dart';
 import '../widgets/order_field_tile.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../order_field_labels.dart';
 
 /// The extra details asked for on every order: address, size, wrap…
 class OrderFieldsPage extends StatelessWidget {
@@ -36,21 +39,23 @@ class _OrderFieldsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final bloc = context.read<OrderFieldsBloc>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Order fields')),
+      appBar: AppBar(title: Text(l10n.orderFieldsTitle)),
       body: BlocConsumer<OrderFieldsBloc, OrderFieldsState>(
         listenWhen: (prev, s) =>
             s is OrderFieldsError ||
             (s is OrderFieldsLoaded &&
-                s.message != null &&
+                s.hasNotice &&
                 (prev is! OrderFieldsLoaded || prev.serial != s.serial)),
         listener: (context, state) {
           if (state is OrderFieldsError) {
             context.showSnackBar(state.message, isError: true);
           }
           if (state is OrderFieldsLoaded) {
-            context.showSnackBar(state.message!, isError: state.isError);
+            context.showSnackBar(orderFieldNotice(l10n, state),
+                isError: state.isError);
           }
         },
         builder: (context, state) {
@@ -69,10 +74,9 @@ class _OrderFieldsView extends StatelessWidget {
             return Center(
               child: EmptyState(
                 icon: Icons.dashboard_customize_outlined,
-                title: 'No order fields yet',
-                message:
-                    'Add what you note on every order: address, size, gift message…',
-                actionLabel: 'Add field',
+                title: l10n.orderFieldsEmptyTitle,
+                message: l10n.orderFieldsEmptyMessage,
+                actionLabel: l10n.orderFieldsAddField,
                 onAction: () => _OrderFieldSheet.open(context, bloc),
               ),
             );
@@ -83,10 +87,23 @@ class _OrderFieldsView extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _OrderFieldSheet.open(context, bloc),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Field'),
+        label: Text(l10n.orderFieldsFab),
       ),
     );
   }
+}
+
+/// The snackbar text for the last action in [state].
+String orderFieldNotice(AppLocalizations l10n, OrderFieldsLoaded state) {
+  final name = state.subject ?? l10n.orderFieldsFallbackName;
+  return switch (state.outcome) {
+    OrderFieldOutcome.added => l10n.orderFieldsOutcomeAdded(name),
+    OrderFieldOutcome.saved => l10n.orderFieldsOutcomeSaved(name),
+    OrderFieldOutcome.archived => l10n.orderFieldsOutcomeArchived(name),
+    OrderFieldOutcome.deleted => l10n.orderFieldsOutcomeDeleted(name),
+    OrderFieldOutcome.restored => l10n.orderFieldsOutcomeRestored(name),
+    null => state.message ?? '',
+  };
 }
 
 class _FieldList extends StatelessWidget {
@@ -98,6 +115,7 @@ class _FieldList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -130,7 +148,7 @@ class _FieldList extends StatelessWidget {
                         Icons.drag_indicator_rounded,
                         size: 20,
                         color: c.muted,
-                        semanticLabel: 'Drag to reorder',
+                        semanticLabel: l10n.orderFieldsDragReorder,
                       ),
                     ),
                   ),
@@ -145,7 +163,7 @@ class _FieldList extends StatelessWidget {
           sliver: SliverList.list(
             children: [
               if (state.archived.isNotEmpty) ...[
-                const SectionLabel('Archived'),
+                SectionLabel(l10n.orderFieldsArchivedHeader),
                 const SizedBox(height: 8),
                 for (final field in state.archived) ...[
                   OrderFieldTile(
@@ -156,7 +174,7 @@ class _FieldList extends StatelessWidget {
                       children: [
                         if (!field.isUsed)
                           IconButton(
-                            tooltip: 'Delete ${field.name}',
+                            tooltip: l10n.orderFieldsDeleteNamed(field.name),
                             onPressed: () =>
                                 _confirmRemove(context, bloc, field),
                             icon: Icon(Icons.delete_outline_rounded,
@@ -165,7 +183,7 @@ class _FieldList extends StatelessWidget {
                         TextButton(
                           onPressed: () =>
                               bloc.add(RestoreOrderFieldEvent(field.id!)),
-                          child: const Text('Restore'),
+                          child: Text(l10n.commonRestore),
                         ),
                       ],
                     ),
@@ -176,8 +194,7 @@ class _FieldList extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
                 child: Text(
-                  'Fields are asked for in this order when you add an order. '
-                  "Archived fields stay on past orders but aren't asked for on new ones.",
+                  l10n.orderFieldsFooter,
                   style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                 ),
               ),
@@ -194,28 +211,29 @@ enum _FieldAction { edit, restore, remove }
 /// The long-press menu: active fields edit or go, archived ones come back.
 Future<void> _fieldActions(
     BuildContext context, OrderFieldsBloc bloc, OrderField field) async {
+  final l10n = context.l10n;
   final archived = field.isArchived;
   final action = await showActionSheet<_FieldAction>(
     context,
     title: field.name,
     actions: [
       if (!archived)
-        const SheetAction(
+        SheetAction(
             value: _FieldAction.edit,
             icon: Icons.edit_outlined,
-            label: 'Edit field'),
+            label: l10n.orderFieldsEditField),
       if (archived)
-        const SheetAction(
+        SheetAction(
             value: _FieldAction.restore,
             icon: Icons.unarchive_outlined,
-            label: 'Restore'),
+            label: l10n.commonRestore),
       if (!archived || !field.isUsed)
         SheetAction(
           value: _FieldAction.remove,
           icon: field.isUsed
               ? Icons.archive_outlined
               : Icons.delete_outline_rounded,
-          label: field.isUsed ? 'Archive' : 'Delete',
+          label: field.isUsed ? l10n.commonArchive : l10n.commonDelete,
           destructive: true,
         ),
     ],
@@ -237,15 +255,17 @@ Future<bool> _confirmRemove(
   OrderFieldsBloc bloc,
   OrderField field,
 ) async {
+  final l10n = context.l10n;
   final used = field.usageCount;
   final confirmed = await ConfirmDialog.show(
     context,
-    title: used > 0 ? 'Archive ${field.name}?' : 'Delete ${field.name}?',
+    title: used > 0
+        ? l10n.orderFieldsArchiveTitle(field.name)
+        : l10n.orderFieldsDeleteTitle(field.name),
     message: used > 0
-        ? "It stays on ${used == 1 ? 'the 1 order' : 'the $used orders'} that use it, "
-            "but won't be asked for on new ones."
-        : 'No order uses it, so it is removed for good.',
-    confirmText: used > 0 ? 'Archive' : 'Delete',
+        ? l10n.orderFieldsArchiveMessage(used)
+        : l10n.orderFieldsDeleteMessage,
+    confirmText: used > 0 ? l10n.commonArchive : l10n.commonDelete,
     isDestructive: true,
   );
   if (confirmed) bloc.add(RemoveOrderFieldEvent(field.id!));
@@ -263,7 +283,9 @@ class _OrderFieldSheet extends StatefulWidget {
       {OrderField? field}) {
     return showAppSheet(
       context: context,
-      title: field == null ? 'New order field' : 'Edit ${field.name}',
+      title: field == null
+          ? context.l10n.orderFieldsNewField
+          : context.l10n.orderFieldsEditNamed(field.name),
       builder: (_) => _OrderFieldSheet(field: field, bloc: bloc),
     );
   }
@@ -320,6 +342,7 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final field = widget.field;
     return Form(
       key: _formKey,
@@ -330,13 +353,14 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
             controller: _name,
             autofocus: field == null,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-                labelText: 'Name', hintText: 'e.g. Address'),
-            validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+            decoration: InputDecoration(
+                labelText: l10n.commonName, hintText: l10n.orderFieldsNameHint),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? l10n.orderFieldsNameRequired
+                : null,
           ),
           const SizedBox(height: 4),
-          const SectionLabel('Type'),
+          SectionLabel(l10n.orderFieldsTypeLabel),
           const SizedBox(height: 8),
           IgnorePointer(
             ignoring: _typeLocked,
@@ -347,7 +371,8 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
                 selected: _type,
                 onSelected: (t) => setState(() => _type = t),
                 options: [
-                  for (final t in OrderFieldType.values) ChipOption(t, t.label)
+                  for (final t in OrderFieldType.values)
+                    ChipOption(t, t.localized(l10n))
                 ],
               ),
             ),
@@ -356,8 +381,8 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
             const SizedBox(height: 6),
             Text(
               _typeLocked
-                  ? "Type can't change once orders use it."
-                  : 'Numbers drop leading zeros. Use Text for phone numbers.',
+                  ? l10n.orderFieldsTypeLocked
+                  : l10n.orderFieldsNumberNote,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ],
@@ -365,15 +390,15 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
             const SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Multi-line'),
-              subtitle: const Text('For longer text like an address'),
+              title: Text(l10n.orderFieldsMultiline),
+              subtitle: Text(l10n.orderFieldsMultilineHint),
               value: _multiline,
               onChanged: (v) => setState(() => _multiline = v),
             ),
           ],
           if (_type == OrderFieldType.choice) ...[
             const SizedBox(height: 4),
-            const SectionLabel('Choices'),
+            SectionLabel(l10n.orderFieldsChoices),
             const SizedBox(height: 8),
             for (var i = 0; i < _options.length; i++)
               Padding(
@@ -384,16 +409,16 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
                       child: TextFormField(
                         controller: _options[i],
                         textCapitalization: TextCapitalization.sentences,
-                        decoration:
-                            InputDecoration(hintText: 'Choice ${i + 1}'),
+                        decoration: InputDecoration(
+                            hintText: l10n.orderFieldsChoiceHint(i + 1)),
                         validator: (_) => i == 0 &&
                                 _options.every((o) => o.text.trim().isEmpty)
-                            ? 'Add at least one choice'
+                            ? l10n.orderFieldsChoiceRequired
                             : null,
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Remove choice',
+                      tooltip: l10n.orderFieldsRemoveChoice,
                       onPressed:
                           _options.length > 1 ? () => _removeOption(i) : null,
                       icon: const Icon(Icons.remove_circle_outline_rounded,
@@ -407,12 +432,12 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
               child: TextButton.icon(
                 onPressed: _addOption,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add choice'),
+                label: Text(l10n.orderFieldsAddChoice),
               ),
             ),
             if (field?.isUsed ?? false)
               Text(
-                'Orders keep the choice they were saved with, even if you rename or remove it here.',
+                l10n.orderFieldsChoicesKept,
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
           ],
@@ -423,12 +448,14 @@ class _OrderFieldSheetState extends State<_OrderFieldSheet> {
                 TextButton(
                   onPressed: _remove,
                   style: TextButton.styleFrom(foregroundColor: c.alert),
-                  child: Text(field.isUsed ? 'Archive' : 'Delete'),
+                  child: Text(
+                      field.isUsed ? l10n.commonArchive : l10n.commonDelete),
                 ),
               const Spacer(),
               FilledButton(
                 onPressed: _save,
-                child: Text(field == null ? 'Add field' : 'Save'),
+                child: Text(
+                    field == null ? l10n.orderFieldsAddField : l10n.commonSave),
               ),
             ],
           ),

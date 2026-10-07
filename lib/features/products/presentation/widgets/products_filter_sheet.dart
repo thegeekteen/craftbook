@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../product_list_filter.dart';
@@ -12,8 +13,8 @@ Future<ProductListFilter?> showProductsFilterSheet(
 }) {
   return showAppSheet<ProductListFilter>(
     context: context,
-    title: 'Filter products',
-    subtitle: 'Works together with search.',
+    title: context.l10n.productsFilterTitle,
+    subtitle: context.l10n.productsFilterSubtitle,
     builder: (_) => ProductsFilterForm(current: current, view: view),
   );
 }
@@ -38,12 +39,13 @@ class _ProductsFilterFormState extends State<ProductsFilterForm> {
   @override
   Widget build(BuildContext context) {
     final view = widget.view;
+    final l10n = context.l10n;
     final label = Theme.of(context).textTheme.bodyMedium;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Type', style: label),
+        Text(l10n.productsFilterType, style: label),
         const SizedBox(height: 8),
         ChoiceChipRow<ProductTypeFilter>.single(
           wrap: true,
@@ -52,12 +54,12 @@ class _ProductsFilterFormState extends State<ProductsFilterForm> {
               setState(() => _filter = _filter.copyWith(type: t)),
           options: [
             for (final t in ProductTypeFilter.values)
-              ChipOption(t, t.label,
+              ChipOption(t, t.label(l10n),
                   count: view.count(_filter.copyWith(type: t))),
           ],
         ),
         const SizedBox(height: 16),
-        Text('Stock', style: label),
+        Text(l10n.productsFilterStock, style: label),
         const SizedBox(height: 8),
         ChoiceChipRow<ProductStockFilter>.single(
           wrap: true,
@@ -68,7 +70,7 @@ class _ProductsFilterFormState extends State<ProductsFilterForm> {
             for (final s in ProductStockFilter.values)
               if ((s != ProductStockFilter.short || view.hasShort) &&
                   (s != ProductStockFilter.archived || view.hasArchived))
-                ChipOption(s, s.label,
+                ChipOption(s, s.label(l10n),
                     count: view.count(_filter.copyWith(stock: s))),
           ],
         ),
@@ -77,12 +79,12 @@ class _ProductsFilterFormState extends State<ProductsFilterForm> {
           children: [
             TextButton(
               onPressed: () => setState(() => _filter = ProductListFilter.none),
-              child: const Text('Clear all'),
+              child: Text(l10n.productsFilterClearAll),
             ),
             const Spacer(),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_filter),
-              child: const Text('Show'),
+              child: Text(l10n.productsFilterShow),
             ),
           ],
         ),

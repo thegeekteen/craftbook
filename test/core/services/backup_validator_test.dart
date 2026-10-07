@@ -6,6 +6,9 @@ import 'package:craftbook/core/services/backup_failure.dart';
 import 'package:craftbook/core/services/backup_service.dart';
 import 'package:craftbook/core/services/backup_validator.dart';
 import 'package:craftbook/database/app_database.dart';
+import 'dart:ui' show Locale;
+
+import 'package:craftbook/l10n/gen/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
@@ -234,23 +237,51 @@ void main() {
   });
 
   group('describe', () {
+    final en = lookupAppLocalizations(const Locale('en'));
+    final fil = lookupAppLocalizations(const Locale('fil'));
+
     test('lists what the backup holds', () {
       expect(
-        BackupService.describe(const BackupSummary(
-            schemaVersion: AppDatabase.currentSchemaVersion,
-            orders: 1,
-            materials: 2,
-            products: 0)),
+        BackupService.describe(
+            const BackupSummary(
+                schemaVersion: AppDatabase.currentSchemaVersion,
+                orders: 1,
+                materials: 2,
+                products: 0),
+            en),
         '1 order, 2 materials and 0 products.',
       );
     });
 
     test('says when an older backup was upgraded', () {
       expect(
-        BackupService.describe(const BackupSummary(
-            schemaVersion: 1, orders: 4, materials: 1, products: 3)),
+        BackupService.describe(
+            const BackupSummary(
+                schemaVersion: 1, orders: 4, materials: 1, products: 3),
+            en),
         '4 orders, 1 material and 3 products. It was made with an older Craftbook and has been upgraded.',
       );
+    });
+
+    test('speaks Filipino when asked', () {
+      expect(
+        BackupService.describe(
+            const BackupSummary(
+                schemaVersion: AppDatabase.currentSchemaVersion,
+                orders: 1,
+                materials: 2,
+                products: 0),
+            fil),
+        '1 order, 2 materyal at 0 produkto.',
+      );
+    });
+
+    test('every problem has a message in both languages', () {
+      for (final problem in BackupProblem.values) {
+        expect(problem.localized(en), problem.message);
+        expect(problem.localized(fil), isNotEmpty);
+        expect(problem.localized(fil), isNot(problem.message));
+      }
     });
   });
 }

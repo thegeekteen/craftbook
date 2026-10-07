@@ -13,6 +13,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/section_label.dart';
@@ -94,8 +95,9 @@ class _TodayViewState extends State<_TodayView> {
         _report(await getIt<SetNotePinned>()(note.id!, !note.isPinned));
       case NoteAction.delete:
         if (!await NoteActions.confirmDelete(context, note) || !mounted) return;
+        final deleted = context.l10n.todayNoteDeleted(note.displayTitle);
         _report(await getIt<DeleteNote>()(note.id!),
-            message: '${note.displayTitle} deleted',
+            message: deleted,
             undo: () async => _report(await getIt<RestoreNote>()(note)));
     }
   }
@@ -116,6 +118,7 @@ class _TodayViewState extends State<_TodayView> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final now = DateTime.now();
+    final locale = Localizations.localeOf(context).toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -125,15 +128,15 @@ class _TodayViewState extends State<_TodayView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              DateFormat('EEEE').format(now).toUpperCase(),
+              DateFormat('EEEE', locale).format(now).toUpperCase(),
               style: AppTextStyles.monoLabel.copyWith(color: c.muted),
             ),
-            Text(DateFormat('MMMM d').format(now)),
+            Text(DateFormat('MMMM d', locale).format(now)),
           ],
         ),
         actions: [
           IconButton(
-            tooltip: 'Calendar',
+            tooltip: context.l10n.todayCalendar,
             icon: const Icon(Icons.calendar_month_rounded),
             onPressed: () => _open(RouteNames.calendarWeek),
           ),
@@ -160,7 +163,7 @@ class _TodayViewState extends State<_TodayView> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(RouteNames.newOrder),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New order'),
+        label: Text(context.l10n.ordersNewOrder),
       ),
     );
   }
@@ -193,17 +196,19 @@ class _TodayViewState extends State<_TodayView> {
         padding: AppSpacing.page.copyWith(bottom: AppSpacing.fabClearance),
         children: [
           SummaryBoard(
-            label: 'To pack today',
+            label: context.l10n.todayToPackToday,
             value: '${d.toPackCount}',
             stats: [
-              BoardStat(label: 'New today', value: '${d.placedToday.length}'),
               BoardStat(
-                label: 'Overdue',
+                  label: context.l10n.todayNewToday,
+                  value: '${d.placedToday.length}'),
+              BoardStat(
+                label: context.l10n.ordersOverdue,
                 value: '${d.overdueCount}',
                 labelColor: d.overdueCount > 0 ? c.alert : null,
               ),
               BoardStat(
-                label: 'Week profit',
+                label: context.l10n.todayWeekProfit,
                 value: CurrencyFormatter.formatCompact(d.weekProfit),
               ),
             ],
@@ -213,17 +218,18 @@ class _TodayViewState extends State<_TodayView> {
             const SizedBox(height: 12),
             InlineBanner(
               icon: Icons.warning_amber_rounded,
-              title: '${alerts.lowStockCount} low:',
+              title: context.l10n.todayLowStock(alerts.lowStockCount),
               message: '$names$more',
-              actionLabel: 'Buy list',
+              actionLabel: context.l10n.todayBuyList,
               onTap: () => _open(RouteNames.buyList),
             ),
           ],
           if (pinnedNotes.isNotEmpty) ...[
             const SizedBox(height: 8),
             SectionLabel(
-              'Pinned notes · ${pinnedNotes.length}',
-              trailing: SectionAction(label: 'All notes', onTap: _openNotes),
+              context.l10n.todayPinnedNotes(pinnedNotes.length),
+              trailing: SectionAction(
+                  label: context.l10n.todayAllNotes, onTap: _openNotes),
             ),
             const SizedBox(height: 8),
             for (final note in pinnedNotes.take(_pinnedNotesShown))
@@ -244,13 +250,13 @@ class _TodayViewState extends State<_TodayView> {
           ),
           if (due.isNotEmpty) ...[
             const SizedBox(height: 8),
-            SectionLabel('Ships today · ${due.length}'),
+            SectionLabel(context.l10n.todayShipsToday(due.length)),
             const SizedBox(height: 8),
             ..._cards(due),
           ],
           if (placed.isNotEmpty) ...[
             const SizedBox(height: 8),
-            SectionLabel('New today · ${placed.length}'),
+            SectionLabel(context.l10n.todayNewTodaySection(placed.length)),
             const SizedBox(height: 8),
             ..._cards(placed),
           ],
@@ -258,11 +264,11 @@ class _TodayViewState extends State<_TodayView> {
             EmptyState(
               icon: Icons.local_florist_outlined,
               title: d.due.isEmpty && d.placedToday.isEmpty
-                  ? 'All clear for today'
-                  : 'Nothing matches this filter',
+                  ? context.l10n.todayAllClear
+                  : context.l10n.todayNoFilterMatch,
               message: d.due.isEmpty && d.placedToday.isEmpty
-                  ? 'Orders shipping today and new orders show up here.'
-                  : 'Pick another status or tap All.',
+                  ? context.l10n.todayAllClearMessage
+                  : context.l10n.todayPickAnotherStatus,
             ),
         ],
       ),

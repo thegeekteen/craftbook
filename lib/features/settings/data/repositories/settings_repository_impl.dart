@@ -6,6 +6,7 @@ import '../../../../core/error/result.dart';
 import '../../../../core/theme/palettes.dart';
 import '../../../../core/utils/currency_setting.dart';
 import '../../../../database/app_database.dart';
+import '../../domain/entities/app_language.dart';
 import '../../domain/entities/order_amount_shown.dart';
 import '../../domain/entities/tax_settings.dart';
 import '../../domain/repositories/settings_repository.dart';
@@ -14,6 +15,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   static const themeModeKey = 'theme_mode';
   static const paletteKey = 'palette';
   static const orderAmountKey = 'order_amount';
+  static const languageKey = 'language';
   static const currencyCodeKey = 'currency_code';
   static const currencySymbolKey = 'currency_symbol';
   static const currencyDecimalsKey = 'currency_decimals';
@@ -52,6 +54,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Future<Result<void>> setOrderAmountShown(OrderAmountShown shown) =>
       _write(orderAmountKey, shown.name);
+
+  @override
+  Future<AppLanguage> getLanguage() async =>
+      AppLanguage.fromName(await _read(languageKey));
+
+  @override
+  Future<Result<void>> setLanguage(AppLanguage language) =>
+      _write(languageKey, language.name);
 
   @override
   Future<CurrencySetting> getCurrency() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
@@ -48,7 +49,7 @@ class _UnitsView extends StatelessWidget {
         context.showSnackBar(s.message!, isError: s.isError);
       },
       builder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Units of measure')),
+        appBar: AppBar(title: Text(context.l10n.unitsTitle)),
         body: switch (state) {
           UnitsError(:final message) => Center(
               child: ErrorState(
@@ -59,9 +60,9 @@ class _UnitsView extends StatelessWidget {
           UnitsLoaded(units: final u) when u.isEmpty => Center(
               child: EmptyState(
                 icon: Icons.square_foot_outlined,
-                title: 'No units yet',
-                message: 'Add what you count things in, like pc, sheet or kg.',
-                actionLabel: 'Add unit',
+                title: context.l10n.unitsEmptyTitle,
+                message: context.l10n.unitsEmptyMessage,
+                actionLabel: context.l10n.unitsAddButton,
                 onAction: () => _edit(context, bloc),
               ),
             ),
@@ -71,7 +72,7 @@ class _UnitsView extends StatelessWidget {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _edit(context, bloc),
           icon: const Icon(Icons.add_rounded),
-          label: const Text('Unit'),
+          label: Text(context.l10n.unitsFab),
         ),
       ),
     );
@@ -82,9 +83,12 @@ Future<void> _edit(BuildContext context, UnitsBloc bloc,
     {UnitOfMeasure? unit}) async {
   final label = await showUnitSheet(
     context,
-    title: unit == null ? 'New unit' : 'Edit ${unit.label}',
+    title: unit == null
+        ? context.l10n.unitsNew
+        : context.l10n.unitsEditTitle(unit.label),
     initial: unit?.label,
-    actionLabel: unit == null ? 'Add unit' : 'Save',
+    actionLabel:
+        unit == null ? context.l10n.unitsAddButton : context.l10n.commonSave,
   );
   if (label == null) return;
   bloc.add(SaveUnitEvent(id: unit?.id, label: label));
@@ -98,25 +102,26 @@ Future<void> _unitActions(
   UnitsBloc bloc,
   UnitOfMeasure unit,
 ) async {
+  final l10n = context.l10n;
   final action = await showActionSheet<_UnitAction>(
     context,
     title: unit.label,
-    subtitle: unit.isDefault ? 'New items start on this' : null,
+    subtitle: unit.isDefault ? l10n.unitsDefaultNote : null,
     actions: [
-      const SheetAction(
+      SheetAction(
           value: _UnitAction.edit,
           icon: Icons.edit_outlined,
-          label: 'Edit unit'),
+          label: l10n.unitsActionEdit),
       if (!unit.isDefault)
-        const SheetAction(
+        SheetAction(
           value: _UnitAction.makeDefault,
           icon: Icons.push_pin_outlined,
-          label: 'Use for new items',
+          label: l10n.unitsActionUseForNew,
         ),
-      const SheetAction(
+      SheetAction(
         value: _UnitAction.delete,
         icon: Icons.delete_outline_rounded,
-        label: 'Delete',
+        label: l10n.commonDelete,
         destructive: true,
       ),
     ],
@@ -130,10 +135,9 @@ Future<void> _unitActions(
     case _UnitAction.delete:
       final confirmed = await ConfirmDialog.show(
         context,
-        title: 'Delete ${unit.label}?',
-        message: 'Materials and products counted in it keep their numbers, '
-            'so move them to another unit first.',
-        confirmText: 'Delete',
+        title: l10n.unitsDeleteTitle(unit.label),
+        message: l10n.unitsDeleteMessage,
+        confirmText: l10n.commonDelete,
         isDestructive: true,
       );
       if (confirmed) bloc.add(DeleteUnitEvent(unit.id!));
@@ -191,7 +195,8 @@ class _UnitList extends StatelessWidget {
                         ),
                       ),
                       if (unit.isDefault)
-                        const AppTag('Default', type: AppTagType.ok),
+                        AppTag(context.l10n.unitsDefaultTag,
+                            type: AppTagType.ok),
                       ReorderableDragStartListener(
                         index: i,
                         child: Padding(
@@ -200,7 +205,7 @@ class _UnitList extends StatelessWidget {
                             Icons.drag_indicator_rounded,
                             size: 20,
                             color: c.muted,
-                            semanticLabel: 'Drag to reorder',
+                            semanticLabel: context.l10n.unitsDragToReorder,
                           ),
                         ),
                       ),
@@ -216,9 +221,7 @@ class _UnitList extends StatelessWidget {
               const EdgeInsets.fromLTRB(20, 8, 20, AppSpacing.fabClearance),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Everything you count is written with one of these: stock, '
-              'what a product uses, what an order reserves. Long-press one to '
-              'rename it, make it the default for new items, or delete it.',
+              context.l10n.unitsFooter,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ),

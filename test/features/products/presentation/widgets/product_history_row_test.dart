@@ -7,10 +7,10 @@ import 'package:craftbook/features/products/presentation/widgets/product_history
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+import '../../../../support/localized_app.dart';
+
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 StockHistoryEntry _stock(ProductStockMovementType type, double qty,
         {String? reference}) =>

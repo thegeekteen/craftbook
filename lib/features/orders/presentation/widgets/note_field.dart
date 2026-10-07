@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/note_codec.dart';
 import '../pages/note_editor_page.dart';
 import '../../../../core/widgets/note/note_view.dart';
@@ -56,7 +57,7 @@ class NoteField extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Note (optional)',
+                      context.l10n.ordersNoteOptional,
                       style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                     ),
                   ),
@@ -76,7 +77,7 @@ class NoteField extends StatelessWidget {
                     // swallow taps (or tick to-dos) on the way.
                     ? IgnorePointer(child: NoteView(raw: note!))
                     : Text(
-                        'Gift wrap, colour requests, packing steps…',
+                        context.l10n.ordersNotePlaceholder,
                         style:
                             AppTextStyles.bodyMedium.copyWith(color: c.muted),
                       ),

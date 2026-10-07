@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
+import '../utils/l10n_extension.dart';
 
 /// A product's photo as a rounded square. Without a photo it shows the
 /// product's initial, so rows line up whether or not a photo is set.
@@ -46,7 +47,7 @@ class ProductPhoto extends StatelessWidget {
 
     return Semantics(
       image: true,
-      label: photo != null ? 'Photo of $name' : null,
+      label: photo != null ? context.l10n.productPhotoOf(name) : null,
       child: GestureDetector(
         onTap: photo != null ? onTap : null,
         child: Container(
@@ -115,7 +116,7 @@ Future<void> showPhotoViewer(
             child: Row(
               children: [
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: context.l10n.commonClose,
                   color: dialogContext.colors.boardInk,
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.of(dialogContext).pop(),

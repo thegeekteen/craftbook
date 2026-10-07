@@ -4,11 +4,13 @@ import 'package:craftbook/features/social_links/presentation/widgets/social_link
 import 'package:craftbook/features/social_links/presentation/widgets/social_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
 
-Widget host(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(
+Widget host(Widget child, {Locale locale = const Locale('en')}) => localizedApp(
+      Scaffold(
           body: Center(child: SizedBox(width: 180, height: 140, child: child))),
+      locale: locale,
+      theme: AppTheme.lightTheme,
     );
 
 void main() {
@@ -45,6 +47,12 @@ void main() {
       )));
       await tester.longPress(find.text('Shopee'));
       expect((taps, longPresses), (0, 1));
+    });
+
+    testWidgets('labels the tile in Filipino', (tester) async {
+      await tester.pumpWidget(host(SocialLinkTile(link: link, onTap: () {}),
+          locale: const Locale('fil')));
+      expect(find.bySemanticsLabel('Buksan ang Shopee'), findsOneWidget);
     });
 
     testWidgets('shows the name and the tidy address', (tester) async {

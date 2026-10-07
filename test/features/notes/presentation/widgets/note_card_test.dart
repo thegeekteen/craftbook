@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/note_bodies.dart';
+import '../../../../support/localized_app.dart';
 import '../../../../support/note_harness.dart';
 
 void main() {
@@ -66,5 +67,25 @@ void main() {
     await pump(tester, NoteCard(note: note, compact: true));
     final preview = tester.widget<Text>(find.textContaining('long long'));
     expect(preview.maxLines, 1);
+  });
+
+  testWidgets('reads in Filipino', (tester) async {
+    await tester.pumpWidget(localizedApp(
+      Scaffold(
+        body: Column(children: [
+          const NoteCard(note: Note(id: 1)),
+          NoteCard(
+            note: Note(
+              id: 2,
+              title: 'Packing',
+              body: noteBody(['[x] Ribbon', '[ ] Card']),
+            ),
+          ),
+        ]),
+      ),
+      locale: const Locale('fil'),
+    ));
+    expect(find.text('Walang pamagat'), findsOneWidget);
+    expect(find.text('1/2 TAPOS NA'), findsOneWidget);
   });
 }

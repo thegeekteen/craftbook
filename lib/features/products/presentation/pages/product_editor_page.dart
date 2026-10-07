@@ -2,6 +2,8 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
@@ -66,8 +68,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   /// "Cost per pc" — the resell cost field and the profit card both mean one
   /// of this product's own units.
-  String get _costLabel =>
-      _unitLabel.isEmpty ? 'Cost per item' : 'Cost per $_unitLabel';
+  String get _costLabel => _unitLabel.isEmpty
+      ? context.l10n.productsCostPerItem
+      : context.l10n.productsCostPerUnit(_unitLabel);
 
   /// Only write the photo when it changed; it is the largest column.
   bool _photoDirty = false;
@@ -75,9 +78,20 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   bool _saving = false;
   String? _error;
 
+  /// The product id no longer exists; shown as a translated message.
+  bool _missing = false;
+
   /// Why the Handmade/Resell switch is locked, or null when it's free.
   /// Flipping the type would orphan the BOM, stock or order history.
-  String? _typeLockReason;
+  _TypeLock? _typeLock;
+
+  /// The user-facing reason for [_typeLock].
+  String? _typeLockReason(AppLocalizations l10n) => switch (_typeLock) {
+        _TypeLock.inOrders => l10n.productsLockOrders,
+        _TypeLock.hasStock => l10n.productsLockStock,
+        _TypeLock.hasMaterials => l10n.productsLockBom,
+        null => null,
+      };
 
   bool get _isNew => widget.productId == null;
 
@@ -141,7 +155,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         case Error(:final failure):
           _error = failure.message;
         case Success(:final value) when value == null:
-          _error = 'Product not found';
+          _error = null;
+          _missing = true;
         case Success(:final value):
           final p = value!;
           _product = p;
@@ -167,12 +182,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               ],
             Error() => [],
           };
-          _typeLockReason = switch (inOrders) {
-            Success(value: true) => 'Used in orders, so its type is fixed.',
+          _typeLock = switch (inOrders) {
+            Success(value: true) => _TypeLock.inOrders,
             _ when p.quantityOnHand > 0 || p.quantityPromised > 0 =>
-              'It has stock on hand or reserved, so its type is fixed.',
-            _ when !p.isStandalone && _bom.isNotEmpty =>
-              'Remove its materials first to switch it to Resell.',
+              _TypeLock.hasStock,
+            _ when !p.isStandalone && _bom.isNotEmpty => _TypeLock.hasMaterials,
             _ => null,
           };
       }
@@ -194,10 +208,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     var query = '';
     final picked = await showAppSheet<Material>(
       context: context,
-      title: 'Add material',
+      title: context.l10n.productsAddMaterialTitle,
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
           final c = sheetContext.colors;
+          final l10n = sheetContext.l10n;
           final visible = options
               .where((m) => m.name.toLowerCase().contains(query))
               .toList();
@@ -205,11 +220,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             return EmptyState(
               icon: Icons.inventory_2_outlined,
               title: _materials.isEmpty
-                  ? 'No materials yet'
-                  : 'All materials added',
-              message: _materials.isEmpty
-                  ? 'Add materials under Stock first.'
-                  : null,
+                  ? l10n.productsNoMaterialsTitle
+                  : l10n.productsAllMaterialsAdded,
+              message:
+                  _materials.isEmpty ? l10n.productsAddMaterialsFirst : null,
             );
           }
           return Column(
@@ -217,7 +231,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             children: [
               if (options.length > 6) ...[
                 AppSearchField(
-                  hint: 'Search materials',
+                  hint: l10n.productsSearchMaterials,
                   onChanged: (v) =>
                       setSheet(() => query = v.trim().toLowerCase()),
                 ),
@@ -269,7 +283,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
       for (final b in _bom) (materialName: b.materialName, makes: b.makes),
     ]);
     if (badBom != null) {
-      context.showSnackBar(badBom.message, isError: true);
+      final bad = _bom.firstWhere((b) => b.makes <= 0);
+      context.showSnackBar(
+          context.l10n.productsMakesAboveZero(bad.materialName),
+          isError: true);
       return;
     }
     setState(() => _saving = true);
@@ -342,7 +359,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         setState(() => _saving = false);
         context.showSnackBar(failure.message, isError: true);
       case Success():
-        context.showSnackBar(_isNew ? '$name added' : 'Changes saved');
+        context.showSnackBar(_isNew
+            ? context.l10n.productsAddedSnack(name)
+            : context.l10n.productsChangesSaved);
         context.pop(true);
     }
   }
@@ -355,10 +374,13 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           appBar: AppBar(leading: back),
           body: const Center(child: CircularProgressIndicator()));
     }
-    if (_error != null) {
+    final l10n = context.l10n;
+    if (_error != null || _missing) {
       return Scaffold(
           appBar: AppBar(leading: back),
-          body: Center(child: ErrorState(message: _error!, onRetry: _load)));
+          body: Center(
+              child: ErrorState(
+                  message: _error ?? l10n.productsNotFound, onRetry: _load)));
     }
     final c = context.colors;
     final money = [
@@ -370,7 +392,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     return Scaffold(
       appBar: AppBar(
         leading: back,
-        title: Text(_isNew ? 'New product' : 'Edit product'),
+        title:
+            Text(_isNew ? l10n.productsNewProduct : l10n.productsEditProduct),
       ),
       body: Form(
         key: _formKey,
@@ -393,9 +416,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               controller: _name,
               autofocus: _isNew,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+              decoration: InputDecoration(labelText: l10n.commonName),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.productsEnterName
+                  : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -403,7 +427,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
               decoration:
-                  const InputDecoration(labelText: 'Description (optional)'),
+                  InputDecoration(labelText: l10n.productsDescriptionOptional),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -412,15 +436,15 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: money,
               decoration: InputDecoration(
-                  labelText: 'Sell price',
+                  labelText: l10n.productsStatSellPrice,
                   prefixText: '${CurrencyFormatter.symbol} '),
               validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
-                  ? 'Enter a price above 0'
+                  ? l10n.productsPriceAboveZero
                   : null,
             ),
             const SizedBox(height: 12),
             UnitPickerField(
-              label: 'Sold and counted in',
+              label: l10n.productsSoldCountedIn,
               unit: _unit,
               onChanged: (u) => setState(() => _unit = u),
             ),
@@ -429,18 +453,18 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               width: double.infinity,
               child: SegmentedButton<bool>(
                 showSelectedIcon: false,
-                segments: const [
+                segments: [
                   ButtonSegment(
                       value: false,
-                      label: Text('Handmade'),
-                      icon: Icon(Icons.content_cut_rounded, size: 18)),
+                      label: Text(l10n.productsTypeHandmade),
+                      icon: const Icon(Icons.content_cut_rounded, size: 18)),
                   ButtonSegment(
                       value: true,
-                      label: Text('Resell'),
-                      icon: Icon(Icons.inventory_2_outlined, size: 18)),
+                      label: Text(l10n.productsTypeResell),
+                      icon: const Icon(Icons.inventory_2_outlined, size: 18)),
                 ],
                 selected: {_isStandalone},
-                onSelectionChanged: _typeLockReason != null
+                onSelectionChanged: _typeLock != null
                     ? null
                     : (s) => setState(() => _isStandalone = s.first),
               ),
@@ -448,10 +472,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
               child: Text(
-                _typeLockReason ??
+                _typeLockReason(l10n) ??
                     (_isStandalone
-                        ? 'Bought ready-made. Tracks its own stock.'
-                        : 'Made from materials. Stock comes from what you can build.'),
+                        ? l10n.productsTypeHintResell
+                        : l10n.productsTypeHintHandmade),
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
             ),
@@ -473,8 +497,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           child: FilledButton(
             onPressed: _saving ? null : _save,
             child: Text(_saving
-                ? 'Saving…'
-                : (_isNew ? 'Add product' : 'Save changes')),
+                ? l10n.productsSaving
+                : (_isNew
+                    ? l10n.productsAddProduct
+                    : l10n.productsSaveChanges)),
           ),
         ),
       ]),
@@ -483,12 +509,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   List<Widget> _buildHandmade(List<TextInputFormatter> counts) {
     final c = context.colors;
+    final l10n = context.l10n;
     return [
       SectionLabel(
-        _unitLabel.isEmpty ? 'Materials per item' : 'Materials per $_unitLabel',
+        _unitLabel.isEmpty
+            ? l10n.productsMaterialsPerItemLabel
+            : l10n.productsMaterialsPerUnitLabel(_unitLabel),
         padding: const EdgeInsets.fromLTRB(2, 16, 0, 0),
         trailing: SectionAction(
-            label: 'Add', icon: Icons.add_rounded, onTap: _addMaterial),
+            label: l10n.commonAdd,
+            icon: Icons.add_rounded,
+            onTap: _addMaterial),
       ),
       const SizedBox(height: 8),
       if (_bom.isEmpty)
@@ -500,7 +531,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Add what this is made from so the app can work out its cost and reserve stock.',
+                  l10n.productsAddMaterialsHint,
                   style: AppTextStyles.bodySmall
                       .copyWith(color: c.muted, fontSize: 13),
                 ),
@@ -517,7 +548,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 subtitle: Text.rich(TextSpan(children: [
                   TextSpan(
                       text: b.materialUnit.isEmpty
-                          ? '${CurrencyFormatter.format(b.unitCost)} each · '
+                          ? '${l10n.productsCostEach(CurrencyFormatter.format(b.unitCost))} · '
                           : '${CurrencyFormatter.format(b.unitCost)}'
                               '/${b.materialUnit} · '),
                   TextSpan(
@@ -531,7 +562,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     _labelledStepper(
-                      'Uses',
+                      l10n.productsUses,
                       StepperInput(
                         value: b.quantity,
                         min: 0,
@@ -547,7 +578,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                     ),
                     const SizedBox(height: 6),
                     _labelledStepper(
-                      'Makes',
+                      l10n.productsMakes,
                       StepperInput(
                         value: b.makes,
                         min: 0,
@@ -563,9 +594,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
           child: Text(
-            'Uses is how much of the material goes in, Makes is how many of '
-            'this product that makes (1 sheet makes 9 cards). '
-            'Set Uses to 0 to remove a material.',
+            l10n.productsBomHelp,
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         ),
@@ -590,17 +619,17 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
 
   /// One alert level for both types; only what it counts differs.
   Widget _alertField(List<TextInputFormatter> counts) {
+    final l10n = context.l10n;
     return TextFormField(
       controller: _alertLevel,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: counts,
       decoration: InputDecoration(
         labelText: _isStandalone
-            ? 'Reorder at (optional)'
-            : 'Warn when I can make (optional)',
-        helperText: _isStandalone
-            ? 'Warn when stock drops to this.'
-            : 'Warn when materials only cover this many.',
+            ? l10n.productsReorderAtOptional
+            : l10n.productsWarnWhenCanMake,
+        helperText:
+            _isStandalone ? l10n.productsReorderHelp : l10n.productsWarnHelp,
       ),
     );
   }
@@ -608,8 +637,10 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
   List<Widget> _buildResell(
       List<TextInputFormatter> money, List<TextInputFormatter> counts) {
     final p = _product;
+    final l10n = context.l10n;
     return [
-      const SectionLabel('Stock', padding: EdgeInsets.fromLTRB(2, 16, 2, 0)),
+      SectionLabel(l10n.productsStockSection,
+          padding: const EdgeInsets.fromLTRB(2, 16, 2, 0)),
       const SizedBox(height: 8),
       if (!_isNew && p != null) ...[
         TextFormField(
@@ -619,7 +650,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           decoration: InputDecoration(
             labelText: _costLabel,
             prefixText: '${CurrencyFormatter.symbol} ',
-            helperText: 'Receiving stock recalculates this as an average.',
+            helperText: l10n.productsCostRecalc,
           ),
         ),
         const SizedBox(height: 12),
@@ -645,7 +676,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: counts,
-                decoration: const InputDecoration(labelText: 'On hand now'),
+                decoration: InputDecoration(labelText: l10n.productsOnHandNow),
               ),
             ),
           ],
@@ -656,6 +687,9 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     ];
   }
 }
+
+/// Why the Handmade/Resell switch is locked.
+enum _TypeLock { inOrders, hasStock, hasMaterials }
 
 class _EditableBomItem {
   final int materialId;

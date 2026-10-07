@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Material;
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
@@ -22,15 +23,17 @@ class MaterialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final m = material;
     // An archived material isn't restocked, so it never reads as low.
     final low = m.isLowStock && !m.isArchived;
     final short = m.quantityFree < 0 ? -m.quantityFree : 0;
     final summary = [
-      '${QuantityFormatter.format(m.quantityFree < 0 ? 0 : m.quantityFree)} free',
+      l10n.stockCardFree(
+          QuantityFormatter.format(m.quantityFree < 0 ? 0 : m.quantityFree)),
       if (m.quantityPromised > 0)
-        '${QuantityFormatter.format(m.quantityPromised)} promised',
-      'reorder at ${QuantityFormatter.format(m.alertLevel)}',
+        l10n.stockCardPromised(QuantityFormatter.format(m.quantityPromised)),
+      l10n.stockCardReorderAt(QuantityFormatter.format(m.alertLevel)),
       // The unit rides on the cost, so the whole line reads in one unit.
       '${CurrencyFormatter.format(m.unitCost)}'
           '${m.unit.isEmpty ? '' : '/${m.unit}'}',
@@ -57,7 +60,7 @@ class MaterialCard extends StatelessWidget {
                       style: AppTextStyles.bodyLarge
                           .copyWith(color: low ? c.alert : c.ink),
                     ),
-                    if (m.isArchived) const AppTag('Archived'),
+                    if (m.isArchived) AppTag(l10n.stockArchivedTag),
                     if (low) const AppTag.low(),
                   ],
                 ),
@@ -85,7 +88,8 @@ class MaterialCard extends StatelessWidget {
               TextSpan(text: summary),
               if (short > 0)
                 TextSpan(
-                  text: ' · ${QuantityFormatter.withUnit(short, m.unit)} short',
+                  text:
+                      ' · ${l10n.stockCardShort(QuantityFormatter.withUnit(short, m.unit))}',
                   style: TextStyle(color: c.alert, fontWeight: FontWeight.w600),
                 ),
             ]),

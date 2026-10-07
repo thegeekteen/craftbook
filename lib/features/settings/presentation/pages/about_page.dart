@@ -4,6 +4,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// Renders the bundled README so the in-app help is the repo's own docs.
 class AboutPage extends StatefulWidget {
@@ -31,7 +32,7 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     final c = context.colors;
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text(context.l10n.aboutTitle)),
       body: FutureBuilder<String>(
         future: _readme,
         builder: (context, snapshot) {
@@ -40,7 +41,7 @@ class _AboutPageState extends State<AboutPage> {
               child: Padding(
                 padding: AppSpacing.page,
                 child: Text(
-                  "Couldn't load the guide. Please try again.",
+                  context.l10n.aboutLoadFailed,
                   style: AppTextStyles.bodyMedium.copyWith(color: c.muted),
                   textAlign: TextAlign.center,
                 ),

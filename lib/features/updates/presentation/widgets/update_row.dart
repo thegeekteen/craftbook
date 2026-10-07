@@ -10,6 +10,7 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../domain/entities/app_update.dart';
 import '../bloc/update_cubit.dart';
 import '../bloc/update_state.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// "Check for updates" on the More page. Needs an [UpdateCubit] above it.
 class UpdateRow extends StatelessWidget {
@@ -18,6 +19,7 @@ class UpdateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return BlocConsumer<UpdateCubit, UpdateState>(
       listenWhen: (prev, next) =>
           prev.status == UpdateStatus.checking &&
@@ -29,33 +31,38 @@ class UpdateRow extends StatelessWidget {
         final (String title, String subtitle, VoidCallback? onTap) =
             switch (state.status) {
           UpdateStatus.idle => (
-              'Check for updates',
-              'Get the newest version of Craftbook',
+              l10n.updatesCheck,
+              l10n.updatesCheckSubtitle,
               cubit.check,
             ),
-          UpdateStatus.checking => ('Check for updates', 'Checking…', null),
+          UpdateStatus.checking => (
+              l10n.updatesCheck,
+              l10n.updatesChecking,
+              null
+            ),
           UpdateStatus.upToDate => (
-              'Check for updates',
-              "You're on the newest version",
+              l10n.updatesCheck,
+              l10n.updatesUpToDate,
               cubit.check,
             ),
           UpdateStatus.available => (
-              'Update to ${update!.version}',
-              'Tap to download and install',
+              l10n.updatesUpdateTo(update!.version),
+              l10n.updatesTapToInstall,
               () => _offer(context, update),
             ),
           UpdateStatus.downloading => (
-              'Update to ${update!.version}',
+              l10n.updatesUpdateTo(update!.version),
               state.progress == null
-                  ? 'Downloading…'
-                  : 'Downloading… ${(state.progress! * 100).round()}%',
+                  ? l10n.updatesDownloading
+                  : l10n.updatesDownloadingPercent(
+                      (state.progress! * 100).round()),
               null,
             ),
           UpdateStatus.failed => (
               update == null
-                  ? 'Check for updates'
-                  : 'Update to ${update.version}',
-              state.error ?? 'Something went wrong. Tap to try again.',
+                  ? l10n.updatesCheck
+                  : l10n.updatesUpdateTo(update.version),
+              state.error ?? l10n.updatesFailedFallback,
               update == null ? cubit.check : cubit.install,
             ),
         };
@@ -100,13 +107,14 @@ class UpdateRow extends StatelessWidget {
   Future<void> _offer(BuildContext context, AppUpdate update) async {
     final cubit = context.read<UpdateCubit>();
     final c = context.colors;
+    final l10n = context.l10n;
     final notes = update.notes.trim();
     final go = await ConfirmDialog.show(
       context,
-      title: 'Update to ${update.version}',
-      message: 'Your orders, stock and notes stay as they are.',
-      confirmText: 'Update',
-      cancelText: 'Later',
+      title: l10n.updatesUpdateTo(update.version),
+      message: l10n.updatesDialogMessage,
+      confirmText: l10n.updatesConfirm,
+      cancelText: l10n.updatesLater,
       content: notes.isEmpty
           ? null
           : ConstrainedBox(

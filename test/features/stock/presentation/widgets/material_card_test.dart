@@ -6,9 +6,13 @@ import 'package:craftbook/features/stock/presentation/widgets/material_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
+import '../../../../support/localized_app.dart';
+
+Widget _wrap(Widget child, {Locale locale = const Locale('en')}) =>
+    localizedApp(
+      Scaffold(body: child),
       theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
+      locale: locale,
     );
 
 entity.Material _material({
@@ -34,6 +38,13 @@ entity.Material _material({
 
 void main() {
   group('MaterialCard', () {
+    testWidgets('reads in Filipino', (tester) async {
+      await tester.pumpWidget(_wrap(MaterialCard(material: _material()),
+          locale: const Locale('fil')));
+      expect(find.textContaining('libre'), findsOneWidget);
+      expect(find.textContaining('free'), findsNothing);
+    });
+
     testWidgets('long press fires onLongPress, not onTap', (tester) async {
       var taps = 0;
       var longPresses = 0;

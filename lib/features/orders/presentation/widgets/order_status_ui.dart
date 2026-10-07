@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/status_pill.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_money.dart';
+import 'order_l10n.dart';
 
 extension OrderStatusLabel on OrderStatus {
-  /// User-facing name. Pending orders are called "To pack" everywhere.
+  /// English name, for code with no [BuildContext]. Screens use
+  /// [OrderStatusL10n.localized] so the name follows the app's language.
   String get label => switch (this) {
         OrderStatus.pending => 'To pack',
         OrderStatus.packed => 'Packed',
@@ -60,7 +63,8 @@ class OrderStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (overdue && status == OrderStatus.pending) {
-      return const StatusPill(text: 'Overdue', type: StatusPillType.alert);
+      return StatusPill(
+          text: context.l10n.ordersOverdue, type: StatusPillType.alert);
     }
     final type = switch (status) {
       OrderStatus.pending => StatusPillType.warning,
@@ -68,7 +72,7 @@ class OrderStatusPill extends StatelessWidget {
       OrderStatus.shipped => StatusPillType.coin,
       OrderStatus.cancelled => StatusPillType.neutral,
     };
-    return StatusPill(text: status.label, type: type);
+    return StatusPill(text: status.localized(context.l10n), type: type);
   }
 }
 

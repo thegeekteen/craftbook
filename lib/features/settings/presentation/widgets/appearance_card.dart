@@ -8,10 +8,12 @@ import '../../../../core/theme/palettes.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../domain/entities/order_amount_shown.dart';
 import '../../domain/entities/theme_settings.dart';
 import '../bloc/order_amount_cubit.dart';
 import '../bloc/theme_cubit.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// Colour scheme swatches, dark mode (Auto follows the phone, On/Off
 /// force it) and which amount order cards show.
@@ -28,7 +30,7 @@ class AppearanceCard extends StatelessWidget {
         builder: (context, look) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Colour scheme',
+            Text(context.l10n.appearanceColourScheme,
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -47,21 +49,21 @@ class AppearanceCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            Text('Dark mode',
+            Text(context.l10n.appearanceDarkMode,
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
             const SizedBox(height: 2),
             Text(
               look.mode == ThemeMode.system
-                  ? 'Auto follows your phone'
-                  : 'Overrides your phone setting',
+                  ? context.l10n.appearanceDarkAutoHint
+                  : context.l10n.appearanceDarkOverrideHint,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
             const SizedBox(height: AppSpacing.md),
             ChoiceChipRow<ThemeMode>.single(
-              options: const [
-                ChipOption(ThemeMode.system, 'Auto'),
-                ChipOption(ThemeMode.dark, 'On'),
-                ChipOption(ThemeMode.light, 'Off'),
+              options: [
+                ChipOption(ThemeMode.system, context.l10n.appearanceAuto),
+                ChipOption(ThemeMode.dark, context.l10n.commonOn),
+                ChipOption(ThemeMode.light, context.l10n.commonOff),
               ],
               selected: look.mode,
               onSelected: cubit.setMode,
@@ -87,20 +89,21 @@ class _OrderAmountSetting extends StatelessWidget {
       builder: (context, shown) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Order cards show',
+          Text(context.l10n.appearanceOrderCardsShow,
               style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
           const SizedBox(height: 2),
           Text(
             shown == OrderAmountShown.total
-                ? 'What the customer pays'
-                : 'What you keep after costs',
+                ? context.l10n.appearanceShowsTotalHint
+                : context.l10n.appearanceShowsProfitHint,
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
           const SizedBox(height: AppSpacing.md),
           ChoiceChipRow<OrderAmountShown>.single(
-            options: const [
-              ChipOption(OrderAmountShown.total, 'Total'),
-              ChipOption(OrderAmountShown.profit, 'Profit'),
+            options: [
+              ChipOption(OrderAmountShown.total, context.l10n.appearanceTotal),
+              ChipOption(
+                  OrderAmountShown.profit, context.l10n.appearanceProfit),
             ],
             selected: shown,
             onSelected: cubit.set,
@@ -109,6 +112,16 @@ class _OrderAmountSetting extends StatelessWidget {
       ),
     );
   }
+}
+
+extension AppPaletteName on AppPalette {
+  /// The palette's name in the app's language.
+  String localized(AppLocalizations l10n) => switch (this) {
+        AppPalette.forest => l10n.appearancePaletteForest,
+        AppPalette.berry => l10n.appearancePaletteBerry,
+        AppPalette.ocean => l10n.appearancePaletteOcean,
+        AppPalette.sunset => l10n.appearancePaletteSunset,
+      };
 }
 
 /// A miniature of the app in [palette], in the brightness currently shown,
@@ -133,7 +146,8 @@ class PaletteSwatch extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: '${palette.label} colour scheme',
+      label: context.l10n
+          .appearanceColourSchemeLabel(palette.localized(context.l10n)),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -191,7 +205,7 @@ class PaletteSwatch extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              palette.label,
+              palette.localized(context.l10n),
               style: AppTextStyles.bodySmall.copyWith(
                 color: selected ? c.ink : c.muted,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

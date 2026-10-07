@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../support/sample_photo.dart';
+import '../../../../support/localized_app.dart';
 
 class MockPhotoPicker extends Mock implements PhotoPicker {}
 
@@ -27,16 +28,15 @@ void main() {
   tearDown(getIt.reset);
 
   Future<void> pump(WidgetTester tester, {Uint8List? photo}) =>
-      tester.pumpWidget(MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          body: ProductPhotoField(
-            photo: photo,
-            name: 'Tulip',
-            onChanged: changes.add,
+      tester.pumpWidget(localizedApp(
+          Scaffold(
+            body: ProductPhotoField(
+              photo: photo,
+              name: 'Tulip',
+              onChanged: changes.add,
+            ),
           ),
-        ),
-      ));
+          theme: AppTheme.lightTheme));
 
   testWidgets('without a photo offers camera and gallery only', (tester) async {
     await pump(tester);
@@ -78,7 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Take photo'));
     await tester.pumpAndSettle();
-    expect(find.text("Couldn't open the camera"), findsOneWidget);
+    expect(find.text('Couldn’t open the camera'), findsOneWidget);
     expect(changes, isEmpty);
   });
 

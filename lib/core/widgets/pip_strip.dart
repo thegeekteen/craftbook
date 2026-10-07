@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/colors.dart';
 import '../utils/quantity_formatter.dart';
+import '../utils/l10n_extension.dart';
 
 enum PipSize { small, large }
 
@@ -135,9 +136,13 @@ class PipStrip extends StatelessWidget {
     return Semantics(
       // The real amounts, not the scaled pip counts: the strip is a shape and
       // this is what it stands for.
-      label: '${QuantityFormatter.withUnit(free, unit)} free, '
-          '${QuantityFormatter.withUnit(promised, unit)} promised'
-          '${alertLevel > 0 ? ', reorder at ${QuantityFormatter.withUnit(alertLevel, unit)}' : ''}',
+      label: alertLevel > 0
+          ? context.l10n.pipSummaryReorder(
+              QuantityFormatter.withUnit(free, unit),
+              QuantityFormatter.withUnit(promised, unit),
+              QuantityFormatter.withUnit(alertLevel, unit))
+          : context.l10n.pipSummary(QuantityFormatter.withUnit(free, unit),
+              QuantityFormatter.withUnit(promised, unit)),
       child: Wrap(spacing: 2, runSpacing: 3, children: children),
     );
   }
@@ -192,12 +197,12 @@ class PipLegend extends StatelessWidget {
       spacing: 12,
       runSpacing: 4,
       children: [
-        item(sw(c.go), 'free'),
-        if (showPromised) item(sw(c.alert), 'promised'),
+        item(sw(c.go), context.l10n.pipFree),
+        if (showPromised) item(sw(c.alert), context.l10n.pipPromised),
         if (showAlert)
           item(
             Container(width: 2, height: 13, color: c.ink),
-            'reorder level',
+            context.l10n.pipReorderLevel,
           ),
       ],
     );

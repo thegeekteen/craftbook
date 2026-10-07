@@ -12,16 +12,17 @@ import 'package:craftbook/features/orders/domain/entities/order_product.dart';
 import 'package:craftbook/features/orders/presentation/bloc/order_detail_state.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_card.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_mini_row.dart';
+import 'package:craftbook/features/orders/presentation/widgets/order_l10n.dart';
 import 'package:craftbook/features/orders/presentation/widgets/order_status_ui.dart';
+import 'package:craftbook/l10n/gen/app_localizations.dart';
 import 'package:craftbook/features/orders/presentation/widgets/pack_confirm_sheet.dart';
 import 'package:craftbook/features/settings/domain/entities/order_amount_shown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 DateTime _day(int offset) {
   final now = DateTime.now();
@@ -66,6 +67,18 @@ OrderListEntry _entry(Order order, {String? channel = 'Shopee'}) =>
         OrderLine(productName: 'Gift box', quantity: 1),
       ],
     );
+
+/// [OrderCard.whenLabel] needs a context for the app's language.
+Future<(String, bool)> _when(WidgetTester tester, Order order) async {
+  late (String, bool) result;
+  await tester.pumpWidget(_wrap(Builder(builder: (context) {
+    result = OrderCard.whenLabel(context, order);
+    return const SizedBox();
+  })));
+  return result;
+}
+
+String _friendly(DateTime d) => app_date.DateUtils.friendly(d);
 
 void main() {
   group('OrderStatusLabel', () {
@@ -265,55 +278,101 @@ void main() {
   });
 
   group('OrderCard.whenLabel', () {
-    test('overdue pending orders are urgent', () {
+    testWidgets('overdue pending orders are urgent', (tester) async {
       expect(
-          OrderCard.whenLabel(_order(shipInDays: -1)), ('Due yesterday', true));
-      expect(OrderCard.whenLabel(_order(shipInDays: -4)),
+          await _when(tester, _order(shipInDays: -1)), ('Due yesterday', true));
+      expect(await _when(tester, _order(shipInDays: -4)),
           ('Due 4 days ago', true));
     });
 
-    test('ships today is urgent only while pending', () {
-      expect(OrderCard.whenLabel(_order(shipInDays: 0)), ('Ships today', true));
+    testWidgets('ships today is urgent only while pending', (tester) async {
+      expect(await _when(tester, _order(shipInDays: 0)), ('Ships today', true));
       expect(
-        OrderCard.whenLabel(_order(shipInDays: 0, status: OrderStatus.packed)),
+        await _when(tester, _order(shipInDays: 0, status: OrderStatus.packed)),
         ('Ships today', false),
       );
     });
 
-    test('packed orders past ship-by are not shown as due', () {
-      final (text, urgent) = OrderCard.whenLabel(
-          _order(shipInDays: -2, status: OrderStatus.packed));
-      expect(text, 'Ships ${app_date.DateUtils.friendly(_day(-2))}');
+    testWidgets('packed orders past ship-by are not shown as due',
+        (tester) async {
+      final (text, urgent) = await _when(
+          tester, _order(shipInDays: -2, status: OrderStatus.packed));
+      expect(text, 'Ships ${_friendly(_day(-2))}');
       expect(urgent, isFalse);
     });
 
-    test('future orders show the friendly date', () {
-      expect(OrderCard.whenLabel(_order(shipInDays: 1)),
+    testWidgets('future orders show the friendly date', (tester) async {
+      expect(await _when(tester, _order(shipInDays: 1)),
           ('Ships Tomorrow', false));
       expect(
-        OrderCard.whenLabel(_order(shipInDays: 5)),
-        ('Ships ${app_date.DateUtils.friendly(_day(5))}', false),
+        await _when(tester, _order(shipInDays: 5)),
+        ('Ships ${_friendly(_day(5))}', false),
       );
     });
 
-    test('shipped orders show when they shipped', () {
+    testWidgets('shipped orders show when they shipped', (tester) async {
       expect(
-        OrderCard.whenLabel(
-            _order(status: OrderStatus.shipped, shippedAt: _day(-1))),
+        await _when(
+            tester, _order(status: OrderStatus.shipped, shippedAt: _day(-1))),
         ('Shipped Yesterday', false),
       );
       expect(
-        OrderCard.whenLabel(_order(status: OrderStatus.shipped)),
+        await _when(tester, _order(status: OrderStatus.shipped)),
         ('Shipped', false),
       );
     });
 
-    test('cancelled orders', () {
+    testWidgets('cancelled orders', (tester) async {
       expect(
-        OrderCard.whenLabel(
-            _order(status: OrderStatus.cancelled, shipInDays: -5)),
+        await _when(
+            tester, _order(status: OrderStatus.cancelled, shipInDays: -5)),
         ('Cancelled', false),
       );
+    });
+  });
+
+  group('Filipino', () {
+    testWidgets('status pills and the card read in Filipino', (tester) async {
+      await tester.pumpWidget(localizedApp(
+        Scaffold(
+          body: Column(children: [
+            OrderStatusPill(status: OrderStatus.packed),
+            OrderCard(entry: _entry(_order(shipInDays: -3))),
+          ]),
+        ),
+        locale: const Locale('fil'),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('NAKA-PACK NA'), findsOneWidget);
+      expect(find.text('LAGPAS NA'), findsOneWidget);
+      expect(find.text('Due 3 araw na ang nakalipas'), findsOneWidget);
+    });
+
+    testWidgets('every notice has wording in both languages', (tester) async {
+      for (final locale in const [Locale('en'), Locale('fil')]) {
+        late AppLocalizations l10n;
+        await tester.pumpWidget(localizedApp(
+          Builder(builder: (context) {
+            l10n = AppLocalizations.of(context);
+            return const SizedBox();
+          }),
+          locale: locale,
+        ));
+        await tester.pumpAndSettle();
+        for (final n in OrderNotice.values) {
+          expect(n.localized(l10n), isNotEmpty);
+          if (locale.languageCode == 'en') expect(n.localized(l10n), n.message);
+        }
+      }
+    });
+
+    testWidgets('the mini row counts items in Filipino', (tester) async {
+      await tester.pumpWidget(localizedApp(
+        Scaffold(body: OrderMiniRow(entry: _entry(_order()))),
+        locale: const Locale('fil'),
+      ));
+      expect(find.textContaining('3 item'), findsOneWidget);
+      expect(find.textContaining('items'), findsNothing);
     });
   });
 

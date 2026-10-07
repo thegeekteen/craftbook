@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../theme/colors.dart';
+import '../../utils/l10n_extension.dart';
 import '../../theme/dimens.dart';
 import '../app_sheet.dart';
 import 'note_styles.dart';
@@ -46,30 +47,31 @@ class NoteToolbar extends StatelessWidget {
             listenable: controller,
             builder: (context, _) {
               final attrs = controller.getSelectionStyle().attributes;
+              final l = context.l10n;
               return ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm, vertical: 6),
                 children: [
-                  _button(Icons.undo_rounded, 'Undo',
+                  _button(Icons.undo_rounded, l.commonUndo,
                       onPressed: controller.hasUndo ? controller.undo : null),
-                  _button(Icons.redo_rounded, 'Redo',
+                  _button(Icons.redo_rounded, l.noteToolRedo,
                       onPressed: controller.hasRedo ? controller.redo : null),
                   const _Divider(),
-                  _toggle(
-                      attrs, Attribute.bold, Icons.format_bold_rounded, 'Bold'),
+                  _toggle(attrs, Attribute.bold, Icons.format_bold_rounded,
+                      l.noteToolBold),
                   _toggle(attrs, Attribute.italic, Icons.format_italic_rounded,
-                      'Italic'),
+                      l.noteToolItalic),
                   _toggle(attrs, Attribute.underline,
-                      Icons.format_underlined_rounded, 'Underline'),
+                      Icons.format_underlined_rounded, l.noteToolUnderline),
                   _toggle(attrs, Attribute.strikeThrough,
-                      Icons.strikethrough_s_rounded, 'Strikethrough'),
+                      Icons.strikethrough_s_rounded, l.noteToolStrikethrough),
                   if (full) ...[
                     _toggle(attrs, Attribute.inlineCode, Icons.code_rounded,
-                        'Inline code'),
+                        l.noteToolInlineCode),
                     _button(
                       Icons.format_color_fill_rounded,
-                      'Highlight',
+                      l.noteToolHighlight,
                       selected: attrs.containsKey(Attribute.background.key),
                       onPressed: () => _pickHighlight(context),
                       refocus: false,
@@ -78,36 +80,45 @@ class NoteToolbar extends StatelessWidget {
                   const _Divider(),
                   if (full)
                     _toggle(attrs, Attribute.h1, Icons.format_size_rounded,
-                        'Large heading'),
-                  _toggle(attrs, Attribute.h2, Icons.title_rounded, 'Heading'),
+                        l.noteToolLargeHeading),
+                  _toggle(attrs, Attribute.h2, Icons.title_rounded,
+                      l.noteToolHeading),
                   if (full)
                     _toggle(attrs, Attribute.h3, Icons.text_fields_rounded,
-                        'Small heading'),
+                        l.noteToolSmallHeading),
                   if (full) const _Divider(),
                   _toggle(attrs, Attribute.unchecked, Icons.checklist_rounded,
-                      'Checklist'),
+                      l.noteToolChecklist),
                   _toggle(attrs, Attribute.ul,
-                      Icons.format_list_bulleted_rounded, 'Bullet list'),
-                  _toggle(attrs, Attribute.ol,
-                      Icons.format_list_numbered_rounded, 'Numbered list'),
+                      Icons.format_list_bulleted_rounded, l.noteToolBulletList),
+                  _toggle(
+                      attrs,
+                      Attribute.ol,
+                      Icons.format_list_numbered_rounded,
+                      l.noteToolNumberedList),
                   if (full) ...[
                     _toggle(attrs, Attribute.blockQuote,
-                        Icons.format_quote_rounded, 'Quote'),
+                        Icons.format_quote_rounded, l.noteToolQuote),
                     _toggle(attrs, Attribute.codeBlock,
-                        Icons.data_object_rounded, 'Code block'),
+                        Icons.data_object_rounded, l.noteToolCodeBlock),
                     const _Divider(),
-                    _button(Icons.format_indent_decrease_rounded, 'Outdent',
+                    _button(
+                        Icons.format_indent_decrease_rounded, l.noteToolOutdent,
                         onPressed: () => controller.indentSelection(false)),
-                    _button(Icons.format_indent_increase_rounded, 'Indent',
+                    _button(
+                        Icons.format_indent_increase_rounded, l.noteToolIndent,
                         onPressed: () => controller.indentSelection(true)),
-                    _toggle(attrs, Attribute.centerAlignment,
-                        Icons.format_align_center_rounded, 'Align centre'),
+                    _toggle(
+                        attrs,
+                        Attribute.centerAlignment,
+                        Icons.format_align_center_rounded,
+                        l.noteToolAlignCentre),
                     _toggle(attrs, Attribute.rightAlignment,
-                        Icons.format_align_right_rounded, 'Align right'),
+                        Icons.format_align_right_rounded, l.noteToolAlignRight),
                     const _Divider(),
                     _button(
                       Icons.link_rounded,
-                      'Link',
+                      l.noteToolLink,
                       selected: attrs.containsKey(Attribute.link.key),
                       onPressed: () => _editLink(
                           context, attrs[Attribute.link.key]?.value as String?),
@@ -115,7 +126,7 @@ class NoteToolbar extends StatelessWidget {
                     ),
                   ],
                   const _Divider(),
-                  _button(Icons.format_clear_rounded, 'Clear formatting',
+                  _button(Icons.format_clear_rounded, l.noteToolClearFormatting,
                       onPressed: _clearFormat),
                 ],
               );
@@ -159,7 +170,7 @@ class NoteToolbar extends StatelessWidget {
     final selection = controller.selection;
     final picked = await showAppSheet<({String? name})>(
       context: context,
-      title: 'Highlight',
+      title: context.l10n.noteToolHighlight,
       builder: (_) => const _HighlightPicker(),
     );
     if (picked == null) return;
@@ -173,7 +184,9 @@ class NoteToolbar extends StatelessWidget {
     final selection = controller.selection;
     final url = await showAppSheet<String>(
       context: context,
-      title: current == null ? 'Add link' : 'Edit link',
+      title: current == null
+          ? context.l10n.noteLinkAdd
+          : context.l10n.noteLinkEdit,
       builder: (_) => _LinkForm(initial: current),
     );
     if (url == null) return;
@@ -233,14 +246,14 @@ class _HighlightPicker extends StatelessWidget {
       runSpacing: AppSpacing.md,
       children: [
         _Swatch(
-          label: 'None',
+          label: context.l10n.commonNone,
           color: c.surface,
           icon: Icons.format_color_reset_rounded,
           onTap: () => Navigator.of(context).pop((name: null)),
         ),
         for (final MapEntry(:key, :value) in palette.entries)
           _Swatch(
-            label: NoteStyles.highlightLabels[key] ?? key,
+            label: NoteStyles.highlightLabel(context.l10n, key),
             color: value,
             onTap: () => Navigator.of(context).pop((name: key)),
           ),
@@ -319,7 +332,7 @@ class _LinkFormState extends State<_LinkForm> {
           autofocus: true,
           keyboardType: TextInputType.url,
           autocorrect: false,
-          decoration: const InputDecoration(labelText: 'Address'),
+          decoration: InputDecoration(labelText: context.l10n.noteLinkAddress),
           onSubmitted: (_) => _apply(),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -328,10 +341,11 @@ class _LinkFormState extends State<_LinkForm> {
             if (widget.initial != null)
               TextButton(
                 onPressed: () => Navigator.of(context).pop(''),
-                child: const Text('Remove link'),
+                child: Text(context.l10n.noteLinkRemove),
               ),
             const Spacer(),
-            FilledButton(onPressed: _apply, child: const Text('Apply')),
+            FilledButton(
+                onPressed: _apply, child: Text(context.l10n.commonApply)),
           ],
         ),
       ],

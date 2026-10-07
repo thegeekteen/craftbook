@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -26,6 +27,7 @@ class ProductProfitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final parts =
         MoneyParts(sales: sellPrice, materials: cost, fees: 0, shipping: 0);
     final positive = parts.profit >= 0;
@@ -39,7 +41,9 @@ class ProductProfitCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                    'PROFIT PER ${unit.isEmpty ? 'ITEM' : unit.toUpperCase()}',
+                    unit.isEmpty
+                        ? l10n.productsProfitPerItem
+                        : l10n.productsProfitPerUnit(unit.toUpperCase()),
                     style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
               ),
               Text(
@@ -53,8 +57,11 @@ class ProductProfitCard extends StatelessWidget {
           MoneyBreakdownBar(parts: parts),
           const SizedBox(height: 8),
           Text(
-            '${CurrencyFormatter.format(cost)} ${isStandalone ? 'cost' : 'materials'} · '
-            '${(parts.margin * 100).round()}% margin · before channel fees',
+            l10n.productsProfitNote(
+              CurrencyFormatter.format(cost),
+              isStandalone ? 'resell' : 'handmade',
+              '${(parts.margin * 100).round()}',
+            ),
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         ],

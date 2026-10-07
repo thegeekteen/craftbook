@@ -1,4 +1,8 @@
+import 'dart:ui' show Locale;
+
 import 'package:intl/intl.dart';
+
+import '../../l10n/gen/app_localizations.dart';
 import '../constants/app_constants.dart';
 
 /// Date utility helpers
@@ -66,6 +70,18 @@ class DateUtils {
     return isSameDay(date, DateTime.now());
   }
 
+  /// The strings for the language the app is showing. Read from
+  /// [Intl.defaultLocale] (set from the app's locale) so callers without a
+  /// BuildContext, such as list rows, still speak the right language.
+  static AppLocalizations _l10n() {
+    final code = Intl.getCurrentLocale().split(RegExp('[_-]')).first;
+    try {
+      return lookupAppLocalizations(Locale(code));
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('en'));
+    }
+  }
+
   /// Get relative date string (e.g., "Today", "Tomorrow", "Yesterday")
   static String getRelativeDate(DateTime date) {
     final now = DateTime.now();
@@ -73,11 +89,12 @@ class DateUtils {
     final target = startOfDay(date);
     final diff = target.difference(today).inDays;
 
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Tomorrow';
-    if (diff == -1) return 'Yesterday';
-    if (diff > 1 && diff <= 7) return 'In $diff days';
-    if (diff < -1 && diff >= -7) return '$diff days ago';
+    final l10n = _l10n();
+    if (diff == 0) return l10n.dateToday;
+    if (diff == 1) return l10n.dateTomorrow;
+    if (diff == -1) return l10n.dateYesterday;
+    if (diff > 1 && diff <= 7) return l10n.dateInDays(diff);
+    if (diff < -1 && diff >= -7) return l10n.dateDaysAgo(-diff);
     return formatDate(date);
   }
 
@@ -86,11 +103,12 @@ class DateUtils {
   static String friendly(DateTime date, {DateTime? now}) {
     final today = startOfDay(now ?? DateTime.now());
     final diff = startOfDay(date).difference(today).inDays;
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Tomorrow';
-    if (diff == -1) return 'Yesterday';
-    if (date.year != today.year) return DateFormat('MMM d, y').format(date);
-    return DateFormat('EEE, MMM d').format(date);
+    final l10n = _l10n();
+    if (diff == 0) return l10n.dateToday;
+    if (diff == 1) return l10n.dateTomorrow;
+    if (diff == -1) return l10n.dateYesterday;
+    if (date.year != today.year) return DateFormat.yMMMd().format(date);
+    return DateFormat.MMMEd().format(date);
   }
 
   /// Days from today to [date] (negative when in the past).

@@ -7,7 +7,9 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../domain/entities/tax_settings.dart';
+import '../../../../core/utils/l10n_extension.dart';
 
 /// Edits the shop's tax. Returns the new settings, or null when dismissed.
 Future<TaxSettings?> showTaxSheet(
@@ -16,9 +18,8 @@ Future<TaxSettings?> showTaxSheet(
 }) {
   return showAppSheet<TaxSettings>(
     context: context,
-    title: 'Tax',
-    subtitle: 'Works out the tax on each order so you know what to set '
-        'aside.',
+    title: context.l10n.taxSheetTitle,
+    subtitle: context.l10n.taxSheetSubtitle,
     builder: (_) => TaxForm(current: current),
   );
 }
@@ -67,7 +68,7 @@ class _TaxFormState extends State<TaxForm> {
   }
 
   /// One worked example, so "included" and "on top" mean something.
-  String get _example {
+  String _example(AppLocalizations l10n) {
     final r = _rateValue / 100;
     final name = _label.text.trim().isEmpty
         ? TaxSettings.defaultLabel
@@ -75,14 +76,15 @@ class _TaxFormState extends State<TaxForm> {
     if (_inclusive) {
       const price = 1120.0;
       final tax = price * r / (1 + r);
-      return 'A ${CurrencyFormatter.formatShort(price)} sale includes '
-          '${CurrencyFormatter.format(tax)} $name. That comes out of your profit.';
+      return l10n.taxExampleIncluded(CurrencyFormatter.formatShort(price),
+          CurrencyFormatter.format(tax), name);
     }
     const price = 1000.0;
-    return 'A ${CurrencyFormatter.formatShort(price)} sale costs the customer '
-        '${CurrencyFormatter.format(price * (1 + r))}. The '
-        '${CurrencyFormatter.format(price * r)} $name is theirs to pay, so '
-        'it isn\'t counted as profit.';
+    return l10n.taxExampleOnTop(
+        CurrencyFormatter.formatShort(price),
+        CurrencyFormatter.format(price * (1 + r)),
+        CurrencyFormatter.format(price * r),
+        name);
   }
 
   @override
@@ -95,12 +97,10 @@ class _TaxFormState extends State<TaxForm> {
           contentPadding: EdgeInsets.zero,
           value: _enabled,
           onChanged: (v) => setState(() => _enabled = v),
-          title: Text('Use tax',
+          title: Text(context.l10n.taxUse,
               style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
           subtitle: Text(
-              _enabled
-                  ? 'Each order gets a tax switch'
-                  : 'Orders have no tax. Saved orders keep what they had',
+              _enabled ? context.l10n.taxUseOnHint : context.l10n.taxUseOffHint,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
         ),
         if (_enabled)
@@ -108,12 +108,12 @@ class _TaxFormState extends State<TaxForm> {
             contentPadding: EdgeInsets.zero,
             value: _onByDefault,
             onChanged: (v) => setState(() => _onByDefault = v),
-            title: Text('New orders start with tax',
+            title: Text(context.l10n.taxNewOrders,
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
             subtitle: Text(
                 _onByDefault
-                    ? 'Switch it off on orders that don\'t need it'
-                    : 'Switch it on when a customer needs it, like for an official receipt',
+                    ? context.l10n.taxNewOrdersOnHint
+                    : context.l10n.taxNewOrdersOffHint,
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted)),
           ),
         const SizedBox(height: 8),
@@ -123,8 +123,8 @@ class _TaxFormState extends State<TaxForm> {
               child: TextField(
                 controller: _label,
                 textCapitalization: TextCapitalization.characters,
-                decoration:
-                    const InputDecoration(labelText: 'Called', hintText: 'VAT'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.taxCalled, hintText: 'VAT'),
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -138,21 +138,21 @@ class _TaxFormState extends State<TaxForm> {
                   FilteringTextInputFormatter.allow(
                       RegExp(r'^\d{0,3}\.?\d{0,2}'))
                 ],
-                decoration:
-                    const InputDecoration(labelText: 'Rate', suffixText: '%'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.taxRate, suffixText: '%'),
                 onChanged: (_) => setState(() {}),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Text('Your prices',
+        Text(context.l10n.taxYourPrices,
             style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
         const SizedBox(height: 8),
         ChoiceChipRow<bool>.single(
-          options: const [
-            ChipOption(true, 'Already include tax'),
-            ChipOption(false, 'Tax added on top'),
+          options: [
+            ChipOption(true, context.l10n.taxIncluded),
+            ChipOption(false, context.l10n.taxOnTop),
           ],
           selected: _inclusive,
           onSelected: (v) => setState(() => _inclusive = v),
@@ -162,14 +162,15 @@ class _TaxFormState extends State<TaxForm> {
           padding: const EdgeInsets.all(12),
           decoration:
               BoxDecoration(color: c.paper, borderRadius: AppRadii.controlAll),
-          child: Text(_example,
+          child: Text(_example(context.l10n),
               style: AppTextStyles.bodySmall
                   .copyWith(color: c.muted, fontSize: 13)),
         ),
         const SizedBox(height: 16),
         Align(
           alignment: AlignmentDirectional.centerEnd,
-          child: FilledButton(onPressed: _save, child: const Text('Save')),
+          child: FilledButton(
+              onPressed: _save, child: Text(context.l10n.commonSave)),
         ),
       ],
     );

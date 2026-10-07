@@ -4,21 +4,21 @@ import 'package:craftbook/core/utils/currency_setting.dart';
 import 'package:craftbook/features/settings/presentation/widgets/currency_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
 void main() {
   Future<CurrencySetting?> open(
       WidgetTester tester, Future<void> Function() interact) async {
     CurrencySetting? picked;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light(AppPalette.forest),
-      home: Builder(
-        builder: (context) => TextButton(
-          onPressed: () async => picked =
-              await showCurrencySheet(context, current: CurrencySetting.php),
-          child: const Text('open'),
+    await tester.pumpWidget(localizedApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => picked =
+                await showCurrencySheet(context, current: CurrencySetting.php),
+            child: const Text('open'),
+          ),
         ),
-      ),
-    ));
+        theme: AppTheme.light(AppPalette.forest)));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await interact();

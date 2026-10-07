@@ -10,6 +10,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/status_filter_chips.dart';
@@ -132,15 +133,17 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   String get _title {
+    final locale = Localizations.localeOf(context).toString();
     if (_mode == CalendarMode.month) {
-      return DateFormat(_anchor.year == DateTime.now().year ? 'MMMM' : 'MMMM y')
+      return DateFormat(
+              _anchor.year == DateTime.now().year ? 'MMMM' : 'MMMM y', locale)
           .format(_anchor);
     }
     final start = app_date.DateUtils.startOfWeek(_anchor);
     final end = start.add(const Duration(days: 6));
-    final startText = DateFormat('MMM d').format(start);
-    final endText =
-        DateFormat(start.month == end.month ? 'd' : 'MMM d').format(end);
+    final startText = DateFormat('MMM d', locale).format(start);
+    final endText = DateFormat(start.month == end.month ? 'd' : 'MMM d', locale)
+        .format(end);
     return '$startText – $endText';
   }
 
@@ -182,13 +185,15 @@ class _CalendarPageState extends State<CalendarPage> {
           actions: [
             IconButton(
               tooltip: _mode == CalendarMode.week
-                  ? 'Previous week'
-                  : 'Previous month',
+                  ? context.l10n.todayPrevWeek
+                  : context.l10n.todayPrevMonth,
               icon: const Icon(Icons.chevron_left_rounded),
               onPressed: () => _shift(-1),
             ),
             IconButton(
-              tooltip: _mode == CalendarMode.week ? 'Next week' : 'Next month',
+              tooltip: _mode == CalendarMode.week
+                  ? context.l10n.todayNextWeek
+                  : context.l10n.todayNextMonth,
               icon: const Icon(Icons.chevron_right_rounded),
               onPressed: () => _shift(1),
             ),
@@ -202,11 +207,13 @@ class _CalendarPageState extends State<CalendarPage> {
                 width: double.infinity,
                 child: SegmentedButton<CalendarMode>(
                   showSelectedIcon: false,
-                  segments: const [
+                  segments: [
                     ButtonSegment(
-                        value: CalendarMode.week, label: Text('Week')),
+                        value: CalendarMode.week,
+                        label: Text(context.l10n.todayWeek)),
                     ButtonSegment(
-                        value: CalendarMode.month, label: Text('Month')),
+                        value: CalendarMode.month,
+                        label: Text(context.l10n.todayMonth)),
                   ],
                   selected: {_mode},
                   onSelectionChanged: (s) => _setMode(s.first),
@@ -264,7 +271,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       ? Padding(
                           padding: const EdgeInsets.only(top: 14),
                           child: Text(
-                            'Nothing due',
+                            context.l10n.todayNothingDue,
                             style: AppTextStyles.bodySmall
                                 .copyWith(color: c.muted),
                           ),
@@ -290,7 +297,12 @@ class _CalendarPageState extends State<CalendarPage> {
     final c = context.colors;
     final days = _monthGrid();
     final selected = _forDay(_selectedDay);
-    const dow = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final locale = Localizations.localeOf(context).toString();
+    // Narrow weekday letters, Monday first, in the app's language.
+    final dow = [
+      for (var i = 0; i < 7; i++)
+        DateFormat('EEEEE', locale).format(DateTime(2024, 1, 1 + i)),
+    ];
 
     return [
       Row(
@@ -333,15 +345,17 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       const SizedBox(height: 12),
       SectionLabel(
-        '${DateFormat('EEE, MMM d').format(_selectedDay)} · '
-        '${selected.length} ${selected.length == 1 ? 'order' : 'orders'}',
+        context.l10n.todayDayOrders(
+          DateFormat('EEE, MMM d', locale).format(_selectedDay),
+          context.l10n.ordersOrderCount(selected.length),
+        ),
       ),
       const SizedBox(height: 8),
       if (selected.isEmpty)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            'Nothing ships this day.',
+            context.l10n.todayNothingShipsDay,
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         )
@@ -376,7 +390,9 @@ class _DayBadge extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            DateFormat('EEE').format(day).toUpperCase(),
+            DateFormat('EEE', Localizations.localeOf(context).toString())
+                .format(day)
+                .toUpperCase(),
             style: AppTextStyles.monoTag
                 .copyWith(color: highlighted ? fg : c.muted),
           ),

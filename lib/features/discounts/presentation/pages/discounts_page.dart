@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
@@ -45,7 +46,7 @@ class _DiscountsView extends StatelessWidget {
         context.showSnackBar(s.message!, isError: s.isError);
       },
       builder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Discounts')),
+        appBar: AppBar(title: Text(context.l10n.discountsTitle)),
         body: switch (state) {
           DiscountPresetsError(:final message) => Center(
               child: ErrorState(
@@ -56,10 +57,9 @@ class _DiscountsView extends StatelessWidget {
           DiscountPresetsLoaded(presets: final p) when p.isEmpty => Center(
               child: EmptyState(
                 icon: Icons.local_offer_outlined,
-                title: 'No discounts yet',
-                message: 'Save the ones you give often, like 10% for regulars. '
-                    'You can still type any discount on an order.',
-                actionLabel: 'Add discount',
+                title: context.l10n.discountsEmptyTitle,
+                message: context.l10n.discountsEmptyMessage,
+                actionLabel: context.l10n.discountsAddButton,
                 onAction: () => _edit(context, bloc),
               ),
             ),
@@ -70,7 +70,7 @@ class _DiscountsView extends StatelessWidget {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _edit(context, bloc),
           icon: const Icon(Icons.add_rounded),
-          label: const Text('Discount'),
+          label: Text(context.l10n.discountsFab),
         ),
       ),
     );
@@ -81,9 +81,13 @@ Future<void> _edit(BuildContext context, DiscountPresetsBloc bloc,
     {DiscountPreset? preset}) async {
   final result = await showDiscountSheet(
     context,
-    title: preset == null ? 'New discount' : 'Edit ${preset.label}',
+    title: preset == null
+        ? context.l10n.discountsNew
+        : context.l10n.discountsEditTitle(preset.label),
     initial: preset?.toDiscount(),
-    actionLabel: preset == null ? 'Add discount' : 'Save',
+    actionLabel: preset == null
+        ? context.l10n.discountsAddButton
+        : context.l10n.commonSave,
   );
   if (result == null) return;
   bloc.add(SaveDiscountPresetEvent(
@@ -99,19 +103,20 @@ enum _PresetAction { edit, delete }
 /// The long-press menu on a preset.
 Future<void> _presetActions(BuildContext context, DiscountPresetsBloc bloc,
     DiscountPreset preset) async {
+  final l10n = context.l10n;
   final action = await showActionSheet<_PresetAction>(
     context,
     title: preset.label,
     subtitle: discountValueLabel(preset.kind, preset.value),
-    actions: const [
+    actions: [
       SheetAction(
           value: _PresetAction.edit,
           icon: Icons.edit_outlined,
-          label: 'Edit discount'),
+          label: l10n.discountsActionEdit),
       SheetAction(
           value: _PresetAction.delete,
           icon: Icons.delete_outline_rounded,
-          label: 'Delete',
+          label: l10n.commonDelete,
           destructive: true),
     ],
   );
@@ -122,9 +127,9 @@ Future<void> _presetActions(BuildContext context, DiscountPresetsBloc bloc,
     case _PresetAction.delete:
       final confirmed = await ConfirmDialog.show(
         context,
-        title: 'Delete ${preset.label}?',
-        message: 'Orders that already have it keep it.',
-        confirmText: 'Delete',
+        title: l10n.discountsDeleteTitle(preset.label),
+        message: l10n.discountsDeleteMessage,
+        confirmText: l10n.commonDelete,
         isDestructive: true,
       );
       if (confirmed) bloc.add(DeleteDiscountPresetEvent(preset.id!));
@@ -200,7 +205,7 @@ class _PresetList extends StatelessWidget {
                             Icons.drag_indicator_rounded,
                             size: 20,
                             color: c.muted,
-                            semanticLabel: 'Drag to reorder',
+                            semanticLabel: context.l10n.discountsDragToReorder,
                           ),
                         ),
                       ),
@@ -216,9 +221,7 @@ class _PresetList extends StatelessWidget {
               const EdgeInsets.fromLTRB(20, 8, 20, AppSpacing.fabClearance),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'These show as one-tap chips when you review an order. '
-              'Orders keep their own copy, so editing one here never '
-              'changes past orders.',
+              context.l10n.discountsFooter,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ),

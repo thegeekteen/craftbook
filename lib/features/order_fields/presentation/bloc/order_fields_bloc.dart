@@ -61,9 +61,8 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     await _finish(
       emit,
       result,
-      event.id == null
-          ? '${event.name.trim()} added'
-          : '${event.name.trim()} saved',
+      event.id == null ? OrderFieldOutcome.added : OrderFieldOutcome.saved,
+      event.name.trim(),
     );
   }
 
@@ -73,11 +72,11 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
   ) async {
     final name = _nameOf(event.id);
     final result = await removeOrderField(event.id);
-    final message = switch (result) {
-      Success(value: RemoveOutcome.archived) => '$name archived',
-      _ => '$name deleted',
+    final outcome = switch (result) {
+      Success(value: RemoveOutcome.archived) => OrderFieldOutcome.archived,
+      _ => OrderFieldOutcome.deleted,
     };
-    await _finish(emit, result, message);
+    await _finish(emit, result, outcome, name);
   }
 
   Future<void> _onRestore(
@@ -85,7 +84,7 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     Emitter<OrderFieldsState> emit,
   ) async {
     final result = await restoreOrderField(event.id);
-    await _finish(emit, result, '${_nameOf(event.id)} restored');
+    await _finish(emit, result, OrderFieldOutcome.restored, _nameOf(event.id));
   }
 
   Future<void> _onReorder(
@@ -101,7 +100,7 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     emit(OrderFieldsLoaded(active: active, archived: current.archived));
     final result = await reorderOrderFields([for (final f in active) f.id!]);
     if (result case Error(:final failure)) {
-      emit(current.withMessage(failure.message, ++_serial, isError: true));
+      emit(current.withError(failure.message, ++_serial));
     }
   }
 
@@ -109,13 +108,14 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
   Future<void> _finish(
     Emitter<OrderFieldsState> emit,
     Result<Object?> result,
-    String successMessage,
+    OrderFieldOutcome outcome,
+    String? subject,
   ) async {
     switch (result) {
       case Error(:final failure):
         final current = state;
         if (current is OrderFieldsLoaded) {
-          emit(current.withMessage(failure.message, ++_serial, isError: true));
+          emit(current.withError(failure.message, ++_serial));
         } else {
           emit(OrderFieldsError(failure.message));
         }
@@ -125,7 +125,7 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
           case Error(:final failure):
             emit(OrderFieldsError(failure.message));
           case Success(:final value):
-            emit(value.withMessage(successMessage, ++_serial));
+            emit(value.withOutcome(outcome, subject, ++_serial));
         }
     }
   }
@@ -147,13 +147,13 @@ class OrderFieldsBloc extends Bloc<OrderFieldsEvent, OrderFieldsState> {
     };
   }
 
-  String _nameOf(int id) {
+  /// Null when the field isn't in the list, so the page can name it itself.
+  String? _nameOf(int id) {
     final current = state;
-    if (current is! OrderFieldsLoaded) return 'Field';
+    if (current is! OrderFieldsLoaded) return null;
     return [...current.active, ...current.archived]
-            .where((f) => f.id == id)
-            .firstOrNull
-            ?.name ??
-        'Field';
+        .where((f) => f.id == id)
+        .firstOrNull
+        ?.name;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/widgets/app_search_field.dart';
@@ -57,7 +58,7 @@ class _ProductsTabState extends State<ProductsTab>
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: AppSearchField(
-            hint: 'Search products',
+            hint: context.l10n.productsSearchHint,
             controller: widget.search,
             onChanged: widget.onQueryChanged,
           ),
@@ -96,13 +97,13 @@ class _ProductsTabState extends State<ProductsTab>
           filters: [
             if (filter.type != ProductTypeFilter.any)
               (
-                filter.type.label,
+                filter.type.label(context.l10n),
                 () => widget.onFilterChanged(
                     filter.copyWith(type: ProductTypeFilter.any)),
               ),
             if (filter.stock != ProductStockFilter.any)
               (
-                filter.stock.label,
+                filter.stock.label(context.l10n),
                 () => widget.onFilterChanged(
                     filter.copyWith(stock: ProductStockFilter.any)),
               ),
@@ -144,48 +145,49 @@ class _ProductsTabState extends State<ProductsTab>
   }
 
   Widget _empty(ProductsLoaded state, ProductListFilter filter) {
+    final l10n = context.l10n;
     if (state.products.isEmpty) {
       return EmptyState(
         icon: Icons.sell_outlined,
-        title: 'No products yet',
-        message: 'Add what you sell and the materials it is made from.',
-        actionLabel: 'Add product',
+        title: l10n.productsEmptyTitle,
+        message: l10n.productsEmptyMessage,
+        actionLabel: l10n.productsAddProduct,
         onAction: () => widget.onOpen(RouteNames.newProduct),
       );
     }
     if (widget.query.trim().isNotEmpty) {
       return EmptyState(
           icon: Icons.search_off_rounded,
-          title: 'No matches',
-          message: 'Nothing matches "${widget.query.trim()}".');
+          title: l10n.productsNoMatches,
+          message: l10n.productsNoMatchesFor(widget.query.trim()));
     }
     if (filter.activeCount > 1) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.filter_list_off_rounded,
-        title: 'Nothing matches these filters',
-        message: 'Tap a filter above to remove it.',
+        title: l10n.productsNoFilterMatchTitle,
+        message: l10n.productsNoFilterMatchMessage,
       );
     }
     return switch ((filter.type, filter.stock)) {
-      (ProductTypeFilter.handmade, _) => const EmptyState(
+      (ProductTypeFilter.handmade, _) => EmptyState(
           icon: Icons.content_cut_rounded,
-          title: 'No handmade products',
-          message: 'Products made from your materials show up here.',
+          title: l10n.productsNoHandmadeTitle,
+          message: l10n.productsNoHandmadeMessage,
         ),
-      (ProductTypeFilter.resell, _) => const EmptyState(
+      (ProductTypeFilter.resell, _) => EmptyState(
           icon: Icons.inventory_2_outlined,
-          title: 'No resell products',
-          message: 'Things you buy ready-made and sell on show up here.',
+          title: l10n.productsNoResellTitle,
+          message: l10n.productsNoResellMessage,
         ),
-      (_, ProductStockFilter.any) => const EmptyState(
+      (_, ProductStockFilter.any) => EmptyState(
           icon: Icons.archive_outlined,
-          title: 'Every product is archived',
-          message: 'Filter by Archived to see them.',
+          title: l10n.productsAllArchivedTitle,
+          message: l10n.productsAllArchivedMessage,
         ),
-      _ => const EmptyState(
+      _ => EmptyState(
           icon: Icons.check_circle_outline_rounded,
-          title: 'Nothing is low',
-          message: 'Set a warning level on a product to watch it here.',
+          title: l10n.productsNothingLowTitle,
+          message: l10n.productsNothingLowMessage,
         ),
     };
   }

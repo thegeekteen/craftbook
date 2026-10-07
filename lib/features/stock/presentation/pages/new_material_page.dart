@@ -9,6 +9,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/error/result.dart';
@@ -105,7 +106,7 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
         });
       case Success(value: null):
         setState(() {
-          _loadError = 'Material not found';
+          _loadError = context.l10n.stockMaterialNotFound;
           _loading = false;
         });
       case Success(:final value?):
@@ -174,19 +175,20 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
 
   String? _positiveNumber(String? v) {
     final n = double.tryParse(v ?? '');
-    if (n == null || n <= 0) return 'Enter a number above 0';
+    if (n == null || n <= 0) return context.l10n.stockNumberAboveZero;
     return null;
   }
 
   String? _nonNegativeNumber(String? v) {
     final n = double.tryParse(v ?? '');
-    if (n == null || n < 0) return 'Enter 0 or more';
+    if (n == null || n < 0) return context.l10n.stockNumberZeroOrMore;
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     // Counts can be fractional (1.25 boards a head), so allow a dot.
     final counts = [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))];
     final money = [
@@ -196,11 +198,11 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
     return BlocListener<MaterialsBloc, MaterialsState>(
       listener: (context, state) {
         if (state is MaterialCreated) {
-          context.showSnackBar('${_name.text.trim()} added');
+          context.showSnackBar(l10n.stockAdded(_name.text.trim()));
           context.pop(true);
         }
         if (state is MaterialUpdated) {
-          context.showSnackBar('${_name.text.trim()} updated');
+          context.showSnackBar(l10n.stockUpdated(_name.text.trim()));
           context.pop(true);
         }
         if (state is MaterialsError) {
@@ -209,8 +211,9 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
         }
       },
       child: Scaffold(
-        appBar:
-            AppBar(title: Text(_isEditing ? 'Edit material' : 'New material')),
+        appBar: AppBar(
+            title:
+                Text(_isEditing ? l10n.stockActionEdit : l10n.stockNewTitle)),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _loadError != null
@@ -227,21 +230,21 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                           controller: _name,
                           autofocus: !_isEditing,
                           textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            hintText: 'e.g. Glass seed beads 2mm',
+                          decoration: InputDecoration(
+                            labelText: l10n.commonName,
+                            hintText: l10n.stockNameHint,
                           ),
                           validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Enter a name'
+                              ? l10n.stockNameRequired
                               : null,
                         ),
                         const SizedBox(height: 12),
                         UnitPickerField(
-                          label: 'Counted in',
+                          label: l10n.stockCountedIn,
                           unit: _unit,
                           onChanged: (u) => setState(() => _unit = u),
                         ),
-                        const SectionLabel('How you buy it'),
+                        SectionLabel(l10n.stockSectionBuy),
                         const SizedBox(height: 8),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,8 +258,9 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                 inputFormatters: counts,
                                 decoration: InputDecoration(
                                     labelText: _unitLabel.isEmpty
-                                        ? 'Per pack'
-                                        : '$_unitLabel per pack'),
+                                        ? l10n.stockPerPackLabel
+                                        : l10n
+                                            .stockUnitPerPackLabel(_unitLabel)),
                                 validator: _positiveNumber,
                               ),
                             ),
@@ -269,12 +273,12 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                         decimal: true),
                                 inputFormatters: money,
                                 decoration: InputDecoration(
-                                    labelText: 'Pack price',
+                                    labelText: l10n.stockPackPrice,
                                     prefixText: '${CurrencyFormatter.symbol} '),
                                 validator: (v) {
                                   final n = double.tryParse(v ?? '');
                                   return (n == null || n < 0)
-                                      ? 'Enter a price'
+                                      ? l10n.stockPriceRequired
                                       : null;
                                 },
                               ),
@@ -285,8 +289,11 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
                             child: Text(
-                              '${CurrencyFormatter.format(_unitCost!)}'
-                              '${_unitLabel.isEmpty ? '' : ' per $_unitLabel'}',
+                              _unitLabel.isEmpty
+                                  ? CurrencyFormatter.format(_unitCost!)
+                                  : l10n.stockCostPerUnit(
+                                      CurrencyFormatter.format(_unitCost!),
+                                      _unitLabel),
                               style: AppTextStyles.bodySmall.copyWith(
                                   color: c.coin, fontWeight: FontWeight.w600),
                             ),
@@ -295,10 +302,10 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                         TextFormField(
                           controller: _supplier,
                           textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                              labelText: 'Supplier (optional)'),
+                          decoration: InputDecoration(
+                              labelText: l10n.stockSupplierOptional),
                         ),
-                        const SectionLabel('Stock'),
+                        SectionLabel(l10n.stockSectionStock),
                         const SizedBox(height: 8),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,8 +320,9 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                   inputFormatters: counts,
                                   decoration: InputDecoration(
                                       labelText: _unitLabel.isEmpty
-                                          ? 'On hand now'
-                                          : '$_unitLabel on hand now'),
+                                          ? l10n.stockOnHandNow
+                                          : l10n
+                                              .stockUnitOnHandNow(_unitLabel)),
                                   validator: _nonNegativeNumber,
                                 ),
                               ),
@@ -327,8 +335,8 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
                                 inputFormatters: counts,
-                                decoration: const InputDecoration(
-                                    labelText: 'Reorder at'),
+                                decoration: InputDecoration(
+                                    labelText: l10n.stockStatReorderAt),
                                 validator: _nonNegativeNumber,
                               ),
                             ),
@@ -337,7 +345,7 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
                           child: Text(
-                            "You'll see a warning and it goes on the buy list when stock drops to the reorder level.",
+                            l10n.stockReorderHelp,
                             style: AppTextStyles.bodySmall
                                 .copyWith(color: c.muted),
                           ),
@@ -350,8 +358,10 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
             child: FilledButton(
               onPressed: _saving ? null : _save,
               child: Text(_saving
-                  ? 'Saving…'
-                  : (_isEditing ? 'Save changes' : 'Add material')),
+                  ? l10n.stockSaving
+                  : (_isEditing
+                      ? l10n.stockSaveChanges
+                      : l10n.stockAddMaterial)),
             ),
           ),
         ]),

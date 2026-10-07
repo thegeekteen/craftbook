@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
@@ -18,30 +19,31 @@ abstract final class ProductActions {
   /// The long-press menu. Returns true when something changed and the
   /// caller should reload.
   static Future<bool> open(BuildContext context, Product product) async {
+    final l10n = context.l10n;
     final action = await showActionSheet<_ProductAction>(
       context,
       title: product.name,
       actions: [
-        const SheetAction(
+        SheetAction(
             value: _ProductAction.edit,
             icon: Icons.edit_outlined,
-            label: 'Edit product'),
+            label: l10n.productsActionEdit),
         if (product.isStandalone)
-          const SheetAction(
+          SheetAction(
               value: _ProductAction.receive,
               icon: Icons.add_rounded,
-              label: 'Receive stock'),
+              label: l10n.productsActionReceive),
         SheetAction(
           value: _ProductAction.toggleArchived,
           icon: product.isArchived
               ? Icons.unarchive_outlined
               : Icons.archive_outlined,
-          label: product.isArchived ? 'Unarchive' : 'Archive',
+          label: product.isArchived ? l10n.commonUnarchive : l10n.commonArchive,
         ),
-        const SheetAction(
+        SheetAction(
             value: _ProductAction.delete,
             icon: Icons.delete_outline_rounded,
-            label: 'Delete product',
+            label: l10n.productsActionDelete,
             destructive: true),
       ],
     );
@@ -65,6 +67,7 @@ abstract final class ProductActions {
   /// Archives or unarchives. Returns true once it changed.
   static Future<bool> setArchived(
       BuildContext context, Product product, bool archived) async {
+    final l10n = context.l10n;
     final result =
         await getIt<UpdateProduct>()(id: product.id!, isArchived: archived);
     if (!context.mounted) return false;
@@ -74,8 +77,8 @@ abstract final class ProductActions {
         return false;
       case Success():
         context.showSnackBar(archived
-            ? '${product.name} archived'
-            : '${product.name} is back in your lists');
+            ? l10n.productsArchivedSnack(product.name)
+            : l10n.productsUnarchivedSnack(product.name));
         return true;
     }
   }
@@ -83,12 +86,12 @@ abstract final class ProductActions {
   /// Confirms, then deletes. Returns true once the product is gone; a
   /// blocked delete explains itself in a snackbar.
   static Future<bool> delete(BuildContext context, Product product) async {
+    final l10n = context.l10n;
     final confirmed = await ConfirmDialog.show(
       context,
-      title: 'Delete ${product.name}?',
-      message:
-          "This can't be undone. Products that appear in orders can't be deleted; archive them instead.",
-      confirmText: 'Delete',
+      title: l10n.productsDeleteTitle(product.name),
+      message: l10n.productsDeleteMessage,
+      confirmText: l10n.commonDelete,
       isDestructive: true,
     );
     if (!confirmed || !context.mounted) return false;
@@ -99,7 +102,7 @@ abstract final class ProductActions {
         context.showSnackBar(failure.message, isError: true);
         return false;
       case Success():
-        context.showSnackBar('Product deleted');
+        context.showSnackBar(l10n.productsDeletedSnack);
         return true;
     }
   }

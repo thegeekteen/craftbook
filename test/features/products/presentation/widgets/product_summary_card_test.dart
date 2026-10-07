@@ -8,11 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../support/sample_photo.dart';
+import '../../../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-    );
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: SingleChildScrollView(child: child)),
+        theme: AppTheme.lightTheme);
 
 final _now = DateTime(2026, 1, 1);
 

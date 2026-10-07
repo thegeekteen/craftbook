@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
@@ -200,7 +201,7 @@ class _InventoryViewState extends State<_InventoryView>
     final onProducts = _tab == InventoryTab.products;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory'),
+        title: Text(context.l10n.productsInventoryTitle),
         actions: [
           _filterButton(),
           BuyListButton(
@@ -214,7 +215,7 @@ class _InventoryViewState extends State<_InventoryView>
               builder: (context, state) {
                 final view = _productView(state);
                 return _CountedTab(
-                  label: 'Products',
+                  label: context.l10n.productsTabProducts,
                   count: view?.count(view.effective(_productFilter)),
                   selected: _tab == InventoryTab.products,
                 );
@@ -224,7 +225,7 @@ class _InventoryViewState extends State<_InventoryView>
               builder: (context, state) {
                 final view = _materialView(state);
                 return _CountedTab(
-                  label: 'Materials',
+                  label: context.l10n.productsTabMaterials,
                   count: view?.count(view.effective(_materialFilter)),
                   selected: _tab == InventoryTab.materials,
                 );
@@ -260,7 +261,9 @@ class _InventoryViewState extends State<_InventoryView>
         onPressed: () =>
             _open(onProducts ? RouteNames.newProduct : RouteNames.newMaterial),
         icon: const Icon(Icons.add_rounded),
-        label: Text(onProducts ? 'Product' : 'Material'),
+        label: Text(onProducts
+            ? context.l10n.productsFabProduct
+            : context.l10n.productsFabMaterial),
       ),
     );
   }

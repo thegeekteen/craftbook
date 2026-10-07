@@ -9,6 +9,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -93,6 +94,7 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final profit = _lines.fold<double>(0, (s, l) => s + l.profit);
     final sales = _lines.fold<double>(0, (s, l) => s + l.sales);
     final sold = _lines.fold<double>(0, (s, l) => s + l.quantity);
@@ -110,7 +112,10 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
             Text(_periodText.toUpperCase(),
                 style: AppTextStyles.monoLabel.copyWith(color: c.muted)),
             Text(
-              _productName ?? (_lines.isEmpty ? 'Product' : 'Product earnings'),
+              _productName ??
+                  (_lines.isEmpty
+                      ? l10n.earningsProduct
+                      : l10n.earningsProductEarnings),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -128,7 +133,7 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('PROFIT',
+                          Text(l10n.earningsProfitCaption,
                               style: AppTextStyles.monoLabel
                                   .copyWith(color: c.muted)),
                           const SizedBox(height: 4),
@@ -142,13 +147,15 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                           const SizedBox(height: 14),
                           StatRow(children: [
                             StatTile(
-                                label: 'Sold',
+                                label: l10n.earningsStatSold,
                                 value: QuantityFormatter.withUnit(sold, unit)),
                             StatTile(
-                                label: 'Sales',
+                                label: l10n.earningsStatSales,
                                 value: CurrencyFormatter.formatCompact(sales)),
                             StatTile(
-                              label: unit.isEmpty ? 'Per item' : 'Per $unit',
+                              label: unit.isEmpty
+                                  ? l10n.earningsStatPerItem
+                                  : l10n.earningsStatPerUnit(unit),
                               value: sold == 0
                                   ? '—'
                                   : CurrencyFormatter.formatShort(
@@ -160,11 +167,11 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    SectionLabel('Orders · ${_lines.length}'),
+                    SectionLabel(l10n.earningsOrdersHeader(_lines.length)),
                     const SizedBox(height: 8),
                     if (_lines.isEmpty)
                       Text(
-                        'No packed or shipped orders with this product in this period.',
+                        l10n.earningsNoProductOrders,
                         style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                       )
                     else
@@ -192,7 +199,7 @@ class _ProductEarningsPageState extends State<ProductEarningsPage> {
                       ),
                     const SizedBox(height: 10),
                     Text(
-                      'Each order\'s profit is split across its products by share of sales.',
+                      l10n.earningsProfitSplitNote,
                       style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                     ),
                   ],

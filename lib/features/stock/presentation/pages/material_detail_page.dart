@@ -10,6 +10,7 @@ import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/quantity.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -57,6 +58,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
   Future<void> _load() async {
     final result = await getIt<GetMaterialDetail>()(widget.materialId);
     if (!mounted) return;
+    final l10n = context.l10n;
     switch (result) {
       case Error(:final failure):
         setState(() {
@@ -75,9 +77,12 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               Success(:final value) => value
                   .where((b) => b.materialId == widget.materialId)
                   .map((b) => b.makes > 1
-                      ? '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)}'
-                          ' per ${QuantityFormatter.format(b.makes)}'
-                      : '${QuantityFormatter.withUnit(b.quantityRequired, b.materialUnit)} each')
+                      ? l10n.stockUsagePer(
+                          QuantityFormatter.withUnit(
+                              b.quantityRequired, b.materialUnit),
+                          QuantityFormatter.format(b.makes))
+                      : l10n.stockUsageEach(QuantityFormatter.withUnit(
+                          b.quantityRequired, b.materialUnit)))
                   .join(' + '),
               Error() => '',
             };
@@ -124,10 +129,11 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
 
   Future<void> _count(Material m) async {
     var counted = m.quantityOnHand;
+    final l10n = context.l10n;
     final save = await showAppSheet<bool>(
       context: context,
-      title: 'Count stock',
-      subtitle: 'Set the real amount on the shelf.',
+      title: l10n.stockCountTitle,
+      subtitle: l10n.stockCountSubtitle,
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheet) {
           final c = sheetContext.colors;
@@ -147,9 +153,11 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               const SizedBox(height: 10),
               Text(
                 sameQty(diff, 0)
-                    ? 'Matches the app (${QuantityFormatter.format(m.quantityOnHand)})'
-                    : '${diff > 0 ? '+' : '−'}${QuantityFormatter.format(diff.abs())}'
-                        ' from ${QuantityFormatter.format(m.quantityOnHand)} in the app',
+                    ? l10n.stockCountMatches(
+                        QuantityFormatter.format(m.quantityOnHand))
+                    : l10n.stockCountDiff(
+                        '${diff > 0 ? '+' : '−'}${QuantityFormatter.format(diff.abs())}',
+                        QuantityFormatter.format(m.quantityOnHand)),
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall.copyWith(
                   color:
@@ -162,7 +170,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 onPressed: sameQty(diff, 0)
                     ? null
                     : () => Navigator.pop(sheetContext, true),
-                child: const Text('Save count'),
+                child: Text(l10n.stockCountSave),
               ),
             ],
           );
@@ -177,7 +185,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
         context.showSnackBar(failure.message, isError: true);
       case Success():
         context.showSnackBar(
-            'Stock set to ${QuantityFormatter.withUnit(counted, m.unit)}');
+            l10n.stockCountSet(QuantityFormatter.withUnit(counted, m.unit)));
         _changed = true;
         _load();
     }
@@ -218,10 +226,12 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
         appBar: AppBar(leading: back),
         body: Center(
             child: ErrorState(
-                message: _error ?? 'Material not found', onRetry: _load)),
+                message: _error ?? context.l10n.stockMaterialNotFound,
+                onRetry: _load)),
       );
     }
     final c = context.colors;
+    final l10n = context.l10n;
     final m = _material!;
     final low = m.isLowStock && !m.isArchived;
 
@@ -238,12 +248,12 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
               if (v == 'delete') _delete(m);
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
                 child: Row(children: [
-                  Icon(Icons.edit_outlined, size: 20),
-                  SizedBox(width: 10),
-                  Text('Edit material'),
+                  const Icon(Icons.edit_outlined, size: 20),
+                  const SizedBox(width: 10),
+                  Text(l10n.stockActionEdit),
                 ]),
               ),
               PopupMenuItem(
@@ -255,7 +265,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                           : Icons.archive_outlined,
                       size: 20),
                   const SizedBox(width: 10),
-                  Text(m.isArchived ? 'Unarchive' : 'Archive'),
+                  Text(
+                      m.isArchived ? l10n.commonUnarchive : l10n.commonArchive),
                 ]),
               ),
               PopupMenuItem(
@@ -263,7 +274,8 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 child: Row(children: [
                   Icon(Icons.delete_outline_rounded, size: 20, color: c.alert),
                   const SizedBox(width: 10),
-                  Text('Delete material', style: TextStyle(color: c.alert)),
+                  Text(l10n.stockActionDelete,
+                      style: TextStyle(color: c.alert)),
                 ]),
               ),
             ],
@@ -292,12 +304,13 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                       const SizedBox(width: 8),
                       Text(
                           m.unit.isEmpty
-                              ? 'ON HAND'
-                              : '${m.unit.toUpperCase()} ON HAND',
+                              ? l10n.stockOnHandCaption
+                              : l10n
+                                  .stockUnitOnHandCaption(m.unit.toUpperCase()),
                           style:
                               AppTextStyles.monoLabel.copyWith(color: c.muted)),
                       const Spacer(),
-                      if (m.isArchived) const AppTag('Archived'),
+                      if (m.isArchived) AppTag(l10n.stockArchivedTag),
                       if (low) const AppTag.low(),
                     ],
                   ),
@@ -317,19 +330,19 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   StatRow(children: [
                     m.quantityFree < 0
                         ? StatTile(
-                            label: 'Short',
+                            label: l10n.stockStatShort,
                             value: QuantityFormatter.format(-m.quantityFree),
                             valueColor: c.alert)
                         : StatTile(
-                            label: 'Free',
+                            label: l10n.stockStatFree,
                             value: QuantityFormatter.format(m.quantityFree),
                             valueColor: c.go),
                     StatTile(
-                        label: 'Promised',
+                        label: l10n.stockStatPromised,
                         value: QuantityFormatter.format(m.quantityPromised),
                         valueColor: m.quantityPromised > 0 ? c.alert : null),
                     StatTile(
-                        label: 'Reorder at',
+                        label: l10n.stockStatReorderAt,
                         value: QuantityFormatter.format(m.alertLevel)),
                   ]),
                   const SizedBox(height: 12),
@@ -337,15 +350,15 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   const SizedBox(height: 12),
                   StatRow(children: [
                     StatTile(
-                        label: 'Unit cost',
+                        label: l10n.stockStatUnitCost,
                         value: CurrencyFormatter.format(m.unitCost),
                         compact: true),
                     StatTile(
-                        label: 'Pack',
+                        label: l10n.stockStatPack,
                         value: QuantityFormatter.withUnit(m.packSize, m.unit),
                         compact: true),
                     StatTile(
-                        label: 'Supplier',
+                        label: l10n.stockStatSupplier,
                         value:
                             m.supplier?.isNotEmpty == true ? m.supplier! : '—',
                         compact: true),
@@ -360,7 +373,7 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   child: FilledButton.icon(
                     onPressed: _receive,
                     icon: const Icon(Icons.add_rounded, size: 20),
-                    label: const Text('Receive'),
+                    label: Text(l10n.stockReceive),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -368,16 +381,16 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                   child: OutlinedButton.icon(
                     onPressed: () => _count(m),
                     icon: const Icon(Icons.fact_check_outlined, size: 18),
-                    label: const Text('Count'),
+                    label: Text(l10n.stockCount),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            SectionLabel('Used in · ${_usedIn.length}'),
+            SectionLabel(l10n.stockUsedIn(_usedIn.length)),
             const SizedBox(height: 8),
             if (_usedIn.isEmpty)
-              _quiet('Not part of any product yet.')
+              _quiet(l10n.stockUsedInEmpty)
             else
               AppCard.flush(
                 child: CardList(children: [
@@ -393,10 +406,10 @@ class _MaterialDetailPageState extends State<MaterialDetailPage> {
                 ]),
               ),
             const SizedBox(height: 8),
-            const SectionLabel('History'),
+            SectionLabel(l10n.stockHistory),
             const SizedBox(height: 8),
             if (_movements.isEmpty)
-              _quiet('No stock changes yet.')
+              _quiet(l10n.stockHistoryEmpty)
             else
               AppCard.flush(
                 child: CardList(children: [
@@ -429,6 +442,7 @@ class _MovementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final mv = movement;
     final adds = mv.type == StockMovementType.received ||
         (mv.type == StockMovementType.adjusted && mv.quantity > 0);
@@ -436,11 +450,11 @@ class _MovementRow extends StatelessWidget {
     final qty = mv.quantity.abs();
     final title = switch (mv.type) {
       StockMovementType.received => mv.reference?.contains('Restored') == true
-          ? 'Returned from deleted order'
-          : 'Received',
-      StockMovementType.deducted => 'Used in an order',
-      StockMovementType.adjusted => 'Counted',
-      StockMovementType.waste => 'Waste',
+          ? l10n.stockMoveReturned
+          : l10n.stockMoveReceived,
+      StockMovementType.deducted => l10n.stockMoveUsed,
+      StockMovementType.adjusted => l10n.stockMoveCounted,
+      StockMovementType.waste => l10n.stockMoveWaste,
     };
     final when = DateFormat('MMM d, y').format(mv.createdAt);
     return CardRow(

@@ -3,11 +3,10 @@ import 'package:craftbook/core/theme/colors.dart';
 import 'package:craftbook/core/widgets/pip_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 /// Pip counts by kind, read from the Containers the strip draws.
 class _Pips {

@@ -4,6 +4,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_search_field.dart';
@@ -126,11 +127,11 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Add product',
+              Text(context.l10n.ordersAddProduct,
                   style: AppTextStyles.displaySmall.copyWith(color: c.ink)),
               const SizedBox(height: 12),
               AppSearchField(
-                hint: 'Search products',
+                hint: context.l10n.ordersSearchProducts,
                 onChanged: (v) =>
                     setState(() => _query = v.trim().toLowerCase()),
               ),
@@ -152,10 +153,11 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         children: [
           EmptyState(
             icon: Icons.sell_outlined,
-            title: _products.isEmpty ? 'No products yet' : 'No matches',
-            message: _products.isEmpty
-                ? 'Add products under More → Products first.'
-                : null,
+            title: _products.isEmpty
+                ? context.l10n.ordersNoProducts
+                : context.l10n.ordersNoMatches,
+            message:
+                _products.isEmpty ? context.l10n.ordersNoProductsMessage : null,
           ),
         ],
       );
@@ -174,11 +176,13 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
         final shown = p.isStandalone ? qty : qty.floorToDouble();
         final stockText = !available
             ? (p.isStandalone
-                ? 'Out of stock'
-                : "Can't build: not enough materials")
+                ? context.l10n.ordersOutOfStock
+                : context.l10n.ordersCantBuild)
             : (p.isStandalone
-                ? 'In stock ${QuantityFormatter.withUnit(shown, p.unit)}'
-                : 'Can build ${QuantityFormatter.withUnit(shown, p.unit)}');
+                ? context.l10n
+                    .ordersInStock(QuantityFormatter.withUnit(shown, p.unit))
+                : context.l10n
+                    .ordersCanBuild(QuantityFormatter.withUnit(shown, p.unit)));
         return Opacity(
           opacity: available ? 1 : 0.45,
           child: InkWell(
@@ -212,7 +216,8 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                             if (available && isProductLow(p, qty))
                               const AppTag.low(),
                             if (added)
-                              const AppTag('Added', type: AppTagType.ok),
+                              AppTag(context.l10n.ordersAddedTag,
+                                  type: AppTagType.ok),
                           ],
                         ),
                         const SizedBox(height: 2),

@@ -29,10 +29,14 @@ import '../../../discounts/domain/repositories/discount_preset_repository.dart';
 import '../../../units/domain/repositories/unit_repository.dart';
 import '../../../orders/domain/usecases/get_receivables.dart';
 import '../../domain/entities/tax_settings.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../bloc/currency_cubit.dart';
+import '../bloc/language_cubit.dart';
 import '../bloc/tax_settings_cubit.dart';
 import '../widgets/appearance_card.dart';
 import '../widgets/currency_sheet.dart';
+import '../widgets/language_sheet.dart';
 import '../widgets/tax_sheet.dart';
 
 /// More: the shop's setup (channels, order fields, units, buy list), the
@@ -73,39 +77,46 @@ class _SettingsPageState extends State<SettingsPage> {
     final receivables = await getIt<GetReceivables>()();
     final canUndoRestore = await BackupService.canUndoRestore();
     if (!mounted) return;
+    final l10n = context.l10n;
     setState(() {
       _canUndoRestore = canUndoRestore;
       if (channels case Success(:final value)) {
         final on = value.where((c) => c.isActive).length;
         final off = value.length - on;
-        _channelsHint = '$on on${off > 0 ? ' · $off off' : ''}';
+        _channelsHint = off > 0
+            ? l10n.settingsChannelsOnOff(on, off)
+            : l10n.settingsChannelsOn(on);
       }
       if (orderFields case Success(:final value)) {
         final archived = value.where((f) => f.isArchived).length;
         final active = value.length - archived;
         _orderFieldsHint = value.isEmpty
             ? null
-            : '$active ${active == 1 ? 'field' : 'fields'}'
-                '${archived > 0 ? ' · $archived archived' : ''}';
+            : [
+                l10n.settingsFieldsCount(active),
+                if (archived > 0) l10n.settingsArchivedCount(archived),
+              ].join(' · ');
       }
       if (buyList case Success(:final value)) {
         final total = value.fold<double>(0, (s, i) => s + i.totalCost);
         _buyListHint = value.isEmpty
-            ? 'Nothing to buy'
-            : '${value.length} ${value.length == 1 ? 'item' : 'items'} · ${CurrencyFormatter.format(total)}';
+            ? l10n.settingsNothingToBuy
+            : '${l10n.settingsItemsCount(value.length)} · ${CurrencyFormatter.format(total)}';
       }
       if (notes case Success(:final value)) {
         final pinned = value.where((n) => n.isPinned).length;
         _notesHint = value.isEmpty
             ? null
-            : '${value.length} ${value.length == 1 ? 'note' : 'notes'}'
-                '${pinned > 0 ? ' · $pinned pinned' : ''}';
+            : [
+                l10n.settingsNotesCount(value.length),
+                if (pinned > 0) l10n.settingsPinnedCount(pinned),
+              ].join(' · ');
       }
       if (receivables case Success(:final value)) {
         _receivablesHint = value.isEmpty
             ? null
             : '${CurrencyFormatter.format(value.total)} · '
-                '${value.orderCount} ${value.orderCount == 1 ? 'order' : 'orders'}';
+                '${l10n.settingsOrdersCount(value.orderCount)}';
       }
       if (discounts case Success(:final value)) {
         _discountsHint =
@@ -117,12 +128,12 @@ class _SettingsPageState extends State<SettingsPage> {
         for (final u in value) {
           if (u.isDefault) startsOn = u.label;
         }
-        _unitsHint = '${value.length} · new items start on $startsOn';
+        _unitsHint = l10n.settingsUnitsSummary(value.length, startsOn);
       }
       if (social case Success(:final value)) {
         _socialHint = value.isEmpty
             ? null
-            : '${value.length} ${value.length == 1 ? 'shortcut' : 'shortcuts'} · '
+            : '${l10n.settingsShortcutsCount(value.length)} · '
                 '${value.take(3).map((l) => l.label).join(', ')}';
       }
     });
@@ -137,13 +148,26 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) _loadHints();
   }
 
-  static String _taxHint(TaxSettings tax) {
-    if (!tax.enabled) return 'Off';
+  Future<void> _pickLanguage() async {
+    final cubit = getIt<LanguageCubit>();
+    final picked = await showLanguageSheet(context, current: cubit.state);
+    if (picked == null) return;
+    await cubit.set(picked);
+    // The hints under the rows are already-translated strings.
+    if (mounted) _loadHints();
+  }
+
+  static String _taxHint(AppLocalizations l10n, TaxSettings tax) {
+    if (!tax.enabled) return l10n.commonOff;
     final rate = tax.rate == tax.rate.roundToDouble()
         ? tax.rate.toStringAsFixed(0)
         : '${tax.rate}';
-    return '${tax.label} $rate% · ${tax.inclusive ? 'in prices' : 'added on top'}'
-        '${tax.onByDefault ? '' : ' · off by default'}';
+    final mode =
+        tax.inclusive ? l10n.settingsTaxInPrices : l10n.settingsTaxAddedOnTop;
+    final summary = l10n.settingsTaxSummary(tax.label, rate, mode);
+    return tax.onByDefault
+        ? summary
+        : '$summary · ${l10n.settingsTaxOffByDefault}';
   }
 
   Future<void> _editTax() async {
@@ -162,143 +186,154 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return BlocProvider(
       create: (_) => getIt<UpdateCubit>()..load(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('More')),
+        appBar: AppBar(title: Text(l10n.settingsMoreTitle)),
         body: ListView(
           padding: AppSpacing.page,
           children: [
-            const SectionLabel('Notebook',
-                padding: EdgeInsets.fromLTRB(2, 2, 2, 0)),
+            SectionLabel(l10n.settingsSectionNotebook,
+                padding: const EdgeInsets.fromLTRB(2, 2, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.sticky_note_2_outlined,
-                  title: 'Notes',
-                  subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
+                  title: l10n.settingsNotesTitle,
+                  subtitle: _notesHint ?? l10n.settingsNotesHint,
                   onTap: () => _open(RouteNames.notes),
                 ),
               ]),
             ),
-            const SectionLabel('Your shop online',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            SectionLabel(l10n.settingsSectionShopOnline,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.share_outlined,
-                  title: 'Social shortcuts',
-                  subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
+                  title: l10n.settingsSocialTitle,
+                  subtitle: _socialHint ?? l10n.settingsSocialHint,
                   onTap: () => _open(RouteNames.socialLinks),
                 ),
               ]),
             ),
-            const SectionLabel('Catalogue',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            SectionLabel(l10n.settingsSectionCatalogue,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.storefront_outlined,
-                  title: 'Channels & fees',
-                  subtitle:
-                      _channelsHint ?? 'Where you sell and what they charge',
+                  title: l10n.settingsChannelsTitle,
+                  subtitle: _channelsHint ?? l10n.settingsChannelsHint,
                   onTap: () => _open(RouteNames.channels),
                 ),
                 MoreRow(
                   icon: Icons.dashboard_customize_outlined,
-                  title: 'Order fields',
-                  subtitle:
-                      _orderFieldsHint ?? 'Extra details to note on each order',
+                  title: l10n.settingsOrderFieldsTitle,
+                  subtitle: _orderFieldsHint ?? l10n.settingsOrderFieldsHint,
                   onTap: () => _open(RouteNames.orderFields),
                 ),
                 MoreRow(
                   icon: Icons.square_foot_outlined,
-                  title: 'Units of measure',
-                  subtitle: _unitsHint ?? 'What you count things in',
+                  title: l10n.settingsUnitsTitle,
+                  subtitle: _unitsHint ?? l10n.settingsUnitsHint,
                   onTap: () => _open(RouteNames.units),
                 ),
                 MoreRow(
                   icon: Icons.shopping_basket_outlined,
-                  title: 'Buy list',
-                  subtitle: _buyListHint ?? 'Things to restock',
+                  title: l10n.settingsBuyListTitle,
+                  subtitle: _buyListHint ?? l10n.settingsBuyListHint,
                   onTap: () => _open(RouteNames.buyList),
                 ),
               ]),
             ),
-            const SectionLabel('Money & orders',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            SectionLabel(l10n.settingsSectionMoneyOrders,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.schedule_rounded,
-                  title: 'Waiting for payment',
-                  subtitle: _receivablesHint ?? 'Everyone has paid',
+                  title: l10n.settingsReceivablesTitle,
+                  subtitle: _receivablesHint ?? l10n.settingsReceivablesHint,
                   onTap: () => _open(RouteNames.receivables),
                 ),
                 MoreRow(
                   icon: Icons.currency_exchange_rounded,
-                  title: 'Currency',
+                  title: l10n.settingsCurrencyTitle,
                   subtitle: CurrencyFormatter.currency.label,
                   onTap: _pickCurrency,
                 ),
                 MoreRow(
                   icon: Icons.account_balance_outlined,
-                  title: 'Tax',
-                  subtitle: _taxHint(getIt<TaxSettingsCubit>().state),
+                  title: l10n.settingsTaxTitle,
+                  subtitle:
+                      _taxHint(context.l10n, getIt<TaxSettingsCubit>().state),
                   onTap: _editTax,
                 ),
                 MoreRow(
                   icon: Icons.local_offer_outlined,
-                  title: 'Discounts',
-                  subtitle: _discountsHint ?? 'Ones you give often',
+                  title: l10n.settingsDiscountsTitle,
+                  subtitle: _discountsHint ?? l10n.settingsDiscountsHint,
                   onTap: () => _open(RouteNames.discounts),
                 ),
               ]),
             ),
-            const SectionLabel('Appearance',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            SectionLabel(l10n.settingsSectionAppearance,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             const AppearanceCard(),
-            const SectionLabel('Your data',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 12),
+            AppCard.flush(
+              child: CardList(children: [
+                MoreRow(
+                  icon: Icons.translate_rounded,
+                  title: l10n.languageTitle,
+                  subtitle: getIt<LanguageCubit>().state.label(context),
+                  onTap: _pickLanguage,
+                ),
+              ]),
+            ),
+            SectionLabel(l10n.settingsSectionYourData,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.upload_rounded,
-                  title: 'Export backup',
-                  subtitle: 'Save a copy of everything to a file',
+                  title: l10n.settingsExportTitle,
+                  subtitle: l10n.settingsExportHint,
                   onTap: () => BackupService.exportDatabase(context),
                 ),
                 MoreRow(
                   icon: Icons.download_rounded,
                   iconColor: c.alert,
-                  title: 'Restore from backup',
-                  subtitle: 'Replaces everything on this phone',
+                  title: l10n.settingsRestoreTitle,
+                  subtitle: l10n.settingsRestoreHint,
                   onTap: () => BackupService.importDatabase(context),
                 ),
                 if (_canUndoRestore)
                   MoreRow(
                     icon: Icons.undo_rounded,
-                    title: 'Undo last restore',
-                    subtitle: 'Go back to the data from before it',
+                    title: l10n.settingsUndoRestoreTitle,
+                    subtitle: l10n.settingsUndoRestoreHint,
                     onTap: () => BackupService.undoRestore(context),
                   ),
               ]),
             ),
-            const SectionLabel('About',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            SectionLabel(l10n.settingsSectionAbout,
+                padding: const EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
                 MoreRow(
                   icon: Icons.info_outline_rounded,
-                  title: 'About Craftbook',
-                  subtitle: 'What it does and how to use it',
+                  title: l10n.settingsAboutTitle,
+                  subtitle: l10n.settingsAboutHint,
                   onTap: () => _open(RouteNames.about),
                 ),
                 const UpdateRow(),
@@ -321,8 +356,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   BlocSelector<UpdateCubit, UpdateState, String?>(
                     selector: (state) => state.currentVersion,
                     builder: (context, version) => Text(
-                      '${version == null ? '' : 'Version $version · '}'
-                      'all data stays on this phone',
+                      version == null
+                          ? l10n.settingsFooter
+                          : l10n.settingsFooterWithVersion(version),
                       style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                     ),
                   ),

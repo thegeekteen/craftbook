@@ -1,7 +1,11 @@
 import 'package:craftbook/features/earnings/domain/entities/report_filter.dart';
 import 'package:craftbook/features/earnings/presentation/widgets/report_filter_sheet.dart';
 import 'package:craftbook/features/orders/domain/entities/order.dart';
+import 'package:craftbook/l10n/gen/app_localizations.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+
+final l10n = lookupAppLocalizations(const Locale('en'));
 
 void main() {
   Order order({
@@ -97,10 +101,20 @@ void main() {
       minTotal: 500,
     );
     final parts = describeFilter(f,
-        channelNames: const {1: 'Shopee'}, productNames: const {});
+        l10n: l10n, channelNames: const {1: 'Shopee'}, productNames: const {});
     expect(parts.map((p) => p.$1),
         ['Shopee', '2 products', 'Unpaid', '₱500 and up']);
     expect(parts.first.$2, f.copyWith(channelIds: const {}));
     expect(parts.last.$2.minTotal, isNull);
+  });
+
+  test('describeFilter speaks Filipino', () {
+    final fil = lookupAppLocalizations(const Locale('fil'));
+    final parts = describeFilter(
+        const ReportFilter(payment: PaymentFilter.unpaid, productIds: {5, 6}),
+        l10n: fil,
+        channelNames: const {},
+        productNames: const {});
+    expect(parts.map((p) => p.$1), ['2 produkto', 'Hindi pa bayad']);
   });
 }

@@ -3,11 +3,10 @@ import 'package:craftbook/core/theme/colors.dart';
 import 'package:craftbook/core/widgets/money_breakdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/localized_app.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
+Widget _wrap(Widget child) =>
+    localizedApp(Scaffold(body: child), theme: AppTheme.lightTheme);
 
 void main() {
   group('MoneyParts', () {
@@ -157,9 +156,8 @@ void main() {
 
     testWidgets('renders without an app theme (fallback palette)',
         (tester) async {
-      await tester.pumpWidget(const MaterialApp(
-        home: Scaffold(body: MoneyBreakdown(parts: parts)),
-      ));
+      await tester.pumpWidget(
+          localizedApp(Scaffold(body: MoneyBreakdown(parts: parts))));
       expect(tester.takeException(), isNull);
       expect(find.text('Sales'), findsOneWidget);
     });

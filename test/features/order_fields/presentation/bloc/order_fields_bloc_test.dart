@@ -101,7 +101,7 @@ void main() {
       seed: () => loaded,
       act: (bloc) => bloc.add(const SaveOrderFieldEvent(
           name: ' Wrap ', type: OrderFieldType.choice, options: ['Kraft'])),
-      expect: () => [loaded.withMessage('Wrap added', 1)],
+      expect: () => [loaded.withOutcome(OrderFieldOutcome.added, 'Wrap', 1)],
       verify: (_) => verify(() => save(
             id: null,
             name: ' Wrap ',
@@ -118,7 +118,7 @@ void main() {
       seed: () => loaded,
       act: (bloc) => bloc.add(const SaveOrderFieldEvent(
           id: 2, name: 'Size', type: OrderFieldType.text)),
-      expect: () => [loaded.withMessage('Size saved', 1)],
+      expect: () => [loaded.withOutcome(OrderFieldOutcome.saved, 'Size', 1)],
     );
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
@@ -129,10 +129,8 @@ void main() {
       seed: () => loaded,
       act: (bloc) => bloc.add(
           const SaveOrderFieldEvent(name: 'Size', type: OrderFieldType.text)),
-      expect: () => [
-        loaded.withMessage('There is already a field called Size', 1,
-            isError: true)
-      ],
+      expect: () =>
+          [loaded.withError('There is already a field called Size', 1)],
     );
   });
 
@@ -144,7 +142,8 @@ void main() {
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(1)),
-      expect: () => [loaded.withMessage('Address archived', 1)],
+      expect: () =>
+          [loaded.withOutcome(OrderFieldOutcome.archived, 'Address', 1)],
     );
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
@@ -154,7 +153,7 @@ void main() {
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(2)),
-      expect: () => [loaded.withMessage('Size deleted', 1)],
+      expect: () => [loaded.withOutcome(OrderFieldOutcome.deleted, 'Size', 1)],
     );
 
     blocTest<OrderFieldsBloc, OrderFieldsState>(
@@ -164,7 +163,7 @@ void main() {
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RemoveOrderFieldEvent(2)),
-      expect: () => [loaded.withMessage('locked', 1, isError: true)],
+      expect: () => [loaded.withError('locked', 1)],
     );
   });
 
@@ -176,7 +175,7 @@ void main() {
       build: build,
       seed: () => loaded,
       act: (bloc) => bloc.add(const RestoreOrderFieldEvent(3)),
-      expect: () => [loaded.withMessage('Card restored', 1)],
+      expect: () => [loaded.withOutcome(OrderFieldOutcome.restored, 'Card', 1)],
     );
   });
 
@@ -203,7 +202,7 @@ void main() {
       act: (bloc) => bloc.add(const ReorderOrderFieldsEvent(0, 1)),
       expect: () => [
         const OrderFieldsLoaded(active: [size, address], archived: [card]),
-        loaded.withMessage('locked', 1, isError: true),
+        loaded.withError('locked', 1),
       ],
     );
 

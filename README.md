@@ -33,7 +33,7 @@ The bar at the bottom has five tabs:
 | **Orders** | Every order, by status, with search |
 | **Inventory** | Two tabs: **Products** (what you sell, with photos, margins and how many you can make now) and **Materials** (what it's made from, with stock). Each tab shows how many items it's listing |
 | **Reports** | Profit for any period, where the money went, waste, and who hasn't paid |
-| **More** | Channels, discounts, tax, currency, notes, backups and settings |
+| **More** | Channels, discounts, tax, currency, language, notes, backups and settings |
 
 **Long-press** almost anything (an order, a product, a material, a discount) to see what you can do with it.
 
@@ -46,6 +46,7 @@ Go to **More** and work down the list. You can change everything later.
 | What | Where | What you enter |
 |------|-------|----------------|
 | **Currency** | More → Currency | Pick yours from the list, or type any symbol. This only changes the symbol; your amounts aren't converted. |
+| **Language** | More → Language | Show the app in English or Filipino (Tagalog), or follow your phone's language. The change is instant. Your own items, names and notes are never translated. |
 | **Units of measure** | More → Units of measure | What you count things in: *pc*, *sheet*, *m*, *kg*… The app starts with the common ones. Add your own, rename them, drag them into the order you like, and choose the one new items start on. Every number in the app is written with one. |
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
 | **Materials** | Inventory → **Materials** tab → **+ Material** | What it's counted in, pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |

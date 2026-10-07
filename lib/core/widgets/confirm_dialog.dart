@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/colors.dart';
+import '../utils/l10n_extension.dart';
 
 /// Confirmation dialog. Destructive actions get a red confirm button.
 class ConfirmDialog extends StatelessWidget {
@@ -42,7 +43,7 @@ class ConfirmDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
           style: TextButton.styleFrom(foregroundColor: c.muted),
-          child: Text(cancelText ?? 'Cancel'),
+          child: Text(cancelText ?? context.l10n.commonCancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
@@ -51,7 +52,7 @@ class ConfirmDialog extends StatelessWidget {
             foregroundColor: c.onAccent,
             minimumSize: const Size(0, 44),
           ),
-          child: Text(confirmText ?? 'Confirm'),
+          child: Text(confirmText ?? context.l10n.commonConfirm),
         ),
       ],
     );

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/app_sheet.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 
 /// Which orders on the Orders tab to show by payment.
 enum OrderPaymentFilter {
-  any('Any'),
-  unpaid('Unpaid'),
-  paid('Paid');
+  any,
+  unpaid,
+  paid;
 
-  final String label;
-  const OrderPaymentFilter(this.label);
+  /// The option's name in the app's language.
+  String labelOf(AppLocalizations l10n) => switch (this) {
+        any => l10n.ordersPaymentAny,
+        unpaid => l10n.ordersPaymentUnpaid,
+        paid => l10n.ordersPaymentPaid,
+      };
 }
 
 /// Picks the Orders tab's payment filter. Returns null when dismissed.
@@ -21,8 +27,8 @@ Future<OrderPaymentFilter?> showOrdersFilterSheet(
 }) {
   return showAppSheet<OrderPaymentFilter>(
     context: context,
-    title: 'Filter orders',
-    subtitle: 'Works together with the status chips and search.',
+    title: context.l10n.ordersFilterTitle,
+    subtitle: context.l10n.ordersFilterSubtitle,
     builder: (_) => OrdersFilterForm(current: current, counts: counts),
   );
 }
@@ -51,7 +57,8 @@ class _OrdersFilterFormState extends State<OrdersFilterForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Payment', style: Theme.of(context).textTheme.bodyMedium),
+        Text(context.l10n.ordersFilterPayment,
+            style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 8),
         ChoiceChipRow<OrderPaymentFilter>.single(
           wrap: true,
@@ -59,7 +66,7 @@ class _OrdersFilterFormState extends State<OrdersFilterForm> {
           onSelected: (p) => setState(() => _payment = p),
           options: [
             for (final p in OrderPaymentFilter.values)
-              ChipOption(p, p.label, count: widget.counts[p]),
+              ChipOption(p, p.labelOf(context.l10n), count: widget.counts[p]),
           ],
         ),
         const SizedBox(height: 20),
@@ -68,12 +75,12 @@ class _OrdersFilterFormState extends State<OrdersFilterForm> {
             TextButton(
               onPressed: () =>
                   setState(() => _payment = OrderPaymentFilter.any),
-              child: const Text('Clear all'),
+              child: Text(context.l10n.ordersFilterClearAll),
             ),
             const Spacer(),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(_payment),
-              child: const Text('Show'),
+              child: Text(context.l10n.ordersFilterShow),
             ),
           ],
         ),

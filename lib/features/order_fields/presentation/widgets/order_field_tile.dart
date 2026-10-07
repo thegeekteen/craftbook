@@ -5,6 +5,9 @@ import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_tag.dart';
 import '../../domain/entities/order_field.dart';
+import '../../../../core/utils/l10n_extension.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../order_field_labels.dart';
 
 /// One field in the settings list: name, type, and what it holds.
 class OrderFieldTile extends StatelessWidget {
@@ -26,14 +29,15 @@ class OrderFieldTile extends StatelessWidget {
   });
 
   /// "Multi-line · used on 4 orders", "3 choices", "Not used yet".
-  static String describe(OrderField field) {
+  static String describe(AppLocalizations l10n, OrderField field) {
     final parts = [
-      if (field.type == OrderFieldType.text && field.isMultiline) 'Multi-line',
+      if (field.type == OrderFieldType.text && field.isMultiline)
+        l10n.orderFieldsMultiline,
       if (field.type == OrderFieldType.choice)
-        '${field.options.length} ${field.options.length == 1 ? 'choice' : 'choices'}',
+        l10n.orderFieldsChoiceCount(field.options.length),
       field.isUsed
-          ? 'used on ${field.usageCount} ${field.usageCount == 1 ? 'order' : 'orders'}'
-          : 'not used yet',
+          ? l10n.orderFieldsUsedOn(field.usageCount)
+          : l10n.orderFieldsNotUsed,
     ];
     final text = parts.join(' · ');
     return text[0].toUpperCase() + text.substring(1);
@@ -42,6 +46,7 @@ class OrderFieldTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     return AppCard(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -67,12 +72,13 @@ class OrderFieldTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    AppTag(field.type.label, type: AppTagType.outline),
+                    AppTag(field.type.localized(l10n),
+                        type: AppTagType.outline),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  describe(field),
+                  describe(l10n, field),
                   style: AppTextStyles.bodySmall.copyWith(color: c.muted),
                 ),
               ],

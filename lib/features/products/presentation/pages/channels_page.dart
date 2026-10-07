@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
@@ -38,17 +39,19 @@ class _ChannelsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final bloc = context.read<ChannelsBloc>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Channels & fees')),
+      appBar: AppBar(title: Text(context.l10n.productsChannelsTitle)),
       body: BlocConsumer<ChannelsBloc, ChannelsState>(
         listener: (context, state) {
           if (state is ChannelsError) {
             context.showSnackBar(state.message, isError: true);
           }
           if (state is ChannelCreated) {
-            context.showSnackBar('Channel added');
+            context.showSnackBar(context.l10n.productsChannelAdded);
             bloc.add(const LoadChannels());
           }
-          if (state is ChannelDeleted) context.showSnackBar('Channel deleted');
+          if (state is ChannelDeleted) {
+            context.showSnackBar(context.l10n.productsChannelDeleted);
+          }
         },
         buildWhen: (_, s) =>
             s is ChannelsLoaded || s is ChannelsLoading || s is ChannelsInitial,
@@ -60,10 +63,9 @@ class _ChannelsView extends StatelessWidget {
             return Center(
               child: EmptyState(
                 icon: Icons.storefront_outlined,
-                title: 'No channels yet',
-                message:
-                    'Add Shopee, TikTok Shop, walk-in… with their fees so profit is accurate.',
-                actionLabel: 'Add channel',
+                title: context.l10n.productsChannelsEmptyTitle,
+                message: context.l10n.productsChannelsEmptyMessage,
+                actionLabel: context.l10n.productsChannelAddButton,
                 onAction: () => _ChannelSheet.open(context, bloc),
               ),
             );
@@ -82,8 +84,8 @@ class _ChannelsView extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
                   child: Text(
-                    'Examples use a ${CurrencyFormatter.formatShort(ChannelCard.exampleSale)} sale. '
-                    'Turned-off channels stay on past orders but are hidden when you create new ones.',
+                    context.l10n.productsChannelsNote(
+                        CurrencyFormatter.formatShort(ChannelCard.exampleSale)),
                     style: AppTextStyles.bodySmall
                         .copyWith(color: context.colors.muted),
                   ),
@@ -104,7 +106,7 @@ class _ChannelsView extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _ChannelSheet.open(context, bloc),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Channel'),
+        label: Text(context.l10n.productsChannelFab),
       ),
     );
   }
@@ -115,24 +117,27 @@ enum _ChannelAction { edit, toggleActive, delete }
 /// The long-press menu on a channel.
 Future<void> _channelActions(
     BuildContext context, ChannelsBloc bloc, Channel ch) async {
+  final l10n = context.l10n;
   final action = await showActionSheet<_ChannelAction>(
     context,
     title: ch.name,
     actions: [
-      const SheetAction(
+      SheetAction(
           value: _ChannelAction.edit,
           icon: Icons.edit_outlined,
-          label: 'Edit channel'),
+          label: l10n.productsChannelEdit),
       SheetAction(
         value: _ChannelAction.toggleActive,
         icon:
             ch.isActive ? Icons.toggle_off_outlined : Icons.toggle_on_outlined,
-        label: ch.isActive ? 'Turn off' : 'Turn on',
+        label: ch.isActive
+            ? l10n.productsChannelTurnOff
+            : l10n.productsChannelTurnOn,
       ),
-      const SheetAction(
+      SheetAction(
           value: _ChannelAction.delete,
           icon: Icons.delete_outline_rounded,
-          label: 'Delete channel',
+          label: l10n.productsChannelDelete,
           destructive: true),
     ],
   );
@@ -152,9 +157,9 @@ Future<void> _channelActions(
 Future<bool> _confirmDelete(BuildContext context, Channel ch) {
   return ConfirmDialog.show(
     context,
-    title: 'Delete ${ch.name}?',
-    message: "Channels used by orders can't be deleted. Turn them off instead.",
-    confirmText: 'Delete',
+    title: context.l10n.productsChannelDeleteTitle(ch.name),
+    message: context.l10n.productsChannelDeleteMessage,
+    confirmText: context.l10n.commonDelete,
     isDestructive: true,
   );
 }
@@ -170,7 +175,9 @@ class _ChannelSheet extends StatefulWidget {
       {Channel? channel}) {
     return showAppSheet(
       context: context,
-      title: channel == null ? 'New channel' : 'Edit ${channel.name}',
+      title: channel == null
+          ? context.l10n.productsChannelNew
+          : context.l10n.productsChannelEditTitle(channel.name),
       builder: (_) => _ChannelSheet(channel: channel, bloc: bloc),
     );
   }
@@ -250,6 +257,7 @@ class _ChannelSheetState extends State<_ChannelSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l10n = context.l10n;
     final money = [
       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
     ];
@@ -284,38 +292,42 @@ class _ChannelSheetState extends State<_ChannelSheet> {
             controller: _name,
             autofocus: widget.channel == null,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-                labelText: 'Name', hintText: 'e.g. Shopee'),
+            decoration: InputDecoration(
+                labelText: l10n.commonName,
+                hintText: l10n.productsChannelNameHint),
             validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                (v == null || v.trim().isEmpty) ? l10n.productsEnterName : null,
           ),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: field(_commission, 'Commission', suffix: '%')),
+            Expanded(
+                child: field(_commission, l10n.productsChannelCommission,
+                    suffix: '%')),
             const SizedBox(width: 8),
             Expanded(
-                child: field(_transaction, 'Transaction fee', suffix: '%')),
+                child: field(_transaction, l10n.productsChannelTransactionFee,
+                    suffix: '%')),
           ]),
           const SizedBox(height: 12),
           Row(children: [
             Expanded(
-                child: field(_flat, 'Fixed fee',
+                child: field(_flat, l10n.productsChannelFixedFee,
                     prefix: '${CurrencyFormatter.symbol} ')),
             const SizedBox(width: 8),
             Expanded(
-                child: field(_shipping, 'Shipping you pay',
+                child: field(_shipping, l10n.productsChannelShippingYouPay,
                     prefix: '${CurrencyFormatter.symbol} ')),
           ]),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _paidByDefault,
             onChanged: (v) => setState(() => _paidByDefault = v),
-            title: Text('Orders are paid when placed',
+            title: Text(l10n.productsChannelPaidWhenPlaced,
                 style: AppTextStyles.bodyMedium.copyWith(color: c.ink)),
             subtitle: Text(
               _paidByDefault
-                  ? 'Like a marketplace that collects up front'
-                  : 'New orders start unpaid, for cash on delivery or chat sales',
+                  ? l10n.productsChannelPaidUpfront
+                  : l10n.productsChannelUnpaidStart,
               style: AppTextStyles.bodySmall.copyWith(color: c.muted),
             ),
           ),
@@ -328,12 +340,12 @@ class _ChannelSheetState extends State<_ChannelSheet> {
               TextSpan(children: [
                 TextSpan(
                     text:
-                        'On a ${CurrencyFormatter.formatShort(sale)} sale you keep '),
+                        '${l10n.productsChannelYouKeep(CurrencyFormatter.formatShort(sale))} '),
                 TextSpan(
                   text: CurrencyFormatter.format(keep),
                   style: TextStyle(color: c.go, fontWeight: FontWeight.w600),
                 ),
-                const TextSpan(text: ' before materials.'),
+                TextSpan(text: ' ${l10n.productsChannelBeforeMaterials}'),
               ]),
               style: AppTextStyles.bodySmall
                   .copyWith(color: c.muted, fontSize: 13),
@@ -346,12 +358,14 @@ class _ChannelSheetState extends State<_ChannelSheet> {
                 TextButton(
                   onPressed: _delete,
                   style: TextButton.styleFrom(foregroundColor: c.alert),
-                  child: const Text('Delete'),
+                  child: Text(l10n.commonDelete),
                 ),
               const Spacer(),
               FilledButton(
                 onPressed: _save,
-                child: Text(widget.channel == null ? 'Add channel' : 'Save'),
+                child: Text(widget.channel == null
+                    ? l10n.productsChannelAddButton
+                    : l10n.commonSave),
               ),
             ],
           ),

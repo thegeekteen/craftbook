@@ -28,13 +28,17 @@ class Note extends Equatable {
 
   /// The title, or else the body's first line, so an untitled note still has
   /// something to be found by in a list.
-  String get displayTitle {
+  String get displayTitle => titleOr('Untitled');
+
+  /// [displayTitle] with the placeholder for a note with no words, so the
+  /// presentation layer can supply the translated one.
+  String titleOr(String untitled) {
     if (title.trim().isNotEmpty) return title.trim();
     final firstLine = NoteCodec.textOf(NoteCodec.decode(body))
         .split('\n')
         .map((l) => l.trim())
         .firstWhere((l) => l.isNotEmpty, orElse: () => '');
-    return firstLine.isEmpty ? 'Untitled' : firstLine;
+    return firstLine.isEmpty ? untitled : firstLine;
   }
 
   /// Ticked and total to-do lines. Both are 0 when the note has no checklist.

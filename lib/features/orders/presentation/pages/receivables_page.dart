@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/dimens.dart';
 import '../../../../core/theme/text_styles.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/section_label.dart';
@@ -36,17 +37,17 @@ class _ReceivablesView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<ReceivablesCubit>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Waiting for payment')),
+      appBar: AppBar(title: Text(context.l10n.ordersReceivablesTitle)),
       body: BlocBuilder<ReceivablesCubit, ReceivablesState>(
         builder: (context, state) => switch (state) {
           ReceivablesError(:final message) =>
             Center(child: ErrorState(message: message, onRetry: cubit.load)),
           ReceivablesLoaded(:final receivables) when receivables.isEmpty =>
-            const Center(
+            Center(
               child: EmptyState(
                 icon: Icons.check_circle_outline_rounded,
-                title: 'Everyone has paid',
-                message: 'Orders marked unpaid will show up here.',
+                title: context.l10n.ordersReceivablesEmptyTitle,
+                message: context.l10n.ordersReceivablesEmptyMessage,
               ),
             ),
           ReceivablesLoaded(:final receivables) =>
@@ -79,7 +80,8 @@ class _List extends StatelessWidget {
         padding: AppSpacing.page.copyWith(top: 4),
         children: [
           SummaryBoard(
-            label: 'Owed to you · $count ${count == 1 ? 'order' : 'orders'}',
+            label: context.l10n
+                .ordersReceivablesOwed(context.l10n.ordersOrderCount(count)),
             value: CurrencyFormatter.formatShort(receivables.total),
           ),
           const SizedBox(height: 12),
@@ -103,7 +105,7 @@ class _List extends StatelessWidget {
             const SizedBox(height: 4),
           ],
           Text(
-            'Mark an order paid from its page or by long-pressing it.',
+            context.l10n.ordersReceivablesHint,
             style: AppTextStyles.bodySmall.copyWith(color: c.muted),
           ),
         ],

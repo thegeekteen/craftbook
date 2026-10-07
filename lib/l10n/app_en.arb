@@ -1,0 +1,2495 @@
+{
+  "@@locale": "en",
+  "appName": "CraftBook",
+  "languageTitle": "Language",
+  "languageSubtitle": "The language the app is shown in.",
+  "languageSystem": "System default",
+  "languageEnglish": "English",
+  "languageFilipino": "Filipino (Tagalog)",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonDelete": "Delete",
+  "commonEdit": "Edit",
+  "commonDone": "Done",
+  "commonAdd": "Add",
+  "commonClose": "Close",
+  "commonTryAgain": "Try again",
+  "commonArchive": "Archive",
+  "commonUnarchive": "Unarchive",
+  "commonRestore": "Restore",
+  "commonUndo": "Undo",
+  "commonNext": "Next",
+  "commonBack": "Back",
+  "commonClear": "Clear",
+  "commonApply": "Apply",
+  "commonAll": "All",
+  "commonNone": "None",
+  "commonOn": "On",
+  "commonOff": "Off",
+  "commonName": "Name",
+  "commonNotes": "Notes",
+  "commonRemove": "Remove",
+  "commonConfirm": "Confirm",
+  "commonLow": "Low",
+  "commonFilter": "Filter",
+  "commonNotSet": "Not set",
+  "commonClearField": "Clear {label}",
+  "@commonClearField": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCouldntLoad": "Couldn’t load this",
+  "navToday": "Today",
+  "navOrders": "Orders",
+  "navInventory": "Inventory",
+  "navReports": "Reports",
+  "navMore": "More",
+  "dateToday": "Today",
+  "dateTomorrow": "Tomorrow",
+  "dateYesterday": "Yesterday",
+  "dateInDays": "{count, plural, =1{In 1 day} other{In {count} days}}",
+  "@dateInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dateDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@dateDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moneySales": "Sales",
+  "moneyDiscounts": "Discounts",
+  "moneyTax": "Tax",
+  "moneyTaxInPrices": "{tax} in prices",
+  "@moneyTaxInPrices": {
+    "placeholders": {
+      "tax": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyMaterials": "Materials",
+  "moneyChannelFees": "Channel fees",
+  "moneyShipping": "Shipping",
+  "moneyAddedTaxNote": "+ {amount} {tax} added for the customer to pay. It isn’t yours, so it’s not in profit.",
+  "@moneyAddedTaxNote": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyProfitMargin": "Profit · {margin}% margin",
+  "@moneyProfitMargin": {
+    "placeholders": {
+      "margin": {
+        "type": "int"
+      }
+    }
+  },
+  "moneyProfitSemantics": "Profit {profit} of {sales} sales",
+  "@moneyProfitSemantics": {
+    "placeholders": {
+      "profit": {
+        "type": "String"
+      },
+      "sales": {
+        "type": "String"
+      }
+    }
+  },
+  "pipFree": "free",
+  "pipPromised": "promised",
+  "pipReorderLevel": "reorder level",
+  "productPhotoOf": "Photo of {name}",
+  "@productPhotoOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "appLogoLabel": "CraftBook logo",
+  "noteToolRedo": "Redo",
+  "noteToolBold": "Bold",
+  "noteToolItalic": "Italic",
+  "noteToolUnderline": "Underline",
+  "noteToolStrikethrough": "Strikethrough",
+  "noteToolInlineCode": "Inline code",
+  "noteToolHighlight": "Highlight",
+  "noteToolLargeHeading": "Large heading",
+  "noteToolHeading": "Heading",
+  "noteToolSmallHeading": "Small heading",
+  "noteToolChecklist": "Checklist",
+  "noteToolBulletList": "Bullet list",
+  "noteToolNumberedList": "Numbered list",
+  "noteToolQuote": "Quote",
+  "noteToolCodeBlock": "Code block",
+  "noteToolOutdent": "Outdent",
+  "noteToolIndent": "Indent",
+  "noteToolAlignCentre": "Align centre",
+  "noteToolAlignRight": "Align right",
+  "noteToolLink": "Link",
+  "noteToolClearFormatting": "Clear formatting",
+  "noteLinkAdd": "Add link",
+  "noteLinkEdit": "Edit link",
+  "noteLinkAddress": "Address",
+  "noteLinkRemove": "Remove link",
+  "noteHighlightSand": "Sand",
+  "noteHighlightGreen": "Green",
+  "noteHighlightLavender": "Lavender",
+  "noteHighlightRose": "Rose",
+  "backupProblemNotSqlite": "This isn’t a Craftbook backup file.",
+  "backupProblemCorrupt": "This backup is damaged and can’t be restored.",
+  "backupProblemWrongApp": "This file belongs to a different app, not Craftbook.",
+  "backupProblemNewerVersion": "This backup was made with a newer Craftbook. Update the app first.",
+  "backupProblemUpgradeFailed": "This backup couldn’t be upgraded to this version of Craftbook.",
+  "backupProblemSchemaMismatch": "This backup is missing data Craftbook needs.",
+  "backupSaveDialogTitle": "Save backup",
+  "backupSaved": "Backup saved successfully",
+  "backupExportFailed": "Export failed: {error}",
+  "@backupExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPickDialogTitle": "Select backup file",
+  "backupRestoreTitle": "Restore this backup?",
+  "backupRestoreMessage": "{summary}\n\nEverything on this phone is replaced by it. You can undo this from More.",
+  "@backupRestoreMessage": {
+    "placeholders": {
+      "summary": {
+        "type": "String"
+      }
+    }
+  },
+  "backupContents": "{orders, plural, =1{1 order} other{{orders} orders}}, {materials, plural, =1{1 material} other{{materials} materials}} and {products, plural, =1{1 product} other{{products} products}}.",
+  "@backupContents": {
+    "placeholders": {
+      "orders": {
+        "type": "int"
+      },
+      "materials": {
+        "type": "int"
+      },
+      "products": {
+        "type": "int"
+      }
+    }
+  },
+  "backupContentsUpgraded": "{contents} It was made with an older Craftbook and has been upgraded.",
+  "@backupContentsUpgraded": {
+    "placeholders": {
+      "contents": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestored": "Backup restored",
+  "backupRestoreFailed": "Restore failed: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupUndoTitle": "Undo last restore?",
+  "backupUndoMessage": "Goes back to the data you had before the last restore. Anything changed since then is lost.",
+  "backupUndoConfirm": "Undo restore",
+  "backupCantUndo": "Can’t undo: {reason}",
+  "@backupCantUndo": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreUndone": "Restore undone",
+  "backupUndoFailed": "Undo failed: {error}",
+  "@backupUndoFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSwapFailed": "Restore failed, nothing was changed: {error}",
+  "@backupSwapFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestartApp": "{message}. Restart the app.",
+  "@backupRestartApp": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMoreTitle": "More",
+  "settingsSectionNotebook": "Notebook",
+  "settingsSectionShopOnline": "Your shop online",
+  "settingsSectionCatalogue": "Catalogue",
+  "settingsSectionMoneyOrders": "Money & orders",
+  "settingsSectionAppearance": "Appearance",
+  "settingsSectionYourData": "Your data",
+  "settingsSectionAbout": "About",
+  "settingsNotesTitle": "Notes",
+  "settingsNotesHint": "Supplier details, ideas, how-tos",
+  "settingsSocialTitle": "Social shortcuts",
+  "settingsSocialHint": "Facebook, TikTok, Shopee, Lazada…",
+  "settingsChannelsTitle": "Channels & fees",
+  "settingsChannelsHint": "Where you sell and what they charge",
+  "settingsOrderFieldsTitle": "Order fields",
+  "settingsOrderFieldsHint": "Extra details to note on each order",
+  "settingsUnitsTitle": "Units of measure",
+  "settingsUnitsHint": "What you count things in",
+  "settingsBuyListTitle": "Buy list",
+  "settingsBuyListHint": "Things to restock",
+  "settingsReceivablesTitle": "Waiting for payment",
+  "settingsReceivablesHint": "Everyone has paid",
+  "settingsCurrencyTitle": "Currency",
+  "settingsTaxTitle": "Tax",
+  "settingsDiscountsTitle": "Discounts",
+  "settingsDiscountsHint": "Ones you give often",
+  "settingsExportTitle": "Export backup",
+  "settingsExportHint": "Save a copy of everything to a file",
+  "settingsRestoreTitle": "Restore from backup",
+  "settingsRestoreHint": "Replaces everything on this phone",
+  "settingsUndoRestoreTitle": "Undo last restore",
+  "settingsUndoRestoreHint": "Go back to the data from before it",
+  "settingsAboutTitle": "About Craftbook",
+  "settingsAboutHint": "What it does and how to use it",
+  "settingsFooterWithVersion": "Version {version} · all data stays on this phone",
+  "@settingsFooterWithVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsFooter": "All data stays on this phone",
+  "settingsChannelsOn": "{on} on",
+  "@settingsChannelsOn": {
+    "placeholders": {
+      "on": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsChannelsOnOff": "{on} on · {off} off",
+  "@settingsChannelsOnOff": {
+    "placeholders": {
+      "on": {
+        "type": "int"
+      },
+      "off": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsFieldsCount": "{count, plural, =1{1 field} other{{count} fields}}",
+  "@settingsFieldsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsArchivedCount": "{count} archived",
+  "@settingsArchivedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNothingToBuy": "Nothing to buy",
+  "settingsItemsCount": "{count, plural, =1{1 item} other{{count} items}}",
+  "@settingsItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsNotesCount": "{count, plural, =1{1 note} other{{count} notes}}",
+  "@settingsNotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsPinnedCount": "{count} pinned",
+  "@settingsPinnedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsOrdersCount": "{count, plural, =1{1 order} other{{count} orders}}",
+  "@settingsOrdersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsShortcutsCount": "{count, plural, =1{1 shortcut} other{{count} shortcuts}}",
+  "@settingsShortcutsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsUnitsSummary": "{count} · new items start on {unit}",
+  "@settingsUnitsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTaxSummary": "{label} {rate}% · {mode}",
+  "@settingsTaxSummary": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTaxInPrices": "in prices",
+  "settingsTaxAddedOnTop": "added on top",
+  "settingsTaxOffByDefault": "off by default",
+  "aboutTitle": "About",
+  "aboutLoadFailed": "Couldn’t load the guide. Please try again.",
+  "appearanceColourScheme": "Colour scheme",
+  "appearanceColourSchemeLabel": "{name} colour scheme",
+  "@appearanceColourSchemeLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "appearancePaletteForest": "Forest",
+  "appearancePaletteBerry": "Berry",
+  "appearancePaletteOcean": "Ocean",
+  "appearancePaletteSunset": "Sunset",
+  "appearanceDarkMode": "Dark mode",
+  "appearanceDarkAutoHint": "Auto follows your phone",
+  "appearanceDarkOverrideHint": "Overrides your phone setting",
+  "appearanceAuto": "Auto",
+  "appearanceOrderCardsShow": "Order cards show",
+  "appearanceShowsTotalHint": "What the customer pays",
+  "appearanceShowsProfitHint": "What you keep after costs",
+  "appearanceTotal": "Total",
+  "appearanceProfit": "Profit",
+  "taxSheetTitle": "Tax",
+  "taxSheetSubtitle": "Works out the tax on each order so you know what to set aside.",
+  "taxExampleIncluded": "A {price} sale includes {tax} {name}. That comes out of your profit.",
+  "@taxExampleIncluded": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taxExampleOnTop": "A {price} sale costs the customer {total}. The {tax} {name} is theirs to pay, so it isn’t counted as profit.",
+  "@taxExampleOnTop": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taxUse": "Use tax",
+  "taxUseOnHint": "Each order gets a tax switch",
+  "taxUseOffHint": "Orders have no tax. Saved orders keep what they had",
+  "taxNewOrders": "New orders start with tax",
+  "taxNewOrdersOnHint": "Switch it off on orders that don’t need it",
+  "taxNewOrdersOffHint": "Switch it on when a customer needs it, like for an official receipt",
+  "taxCalled": "Called",
+  "taxRate": "Rate",
+  "taxYourPrices": "Your prices",
+  "taxIncluded": "Already include tax",
+  "taxOnTop": "Tax added on top",
+  "currencySheetTitle": "Currency",
+  "currencySheetSubtitle": "Changes the symbol only. Amounts aren’t converted.",
+  "currencySomethingElse": "Something else",
+  "currencySymbol": "Symbol",
+  "currencySymbolHint": "e.g. kr",
+  "currencyUse": "Use",
+  "currencyNoCents": "No cents",
+  "currencyNoCentsHint": "Show 1,200 instead of 1,200.00",
+  "pipSummary": "{free} free, {promised} promised",
+  "pipSummaryReorder": "{free} free, {promised} promised, reorder at {level}",
+  "@pipSummary": {
+    "placeholders": {
+      "free": {
+        "type": "String"
+      },
+      "promised": {
+        "type": "String"
+      }
+    }
+  },
+  "@pipSummaryReorder": {
+    "placeholders": {
+      "free": {
+        "type": "String"
+      },
+      "promised": {
+        "type": "String"
+      },
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsTitle": "Reports",
+  "earningsRangeWeek": "Week",
+  "earningsRangeMonth": "Month",
+  "earningsRangeYear": "Year",
+  "earningsRangeCustom": "Custom",
+  "earningsPickerHelp": "Report on",
+  "earningsPickerShow": "Show",
+  "earningsPrevious": "Previous",
+  "earningsOrders": "{count, plural, =1{{count} order} other{{count} orders}}",
+  "@earningsOrders": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsCustomers": "{count, plural, =1{{count} customer} other{{count} customers}}",
+  "@earningsCustomers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsDays": "{count, plural, =1{{count} day} other{{count} days}}",
+  "@earningsDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsNetProfit": "Net profit · {orders}",
+  "@earningsNetProfit": {
+    "placeholders": {
+      "orders": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsNoOrders": "No packed or shipped orders in this period. Profit counts once an order is packed.",
+  "earningsNoOrdersFiltered": "No packed or shipped orders in this period match the filter.",
+  "earningsMargin": "{percent}% of sales is profit",
+  "@earningsMargin": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsUnpaidLine": "{amount} of it is still unpaid ({orders})",
+  "@earningsUnpaidLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "orders": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsByProduct": "By product · {count}",
+  "@earningsByProduct": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsSoldSales": "{sold} sold · {sales} sales",
+  "@earningsSoldSales": {
+    "placeholders": {
+      "sold": {
+        "type": "String"
+      },
+      "sales": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsWaste": "Waste",
+  "earningsWasteWithCost": "Waste · {cost}",
+  "@earningsWasteWithCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsNoWaste": "No waste recorded in this period.",
+  "earningsWasted": "{quantity} wasted",
+  "@earningsWasted": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsWaiting": "Waiting for payment",
+  "earningsWaitingSubtitle": "{orders} · {customers}",
+  "@earningsWaitingSubtitle": {
+    "placeholders": {
+      "orders": {
+        "type": "String"
+      },
+      "customers": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsThisWeek": "This week",
+  "earningsThisMonth": "This month",
+  "earningsThisYear": "This year",
+  "earningsLastWeek": "Last week",
+  "earningsLastMonth": "Last month",
+  "earningsProduct": "Product",
+  "earningsProductEarnings": "Product earnings",
+  "earningsProfitCaption": "PROFIT",
+  "earningsStatSold": "Sold",
+  "earningsStatSales": "Sales",
+  "earningsStatPerItem": "Per item",
+  "earningsStatPerUnit": "Per {unit}",
+  "@earningsStatPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsOrdersHeader": "Orders · {count}",
+  "@earningsOrdersHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsNoProductOrders": "No packed or shipped orders with this product in this period.",
+  "earningsProfitSplitNote": "Each order’s profit is split across its products by share of sales.",
+  "earningsFilterTitle": "Filter report",
+  "earningsFilterSubtitle": "Only orders that match every choice are counted.",
+  "earningsFilterChannel": "Channel",
+  "earningsFilterProducts": "Has any of these products",
+  "earningsFilterStatus": "Status",
+  "earningsFilterPayment": "Payment",
+  "earningsFilterDiscount": "Discount",
+  "earningsFilterTax": "Tax",
+  "earningsFilterTotal": "Order total",
+  "earningsFilterFrom": "From",
+  "earningsFilterTo": "To",
+  "earningsFilterClear": "Clear all",
+  "earningsFilterShow": "Show",
+  "earningsAny": "Any",
+  "earningsPacked": "Packed",
+  "earningsShipped": "Shipped",
+  "earningsPaid": "Paid",
+  "earningsUnpaid": "Unpaid",
+  "earningsWithDiscount": "With discount",
+  "earningsNoDiscount": "No discount",
+  "earningsWithTax": "With tax",
+  "earningsNoTax": "No tax",
+  "earningsChipChannel": "channel",
+  "earningsChipChannels": "{count} channels",
+  "@earningsChipChannels": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsChipProduct": "product",
+  "earningsChipProducts": "{count} products",
+  "@earningsChipProducts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "earningsChipPackedOnly": "Packed only",
+  "earningsChipShippedOnly": "Shipped only",
+  "earningsChipPackedOrShipped": "Packed or shipped",
+  "earningsChipRange": "{min}–{max}",
+  "@earningsChipRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsChipAndUp": "{min} and up",
+  "@earningsChipAndUp": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "earningsChipUpTo": "Up to {max}",
+  "@earningsChipUpTo": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "notesEmptyTitle": "No notes yet",
+  "notesEmptyMessage": "Keep supplier details, product ideas and packing how-tos here.",
+  "notesAddNote": "Add note",
+  "notesFab": "Note",
+  "notesSearchHint": "Search notes",
+  "notesNoMatches": "No matches",
+  "notesNoMatchesMessage": "No note mentions \"{query}\".",
+  "@notesNoMatchesMessage": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "notesPinnedHeader": "Pinned · {count}",
+  "@notesPinnedHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesOthersHeader": "Others · {count}",
+  "@notesOthersHeader": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesUntitled": "Untitled",
+  "notesPinToToday": "Pin to Today",
+  "notesUnpin": "Unpin",
+  "notesPin": "Pin",
+  "notesPinnedLabel": "Pinned",
+  "notesDeleteTitle": "Delete note?",
+  "notesDeleteMessage": "{title} is removed from your notebook.",
+  "@notesDeleteMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesChecklistDone": "{done}/{total} done",
+  "@notesChecklistDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "notesOutcomePinned": "Pinned to Today",
+  "notesOutcomeUnpinned": "Unpinned",
+  "notesOutcomeDeleted": "{title} deleted",
+  "@notesOutcomeDeleted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesOutcomeRestored": "{title} restored",
+  "@notesOutcomeRestored": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesDiscardTitle": "Discard changes?",
+  "notesDiscardNew": "The note is not saved.",
+  "notesDiscardEdit": "The note stays as it was.",
+  "notesDiscardConfirm": "Discard",
+  "notesKeepEditing": "Keep editing",
+  "notesNewNote": "New note",
+  "notesEditNote": "Edit note",
+  "notesMore": "More",
+  "notesTitleHint": "Title",
+  "notesBodyHint": "Supplier details, ideas, how-tos…",
+  "orderFieldsTitle": "Order fields",
+  "orderFieldsEmptyTitle": "No order fields yet",
+  "orderFieldsEmptyMessage": "Add what you note on every order: address, size, gift message…",
+  "orderFieldsAddField": "Add field",
+  "orderFieldsFab": "Field",
+  "orderFieldsDragReorder": "Drag to reorder",
+  "orderFieldsArchivedHeader": "Archived",
+  "orderFieldsDeleteNamed": "Delete {name}",
+  "@orderFieldsDeleteNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsFooter": "Fields are asked for in this order when you add an order. Archived fields stay on past orders but aren’t asked for on new ones.",
+  "orderFieldsEditField": "Edit field",
+  "orderFieldsArchiveTitle": "Archive {name}?",
+  "@orderFieldsArchiveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsDeleteTitle": "Delete {name}?",
+  "@orderFieldsDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsArchiveMessage": "It stays on {count, plural, =1{the 1 order} other{the {count} orders}} that use it, but won’t be asked for on new ones.",
+  "@orderFieldsArchiveMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderFieldsDeleteMessage": "No order uses it, so it is removed for good.",
+  "orderFieldsNewField": "New order field",
+  "orderFieldsEditNamed": "Edit {name}",
+  "@orderFieldsEditNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsNameHint": "e.g. Address",
+  "orderFieldsNameRequired": "Enter a name",
+  "orderFieldsTypeLabel": "Type",
+  "orderFieldsTypeText": "Text",
+  "orderFieldsTypeNumber": "Number",
+  "orderFieldsTypeDate": "Date",
+  "orderFieldsTypeChoice": "Choice",
+  "orderFieldsTypeLocked": "Type can’t change once orders use it.",
+  "orderFieldsNumberNote": "Numbers drop leading zeros. Use Text for phone numbers.",
+  "orderFieldsMultiline": "Multi-line",
+  "orderFieldsMultilineHint": "For longer text like an address",
+  "orderFieldsChoices": "Choices",
+  "orderFieldsChoiceHint": "Choice {number}",
+  "@orderFieldsChoiceHint": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "orderFieldsChoiceRequired": "Add at least one choice",
+  "orderFieldsRemoveChoice": "Remove choice",
+  "orderFieldsAddChoice": "Add choice",
+  "orderFieldsChoicesKept": "Orders keep the choice they were saved with, even if you rename or remove it here.",
+  "orderFieldsEnterNumber": "Enter a number",
+  "orderFieldsChoiceCount": "{count, plural, =1{1 choice} other{{count} choices}}",
+  "@orderFieldsChoiceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderFieldsUsedOn": "used on {count, plural, =1{1 order} other{{count} orders}}",
+  "@orderFieldsUsedOn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderFieldsNotUsed": "not used yet",
+  "orderFieldsFallbackName": "Field",
+  "orderFieldsOutcomeAdded": "{name} added",
+  "@orderFieldsOutcomeAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsOutcomeSaved": "{name} saved",
+  "@orderFieldsOutcomeSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsOutcomeArchived": "{name} archived",
+  "@orderFieldsOutcomeArchived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsOutcomeDeleted": "{name} deleted",
+  "@orderFieldsOutcomeDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderFieldsOutcomeRestored": "{name} restored",
+  "@orderFieldsOutcomeRestored": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialTitle": "Social shortcuts",
+  "socialEmptyTitle": "No shortcuts yet",
+  "socialEmptyMessage": "Keep your Facebook, TikTok, Shopee or Lazada page one tap away.",
+  "socialAddShortcut": "Add shortcut",
+  "socialFab": "Shortcut",
+  "socialOpen": "Open",
+  "socialEditShortcut": "Edit shortcut",
+  "socialRemoveTitle": "Remove {name}?",
+  "@socialRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialRemoveMessage": "Only the shortcut goes; the page itself is untouched.",
+  "socialHint": "Tap a shortcut to open it in your browser or the app. Tap Edit to rearrange or change them.",
+  "socialNewShortcut": "New shortcut",
+  "socialEditNamed": "Edit {name}",
+  "@socialEditNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialSite": "Site",
+  "socialOther": "Other",
+  "socialNameHint": "e.g. My website",
+  "socialNameRequired": "Enter a name",
+  "socialLinkLabel": "Link",
+  "socialLinkInvalid": "Enter a web address like {example}",
+  "@socialLinkInvalid": {
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "socialColour": "Colour",
+  "socialCouldntOpen": "Couldn’t open {name}. Check the link.",
+  "@socialCouldntOpen": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialOpenNamed": "Open {name}",
+  "@socialOpenNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialDragReorder": "Drag to reorder",
+  "socialFallbackName": "Shortcut",
+  "socialOutcomeAdded": "{name} added",
+  "@socialOutcomeAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialOutcomeSaved": "{name} saved",
+  "@socialOutcomeSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "socialOutcomeRemoved": "{name} removed",
+  "@socialOutcomeRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "updatesCheck": "Check for updates",
+  "updatesCheckSubtitle": "Get the newest version of Craftbook",
+  "updatesChecking": "Checking…",
+  "updatesUpToDate": "You’re on the newest version",
+  "updatesUpdateTo": "Update to {version}",
+  "@updatesUpdateTo": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updatesTapToInstall": "Tap to download and install",
+  "updatesDownloading": "Downloading…",
+  "updatesDownloadingPercent": "Downloading… {percent}%",
+  "@updatesDownloadingPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "updatesFailedFallback": "Something went wrong. Tap to try again.",
+  "updatesDialogMessage": "Your orders, stock and notes stay as they are.",
+  "updatesConfirm": "Update",
+  "updatesLater": "Later",
+  "ordersStatusToPack": "To pack",
+  "ordersStatusPacked": "Packed",
+  "ordersStatusShipped": "Shipped",
+  "ordersStatusCancelled": "Cancelled",
+  "ordersOverdue": "Overdue",
+  "ordersPaymentAny": "Any",
+  "ordersPaymentUnpaid": "Unpaid",
+  "ordersPaymentPaid": "Paid",
+  "ordersFilterTitle": "Filter orders",
+  "ordersFilterSubtitle": "Works together with the status chips and search.",
+  "ordersFilterPayment": "Payment",
+  "ordersFilterClearAll": "Clear all",
+  "ordersFilterShow": "Show",
+  "ordersItemCount": "{count, plural, =1{{qty} item} other{{qty} items}}",
+  "@ordersItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersOrderCount": "{count, plural, =1{1 order} other{{count} orders}}",
+  "@ordersOrderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ordersLineCount": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@ordersLineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ordersMiniProfit": "{amount} profit",
+  "@ordersMiniProfit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersUnpaidTag": "Unpaid",
+  "ordersDateToday": "Today",
+  "ordersDateTomorrow": "Tomorrow",
+  "ordersDateYesterday": "Yesterday",
+  "ordersWhenShipped": "Shipped",
+  "ordersWhenShippedOn": "Shipped {date}",
+  "@ordersWhenShippedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWhenCancelled": "Cancelled",
+  "ordersWhenDueYesterday": "Due yesterday",
+  "ordersWhenDueDaysAgo": "{count, plural, =1{Due 1 day ago} other{Due {count} days ago}}",
+  "@ordersWhenDueDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ordersWhenShipsToday": "Ships today",
+  "ordersWhenShips": "Ships {date}",
+  "@ordersWhenShips": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersActionTitle": "Order #{id} · {customer}",
+  "@ordersActionTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "customer": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersMarkShipped": "Mark shipped",
+  "ordersMarkPaid": "Mark paid",
+  "ordersMarkUnpaid": "Mark unpaid",
+  "ordersEditNote": "Edit note",
+  "ordersEditOrder": "Edit order",
+  "ordersCancelOrder": "Cancel order",
+  "ordersRestoreOrder": "Restore order",
+  "ordersDeleteOrder": "Delete order",
+  "ordersToastShipped": "Marked as shipped",
+  "ordersToastPaid": "Marked as paid",
+  "ordersToastUnpaid": "Marked as unpaid",
+  "ordersToastCancelled": "Order cancelled. Stock returned.",
+  "ordersToastRestored": "Order restored",
+  "ordersToastDeleted": "Order deleted",
+  "ordersToastPacked": "Packed. Stock updated.",
+  "ordersToastMaterialsUpdated": "Materials updated",
+  "ordersCancelTitle": "Cancel order #{id}?",
+  "@ordersCancelTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersCancelMessageShipped": "Use this when it came back or never went out. Its materials go back on the shelf, and the order stays in your list as cancelled, out of your reports. You can delete it after.",
+  "ordersCancelMessagePacked": "Its materials go back on the shelf. The order stays in your list as cancelled and doesn’t count toward earnings.",
+  "ordersCancelMessagePending": "Its reserved stock is released. The order stays in your list as cancelled and doesn’t count toward earnings.",
+  "ordersCancelConfirm": "Cancel order",
+  "ordersCancelKeep": "Keep order",
+  "ordersRestoreTitle": "Restore order #{id}?",
+  "@ordersRestoreTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersRestoreMessage": "It goes back to To pack and reserves its materials again.",
+  "ordersDeleteTitle": "Delete order #{id}?",
+  "@ordersDeleteTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersDeleteMessagePacked": "The order is removed and its materials go back on the shelf.",
+  "ordersDeleteMessageCancelled": "The cancelled order is removed for good.",
+  "ordersDeleteMessagePending": "The order is removed and its reserved stock is released.",
+  "ordersNoteOptional": "Note (optional)",
+  "ordersNotePlaceholder": "Gift wrap, colour requests, packing steps…",
+  "ordersNoteAdd": "Add note",
+  "ordersDiscardChangesTitle": "Discard changes?",
+  "ordersNoteStaysMessage": "The note stays as it was.",
+  "ordersDiscard": "Discard",
+  "ordersKeepEditing": "Keep editing",
+  "ordersTitle": "Orders",
+  "ordersNewOrder": "New order",
+  "ordersSearchHint": "Search name, # or channel",
+  "ordersGroupPacked": "Packed, ready to ship",
+  "ordersGroupDueThisWeek": "Due this week",
+  "ordersGroupLater": "Later",
+  "ordersEmptyNoneTitle": "No orders yet",
+  "ordersEmptyNoneMessage": "Your first order will show up here.",
+  "ordersNoMatches": "No matches",
+  "ordersNoMatchesFor": "Nothing matches “{query}”.",
+  "@ordersNoMatchesFor": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersNothingWaiting": "Nothing waiting for payment",
+  "ordersNoPaidHere": "No paid orders here",
+  "ordersNothingToPack": "Nothing to pack",
+  "ordersAllPackedMessage": "Every order is packed. Nice work.",
+  "ordersNoStatusOrders": "No {status} orders",
+  "@ordersNoStatusOrders": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersReceivablesTitle": "Waiting for payment",
+  "ordersReceivablesEmptyTitle": "Everyone has paid",
+  "ordersReceivablesEmptyMessage": "Orders marked unpaid will show up here.",
+  "ordersReceivablesOwed": "Owed to you · {orders}",
+  "@ordersReceivablesOwed": {
+    "placeholders": {
+      "orders": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersReceivablesHint": "Mark an order paid from its page or by long-pressing it.",
+  "ordersDetailHeader": "ORDER #{id}",
+  "@ordersDetailHeader": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersMenuMore": "More",
+  "ordersItemsCaps": "ITEMS",
+  "ordersPlaced": "Placed",
+  "ordersPlacedOn": "Placed {date}",
+  "@ordersPlacedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersDueOn": "due {date}",
+  "@ordersDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersCustomer": "Customer",
+  "ordersFieldCopied": "{label} copied",
+  "@ordersFieldCopied": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersDiscountsLine": "Discounts",
+  "ordersItemsLine": "Items",
+  "ordersIncludesTax": "Includes {amount} {tax} ({rate}%)",
+  "@ordersIncludesTax": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPaidOn": "Paid {date}",
+  "@ordersPaidOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPaid": "Paid",
+  "ordersWaitingForPayment": "Waiting for payment",
+  "ordersTotalCaps": "ORDER TOTAL",
+  "ordersAdjust": "Adjust",
+  "ordersPackOrder": "Pack order",
+  "ordersMaterials": "Materials",
+  "ordersMaterialsLines": "Materials · {lines}",
+  "@ordersMaterialsLines": {
+    "placeholders": {
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersMaterialsLinesWaste": "Materials · {lines} · waste",
+  "@ordersMaterialsLinesWaste": {
+    "placeholders": {
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersChannelFees": "Channel fees",
+  "ordersChannelFeesNamed": "{channel} fees",
+  "@ordersChannelFeesNamed": {
+    "placeholders": {
+      "channel": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPlannedUsed": "Planned {planned} · used {used}",
+  "@ordersPlannedUsed": {
+    "placeholders": {
+      "planned": {
+        "type": "String"
+      },
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWasteQty": "+{qty} waste",
+  "@ordersWasteQty": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWasteQtyReason": "+{qty} waste ({reason})",
+  "@ordersWasteQtyReason": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersFromStock": "{qty} × {price} · from stock",
+  "@ordersFromStock": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWasteCutting": "Cutting",
+  "ordersWasteDefect": "Defect",
+  "ordersWasteMiscount": "Miscount",
+  "ordersWasteOther": "Other",
+  "ordersAdjustTitle": "Materials used",
+  "ordersAdjustIntro": "Record what you actually used. Anything over plan counts as waste and comes out of this order’s profit.",
+  "ordersPlannedPerUnit": "Planned {qty} · {price}/{unit}",
+  "@ordersPlannedPerUnit": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPlannedEach": "Planned {qty} · {price} each",
+  "@ordersPlannedEach": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWasteCost": "+{qty} waste · {cost}",
+  "@ordersWasteCost": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersWhy": "Why?",
+  "ordersFewerThanPlanned": "{qty} fewer than planned",
+  "@ordersFewerThanPlanned": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPackTitle": "Pack this order?",
+  "ordersPackNothing": "Nothing to take from stock for this order.",
+  "ordersPackIntro": "These pieces come off your shelf.",
+  "ordersPackShort": "Short on {names}.",
+  "@ordersPackShort": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPackShortMessage": "Stock will stop at 0.",
+  "ordersPackConfirm": "Pack & deduct",
+  "ordersAddProduct": "Add product",
+  "ordersSearchProducts": "Search products",
+  "ordersNoProducts": "No products yet",
+  "ordersNoProductsMessage": "Add products under More → Products first.",
+  "ordersOutOfStock": "Out of stock",
+  "ordersCantBuild": "Can’t build: not enough materials",
+  "ordersInStock": "In stock {qty}",
+  "@ordersInStock": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersCanBuild": "Can build {qty}",
+  "@ordersCanBuild": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersAddedTag": "Added",
+  "ordersDiscountsCaps": "DISCOUNTS",
+  "ordersManage": "Manage",
+  "ordersRemoveDiscount": "Remove {label}",
+  "@ordersRemoveDiscount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersAddDiscountChip": "+ Add discount",
+  "ordersOtherDiscountChip": "+ Other",
+  "ordersAddDiscountTitle": "Add a discount",
+  "ordersTaxInPrices": "{tax} {rate}% · in prices",
+  "@ordersTaxInPrices": {
+    "placeholders": {
+      "tax": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersTaxOnTop": "{tax} {rate}% · added on top",
+  "@ordersTaxOnTop": {
+    "placeholders": {
+      "tax": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersTaxOff": "Off for this order",
+  "ordersTaxPartOfTotal": "{amount} of the total is {tax}",
+  "@ordersTaxPartOfTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersTaxCustomerPays": "Customer pays {amount} more",
+  "@ordersTaxCustomerPays": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPaidSwitch": "Paid",
+  "ordersPaidHasPaid": "The customer has paid",
+  "ordersPaidWaitingFor": "Waiting for {amount}",
+  "@ordersPaidWaitingFor": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersPickChannel": "Pick a sales channel",
+  "ordersDiscardEditTitle": "Discard your changes?",
+  "ordersDiscardNewTitle": "Discard this order?",
+  "ordersDiscardEditMessage": "The order stays as it was.",
+  "ordersDiscardNewMessage": "What you’ve entered so far will be lost.",
+  "ordersSaved": "Order #{id} saved",
+  "@ordersSaved": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersUpdated": "Order #{id} updated",
+  "@ordersUpdated": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersEditTitle": "Edit order",
+  "ordersEditTitleId": "Edit order #{id}",
+  "@ordersEditTitleId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersStepDetails": "Details",
+  "ordersStepCustomer": "Customer",
+  "ordersStepItems": "Items",
+  "ordersStepReview": "Review",
+  "ordersCustomerName": "Customer name",
+  "ordersEnterCustomerName": "Enter the customer name",
+  "ordersAddOrderFields": "Add order fields (address, size…)",
+  "ordersChannel": "Channel",
+  "ordersNoChannelsTitle": "No sales channels yet.",
+  "ordersNoChannelsMessage": "Add one to work out fees.",
+  "ordersOrderDate": "Order date",
+  "ordersShipBy": "Ship by",
+  "ordersNoItemsTitle": "No items yet",
+  "ordersNoItemsMessage": "Add the products this customer ordered.",
+  "ordersEachSubtotal": "{price} each · {subtotal}",
+  "@ordersEachSubtotal": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "subtotal": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersRemoveHint": "Set a quantity to 0 to remove it.",
+  "ordersShipsByItems": "Ships by {date} · {items}",
+  "@ordersShipsByItems": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "items": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersShortBannerTitle": "Not enough stock for some pieces.",
+  "ordersShortBannerMessage": "You can still save; the buy list will show what to get.",
+  "ordersSaving": "Saving…",
+  "ordersSaveChanges": "Save changes",
+  "ordersSaveOrder": "Save order",
+  "ordersNextAddItems": "Next: add items",
+  "ordersReview": "Review",
+  "ordersTotal": "Total",
+  "ordersReservesCaps": "RESERVES FROM STOCK",
+  "ordersOnlyFree": "{qty} · only {free} free",
+  "@ordersOnlyFree": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersLastOne": "{count, plural, =1{{qty} · last one} other{{qty} · last ones}}",
+  "@ordersLastOne": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "todayToPackToday": "To pack today",
+  "todayNewToday": "New today",
+  "todayWeekProfit": "Week profit",
+  "todayCalendar": "Calendar",
+  "todayLowStock": "{count} low:",
+  "@todayLowStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayBuyList": "Buy list",
+  "todayPinnedNotes": "Pinned notes · {count}",
+  "@todayPinnedNotes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayAllNotes": "All notes",
+  "todayShipsToday": "Ships today · {count}",
+  "@todayShipsToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayNewTodaySection": "New today · {count}",
+  "@todayNewTodaySection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayAllClear": "All clear for today",
+  "todayAllClearMessage": "Orders shipping today and new orders show up here.",
+  "todayNoFilterMatch": "Nothing matches this filter",
+  "todayPickAnotherStatus": "Pick another status or tap All.",
+  "todayNoteDeleted": "{title} deleted",
+  "@todayNoteDeleted": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "todayPrevWeek": "Previous week",
+  "todayNextWeek": "Next week",
+  "todayPrevMonth": "Previous month",
+  "todayNextMonth": "Next month",
+  "todayWeek": "Week",
+  "todayMonth": "Month",
+  "todayNothingDue": "Nothing due",
+  "todayNothingShipsDay": "Nothing ships this day.",
+  "todayDayOrders": "{date} · {orders}",
+  "@todayDayOrders": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "orders": {
+        "type": "String"
+      }
+    }
+  },
+  "productsInventoryTitle": "Inventory",
+  "productsTabProducts": "Products",
+  "productsTabMaterials": "Materials",
+  "productsFabProduct": "Product",
+  "productsFabMaterial": "Material",
+  "productsTypeAny": "Any",
+  "productsTypeHandmade": "Handmade",
+  "productsTypeResell": "Resell",
+  "productsStockAny": "Any",
+  "productsStockLow": "Low",
+  "productsStockShort": "Short",
+  "productsStockArchived": "Archived",
+  "productsFilterTitle": "Filter products",
+  "productsFilterSubtitle": "Works together with search.",
+  "productsFilterType": "Type",
+  "productsFilterStock": "Stock",
+  "productsFilterClearAll": "Clear all",
+  "productsFilterShow": "Show",
+  "productsSearchHint": "Search products",
+  "productsEmptyTitle": "No products yet",
+  "productsEmptyMessage": "Add what you sell and the materials it is made from.",
+  "productsAddProduct": "Add product",
+  "productsNoMatches": "No matches",
+  "productsNoMatchesFor": "Nothing matches \"{query}\".",
+  "@productsNoMatchesFor": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "productsNoFilterMatchTitle": "Nothing matches these filters",
+  "productsNoFilterMatchMessage": "Tap a filter above to remove it.",
+  "productsNoHandmadeTitle": "No handmade products",
+  "productsNoHandmadeMessage": "Products made from your materials show up here.",
+  "productsNoResellTitle": "No resell products",
+  "productsNoResellMessage": "Things you buy ready-made and sell on show up here.",
+  "productsAllArchivedTitle": "Every product is archived",
+  "productsAllArchivedMessage": "Filter by Archived to see them.",
+  "productsNothingLowTitle": "Nothing is low",
+  "productsNothingLowMessage": "Set a warning level on a product to watch it here.",
+  "productsActionEdit": "Edit product",
+  "productsActionReceive": "Receive stock",
+  "productsActionDelete": "Delete product",
+  "productsArchivedSnack": "{name} archived",
+  "@productsArchivedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsUnarchivedSnack": "{name} is back in your lists",
+  "@productsUnarchivedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsDeleteTitle": "Delete {name}?",
+  "@productsDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsDeleteMessage": "This can’t be undone. Products that appear in orders can’t be deleted; archive them instead.",
+  "productsDeletedSnack": "Product deleted",
+  "productsTagResell": "Resell",
+  "productsTagArchived": "Archived",
+  "productsTagShortForOrders": "Short for orders",
+  "productsCardCost": "Cost {cost}",
+  "@productsCardCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "productsCardMargin": "{percent}% margin",
+  "@productsCardMargin": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "productsInStock": "In stock",
+  "productsCanBuild": "Can build",
+  "productsPhotoOf": "Photo of {name}",
+  "@productsPhotoOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsOnHandCaps": "ON HAND",
+  "productsUnitOnHandCaps": "{unit} ON HAND",
+  "@productsUnitOnHandCaps": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "productsCanBuildCaps": "CAN BUILD",
+  "productsStatShort": "Short",
+  "productsStatFree": "Free",
+  "productsStatPromised": "Promised",
+  "productsStatReorderAt": "Reorder at",
+  "productsStatWarnAt": "Warn at",
+  "productsStatSellPrice": "Sell price",
+  "productsStatCost": "Cost",
+  "productsStatMargin": "Margin",
+  "productsProfitPerItem": "PROFIT PER ITEM",
+  "productsProfitPerUnit": "PROFIT PER {unit}",
+  "@productsProfitPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "productsProfitNote": "{cost} {kind, select, resell{cost} other{materials}} · {margin}% margin · before channel fees",
+  "@productsProfitNote": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      },
+      "kind": {
+        "type": "String"
+      },
+      "margin": {
+        "type": "String"
+      }
+    }
+  },
+  "productsPhotoTitle": "Product photo",
+  "productsPhotoSubtitle": "Shown when you pick products for an order.",
+  "productsPhotoTake": "Take photo",
+  "productsPhotoGallery": "Choose from gallery",
+  "productsPhotoRemove": "Remove photo",
+  "productsPhotoCameraFailed": "Couldn’t open the camera",
+  "productsPhotoGalleryFailed": "Couldn’t open your photos",
+  "productsPhotoAdd": "Add photo",
+  "productsPhotoChange": "Change photo",
+  "productsPhotoHelp": "Helps you spot the right item when making an order.",
+  "productsHistInitial": "Initial stock",
+  "productsHistReturned": "Returned from deleted order",
+  "productsHistReceived": "Received",
+  "productsHistUsed": "Used in an order",
+  "productsHistCounted": "Counted",
+  "productsNotFound": "Product not found",
+  "productsCountTitle": "Count stock",
+  "productsCountSubtitle": "Set how many are actually on the shelf.",
+  "productsCountSave": "Save count",
+  "productsStockSet": "Stock set to {qty}",
+  "@productsStockSet": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "productsReceive": "Receive",
+  "productsCount": "Count",
+  "productsMaterialsPerItem": "Materials per item · {count}",
+  "@productsMaterialsPerItem": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "productsMaterialsPerUnit": "Materials per {unit} · {count}",
+  "@productsMaterialsPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "productsNoMaterialsYet": "No materials yet. Edit the product to add them.",
+  "productsMakesCount": "makes {makes}",
+  "@productsMakesCount": {
+    "placeholders": {
+      "makes": {
+        "type": "String"
+      }
+    }
+  },
+  "productsHistoryTitle": "History",
+  "productsHistoryError": "Couldn’t load history: {error}",
+  "@productsHistoryError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "productsHistoryEmpty": "No sales or stock changes yet.",
+  "productsReceiveCaps": "RECEIVE",
+  "productsQuantityReceivedCaps": "QUANTITY RECEIVED",
+  "productsPriceEach": "Price each",
+  "productsPricePerUnit": "Price per {unit}",
+  "@productsPricePerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "productsAfterReceivingCaps": "AFTER RECEIVING",
+  "productsUnitCostWeighted": "Unit cost (weighted)",
+  "productsReceivedSnack": "Added {qty} to {name}",
+  "@productsReceivedSnack": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsReceiveButton": "Add {qty} to stock",
+  "@productsReceiveButton": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "productsNewProduct": "New product",
+  "productsEditProduct": "Edit product",
+  "productsEnterName": "Enter a name",
+  "productsDescriptionOptional": "Description (optional)",
+  "productsPriceAboveZero": "Enter a price above 0",
+  "productsSoldCountedIn": "Sold and counted in",
+  "productsLockOrders": "Used in orders, so its type is fixed.",
+  "productsLockStock": "It has stock on hand or reserved, so its type is fixed.",
+  "productsLockBom": "Remove its materials first to switch it to Resell.",
+  "productsTypeHintResell": "Bought ready-made. Tracks its own stock.",
+  "productsTypeHintHandmade": "Made from materials. Stock comes from what you can build.",
+  "productsSaving": "Saving…",
+  "productsSaveChanges": "Save changes",
+  "productsAddedSnack": "{name} added",
+  "@productsAddedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChangesSaved": "Changes saved",
+  "productsMakesAboveZero": "{material}: Makes must be above 0",
+  "@productsMakesAboveZero": {
+    "placeholders": {
+      "material": {
+        "type": "String"
+      }
+    }
+  },
+  "productsCostPerItem": "Cost per item",
+  "productsCostPerUnit": "Cost per {unit}",
+  "@productsCostPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "productsMaterialsPerItemLabel": "Materials per item",
+  "productsMaterialsPerUnitLabel": "Materials per {unit}",
+  "@productsMaterialsPerUnitLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "productsAddMaterialTitle": "Add material",
+  "productsNoMaterialsTitle": "No materials yet",
+  "productsAllMaterialsAdded": "All materials added",
+  "productsAddMaterialsFirst": "Add materials under Stock first.",
+  "productsSearchMaterials": "Search materials",
+  "productsAddMaterialsHint": "Add what this is made from so the app can work out its cost and reserve stock.",
+  "productsCostEach": "{cost} each",
+  "@productsCostEach": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "productsUses": "Uses",
+  "productsMakes": "Makes",
+  "productsBomHelp": "Uses is how much of the material goes in, Makes is how many of this product that makes (1 sheet makes 9 cards). Set Uses to 0 to remove a material.",
+  "productsReorderAtOptional": "Reorder at (optional)",
+  "productsWarnWhenCanMake": "Warn when I can make (optional)",
+  "productsReorderHelp": "Warn when stock drops to this.",
+  "productsWarnHelp": "Warn when materials only cover this many.",
+  "productsStockSection": "Stock",
+  "productsCostRecalc": "Receiving stock recalculates this as an average.",
+  "productsOnHandNow": "On hand now",
+  "productsChannelsTitle": "Channels & fees",
+  "productsChannelAdded": "Channel added",
+  "productsChannelDeleted": "Channel deleted",
+  "productsChannelsEmptyTitle": "No channels yet",
+  "productsChannelsEmptyMessage": "Add Shopee, TikTok Shop, walk-in… with their fees so profit is accurate.",
+  "productsChannelAddButton": "Add channel",
+  "productsChannelsNote": "Examples use a {sale} sale. Turned-off channels stay on past orders but are hidden when you create new ones.",
+  "@productsChannelsNote": {
+    "placeholders": {
+      "sale": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChannelFab": "Channel",
+  "productsChannelEdit": "Edit channel",
+  "productsChannelDelete": "Delete channel",
+  "productsChannelTurnOff": "Turn off",
+  "productsChannelTurnOn": "Turn on",
+  "productsChannelDeleteTitle": "Delete {name}?",
+  "@productsChannelDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChannelDeleteMessage": "Channels used by orders can’t be deleted. Turn them off instead.",
+  "productsChannelNew": "New channel",
+  "productsChannelEditTitle": "Edit {name}",
+  "@productsChannelEditTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChannelNameHint": "e.g. Shopee",
+  "productsChannelCommission": "Commission",
+  "productsChannelTransactionFee": "Transaction fee",
+  "productsChannelFixedFee": "Fixed fee",
+  "productsChannelShippingYouPay": "Shipping you pay",
+  "productsChannelPaidWhenPlaced": "Orders are paid when placed",
+  "productsChannelPaidUpfront": "Like a marketplace that collects up front",
+  "productsChannelUnpaidStart": "New orders start unpaid, for cash on delivery or chat sales",
+  "productsChannelYouKeep": "On a {sale} sale you keep",
+  "@productsChannelYouKeep": {
+    "placeholders": {
+      "sale": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChannelBeforeMaterials": "before materials.",
+  "productsChannelNoFees": "No fees",
+  "productsChannelRecipeShipping": "{fees} · you pay {shipping} shipping",
+  "@productsChannelRecipeShipping": {
+    "placeholders": {
+      "fees": {
+        "type": "String"
+      },
+      "shipping": {
+        "type": "String"
+      }
+    }
+  },
+  "productsChannelHiddenKeep": "Hidden from new orders · on a {sale} sale you keep",
+  "@productsChannelHiddenKeep": {
+    "placeholders": {
+      "sale": {
+        "type": "String"
+      }
+    }
+  },
+  "unitsTitle": "Units of measure",
+  "unitsEmptyTitle": "No units yet",
+  "unitsEmptyMessage": "Add what you count things in, like pc, sheet or kg.",
+  "unitsAddButton": "Add unit",
+  "unitsFab": "Unit",
+  "unitsNew": "New unit",
+  "unitsEditTitle": "Edit {label}",
+  "@unitsEditTitle": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "unitsDefaultNote": "New items start on this",
+  "unitsActionEdit": "Edit unit",
+  "unitsActionUseForNew": "Use for new items",
+  "unitsDeleteTitle": "Delete {label}?",
+  "@unitsDeleteTitle": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "unitsDeleteMessage": "Materials and products counted in it keep their numbers, so move them to another unit first.",
+  "unitsDefaultTag": "Default",
+  "unitsDragToReorder": "Drag to reorder",
+  "unitsFooter": "Everything you count is written with one of these: stock, what a product uses, what an order reserves. Long-press one to rename it, make it the default for new items, or delete it.",
+  "unitsPickerSubtitle": "Every number for this is written with it.",
+  "unitsPickerHelper": "Add more in More → Units of measure",
+  "unitsFieldLabel": "Unit",
+  "unitsFieldHint": "e.g. sheet, board, kg",
+  "unitsFieldHelper": "Shown exactly as you type it, so an abbreviation like kg or m stays correct.",
+  "unitsNameRequired": "Give the unit a name",
+  "unitsTooLong": "Keep it under {max} characters — it shows next to every number",
+  "@unitsTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "discountsTitle": "Discounts",
+  "discountsEmptyTitle": "No discounts yet",
+  "discountsEmptyMessage": "Save the ones you give often, like 10% for regulars. You can still type any discount on an order.",
+  "discountsAddButton": "Add discount",
+  "discountsFab": "Discount",
+  "discountsNew": "New discount",
+  "discountsEditTitle": "Edit {label}",
+  "@discountsEditTitle": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "discountsActionEdit": "Edit discount",
+  "discountsDeleteTitle": "Delete {label}?",
+  "@discountsDeleteTitle": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "discountsDeleteMessage": "Orders that already have it keep it.",
+  "discountsDragToReorder": "Drag to reorder",
+  "discountsFooter": "These show as one-tap chips when you review an order. Orders keep their own copy, so editing one here never changes past orders.",
+  "discountsNameHint": "e.g. Loyal customer",
+  "discountsKindPercent": "Percent",
+  "discountsKindFixed": "Fixed amount",
+  "discountsPercentOff": "Percent off",
+  "discountsAmountOff": "Amount off",
+  "discountsPercentHelper": "Taken off the items total",
+  "discountsFixedHelper": "Taken off the order once",
+  "discountsNameRequired": "Give the discount a name",
+  "discountsAmountRequired": "Enter an amount above zero",
+  "discountsPercentMax": "A percentage can be at most 100",
+  "stockActionReceive": "Receive stock",
+  "stockActionEdit": "Edit material",
+  "stockActionDelete": "Delete material",
+  "stockArchivedSnack": "{name} archived",
+  "@stockArchivedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockUnarchivedSnack": "{name} is back in your lists",
+  "@stockUnarchivedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockDeleteTitle": "Delete {name}?",
+  "@stockDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockDeleteBody": "This can’t be undone. Materials used in a product or an order can’t be deleted; archive them instead.",
+  "stockDeleteOnHand": "You still have {quantity} on hand. Its stock history goes too.",
+  "@stockDeleteOnHand": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockDeletedSnack": "{name} deleted",
+  "@stockDeletedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockFilterAny": "Any",
+  "stockFilterLow": "Low",
+  "stockFilterPromised": "Promised",
+  "stockFilterArchived": "Archived",
+  "stockFilterTitle": "Filter materials",
+  "stockFilterSubtitle": "Works together with search.",
+  "stockFilterStock": "Stock",
+  "stockFilterClear": "Clear all",
+  "stockFilterShow": "Show",
+  "stockArchivedTag": "Archived",
+  "stockCardFree": "{quantity} free",
+  "@stockCardFree": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCardPromised": "{quantity} promised",
+  "@stockCardPromised": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCardReorderAt": "reorder at {quantity}",
+  "@stockCardReorderAt": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCardShort": "{quantity} short",
+  "@stockCardShort": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBuyListButton": "Buy list",
+  "stockBuyListButtonCount": "Buy list · {count}",
+  "@stockBuyListButtonCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stockSearchHint": "Search materials",
+  "stockEmptyNoneTitle": "No materials yet",
+  "stockEmptyNoneMessage": "Add the beads, yarn and boxes your products are made from.",
+  "stockAddMaterial": "Add material",
+  "stockEmptyNoMatchTitle": "No matches",
+  "stockEmptyNoMatchMessage": "Nothing matches \"{query}\".",
+  "@stockEmptyNoMatchMessage": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "stockEmptyAllArchivedTitle": "Every material is archived",
+  "stockEmptyAllArchivedMessage": "Filter by Archived to see them.",
+  "stockEmptyNotLowTitle": "Nothing is low",
+  "stockEmptyNotLowMessage": "Every material is above its reorder level.",
+  "stockEmptyNoPromisedTitle": "Nothing promised",
+  "stockEmptyNoPromisedMessage": "Materials reserved by open orders show up here.",
+  "stockMaterialNotFound": "Material not found",
+  "stockReceiveCaption": "RECEIVE",
+  "stockReceiveEnterPrice": "Enter what you paid per pack",
+  "stockReceiveAdded": "Added {quantity} of {name}",
+  "@stockReceiveAdded": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockReceivePacksCaption": "PACKS RECEIVED",
+  "stockReceivePerPack": "{quantity} per pack",
+  "@stockReceivePerPack": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockReceivePriceLabel": "Price per pack",
+  "stockSupplierOptional": "Supplier (optional)",
+  "stockReceiveAfterCaption": "AFTER RECEIVING",
+  "stockReceiveUnitCost": "Unit cost (weighted)",
+  "stockReceiveCostUp": "Products using this will cost a bit more to make.",
+  "stockReceiveAddButton": "Add {quantity} to stock",
+  "@stockReceiveAddButton": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockPacks": "{count, plural, =1{{count} pack} other{{count} packs}}",
+  "@stockPacks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stockBuyListTitle": "Buy list",
+  "stockBuyListCopyHeader": "CraftBook buy list",
+  "stockBuyListCopyLine": "- {name}: {amount}, {cost}",
+  "@stockBuyListCopyLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBuyListCopyTotal": "Total: {total}",
+  "@stockBuyListCopyTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBuyListCopied": "Buy list copied",
+  "stockBuyEmptyTitle": "Nothing to buy",
+  "stockBuyEmptyMessage": "Everything is above its reorder level.",
+  "stockBuyItemCount": "{count, plural, =1{{count} item} other{{count} items}}",
+  "@stockBuyItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stockBuyCopyList": "Copy list",
+  "stockBuyTagResell": "Resell",
+  "stockBuyTagBlocking": "{count, plural, =1{Blocking {count} order} other{Blocking {count} orders}}",
+  "@stockBuyTagBlocking": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stockBuyTagOutOfFree": "Out of free stock",
+  "stockBuyTagBelowReorder": "Below reorder",
+  "stockBuyVerb": "Buy",
+  "stockBuyFreeNow": "{quantity} free now",
+  "@stockBuyFreeNow": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBuyHoldsUp": "Holds up: {products}",
+  "@stockBuyHoldsUp": {
+    "placeholders": {
+      "products": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCountTitle": "Count stock",
+  "stockCountSubtitle": "Set the real amount on the shelf.",
+  "stockCountMatches": "Matches the app ({quantity})",
+  "@stockCountMatches": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCountDiff": "{change} from {quantity} in the app",
+  "@stockCountDiff": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockCountSave": "Save count",
+  "stockCountSet": "Stock set to {quantity}",
+  "@stockCountSet": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockOnHandCaption": "ON HAND",
+  "stockUnitOnHandCaption": "{unit} ON HAND",
+  "@stockUnitOnHandCaption": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "stockStatShort": "Short",
+  "stockStatFree": "Free",
+  "stockStatPromised": "Promised",
+  "stockStatReorderAt": "Reorder at",
+  "stockStatUnitCost": "Unit cost",
+  "stockStatPack": "Pack",
+  "stockStatSupplier": "Supplier",
+  "stockReceive": "Receive",
+  "stockCount": "Count",
+  "stockUsedIn": "Used in · {count}",
+  "@stockUsedIn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stockUsedInEmpty": "Not part of any product yet.",
+  "stockHistory": "History",
+  "stockHistoryEmpty": "No stock changes yet.",
+  "stockUsagePer": "{quantity} per {makes}",
+  "@stockUsagePer": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "makes": {
+        "type": "String"
+      }
+    }
+  },
+  "stockUsageEach": "{quantity} each",
+  "@stockUsageEach": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      }
+    }
+  },
+  "stockMoveReturned": "Returned from deleted order",
+  "stockMoveReceived": "Received",
+  "stockMoveUsed": "Used in an order",
+  "stockMoveCounted": "Counted",
+  "stockMoveWaste": "Waste",
+  "stockNewTitle": "New material",
+  "stockNameHint": "e.g. Glass seed beads 2mm",
+  "stockNameRequired": "Enter a name",
+  "stockCountedIn": "Counted in",
+  "stockSectionBuy": "How you buy it",
+  "stockPerPackLabel": "Per pack",
+  "stockUnitPerPackLabel": "{unit} per pack",
+  "@stockUnitPerPackLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "stockPackPrice": "Pack price",
+  "stockPriceRequired": "Enter a price",
+  "stockCostPerUnit": "{cost} per {unit}",
+  "@stockCostPerUnit": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "stockSectionStock": "Stock",
+  "stockOnHandNow": "On hand now",
+  "stockUnitOnHandNow": "{unit} on hand now",
+  "@stockUnitOnHandNow": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "stockReorderHelp": "You’ll see a warning and it goes on the buy list when stock drops to the reorder level.",
+  "stockNumberAboveZero": "Enter a number above 0",
+  "stockNumberZeroOrMore": "Enter 0 or more",
+  "stockSaving": "Saving…",
+  "stockSaveChanges": "Save changes",
+  "stockAdded": "{name} added",
+  "@stockAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stockUpdated": "{name} updated",
+  "@stockUpdated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

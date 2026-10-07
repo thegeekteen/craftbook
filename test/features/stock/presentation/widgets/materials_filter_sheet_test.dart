@@ -6,6 +6,8 @@ import 'package:craftbook/features/stock/presentation/widgets/materials_filter_s
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../../support/localized_app.dart';
+
 final _at = DateTime(2026, 1, 1);
 
 Material _material(String name,
@@ -25,11 +27,11 @@ Material _material(String name,
 
 void main() {
   Future<MaterialStockFilter?> run(WidgetTester tester, MaterialCatalogueView v,
-      Future<void> Function() interact) async {
+      Future<void> Function() interact,
+      {Locale locale = const Locale('en')}) async {
     MaterialStockFilter? result;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Builder(
+    await tester.pumpWidget(localizedApp(
+      Builder(
         builder: (context) => TextButton(
           onPressed: () async => result = await showMaterialsFilterSheet(
               context,
@@ -38,6 +40,8 @@ void main() {
           child: const Text('open'),
         ),
       ),
+      theme: AppTheme.lightTheme,
+      locale: locale,
     ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
@@ -54,6 +58,14 @@ void main() {
     _material('Glue', onHand: 1),
     _material('Beads'),
   ];
+
+  testWidgets('shows Filipino labels', (tester) async {
+    await run(tester, MaterialCatalogueView(materials: [_material('Yarn')]),
+        () async {
+      expect(find.text('Lahat'), findsOneWidget);
+      expect(find.text('Paubos na'), findsOneWidget);
+    }, locale: const Locale('fil'));
+  });
 
   testWidgets('counts every option and hides Archived when empty',
       (tester) async {

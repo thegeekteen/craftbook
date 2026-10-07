@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/widgets/app_sheet.dart';
@@ -46,12 +47,12 @@ class _UnitFormState extends State<UnitForm> {
   void _save() {
     final label = _label.text.trim();
     if (label.isEmpty) {
-      setState(() => _error = 'Give the unit a name');
+      setState(() => _error = context.l10n.unitsNameRequired);
       return;
     }
     if (label.length > maxUnitLabelLength) {
-      setState(() => _error = 'Keep it under $maxUnitLabelLength characters — '
-          'it shows next to every number');
+      setState(() =>
+          _error = context.l10n.unitsTooLong(maxUnitLabelLength.toString()));
       return;
     }
     Navigator.pop(context, label);
@@ -67,11 +68,10 @@ class _UnitFormState extends State<UnitForm> {
           controller: _label,
           autofocus: true,
           maxLength: maxUnitLabelLength,
-          decoration: const InputDecoration(
-            labelText: 'Unit',
-            hintText: 'e.g. sheet, board, kg',
-            helperText: 'Shown exactly as you type it, so an abbreviation '
-                'like kg or m stays correct.',
+          decoration: InputDecoration(
+            labelText: context.l10n.unitsFieldLabel,
+            hintText: context.l10n.unitsFieldHint,
+            helperText: context.l10n.unitsFieldHelper,
           ),
           onSubmitted: (_) => _save(),
         ),

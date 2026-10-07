@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/dimens.dart';
 import '../theme/text_styles.dart';
+import '../utils/l10n_extension.dart';
 
 /// Pill-shaped search input with a clear button.
 class AppSearchField extends StatefulWidget {
@@ -65,7 +66,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
         suffixIcon: _controller.text.isEmpty
             ? null
             : IconButton(
-                tooltip: 'Clear',
+                tooltip: context.l10n.commonClear,
                 icon: Icon(Icons.close_rounded, size: 18, color: c.muted),
                 onPressed: () {
                   _controller.clear();

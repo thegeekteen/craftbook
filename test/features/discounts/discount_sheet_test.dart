@@ -4,21 +4,22 @@ import 'package:craftbook/features/orders/domain/entities/order_discount.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/localized_app.dart';
+
 void main() {
   Future<OrderDiscount?> run(
       WidgetTester tester, Future<void> Function() interact,
       {OrderDiscount? initial}) async {
     OrderDiscount? result;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Builder(
-        builder: (context) => TextButton(
-          onPressed: () async => result = await showDiscountSheet(context,
-              title: 'Add a discount', initial: initial),
-          child: const Text('open'),
+    await tester.pumpWidget(localizedApp(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async => result = await showDiscountSheet(context,
+                title: 'Add a discount', initial: initial),
+            child: const Text('open'),
+          ),
         ),
-      ),
-    ));
+        theme: AppTheme.lightTheme));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await interact();

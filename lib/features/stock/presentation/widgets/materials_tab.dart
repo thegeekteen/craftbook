@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/route_names.dart';
 import '../../../../core/theme/dimens.dart';
+import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/filter_controls.dart';
@@ -60,7 +61,7 @@ class _MaterialsTabState extends State<MaterialsTab>
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: AppSearchField(
-            hint: 'Search materials',
+            hint: context.l10n.stockSearchHint,
             controller: widget.search,
             onChanged: widget.onQueryChanged,
           ),
@@ -106,7 +107,7 @@ class _MaterialsTabState extends State<MaterialsTab>
           filters: [
             if (filter != MaterialStockFilter.any)
               (
-                filter.label,
+                filter.label(context.l10n),
                 () => widget.onFilterChanged(MaterialStockFilter.any),
               ),
           ],
@@ -140,36 +141,37 @@ class _MaterialsTabState extends State<MaterialsTab>
   }
 
   Widget _empty(MaterialStockFilter filter) {
+    final l10n = context.l10n;
     if (_materials.isEmpty) {
       return EmptyState(
         icon: Icons.inventory_2_outlined,
-        title: 'No materials yet',
-        message: 'Add the beads, yarn and boxes your products are made from.',
-        actionLabel: 'Add material',
+        title: l10n.stockEmptyNoneTitle,
+        message: l10n.stockEmptyNoneMessage,
+        actionLabel: l10n.stockAddMaterial,
         onAction: () => widget.onOpen(RouteNames.newMaterial),
       );
     }
     if (widget.query.trim().isNotEmpty) {
       return EmptyState(
           icon: Icons.search_off_rounded,
-          title: 'No matches',
-          message: 'Nothing matches "${widget.query.trim()}".');
+          title: l10n.stockEmptyNoMatchTitle,
+          message: l10n.stockEmptyNoMatchMessage(widget.query.trim()));
     }
     return switch (filter) {
-      MaterialStockFilter.any => const EmptyState(
+      MaterialStockFilter.any => EmptyState(
           icon: Icons.archive_outlined,
-          title: 'Every material is archived',
-          message: 'Filter by Archived to see them.',
+          title: l10n.stockEmptyAllArchivedTitle,
+          message: l10n.stockEmptyAllArchivedMessage,
         ),
-      MaterialStockFilter.low => const EmptyState(
+      MaterialStockFilter.low => EmptyState(
           icon: Icons.check_circle_outline_rounded,
-          title: 'Nothing is low',
-          message: 'Every material is above its reorder level.',
+          title: l10n.stockEmptyNotLowTitle,
+          message: l10n.stockEmptyNotLowMessage,
         ),
-      _ => const EmptyState(
+      _ => EmptyState(
           icon: Icons.inventory_2_outlined,
-          title: 'Nothing promised',
-          message: 'Materials reserved by open orders show up here.',
+          title: l10n.stockEmptyNoPromisedTitle,
+          message: l10n.stockEmptyNoPromisedMessage,
         ),
     };
   }

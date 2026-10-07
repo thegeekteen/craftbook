@@ -1,3 +1,4 @@
+import '../../../../core/utils/l10n_extension.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -25,23 +26,24 @@ class ProductPhotoField extends StatelessWidget {
   });
 
   Future<void> _choose(BuildContext context) async {
+    final l10n = context.l10n;
     final action = await showAppSheet<_PhotoAction>(
       context: context,
-      title: 'Product photo',
-      subtitle: 'Shown when you pick products for an order.',
+      title: l10n.productsPhotoTitle,
+      subtitle: l10n.productsPhotoSubtitle,
       builder: (sheetContext) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take photo'),
+            title: Text(l10n.productsPhotoTake),
             onTap: () => Navigator.pop(sheetContext, _PhotoAction.camera),
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from gallery'),
+            title: Text(l10n.productsPhotoGallery),
             onTap: () => Navigator.pop(sheetContext, _PhotoAction.gallery),
           ),
           if (photo != null)
@@ -49,7 +51,7 @@ class ProductPhotoField extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading:
                   Icon(Icons.delete_outline, color: sheetContext.colors.alert),
-              title: Text('Remove photo',
+              title: Text(l10n.productsPhotoRemove,
                   style: TextStyle(color: sheetContext.colors.alert)),
               onTap: () => Navigator.pop(sheetContext, _PhotoAction.remove),
             ),
@@ -73,8 +75,8 @@ class ProductPhotoField extends StatelessWidget {
       if (!context.mounted) return;
       context.showSnackBar(
         action == _PhotoAction.camera
-            ? "Couldn't open the camera"
-            : "Couldn't open your photos",
+            ? l10n.productsPhotoCameraFailed
+            : l10n.productsPhotoGalleryFailed,
         isError: true,
       );
     }
@@ -100,10 +102,12 @@ class ProductPhotoField extends StatelessWidget {
                 icon: Icon(photo == null
                     ? Icons.add_a_photo_outlined
                     : Icons.edit_outlined),
-                label: Text(photo == null ? 'Add photo' : 'Change photo'),
+                label: Text(photo == null
+                    ? context.l10n.productsPhotoAdd
+                    : context.l10n.productsPhotoChange),
               ),
               Text(
-                'Helps you spot the right item when making an order.',
+                context.l10n.productsPhotoHelp,
                 style: AppTextStyles.bodySmall.copyWith(color: c.muted),
               ),
             ],
