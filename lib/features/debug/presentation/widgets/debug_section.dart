@@ -122,7 +122,10 @@ class _DebugRows extends StatelessWidget {
   /// A typed seed is how you look at a second shop, or rebuild the one someone
   /// else is describing to you.
   Future<void> _seedAnotherShop(BuildContext context) async {
-    final controller = TextEditingController();
+    // The field owns its own controller (see [_SeedField]); the text is
+    // captured through [onChanged] because the controller is gone by the time
+    // the dialog finishes closing.
+    var typed = '';
     final go = await ConfirmDialog.show(
       context,
       title: 'Another shop',
@@ -131,18 +134,10 @@ class _DebugRows extends StatelessWidget {
           'standard shop.',
       confirmText: 'Seed it',
       isDestructive: true,
-      content: TextField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Seed',
-          hintText: 'empty for the standard shop',
-        ),
-      ),
+      content: _SeedField(onChanged: (value) => typed = value),
     );
-    final typed = controller.text.trim();
-    controller.dispose();
     if (!context.mounted || !go) return;
+    typed = typed.trim();
     // A typo would otherwise be read as "no seed" and replace the shop with the
     // standard one, which is not what was asked for. Nothing is written here.
     final seed = typed.isEmpty ? null : int.tryParse(typed);
@@ -189,4 +184,42 @@ class _DebugRows extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$message. Restart the app to see it.')));
   }
+}
+
+/// The seed box inside the "Another shop" dialog.
+///
+/// It owns its [TextEditingController] and disposes it in [dispose], which
+/// Flutter runs only once the dialog route has fully closed. Handing a caller's
+/// controller to [ConfirmDialog] instead means the field rebuilds during the
+/// closing transition against a controller the caller already disposed, which
+/// throws and aborts the seed.
+class _SeedField extends StatefulWidget {
+  const _SeedField({required this.onChanged});
+
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_SeedField> createState() => _SeedFieldState();
+}
+
+class _SeedFieldState extends State<_SeedField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        onChanged: widget.onChanged,
+        decoration: const InputDecoration(
+          labelText: 'Seed',
+          hintText: 'empty for the standard shop',
+        ),
+      );
 }
