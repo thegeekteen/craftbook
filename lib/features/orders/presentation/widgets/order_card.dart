@@ -85,13 +85,16 @@ class OrderCard extends StatelessWidget {
                           .copyWith(color: c.muted, fontSize: 11),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      whenText,
-                      maxLines: 1,
-                      style: muted.copyWith(
-                        color: whenUrgent ? c.alert : c.muted,
-                        fontWeight:
-                            whenUrgent ? FontWeight.w600 : FontWeight.w400,
+                    Flexible(
+                      child: Text(
+                        whenText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: muted.copyWith(
+                          color: whenUrgent ? c.alert : c.muted,
+                          fontWeight:
+                              whenUrgent ? FontWeight.w600 : FontWeight.w400,
+                        ),
                       ),
                     ),
                     if (entry.channelName != null) ...[
@@ -102,8 +105,9 @@ class OrderCard extends StatelessWidget {
                     ],
                     if (order.isAwaitingPayment) ...[
                       const SizedBox(width: 6),
-                      AppTag(context.l10n.ordersUnpaidTag,
-                          type: AppTagType.warn),
+                      Flexible(
+                          child: AppTag(context.l10n.ordersUnpaidTag,
+                              type: AppTagType.warn)),
                     ],
                   ],
                 ),

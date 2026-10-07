@@ -180,6 +180,26 @@ void main() {
   });
 
   group('OrderCard', () {
+    for (final locale in const [Locale('en'), Locale('fil')]) {
+      testWidgets('the unpaid tag shrinks instead of overflowing ($locale)',
+          (tester) async {
+        // A narrow phone, a long channel name and the longest wording.
+        tester.view.physicalSize = const Size(300, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final order = _order().copyWith(isPaid: false);
+        expect(order.isAwaitingPayment, isTrue);
+        await tester.pumpWidget(localizedApp(
+          Scaffold(
+              body: OrderCard(
+                  entry: _entry(order, channel: 'Facebook Marketplace'))),
+          locale: locale,
+          theme: AppTheme.lightTheme,
+        ));
+        expect(find.byType(AppTag), findsNWidgets(2));
+        expect(tester.takeException(), isNull);
+      });
+    }
     testWidgets('long press fires onLongPress, not onTap', (tester) async {
       var taps = 0;
       var longPresses = 0;
