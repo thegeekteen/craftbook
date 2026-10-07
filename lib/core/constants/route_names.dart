@@ -13,8 +13,10 @@ class RouteNames {
   static const String editOrder = '/orders/:id/edit';
   static const String orderDetail = '/orders/:id';
 
-  // Stock / Materials
+  // Stock / Materials. The list is the Products page's Materials tab;
+  // [materials] redirects there.
   static const String materials = '/materials';
+  static const String materialsTab = '/products?tab=materials';
   static const String newMaterial = '/materials/new';
   static const String materialDetail = '/materials/:id';
   static const String editMaterial = '/materials/:id/edit';

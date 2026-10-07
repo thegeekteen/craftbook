@@ -12,11 +12,11 @@ import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/filter_controls.dart';
 import '../../../../core/widgets/money_breakdown.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/summary_board.dart';
 import '../../../../core/error/result.dart';
-import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../orders/presentation/bloc/receivables_cubit.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/domain/usecases/get_channels.dart';
@@ -153,15 +153,8 @@ class _EarningsViewState extends State<_EarningsView> {
       appBar: AppBar(
         title: const Text('Reports'),
         actions: [
-          IconButton(
-            tooltip: 'Filter',
-            onPressed: _openFilter,
-            icon: Badge(
-              isLabelVisible: !_filter.isEmpty,
-              label: Text('${_filter.activeCount}'),
-              child: const Icon(Icons.filter_list_rounded),
-            ),
-          ),
+          FilterButton(
+              activeCount: _filter.activeCount, onPressed: _openFilter),
         ],
       ),
       body: BlocBuilder<EarningsBloc, EarningsState>(
@@ -218,27 +211,16 @@ class _EarningsViewState extends State<_EarningsView> {
             onPickCustom: _pickCustom,
           ),
           if (!_filter.isEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
+            ActiveFilterChips(
+              filters: [
                 for (final (label, without) in describeFilter(
                   _filter,
                   channelNames: {for (final c in _channels) c.id: c.name},
                   productNames: {for (final p in _products) p.id: p.name},
                 ))
-                  AppChip(
-                    label: label,
-                    trailingIcon: Icons.close_rounded,
-                    selected: true,
-                    onTap: () => _setFilter(without),
-                  ),
-                TextButton(
-                  onPressed: () => _setFilter(ReportFilter.none),
-                  child: const Text('Clear'),
-                ),
+                  (label, () => _setFilter(without)),
               ],
+              onClearAll: () => _setFilter(ReportFilter.none),
             ),
             const SizedBox(height: 8),
           ],

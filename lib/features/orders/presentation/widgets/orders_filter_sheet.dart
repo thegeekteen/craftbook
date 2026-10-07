@@ -17,23 +17,26 @@ enum OrderPaymentFilter {
 Future<OrderPaymentFilter?> showOrdersFilterSheet(
   BuildContext context, {
   required OrderPaymentFilter current,
-  int? unpaidCount,
+  Map<OrderPaymentFilter, int> counts = const {},
 }) {
   return showAppSheet<OrderPaymentFilter>(
     context: context,
     title: 'Filter orders',
     subtitle: 'Works together with the status chips and search.',
-    builder: (_) =>
-        OrdersFilterForm(current: current, unpaidCount: unpaidCount),
+    builder: (_) => OrdersFilterForm(current: current, counts: counts),
   );
 }
 
 /// The sheet's body, public so it can be tested alone.
 class OrdersFilterForm extends StatefulWidget {
   final OrderPaymentFilter current;
-  final int? unpaidCount;
 
-  const OrdersFilterForm({super.key, required this.current, this.unpaidCount});
+  /// How many orders each option would show; an option without one shows
+  /// no number.
+  final Map<OrderPaymentFilter, int> counts;
+
+  const OrdersFilterForm(
+      {super.key, required this.current, this.counts = const {}});
 
   @override
   State<OrdersFilterForm> createState() => _OrdersFilterFormState();
@@ -56,10 +59,7 @@ class _OrdersFilterFormState extends State<OrdersFilterForm> {
           onSelected: (p) => setState(() => _payment = p),
           options: [
             for (final p in OrderPaymentFilter.values)
-              ChipOption(p, p.label,
-                  count: p == OrderPaymentFilter.unpaid
-                      ? widget.unpaidCount
-                      : null),
+              ChipOption(p, p.label, count: widget.counts[p]),
           ],
         ),
         const SizedBox(height: 20),

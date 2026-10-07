@@ -12,6 +12,7 @@ import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/choice_chip_row.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/filter_controls.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../settings/domain/entities/order_amount_shown.dart';
 import '../../../settings/presentation/bloc/order_amount_cubit.dart';
@@ -58,14 +59,15 @@ class _OrdersListViewState extends State<_OrdersListView> {
     if (changed == true && mounted) _reload();
   }
 
-  /// Orders awaiting payment under the current search, for the sheet's count.
-  int _unpaidCount = 0;
+  /// How many orders each payment option would show under the current
+  /// status chip and search, for the sheet's counts.
+  Map<OrderPaymentFilter, int> _paymentCounts = const {};
 
   Future<void> _openFilter() async {
     final picked = await showOrdersFilterSheet(
       context,
       current: _payment,
-      unpaidCount: _unpaidCount,
+      counts: _paymentCounts,
     );
     if (picked != null && mounted) setState(() => _payment = picked);
   }
@@ -84,14 +86,9 @@ class _OrdersListViewState extends State<_OrdersListView> {
       appBar: AppBar(
         title: const Text('Orders'),
         actions: [
-          IconButton(
-            tooltip: 'Filter',
+          FilterButton(
+            activeCount: _payment == OrderPaymentFilter.any ? 0 : 1,
             onPressed: _openFilter,
-            icon: Badge(
-              isLabelVisible: _payment != OrderPaymentFilter.any,
-              label: const Text('1'),
-              child: const Icon(Icons.filter_list_rounded),
-            ),
           ),
         ],
       ),
@@ -124,13 +121,17 @@ class _OrdersListViewState extends State<_OrdersListView> {
     final byStatus = _status == null
         ? active
         : searched.where((e) => e.order.status == _status).toList();
-    _unpaidCount = byStatus.where((e) => e.order.isAwaitingPayment).length;
-    final visible = switch (_payment) {
-      OrderPaymentFilter.any => byStatus,
-      OrderPaymentFilter.unpaid =>
-        byStatus.where((e) => e.order.isAwaitingPayment).toList(),
-      OrderPaymentFilter.paid => byStatus.where((e) => e.order.isPaid).toList(),
+    List<OrderListEntry> byPayment(OrderPaymentFilter p) => switch (p) {
+          OrderPaymentFilter.any => byStatus,
+          OrderPaymentFilter.unpaid =>
+            byStatus.where((e) => e.order.isAwaitingPayment).toList(),
+          OrderPaymentFilter.paid =>
+            byStatus.where((e) => e.order.isPaid).toList(),
+        };
+    _paymentCounts = {
+      for (final p in OrderPaymentFilter.values) p: byPayment(p).length,
     };
+    final visible = byPayment(_payment);
     return Column(
       children: [
         Padding(
@@ -153,19 +154,16 @@ class _OrdersListViewState extends State<_OrdersListView> {
             ],
           ),
         ),
-        if (_payment != OrderPaymentFilter.any)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-              child: AppChip(
-                label: _payment.label,
-                selected: true,
-                trailingIcon: Icons.close_rounded,
-                onTap: () => setState(() => _payment = OrderPaymentFilter.any),
+        ActiveFilterChips(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          filters: [
+            if (_payment != OrderPaymentFilter.any)
+              (
+                _payment.label,
+                () => setState(() => _payment = OrderPaymentFilter.any),
               ),
-            ),
-          ),
+          ],
+        ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () {

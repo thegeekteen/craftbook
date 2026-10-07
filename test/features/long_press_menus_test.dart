@@ -178,9 +178,14 @@ void main() {
       expect(tulip.isArchived, isTrue);
       expect(find.text('Tulip'), findsNothing);
 
-      final chip = find.widgetWithText(AppChip, 'Archived');
-      await tester.ensureVisible(chip);
-      await tester.tap(chip);
+      // The "archived" snackbar floats over the sheet's Show button.
+      ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first))
+          .removeCurrentSnackBar();
+      await tester.tap(find.byTooltip('Filter'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(AppChip, 'Archived'));
+      await settle(tester);
+      await tester.tap(find.text('Show'));
       await settle(tester);
       await longPress(tester, 'Tulip');
       await tester.tap(find.text('Unarchive'));
@@ -239,9 +244,14 @@ void main() {
       expect(_matNamed(await materials(tester), 'Yarn').isArchived, isTrue);
       expect(find.text('Yarn'), findsNothing);
 
-      final chip = find.widgetWithText(AppChip, 'Archived');
-      await tester.ensureVisible(chip);
-      await tester.tap(chip);
+      // The "archived" snackbar floats over the sheet's Show button.
+      ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first))
+          .removeCurrentSnackBar();
+      await tester.tap(find.byTooltip('Filter'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(AppChip, 'Archived'));
+      await settle(tester);
+      await tester.tap(find.text('Show'));
       await settle(tester);
       await longPress(tester, 'Yarn');
       await tester.tap(find.text('Unarchive'));
@@ -268,25 +278,28 @@ void main() {
     Finder tab(String label) => find.descendant(
         of: find.byType(NavigationBar), matching: find.text(label));
 
-    testWidgets('Products is a tab with the buy list; Materials is under More',
+    testWidgets('Inventory is a tab with Products, Materials and the buy list',
         (tester) async {
       await startApp(tester, seed: seed);
       await openApp(tester, RouteNames.today);
       expect(tab('Stock'), findsNothing);
 
-      await tester.tap(tab('Products'));
+      await tester.tap(tab('Inventory'));
       await settle(tester);
       expect(find.text('Tulip'), findsOneWidget);
       expect(find.textContaining('Buy list'), findsOneWidget);
+      expect(find.text('Product'), findsOneWidget);
 
-      await tester.tap(tab('More'));
-      await settle(tester);
-      final row = find.text('Materials');
-      await tester.ensureVisible(row);
-      await tester.tap(row);
+      await tester.tap(find.widgetWithText(Tab, 'Materials'));
       await settle(tester);
       expect(find.text('Glue'), findsOneWidget);
+      expect(find.text('Material'), findsOneWidget);
       expect(find.textContaining('Buy list'), findsOneWidget);
+
+      // More no longer lists Materials.
+      await tester.tap(tab('More'));
+      await settle(tester);
+      expect(find.text('Materials'), findsNothing);
       await closeApp(tester);
     });
   });

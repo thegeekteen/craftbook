@@ -35,8 +35,8 @@ import '../widgets/appearance_card.dart';
 import '../widgets/currency_sheet.dart';
 import '../widgets/tax_sheet.dart';
 
-/// More: the catalogue (materials, channels, order fields, buy list), the
-/// notebook and your data.
+/// More: the shop's setup (channels, order fields, units, buy list), the
+/// notebook and your data. Materials live on the Inventory tab.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -45,7 +45,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String? _materialsHint;
   String? _channelsHint;
   String? _orderFieldsHint;
   String? _buyListHint;
@@ -64,7 +63,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   /// Live one-liners under each row. Failures just leave the default text.
   Future<void> _loadHints() async {
-    final materials = await getIt<MaterialRepository>().getAllMaterials();
     final channels = await getIt<ChannelRepository>().getAllChannels();
     final buyList = await getIt<MaterialRepository>().getBuyList();
     final orderFields = await getIt<OrderFieldRepository>().getFields();
@@ -77,13 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     setState(() {
       _canUndoRestore = canUndoRestore;
-      if (materials case Success(:final value)) {
-        final listed = value.where((m) => !m.isArchived).toList();
-        final low = listed.where((m) => m.isLowStock).length;
-        _materialsHint =
-            '${listed.length} ${listed.length == 1 ? 'material' : 'materials'}'
-            '${low > 0 ? ' · $low low' : ''}';
-      }
       if (channels case Success(:final value)) {
         final on = value.where((c) => c.isActive).length;
         final off = value.length - on;
@@ -183,13 +174,6 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
-                MoreRow(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Materials',
-                  subtitle:
-                      _materialsHint ?? 'What your products are made from',
-                  onTap: () => _open(RouteNames.materials),
-                ),
                 MoreRow(
                   icon: Icons.storefront_outlined,
                   title: 'Channels & fees',

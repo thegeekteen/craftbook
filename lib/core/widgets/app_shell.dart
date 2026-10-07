@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../constants/route_names.dart';
 import '../theme/colors.dart';
 
-/// Bottom-nav shell for the five tabs. Products gets a tab because it's
-/// what orders are made of; catalogue pages under More (Materials, Buy
-/// list) also live in the shell so the nav stays visible there.
+/// Bottom-nav shell for the five tabs. Inventory holds Products (what
+/// orders are made of) and Materials as two tabs; the buy list it opens
+/// lives in the shell too so the nav stays visible.
 class AppShell extends StatelessWidget {
   final Widget child;
 
@@ -24,9 +24,9 @@ class AppShell extends StatelessWidget {
       label: 'Orders',
     ),
     NavigationDestination(
-      icon: Icon(Icons.sell_outlined),
-      selectedIcon: Icon(Icons.sell_rounded),
-      label: 'Products',
+      icon: Icon(Icons.inventory_2_outlined),
+      selectedIcon: Icon(Icons.inventory_2_rounded),
+      label: 'Inventory',
     ),
     NavigationDestination(
       icon: Icon(Icons.bar_chart_outlined),
@@ -61,14 +61,16 @@ class AppShell extends StatelessWidget {
   /// Which tab a path belongs to.
   static int selectedIndexFor(String location) {
     if (location.startsWith('/orders')) return 1;
-    if (location.startsWith('/products')) return 2;
+    if (location.startsWith('/products') ||
+        location.startsWith('/materials') ||
+        location.startsWith('/stock')) {
+      return 2;
+    }
     if (location.startsWith(RouteNames.reports) ||
         location.startsWith(RouteNames.receivables)) {
       return 3;
     }
     if (location.startsWith('/settings') ||
-        location.startsWith('/materials') ||
-        location.startsWith('/stock') ||
         location.startsWith('/channels') ||
         location.startsWith(RouteNames.notes) ||
         location.startsWith(RouteNames.about)) {

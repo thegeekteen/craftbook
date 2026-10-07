@@ -77,11 +77,15 @@ void main() {
     await tester.runAsync(() => getIt<AppDatabase>().close());
   }
 
-  /// The chip row scrolls sideways; bring the chip on screen first.
-  Future<void> tapChip(WidgetTester tester, String label) async {
-    final chip = find.widgetWithText(AppChip, label);
-    await tester.ensureVisible(chip);
-    await tester.tap(chip);
+  /// Opens the filter sheet, taps [labels] in order, then Show.
+  Future<void> filter(WidgetTester tester, List<String> labels) async {
+    await tester.tap(find.byTooltip('Filter'));
+    await _settle(tester);
+    for (final label in labels) {
+      await tester.tap(find.widgetWithText(AppChip, label).last);
+      await _settle(tester);
+    }
+    await tester.tap(find.text('Show'));
     await _settle(tester);
   }
 
@@ -95,30 +99,47 @@ void main() {
   int? count(WidgetTester tester, String label) =>
       tester.widget<AppChip>(find.widgetWithText(AppChip, label)).count;
 
-  group('Products list chips', () {
-    testWidgets('counts each filter and hides Short when nothing is short',
-        (tester) async {
+  group('Products filter', () {
+    testWidgets(
+        'the sheet counts each option and hides Short when nothing '
+        'is short', (tester) async {
       await start(tester);
       await open(tester, RouteNames.products);
+      await tester.tap(find.byTooltip('Filter'));
+      await _settle(tester);
 
-      expect(count(tester, 'All'), 3);
       expect(count(tester, 'Handmade'), 2);
       expect(count(tester, 'Resell'), 1);
       expect(count(tester, 'Low'), 2);
       expect(find.widgetWithText(AppChip, 'Short'), findsNothing);
+
+      // Counts follow the other group: of the low ones, one is resell.
+      await tester.tap(find.widgetWithText(AppChip, 'Low'));
+      await _settle(tester);
+      expect(count(tester, 'Handmade'), 1);
+      expect(count(tester, 'Resell'), 1);
       await teardown(tester);
     });
 
-    testWidgets('filters to resell, then to low', (tester) async {
+    testWidgets('combines resell and low, and a chip removes its filter',
+        (tester) async {
       await start(tester);
       await open(tester, RouteNames.products);
 
-      await tapChip(tester, 'Resell');
+      await filter(tester, ['Resell']);
       expect(find.text('Gift box'), findsOneWidget);
       expect(find.text('Tulip'), findsNothing);
       expect(find.text('Strap'), findsNothing);
 
-      await tapChip(tester, 'Low');
+      await filter(tester, ['Low']);
+      expect(find.widgetWithText(AppChip, 'Resell'), findsOneWidget);
+      expect(find.widgetWithText(AppChip, 'Low'), findsOneWidget);
+      expect(find.text('Gift box'), findsOneWidget);
+      expect(find.text('Tulip'), findsNothing);
+
+      // Dropping Resell leaves every low product.
+      await tester.tap(find.widgetWithText(AppChip, 'Resell'));
+      await _settle(tester);
       expect(find.text('Gift box'), findsOneWidget);
       expect(find.text('Tulip'), findsOneWidget);
       expect(find.text('Strap'), findsNothing);
@@ -134,7 +155,7 @@ void main() {
       });
       await open(tester, RouteNames.products);
 
-      await tapChip(tester, 'Low');
+      await filter(tester, ['Low']);
       expect(find.text('Nothing is low'), findsOneWidget);
       await teardown(tester);
     });

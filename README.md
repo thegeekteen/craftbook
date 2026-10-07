@@ -31,9 +31,9 @@ The bar at the bottom has five tabs:
 |-----|--------------|
 | **Today** | What's due today, new orders, low stock, this week's profit, pinned notes |
 | **Orders** | Every order, by status, with search |
-| **Products** | What you sell, with photos, margins and how many you can make now |
+| **Inventory** | Two tabs: **Products** (what you sell, with photos, margins and how many you can make now) and **Materials** (what it's made from, with stock). Each tab shows how many items it's listing |
 | **Reports** | Profit for any period, where the money went, waste, and who hasn't paid |
-| **More** | Materials, channels, discounts, tax, currency, notes, backups and settings |
+| **More** | Channels, discounts, tax, currency, notes, backups and settings |
 
 **Long-press** almost anything (an order, a product, a material, a discount) to see what you can do with it.
 
@@ -48,8 +48,8 @@ Go to **More** and work down the list. You can change everything later.
 | **Currency** | More → Currency | Pick yours from the list, or type any symbol. This only changes the symbol; your amounts aren't converted. |
 | **Units of measure** | More → Units of measure | What you count things in: *pc*, *sheet*, *m*, *kg*… The app starts with the common ones. Add your own, rename them, drag them into the order you like, and choose the one new items start on. Every number in the app is written with one. |
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
-| **Materials** | More → Materials → **+ Material** | What it's counted in, pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
-| **Products** | Products → **+ Product** | Sell price, what it's sold in, and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how much goes in and **Makes** is how many products it makes, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
+| **Materials** | Inventory → **Materials** tab → **+ Material** | What it's counted in, pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
+| **Products** | Inventory → **+ Product** | Sell price, what it's sold in, and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how much goes in and **Makes** is how many products it makes, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
 | **Tax** (optional) | More → Tax | Turn on **Use tax**, set the rate and name (VAT, GST…), and choose whether new orders **start with tax on or off**. Also choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
@@ -101,7 +101,7 @@ If the customer comes back, **Restore** puts a cancelled order back to *To pack*
 Each order is either **paid** or **unpaid**. New orders start out the way their channel is set: paid for marketplaces, unpaid for walk-in or chat sales if you set it up that way.
 
 - Unpaid orders carry an **UNPAID** tag in every list.
-- On the Orders tab, tap the **Filter** button (top right) and choose **Unpaid** to see only the orders still waiting for money. A small chip under the status chips shows the filter is on; tap it to clear.
+- On the Orders tab, tap the **Filter** button (top right) and choose **Unpaid** to see only the orders still waiting for money. Each choice shows how many orders it would show. A small chip under the status chips shows the filter is on; tap it to clear.
 - **Waiting for payment** (on Reports, or More → Waiting for payment) lists everything customers still owe, grouped by customer, with the total. Tap an order to open it, or long-press it to mark it paid.
 
 Unpaid orders still count toward your profit once they're packed, because the sale happened. Reports shows how much of that profit you haven't been paid yet.
@@ -133,7 +133,7 @@ Each order keeps the rate it was saved with, so changing the setting later doesn
 
 ## 5. Keeping stock healthy
 
-**More → Materials** lists every material with a **pip strip**, one block per piece:
+The **Materials** tab on **Inventory** lists every material with a **pip strip**, one block per piece:
 
 | Pip | Meaning |
 |-----|---------|
@@ -146,8 +146,9 @@ If orders need more than you have, the card says how many you're short. Every co
 
 - **Receive** adds packs you bought. The cost per piece is re-averaged with the new price, and you see the new cost before you save.
 - **Count** sets the number on hand after you've physically counted.
-- **Buy list** (on the Products tab or under More) lists everything at or below its low level: how many packs to buy, what it'll cost and which orders are waiting on it. **Copy list** puts it on your clipboard to paste into a chat with your supplier.
-- **Archive** a product or material you no longer use. It disappears from lists and pickers but stays on past orders and reports. Use the **Archived** chip to see archived items again.
+- **Buy list** (top of the Inventory tab, or under More) lists everything at or below its low level: how many packs to buy, what it'll cost and which orders are waiting on it. **Copy list** puts it on your clipboard to paste into a chat with your supplier.
+- **Filter** (the button next to **Buy list** at the top of the Inventory tab) narrows the list you're looking at. On Products, pick a **Type** (Handmade or Resell) and a **Stock** level (Low, Short for orders, Archived), or both, such as handmade products that are low. On Materials, pick Low, Promised or Archived. Each option shows how many items it would show. The filters you've picked show as chips under the search box: tap one to remove it. Products and Materials keep their own filters and searches when you switch tabs, and the number on each tab counts what it's showing.
+- **Archive** a product or material you no longer use. It disappears from lists and pickers but stays on past orders and reports. Filter by **Archived** to see archived items again.
 
 ---
 

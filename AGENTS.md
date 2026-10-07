@@ -66,8 +66,8 @@ lib/
 |---------|----------|-----------|
 | **Today** | `/` | Dashboard, week calendar, month calendar |
 | **Orders** | `/orders`, `/orders/new`, `/orders/:id` | List (tabbed), creation wizard, detail view |
-| **Stock** | `/materials`, `/materials/:id` | Materials list (tabbed, opened from More), detail, receive stock, buy list |
-| **Products** | `/products`, `/products/:id/edit`, `/channels` | List (a bottom-nav tab, with the Buy list shortcut), BOM editor, channels & fees |
+| **Stock** | `/materials` (redirects to `/products?tab=materials`), `/materials/:id` | Materials tab (`MaterialsTab`, filter `MaterialCatalogueView`), detail, receive stock, buy list |
+| **Products** | `/products`, `/products/:id/edit`, `/channels` | `InventoryPage`: the "Inventory" bottom-nav tab with Products and Materials tabs (each counting what it shows), the Buy list shortcut and a per-tab Filter sheet (`ProductCatalogueView`); BOM editor, channels & fees |
 | **Reports** (`features/earnings`) | `/reports`, `/reports/:productId` | Week/month/year/custom period, `ReportFilter` sheet, money breakdown (discounts, tax), per-product, waste, Waiting for payment card. The bottom-nav tab is labelled "Reports"; the folder and classes keep the `earnings` name |
 | **Receivables** (`features/orders`) | `/receivables` | Unpaid, non-cancelled orders grouped by customer (`GetReceivables`, `ReceivablesCubit`). Opened from Reports and More |
 | **Discounts** | `/discounts` | Discount presets (percent or fixed): list, add/edit sheet, drag to reorder. Orders copy them as lines (`order_discounts`) |
@@ -191,7 +191,7 @@ erDiagram
 - **Colours**: never use `AppColors` or `Colors.*` in widgets. Read `context.colors` (`CraftColors` in `lib/core/theme/colors.dart`) so light and dark both work.
 - **Type**: `AppTextStyles` (`lib/core/theme/text_styles.dart`) carries no colour; add it with `copyWith`. Nothing smaller than `monoTag` (10px). Letter spacing is in px.
 - **Shape and spacing**: `AppRadii` and `AppSpacing` (`lib/core/theme/dimens.dart`). Page bodies use `AppSpacing.page`.
-- **Build from shared widgets** in `lib/core/widgets/` before writing a new container: `AppCard`, `CardList`/`CardRow`, `SectionLabel`, `AppTag`, `MoneyBreakdown`, `SummaryBoard`, `StatTile`, `EmptyState`, `BottomActionBar`, `ChoiceChipRow`, `PipStrip`, `showAppSheet`, `showActionSheet`, `ProductPhoto` / `showPhotoViewer` (product thumbnails with an initial as fallback). Rich text (order notes, the notebook) uses `NoteView`, `NoteToolbar` and `NoteStyles` in `lib/core/widgets/note/`, stored as Delta JSON via `NoteCodec`.
+- **Build from shared widgets** in `lib/core/widgets/` before writing a new container: `AppCard`, `CardList`/`CardRow`, `SectionLabel`, `AppTag`, `MoneyBreakdown`, `SummaryBoard`, `StatTile`, `EmptyState`, `BottomActionBar`, `ChoiceChipRow`, `FilterButton` / `ActiveFilterChips` (app-bar filter with a badge, and the removable chips under a list's search), `PipStrip`, `showAppSheet`, `showActionSheet`, `ProductPhoto` / `showPhotoViewer` (product thumbnails with an initial as fallback). Rich text (order notes, the notebook) uses `NoteView`, `NoteToolbar` and `NoteStyles` in `lib/core/widgets/note/`, stored as Delta JSON via `NoteCodec`.
 - **Long press** on a list item opens its actions via `showActionSheet`. Each entity's menu lives in one place (`ProductActions`, `MaterialActions`, `OrderActions`, `NoteActions`, or a `_xActions` function on the page) and returns `true` when the caller should reload. A new list of things that can be edited or deleted gets the same menu.
 - **Order status** maps to a pill only through `OrderStatusPill` (`lib/features/orders/presentation/widgets/order_status_ui.dart`). User-facing name for pending is "To pack".
 - **Money**: `CurrencyFormatter` / `CurrencyText`; `formatShort` for headline numbers. The currency is the user's choice: never write `₱` (or any symbol) in code; input prefixes use `'${CurrencyFormatter.symbol} '`. Profit is always `MoneyParts(...).profit`, `OrderMoney.profit` or `Order.liveProfit`; order money is drawn with `OrderMoney.parts` (`order_status_ui.dart`), which carries discount and tax into `MoneyBreakdown`.
@@ -260,7 +260,7 @@ Future<void> configureDependencies() async {
 
 ## Navigation
 
-Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Products, Reports, More; Materials sits under More) and push routes for detail pages. Pages that are also pushed from the order wizard (channels, order fields, discounts) are top-level routes outside the shell.
+Using `go_router` with a `ShellRoute` for the 5 bottom nav tabs (Today, Orders, Inventory, Reports, More; Inventory holds the Products and Materials tabs) and push routes for detail pages. Pages that are also pushed from the order wizard (channels, order fields, discounts) are top-level routes outside the shell.
 
 - Tab switches use `context.go()` (replace)
 - Detail pages use `context.push()` (push)
