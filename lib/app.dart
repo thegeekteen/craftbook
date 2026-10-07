@@ -22,12 +22,11 @@ import 'features/orders/presentation/pages/orders_list_page.dart';
 import 'features/orders/presentation/pages/new_order_page.dart';
 import 'features/orders/presentation/pages/order_details_page.dart';
 import 'features/orders/presentation/pages/receivables_page.dart';
-import 'features/stock/presentation/pages/materials_list_page.dart';
 import 'features/stock/presentation/pages/material_detail_page.dart';
 import 'features/stock/presentation/pages/new_material_page.dart';
 import 'features/stock/presentation/pages/receive_stock_page.dart';
 import 'features/stock/presentation/pages/buy_list_page.dart';
-import 'features/products/presentation/pages/products_list_page.dart';
+import 'features/products/presentation/pages/inventory_page.dart';
 import 'features/products/presentation/pages/product_detail_page.dart';
 import 'features/products/presentation/pages/product_editor_page.dart';
 import 'features/products/presentation/pages/receive_product_stock_page.dart';
@@ -114,9 +113,10 @@ class CraftbookApp extends StatelessWidget {
                 path: RouteNames.orders,
                 builder: (context, state) => const OrdersListPage(),
               ),
+              // Materials is a tab of the Products page now.
               GoRoute(
                 path: RouteNames.materials,
-                builder: (context, state) => const MaterialsListPage(),
+                redirect: (context, state) => RouteNames.materialsTab,
               ),
               GoRoute(
                 path: RouteNames.reports,
@@ -134,10 +134,14 @@ class CraftbookApp extends StatelessWidget {
                 path: RouteNames.about,
                 builder: (context, state) => const AboutPage(),
               ),
-              // Catalogue pages keep the bottom nav (they belong to More/Stock).
+              // Products and Materials share the Inventory tab; the buy list
+              // keeps the bottom nav too.
               GoRoute(
                 path: RouteNames.products,
-                builder: (context, state) => const ProductsListPage(),
+                builder: (context, state) => InventoryPage(
+                  initialTab:
+                      InventoryTab.parse(state.uri.queryParameters['tab']),
+                ),
               ),
               GoRoute(
                 path: RouteNames.buyList,

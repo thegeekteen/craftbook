@@ -11,10 +11,11 @@ void main() {
       expect(AppShell.selectedIndexFor('/notes'), 4);
     });
 
-    test('keeps Materials and the buy list under the More tab', () {
-      expect(AppShell.selectedIndexFor('/materials'), 4);
-      expect(AppShell.selectedIndexFor('/materials/3'), 4);
-      expect(AppShell.selectedIndexFor('/stock/buy-list'), 4);
+    test('keeps Materials and the buy list under the Products tab', () {
+      expect(AppShell.selectedIndexFor('/products?tab=materials'), 2);
+      expect(AppShell.selectedIndexFor('/materials'), 2);
+      expect(AppShell.selectedIndexFor('/materials/3'), 2);
+      expect(AppShell.selectedIndexFor('/stock/buy-list'), 2);
     });
 
     test('maps the other tabs', () {

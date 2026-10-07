@@ -47,13 +47,13 @@ The app is built around 6 main user flows:
 - **Pack/Ship actions**: Updates status, deducts stock, recalculates profit
 
 ### Flow 4: Stock Management
-- **Materials list**: Opened from More. Tabbed (All, Low, Promised, Archived) with search by material name
+- **Materials list**: The Materials tab of the Inventory page (`/materials` redirects there). Search by material name; the app-bar Filter sheet picks Low, Promised or Archived, with counts, shown as a removable chip
 - **Material detail**: Stock overview with pip strip, receive/adjust actions, movements, products using it
 - **Receive stock**: Packs received + price per pack with live weighted average cost preview. Pack size shown read-only
 - **Delete material**: Blocked if used in a BOM or an order; its stock history goes with it. Archive it otherwise
 
 ### Flow 5: Products & BOM
-- **Products list**: With search by product name, shows margin and buildable quantity
+- **Products list**: The Products tab of the Inventory page. Search by product name, shows margin and buildable quantity. The app-bar Filter sheet combines a Type (Handmade/Resell) with a Stock level (Low/Short/Archived), each option counted; active filters show as removable chips
 - **BOM editor**: Define what materials go into each product with stepper inputs (Uses, and Makes for one piece that yields several products)
 - **Channel management**: Configure fee rates for each sales channel
 - **Delete product**: Blocked if referenced by orders or has BOM items
@@ -70,7 +70,7 @@ The app is built around 6 main user flows:
 ### Settings
 - **Export backup**: Raw SQLite file export via file picker (Android SAF compatible)
 - **Import backup**: Pick a SQLite file, copy over current DB, prompt restart (with confirmation dialog)
-- **Navigation hub**: Links to Materials, Channels, Order fields, Units, Buy List, Waiting for payment, Discounts, Notes, Social shortcuts
+- **Navigation hub**: Links to Channels, Order fields, Units, Buy List, Waiting for payment, Discounts, Notes, Social shortcuts
 - **Currency**: Pick from common currencies or type a symbol; only the display changes
 - **Tax**: Use tax on/off, new orders start on or off, rate, name, prices include tax or tax added on top
 
@@ -93,11 +93,11 @@ The app is built around 6 main user flows:
 | Delete orders | ✅ | Blocked when shipped, stock reversal for pending/packed |
 | Cancel orders | ✅ | Any order not already cancelled, from the detail menu or a long press. Shipped ones are for parcels that came back or never went, and must be cancelled before they can be deleted. Reservations are released, packed or shipped stock goes back on the shelf (logged as "Restored from cancelled order"), and the order stays in the list as Cancelled, out of earnings. The Orders tab's All leaves cancelled orders out; they show under the Cancelled chip. A cancelled order can be restored (back to To pack, reserving its materials again) or deleted |
 | Long-press menus | ✅ | Long press any product, material, order (list, Today, calendar), channel, social shortcut, order field or note for its actions: edit, delete, plus shortcuts such as Archive, Receive stock, Mark shipped, Cancel, Restore order, Turn off, Restore |
-| Materials list | ✅ | Tabbed, search, pip visualization |
+| Materials list | ✅ | Tab on Inventory, search, filter sheet, pip visualization |
 | Material detail | ✅ | Stock overview, movements, receive, adjust, delete |
-| Archive products & materials | ✅ | Long press → Archive. Archived items leave the lists (an Archived chip shows them), pickers, low-stock alerts and the buy list, but stay on past orders and earnings. Replaced the product's "Show in new orders" switch; hidden products were migrated to archived in schema v8. Delete still works when nothing blocks it: a material is blocked only by a BOM or an order, not by its stock history |
+| Archive products & materials | ✅ | Long press → Archive. Archived items leave the lists (the Archived filter shows them), pickers, low-stock alerts and the buy list, but stay on past orders and earnings. Replaced the product's "Show in new orders" switch; hidden products were migrated to archived in schema v8. Delete still works when nothing blocks it: a material is blocked only by a BOM or an order, not by its stock history |
 | Receive stock | ✅ | Packs + price, weighted avg cost preview, read-only pack size |
-| Products list | ✅ | Search, margin display |
+| Products list | ✅ | Search, combinable filter sheet (type + stock), margin display |
 | Product/BOM editor | ✅ | Material stepper inputs, BOM management. Each line has **Uses** and **Makes** (schema v10), so 1 sheet can make 9 cards: cost per product is uses × cost ÷ makes. Uses and Makes accept fractions (schema v12) |
 | Fractional quantities | ✅ | Stock, alert levels, pack sizes, BOM uses/makes, order lines, reservations, waste and history are REAL rounded to 3 decimals on write (`qty()`/`sameQty()` in `core/utils/quantity.dart`). Orders reserve the exact fraction a line needs; buildable is unrounded for the low/short checks and floored for display. Added in schema v12 |
 | Channels & fees | ✅ | CRUD with edit dialog, delete with confirmation |
@@ -169,7 +169,7 @@ An address made sense for some shops and not others, so it became one of the sho
 Week and month are one screen with a toggle and prev/next navigation, so there is no back-stack juggling between them.
 
 ### Catalogue pages keep the bottom nav
-Products has its own tab, since products are what orders are made of; it also carries the Buy list shortcut. Materials and the Buy list open from More and live inside the ShellRoute too. Editors and receive pages are full-screen with their own bottom action bar.
+The Inventory bottom-nav tab (`InventoryPage`) holds Products, since products are what orders are made of, and Materials beside it, so stock is one tap away. Each tab label counts what that tab shows under its search and filter. The page carries the Buy list shortcut and a Filter button for whichever tab is showing. The Buy list lives inside the ShellRoute too and highlights the Inventory tab. Editors and receive pages are full-screen with their own bottom action bar.
 
 ### Overcommitted stock is shown, not hidden
 When promised exceeds on hand, pips only draw pieces that exist and the shortfall is stated ("8 short").

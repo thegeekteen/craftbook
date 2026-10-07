@@ -61,6 +61,13 @@ void main() {
     await teardown(tester);
   });
 
+  testWidgets('leaves Materials to the Products tab', (tester) async {
+    await boot(tester);
+    expect(find.text('Buy list'), findsOneWidget);
+    expect(find.text('Materials'), findsNothing);
+    await teardown(tester);
+  });
+
   testWidgets('offers "Undo last restore" after a restore', (tester) async {
     File('${dir.path}/craftbook.pre-restore.sqlite')
         .writeAsStringSync('old data');

@@ -14,7 +14,11 @@ void main() {
           onPressed: () async => result = await showOrdersFilterSheet(
             context,
             current: current,
-            unpaidCount: 3,
+            counts: const {
+              OrderPaymentFilter.any: 7,
+              OrderPaymentFilter.unpaid: 3,
+              OrderPaymentFilter.paid: 4,
+            },
           ),
           child: const Text('open'),
         ),
@@ -27,13 +31,15 @@ void main() {
     return result;
   }
 
-  testWidgets('shows the options with the unpaid count', (tester) async {
+  testWidgets('shows a count on every option', (tester) async {
     await run(tester, OrderPaymentFilter.any, () async {
       expect(find.text('Filter orders'), findsOneWidget);
       expect(find.text('Any'), findsOneWidget);
       expect(find.text('Paid'), findsOneWidget);
       expect(find.text('Unpaid'), findsOneWidget);
+      expect(find.text('7'), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
+      expect(find.text('4'), findsOneWidget);
     });
   });
 

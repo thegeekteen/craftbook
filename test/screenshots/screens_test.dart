@@ -10,6 +10,7 @@ import 'package:craftbook/features/settings/domain/entities/tax_settings.dart';
 import 'package:craftbook/features/settings/presentation/bloc/tax_settings_cubit.dart';
 import 'package:craftbook/core/di/injection.dart';
 import 'package:craftbook/core/constants/route_names.dart';
+import 'package:craftbook/core/widgets/choice_chip_row.dart';
 import 'package:craftbook/core/theme/palettes.dart';
 import 'package:craftbook/database/app_database.dart';
 import 'package:craftbook/features/orders/presentation/widgets/note_field.dart';
@@ -151,6 +152,27 @@ void main() {
         matchesGoldenFile('goldens/reports_filtered_light.png'));
     await _teardown(tester);
   });
+
+  // The catalogue's filter sheets, then the list with the chips they leave.
+  for (final (name, location, option) in [
+    ('products', RouteNames.products, 'Handmade'),
+    ('materials', RouteNames.materials, 'Low'),
+    ('orders', RouteNames.orders, 'Unpaid'),
+  ]) {
+    testWidgets('$name filtered', (tester) async {
+      await _boot(tester, location, false);
+      await tester.tap(find.byTooltip('Filter'));
+      await _settle(tester);
+      await expectLater(find.byType(CraftbookApp),
+          matchesGoldenFile('goldens/${name}_filter_sheet_light.png'));
+      await tester.tap(find.widgetWithText(AppChip, option).last);
+      await tester.tap(find.text('Show'));
+      await _settle(tester);
+      await expectLater(find.byType(CraftbookApp),
+          matchesGoldenFile('goldens/${name}_filtered_chips_light.png'));
+      await _teardown(tester);
+    });
+  }
 
   testWidgets('reports custom range', (tester) async {
     await _boot(tester, RouteNames.reports, false);

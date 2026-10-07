@@ -18,6 +18,7 @@ import 'package:craftbook/core/utils/currency_formatter.dart';
 import 'package:craftbook/core/utils/quantity.dart';
 import 'package:craftbook/core/utils/quantity_formatter.dart';
 import 'package:craftbook/core/widgets/app_card.dart';
+import 'package:craftbook/core/widgets/app_tag.dart';
 import 'package:craftbook/core/widgets/choice_chip_row.dart';
 import 'package:craftbook/core/widgets/money_breakdown.dart';
 import 'package:craftbook/features/debug/domain/usecases/seed_fake_shop.dart';
@@ -296,14 +297,16 @@ void main() {
       await _reveal(tester, find.text(resell.name));
       expect(find.text(resell.name), findsWidgets,
           reason: 'the resell product is not in the list');
-      expect(find.text('Resell'), findsWidgets,
+      expect(find.widgetWithText(AppTag, 'RESELL'), findsWidgets,
           reason: 'nothing in the list is marked as resold');
       expect(tester.takeException(), isNull);
       await closeApp(tester);
     });
 
     testWidgets('Materials shows a fractional or empty number', (tester) async {
+      // The Materials tab of the Products page; /materials redirects there.
       await _boot(tester, RouteNames.materials);
+      expect(find.widgetWithText(Tab, 'Materials'), findsOneWidget);
       final materials = await _materials(tester);
       final odd = _pick(
           materials,
