@@ -169,8 +169,34 @@ class _SettingsPageState extends State<SettingsPage> {
         body: ListView(
           padding: AppSpacing.page,
           children: [
+            const SectionLabel('Notebook',
+                padding: EdgeInsets.fromLTRB(2, 2, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                MoreRow(
+                  icon: Icons.sticky_note_2_outlined,
+                  title: 'Notes',
+                  subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
+                  onTap: () => _open(RouteNames.notes),
+                ),
+              ]),
+            ),
+            const SectionLabel('Your shop online',
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
+            const SizedBox(height: 8),
+            AppCard.flush(
+              child: CardList(children: [
+                MoreRow(
+                  icon: Icons.share_outlined,
+                  title: 'Social shortcuts',
+                  subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
+                  onTap: () => _open(RouteNames.socialLinks),
+                ),
+              ]),
+            ),
             const SectionLabel('Catalogue',
-                padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
+                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
             const SizedBox(height: 8),
             AppCard.flush(
               child: CardList(children: [
@@ -230,32 +256,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'Discounts',
                   subtitle: _discountsHint ?? 'Ones you give often',
                   onTap: () => _open(RouteNames.discounts),
-                ),
-              ]),
-            ),
-            const SectionLabel('Notebook',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-            const SizedBox(height: 8),
-            AppCard.flush(
-              child: CardList(children: [
-                MoreRow(
-                  icon: Icons.sticky_note_2_outlined,
-                  title: 'Notes',
-                  subtitle: _notesHint ?? 'Supplier details, ideas, how-tos',
-                  onTap: () => _open(RouteNames.notes),
-                ),
-              ]),
-            ),
-            const SectionLabel('Your shop online',
-                padding: EdgeInsets.fromLTRB(2, 20, 2, 0)),
-            const SizedBox(height: 8),
-            AppCard.flush(
-              child: CardList(children: [
-                MoreRow(
-                  icon: Icons.share_outlined,
-                  title: 'Social shortcuts',
-                  subtitle: _socialHint ?? 'Facebook, TikTok, Shopee, Lazada…',
-                  onTap: () => _open(RouteNames.socialLinks),
                 ),
               ]),
             ),
