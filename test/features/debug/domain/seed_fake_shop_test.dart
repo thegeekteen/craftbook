@@ -161,6 +161,40 @@ void main() {
       }
     });
 
+    test('drafts are on file but hold nothing and count nowhere', () async {
+      await _seed();
+      final repo = getIt<OrderRepository>();
+      final orders = _ok(await repo.getAllOrders());
+      final drafts = orders.where((o) => o.isDraft).toList();
+      expect(drafts.length, 3);
+      expect(drafts.any((o) => o.customerName.isEmpty && o.channelId == null),
+          isTrue);
+      // The unpaid, fully filled draft must stay off what customers owe.
+      expect(drafts.any((o) => !o.isPaid), isTrue);
+
+      final receivables = _ok(await getIt<GetReceivables>()());
+      final owedIds = {
+        for (final g in receivables.groups)
+          for (final e in g.entries) e.order.id,
+      };
+      for (final draft in drafts) {
+        expect(owedIds, isNot(contains(draft.id)));
+      }
+
+      final range = _ok(await repo.getOrdersForDateRange(
+          DateTime(2000), DateTime.now().add(const Duration(days: 400))));
+      expect(range.where((o) => o.isDraft), isEmpty,
+          reason: 'a draft reached the calendars');
+      final today = _ok(await repo.getOrdersForDate(DateTime.now()));
+      expect(today.where((o) => o.isDraft), isEmpty,
+          reason: 'a draft reached Today');
+
+      // A draft with items still plans its materials, so placing it later
+      // has something to reserve.
+      final withItems = drafts.firstWhere((o) => o.totalSales > 0);
+      expect(_ok(await repo.getOrderMaterials(withItems.id!)), isNotEmpty);
+    });
+
     test('the buy list has materials, a resell product, and waiting orders',
         () async {
       await _seed();

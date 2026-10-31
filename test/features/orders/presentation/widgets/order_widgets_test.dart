@@ -87,6 +87,15 @@ void main() {
       expect(OrderStatus.packed.label, 'Packed');
       expect(OrderStatus.shipped.label, 'Shipped');
       expect(OrderStatus.cancelled.label, 'Cancelled');
+      expect(OrderStatus.draft.label, 'Draft');
+    });
+
+    test('only placed, uncancelled orders are live', () {
+      expect(OrderStatus.draft.isLive, isFalse);
+      expect(OrderStatus.cancelled.isLive, isFalse);
+      expect(OrderStatus.pending.isLive, isTrue);
+      expect(OrderStatus.packed.isLive, isTrue);
+      expect(OrderStatus.shipped.isLive, isTrue);
     });
   });
 
@@ -132,7 +141,9 @@ void main() {
         OrderStatusPill(status: OrderStatus.packed),
         OrderStatusPill(status: OrderStatus.shipped),
         OrderStatusPill(status: OrderStatus.cancelled),
+        OrderStatusPill(status: OrderStatus.draft),
       ])));
+      expect(find.text('DRAFT'), findsOneWidget);
       expect(find.text('TO PACK'), findsOneWidget);
       expect(find.text('PACKED'), findsOneWidget);
       expect(find.text('SHIPPED'), findsOneWidget);
@@ -281,6 +292,56 @@ void main() {
       expect(find.text('₱310'), findsNothing);
       expect(find.text('CANCELLED'), findsOneWidget);
       expect(find.text('Cancelled'), findsOneWidget);
+    });
+
+    testWidgets('a draft names what it still needs and owes nothing',
+        (tester) async {
+      final draft = Order(
+        id: 7,
+        customerName: '',
+        orderDate: _day(0),
+        shipByDate: _day(2),
+        status: OrderStatus.draft,
+        totalSales: 0,
+        totalMaterialCost: 0,
+        channelFees: 0,
+        shippingCost: 0,
+        profit: 0,
+        isPaid: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await tester.pumpWidget(_wrap(
+          OrderCard(entry: OrderListEntry(order: draft, channelName: null))));
+      expect(find.text('No customer yet'), findsOneWidget);
+      expect(find.text('Needs: customer, channel, items'), findsOneWidget);
+      expect(find.text('DRAFT'), findsOneWidget);
+      // Unpaid, but nobody owes anything for an order that isn't real yet.
+      expect(find.text('Unpaid'), findsNothing);
+      expect(find.text('₱0'), findsNothing);
+    });
+
+    testWidgets('a filled-in draft is ready and shows its total',
+        (tester) async {
+      final draft = _order(status: OrderStatus.draft);
+      await tester.pumpWidget(_wrap(OrderCard(
+          entry: _entry(Order(
+        id: draft.id,
+        customerName: draft.customerName,
+        orderDate: draft.orderDate,
+        shipByDate: draft.shipByDate,
+        status: OrderStatus.draft,
+        channelId: 3,
+        totalSales: 500,
+        totalMaterialCost: 100,
+        channelFees: 0,
+        shippingCost: 0,
+        profit: 400,
+        createdAt: draft.createdAt,
+        updatedAt: draft.updatedAt,
+      )))));
+      expect(find.text('Maria Santos'), findsOneWidget);
+      expect(find.text('Ready to save as an order'), findsOneWidget);
     });
 
     testWidgets('unsaved order shows a dash for id', (tester) async {

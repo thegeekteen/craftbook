@@ -45,22 +45,24 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
     return (select(orders)..where((t) => t.status.equals(status))).get();
   }
 
-  /// Get orders for today
+  /// Placed orders (not drafts) ordered on [date].
   Future<List<Order>> getOrdersForToday(DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     return (select(orders)
           ..where((t) =>
+              t.status.isNotValue('draft') &
               t.orderDate.isBiggerOrEqualValue(startOfDay) &
               t.orderDate.isSmallerThanValue(endOfDay)))
         .get();
   }
 
-  /// Get orders within a date range (by shipByDate)
+  /// Placed orders (not drafts) with a ship-by date in [start, end).
   Future<List<Order>> getOrdersForDateRange(DateTime start, DateTime end) {
     return (select(orders)
           ..where((t) =>
+              t.status.isNotValue('draft') &
               t.shipByDate.isBiggerOrEqualValue(start) &
               t.shipByDate.isSmallerThanValue(end)))
         .get();
@@ -241,11 +243,12 @@ class OrderDao extends DatabaseAccessor<AppDatabase> with _$OrderDaoMixin {
     }
   }
 
-  /// Every unpaid order that isn't cancelled, oldest first.
+  /// Every unpaid order that isn't a draft or cancelled, oldest first.
   Future<List<Order>> getUnpaidOrders() {
     return (select(orders)
-          ..where(
-              (t) => t.isPaid.equals(false) & t.status.isNotValue('cancelled'))
+          ..where((t) =>
+              t.isPaid.equals(false) &
+              t.status.isNotIn(const ['draft', 'cancelled']))
           ..orderBy([(t) => OrderingTerm.asc(t.orderDate)]))
         .get();
   }

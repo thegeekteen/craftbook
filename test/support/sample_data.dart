@@ -18,6 +18,7 @@ import 'package:craftbook/features/orders/domain/entities/order_material.dart';
 import 'package:craftbook/features/orders/domain/repositories/order_repository.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/pack_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/save_draft_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/ship_order.dart';
 import 'package:craftbook/features/products/domain/repositories/channel_repository.dart';
 import 'package:craftbook/features/products/domain/repositories/product_repository.dart';
@@ -395,6 +396,21 @@ Future<void> seedSampleShop() async {
       address: '14 Mabini St, Cubao, Quezon City',
       fees: 28.8,
       shipping: 30);
+
+  // Drafts, left last so every order id above stays where screenshots expect
+  // it: one waiting for its product, one with nobody's name on it yet.
+  final saveDraft = getIt<SaveDraftOrder>();
+  _ok(await saveDraft(
+      customerName: 'Rosa Mendoza',
+      orderDate: today,
+      shipByDate: today.add(const Duration(days: 6)),
+      channelId: shopee,
+      note: 'Wants the lavender tulips, set them up first'));
+  _ok(await saveDraft(
+      customerName: '',
+      orderDate: today,
+      shipByDate: today.add(const Duration(days: 4)),
+      items: [item(tulip, 'Crochet tulip bouquet', 3, 450)]));
 
   _ok(await fields.setArchived(cardField, true));
 

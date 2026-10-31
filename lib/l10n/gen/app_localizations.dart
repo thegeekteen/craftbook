@@ -2456,6 +2456,84 @@ abstract class AppLocalizations {
   /// **'Cancelled'**
   String get ordersStatusCancelled;
 
+  /// No description provided for @ordersStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get ordersStatusDraft;
+
+  /// No description provided for @ordersDraftsChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts'**
+  String get ordersDraftsChip;
+
+  /// No description provided for @ordersDraftNoCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'No customer yet'**
+  String get ordersDraftNoCustomer;
+
+  /// No description provided for @ordersDraftNeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs: {parts}'**
+  String ordersDraftNeeds(String parts);
+
+  /// No description provided for @ordersDraftNeedCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'customer'**
+  String get ordersDraftNeedCustomer;
+
+  /// No description provided for @ordersDraftNeedChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'channel'**
+  String get ordersDraftNeedChannel;
+
+  /// No description provided for @ordersDraftNeedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'items'**
+  String get ordersDraftNeedItems;
+
+  /// No description provided for @ordersDraftReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to save as an order'**
+  String get ordersDraftReady;
+
+  /// No description provided for @ordersContinueDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get ordersContinueDraft;
+
+  /// No description provided for @ordersDeleteDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this draft?'**
+  String get ordersDeleteDraftTitle;
+
+  /// No description provided for @ordersDeleteMessageDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft is removed. It never held any stock.'**
+  String get ordersDeleteMessageDraft;
+
+  /// No description provided for @ordersNoDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'No drafts'**
+  String get ordersNoDrafts;
+
+  /// No description provided for @ordersNoDraftsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Back out of a new order and choose Save draft to finish it later.'**
+  String get ordersNoDraftsMessage;
+
   /// No description provided for @ordersOverdue.
   ///
   /// In en, this message translates to:
@@ -2809,6 +2887,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard'**
   String get ordersDiscard;
+
+  /// No description provided for @ordersSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get ordersSaveDraft;
+
+  /// No description provided for @ordersDraftSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved'**
+  String get ordersDraftSaved;
+
+  /// No description provided for @ordersDraftTitleId.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft #{id}'**
+  String ordersDraftTitleId(String id);
+
+  /// No description provided for @ordersLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this order for later?'**
+  String get ordersLeaveTitle;
+
+  /// No description provided for @ordersLeaveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save it as a draft and finish it any time from Orders → Drafts. Stock isn’t held until you save the order.'**
+  String get ordersLeaveMessage;
+
+  /// No description provided for @ordersLeaveDraftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes to this draft?'**
+  String get ordersLeaveDraftTitle;
+
+  /// No description provided for @ordersLeaveDraftMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard leaves the draft as it was.'**
+  String get ordersLeaveDraftMessage;
+
+  /// No description provided for @ordersShortTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Short'**
+  String get ordersShortTag;
 
   /// No description provided for @ordersKeepEditing.
   ///
@@ -3215,7 +3341,7 @@ abstract class AppLocalizations {
   /// No description provided for @ordersNoProductsMessage.
   ///
   /// In en, this message translates to:
-  /// **'Add products under More → Products first.'**
+  /// **'Make your first one here. It goes straight onto this order.'**
   String get ordersNoProductsMessage;
 
   /// No description provided for @ordersOutOfStock.
@@ -3344,23 +3470,11 @@ abstract class AppLocalizations {
   /// **'Discard your changes?'**
   String get ordersDiscardEditTitle;
 
-  /// No description provided for @ordersDiscardNewTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard this order?'**
-  String get ordersDiscardNewTitle;
-
   /// No description provided for @ordersDiscardEditMessage.
   ///
   /// In en, this message translates to:
   /// **'The order stays as it was.'**
   String get ordersDiscardEditMessage;
-
-  /// No description provided for @ordersDiscardNewMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'What you’ve entered so far will be lost.'**
-  String get ordersDiscardNewMessage;
 
   /// No description provided for @ordersSaved.
   ///
@@ -4310,6 +4424,18 @@ abstract class AppLocalizations {
   /// **'New product'**
   String get productsNewProduct;
 
+  /// No description provided for @productsNewMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'New material'**
+  String get productsNewMaterial;
+
+  /// No description provided for @productsAddsToOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving adds it to the order you’re making.'**
+  String get productsAddsToOrder;
+
   /// No description provided for @productsEditProduct.
   ///
   /// In en, this message translates to:
@@ -4445,7 +4571,7 @@ abstract class AppLocalizations {
   /// No description provided for @productsAddMaterialsFirst.
   ///
   /// In en, this message translates to:
-  /// **'Add materials under Stock first.'**
+  /// **'Make your first one here. It goes straight onto this product.'**
   String get productsAddMaterialsFirst;
 
   /// No description provided for @productsSearchMaterials.
@@ -5533,6 +5659,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New material'**
   String get stockNewTitle;
+
+  /// No description provided for @stockAddsToProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving adds it to the product’s materials.'**
+  String get stockAddsToProduct;
 
   /// No description provided for @stockNameHint.
   ///

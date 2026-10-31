@@ -31,6 +31,8 @@ import '../../../order_fields/domain/order_field_codec.dart';
 import '../../../order_fields/domain/usecases/get_order_fields.dart';
 import '../../../order_fields/presentation/widgets/order_field_input.dart';
 import '../../../products/domain/entities/channel.dart';
+import '../../../products/domain/entities/product.dart';
+import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/domain/usecases/get_channels.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
@@ -38,6 +40,7 @@ import '../../domain/usecases/preview_order.dart';
 import '../bloc/new_order_bloc.dart';
 import '../bloc/new_order_event.dart';
 import '../bloc/new_order_state.dart';
+import '../widgets/leave_order_dialog.dart';
 import '../widgets/note_field.dart';
 import '../widgets/order_l10n.dart';
 import '../widgets/product_picker_sheet.dart';
@@ -49,8 +52,9 @@ import '../../../discounts/domain/repositories/discount_preset_repository.dart';
 import '../../../settings/presentation/bloc/tax_settings_cubit.dart';
 
 /// New order: Customer → Items → Review. With [orderId] it edits that order
-/// instead: pending orders go through all three steps, packed orders only
-/// get the details form (items are locked), shipped orders only the note.
+/// instead: drafts and pending orders go through all three steps, packed
+/// orders only get the details form (items are locked), shipped orders only
+/// the note. A new order or a draft can be kept as a draft at any step.
 class NewOrderPage extends StatelessWidget {
   final int? orderId;
 
@@ -103,6 +107,11 @@ class _NewOrderViewState extends State<_NewOrderView> {
   OrderStatus? _editingStatus;
 
   bool get _isEditing => widget.orderId != null;
+
+  bool get _isDraft => _editingStatus == OrderStatus.draft;
+
+  /// Save draft is for orders that aren't placed yet.
+  bool get _canDraft => !_isEditing || _isDraft;
 
   /// Packed and shipped orders have had their stock deducted, so items stay.
   bool get _itemsLocked =>
@@ -221,22 +230,77 @@ class _NewOrderViewState extends State<_NewOrderView> {
     if (step == 2) context.read<NewOrderBloc>().add(RequestPreview());
   }
 
+  /// The first step's form as it stands, checked or not.
+  SetCustomerDetails get _formDetails => SetCustomerDetails(
+        customerName: _nameController.text.trim(),
+        fieldValues: _formFieldValues,
+        channelId: _channelId,
+        orderDate: _orderDate,
+        shipByDate: _shipByDate,
+        note: _note,
+        channelPaidByDefault: _channel?.paidByDefault ?? true,
+      );
+
   void _submitDetails() {
     if (!_formKey.currentState!.validate()) return;
     if (_channelId == null) {
       context.showSnackBar(context.l10n.ordersPickChannel, isError: true);
       return;
     }
-    context.read<NewOrderBloc>().add(SetCustomerDetails(
-          customerName: _nameController.text.trim(),
-          fieldValues: _formFieldValues,
-          channelId: _channelId!,
-          orderDate: _orderDate,
-          shipByDate: _shipByDate,
-          note: _note,
-          channelPaidByDefault: _channel?.paidByDefault ?? true,
-        ));
+    context.read<NewOrderBloc>().add(_formDetails);
     _goTo(1);
+  }
+
+  /// Anything typed or picked that would be lost by leaving.
+  bool _hasInput(List<OrderItemInput> items) =>
+      _nameController.text.trim().isNotEmpty ||
+      _note != null ||
+      _fieldValues.values.any((v) => v.trim().isNotEmpty) ||
+      items.isNotEmpty;
+
+  void _saveDraft() {
+    FocusScope.of(context).unfocus();
+    context.read<NewOrderBloc>().add(SaveDraft(details: _formDetails));
+  }
+
+  /// A draft reopens on the first step that still needs something.
+  void _resumeDraft(NewOrderDetailsFilled d) {
+    final step = d.customerName.trim().isEmpty || d.channelId == 0
+        ? 0
+        : d.items.isEmpty
+            ? 1
+            : 2;
+    if (step == 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      setState(() => _step = step);
+      _pageController.jumpToPage(step);
+      if (step == 2) context.read<NewOrderBloc>().add(RequestPreview());
+    });
+  }
+
+  /// Makes a product on its own page and adds it to the order, so an order
+  /// can be taken before the product is set up.
+  Future<void> _createProduct() async {
+    final bloc = context.read<NewOrderBloc>();
+    final id = await context.push<int>(RouteNames.newProduct, extra: true);
+    if (id == null || !mounted) return;
+    final result = await getIt<ProductRepository>().getProductById(id);
+    if (!mounted) return;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+      case Success(:final value):
+        final Product? p = value;
+        if (p == null) return;
+        bloc.add(AddItem(
+          productId: id,
+          productName: p.name,
+          quantity: 1,
+          unitPrice: p.sellPrice,
+          photo: p.photo,
+        ));
+    }
   }
 
   void _seed(NewOrderDetailsFilled d) {
@@ -261,37 +325,38 @@ class _NewOrderViewState extends State<_NewOrderView> {
       return;
     }
     final bloc = context.read<NewOrderBloc>();
-    bloc.add(SetCustomerDetails(
-      customerName: _nameController.text.trim(),
-      fieldValues: _formFieldValues,
-      channelId: _channelId!,
-      orderDate: _orderDate,
-      shipByDate: _shipByDate,
-      note: _note,
-      channelPaidByDefault: _channel?.paidByDefault ?? true,
-    ));
+    bloc.add(_formDetails);
     bloc.add(SaveOrder());
   }
 
+  /// Whether to leave. An order that isn't placed yet can be kept as a
+  /// draft instead; the page closes once that's saved.
   Future<bool> _confirmDiscard(List<OrderItemInput> items) async {
-    final dirty = _isEditing ||
-        _nameController.text.trim().isNotEmpty ||
-        _note != null ||
-        _fieldValues.values.any((v) => v.isNotEmpty) ||
-        items.isNotEmpty;
+    final dirty = _isEditing || _hasInput(items);
     if (!dirty) return true;
-    return ConfirmDialog.show(
-      context,
-      title: _isEditing
-          ? context.l10n.ordersDiscardEditTitle
-          : context.l10n.ordersDiscardNewTitle,
-      message: _isEditing
-          ? context.l10n.ordersDiscardEditMessage
-          : context.l10n.ordersDiscardNewMessage,
-      confirmText: context.l10n.ordersDiscard,
-      cancelText: context.l10n.ordersKeepEditing,
-      isDestructive: true,
-    );
+    // Only a placed order lands here, so leaving just drops the edits.
+    if (!_canDraft) {
+      return ConfirmDialog.show(
+        context,
+        title: context.l10n.ordersDiscardEditTitle,
+        message: context.l10n.ordersDiscardEditMessage,
+        confirmText: context.l10n.ordersDiscard,
+        cancelText: context.l10n.ordersKeepEditing,
+        isDestructive: true,
+      );
+    }
+    final choice = await LeaveOrderDialog.show(context, isDraft: _isDraft);
+    if (!mounted) return false;
+    switch (choice) {
+      case LeaveChoice.saveDraft:
+        _saveDraft();
+        return false;
+      case LeaveChoice.discard:
+        return true;
+      case LeaveChoice.keepEditing:
+      case null:
+        return false;
+    }
   }
 
   Future<void> _handleBack(List<OrderItemInput> items) async {
@@ -308,11 +373,16 @@ class _NewOrderViewState extends State<_NewOrderView> {
       listener: (context, state) {
         if (state is NewOrderDetailsFilled && _isEditing && !_seeded) {
           setState(() => _seed(state));
+          if (_isDraft) _resumeDraft(state);
         }
         if (state is NewOrderSaved) {
-          context.showSnackBar(_isEditing
+          context.showSnackBar(_isEditing && !_isDraft
               ? context.l10n.ordersUpdated('${state.orderId}')
               : context.l10n.ordersSaved('${state.orderId}'));
+          context.pop(true);
+        }
+        if (state is NewOrderDraftSaved) {
+          context.showSnackBar(context.l10n.ordersDraftSaved);
           context.pop(true);
         }
         if (state is NewOrderError) {
@@ -349,9 +419,24 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     : Icons.arrow_back_rounded),
                 onPressed: () => _handleBack(items),
               ),
-              title: Text(_isEditing
-                  ? context.l10n.ordersEditTitleId('${widget.orderId}')
-                  : context.l10n.ordersNewOrder),
+              title: Text(_isDraft
+                  ? context.l10n.ordersDraftTitleId('${widget.orderId}')
+                  : _isEditing
+                      ? context.l10n.ordersEditTitleId('${widget.orderId}')
+                      : context.l10n.ordersNewOrder),
+              actions: [
+                if (_canDraft)
+                  ListenableBuilder(
+                    listenable: _nameController,
+                    builder: (context, _) => TextButton(
+                      onPressed: (details?.isSaving ?? false) ||
+                              !(_isDraft || _hasInput(items))
+                          ? null
+                          : _saveDraft,
+                      child: Text(context.l10n.ordersSaveDraft),
+                    ),
+                  ),
+              ],
               bottom: _itemsLocked
                   ? null
                   : PreferredSize(
@@ -529,6 +614,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
     ProductPickerSheet.show(
       context,
       addedProductIds: [for (final i in items) i.productId],
+      onCreateNew: _createProduct,
       onSelected: (item) => bloc.add(AddItem(
         productId: item.productId,
         productName: item.productName,
@@ -681,10 +767,23 @@ class _NewOrderViewState extends State<_NewOrderView> {
             const SizedBox(height: 12),
           ],
           if (preview.reservations.isNotEmpty)
-            _ReservationsCard(lines: preview.reservations),
+            _ReservationsCard(
+                lines: preview.reservations, onReceive: _receiveFor),
         ],
       ],
     );
+  }
+
+  /// Receives stock for a short line, then works the review out again so
+  /// the shortage goes away.
+  Future<void> _receiveFor(ReservationLine line) async {
+    final id = line.id;
+    if (id == null) return;
+    final bloc = context.read<NewOrderBloc>();
+    final received = await context.push<bool>(line.isProduct
+        ? RouteNames.receiveProductStockPath(id)
+        : RouteNames.receiveStockPath(id));
+    if (received == true && mounted) bloc.add(RequestPreview());
   }
 
   // ── Bottom bar ───────────────────────────────────────────────────────
@@ -746,7 +845,7 @@ class _NewOrderViewState extends State<_NewOrderView> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check_rounded, size: 20),
-            label: Text(_isEditing
+            label: Text(_isEditing && !_isDraft
                 ? context.l10n.ordersSaveChanges
                 : context.l10n.ordersSaveOrder),
           ),
@@ -844,7 +943,10 @@ class _MoneyPreviewCard extends StatelessWidget {
 class _ReservationsCard extends StatelessWidget {
   final List<ReservationLine> lines;
 
-  const _ReservationsCard({required this.lines});
+  /// Offered on short lines: receive stock for that material or product.
+  final void Function(ReservationLine line) onReceive;
+
+  const _ReservationsCard({required this.lines, required this.onReceive});
 
   @override
   Widget build(BuildContext context) {
@@ -886,6 +988,17 @@ class _ReservationsCard extends StatelessWidget {
                       fontFeatures: AppTextStyles.tabular.fontFeatures,
                     ),
                   ),
+                  if (r.isShort && r.id != null) ...[
+                    const SizedBox(width: 4),
+                    TextButton(
+                      onPressed: () => onReceive(r),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: Text(context.l10n.stockReceive),
+                    ),
+                  ],
                 ],
               ),
             ),

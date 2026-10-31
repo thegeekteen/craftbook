@@ -17,6 +17,7 @@ import 'package:craftbook/features/orders/domain/usecases/update_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/preview_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/save_draft_order.dart';
 import 'package:craftbook/features/orders/presentation/bloc/new_order_bloc.dart';
 import 'package:craftbook/features/orders/presentation/bloc/new_order_event.dart';
 import 'package:craftbook/features/orders/presentation/bloc/new_order_state.dart';
@@ -31,12 +32,15 @@ class MockCalculateOrderProfit extends Mock implements CalculateOrderProfit {}
 
 class MockPreviewOrder extends Mock implements PreviewOrder {}
 
+class MockSaveDraftOrder extends Mock implements SaveDraftOrder {}
+
 void main() {
   late MockCreateOrder createOrder;
   late MockCalculateOrderProfit calculateOrderProfit;
   late MockPreviewOrder previewOrder;
   late MockUpdateOrder updateOrder;
   late MockOrderRepository orderRepository;
+  late MockSaveDraftOrder saveDraftOrder;
 
   final orderDate = DateTime(2026, 9, 1);
   final shipBy = DateTime(2026, 9, 3);
@@ -73,6 +77,7 @@ void main() {
     previewOrder = MockPreviewOrder();
     updateOrder = MockUpdateOrder();
     orderRepository = MockOrderRepository();
+    saveDraftOrder = MockSaveDraftOrder();
     when(() => orderRepository.getOrderDiscounts(any()))
         .thenAnswer((_) async => const Success(<OrderDiscount>[]));
   });
@@ -80,6 +85,7 @@ void main() {
   NewOrderBloc build() => NewOrderBloc(
         createOrder: createOrder,
         updateOrder: updateOrder,
+        saveDraftOrder: saveDraftOrder,
         orderRepository: orderRepository,
         calculateOrderProfit: calculateOrderProfit,
         previewOrder: previewOrder,
@@ -810,6 +816,164 @@ void main() {
             items: any(named: 'items'),
             channelId: 2,
             excludeOrderId: 7,
+          )).called(1),
+    );
+  });
+
+  group('SaveDraft', () {
+    void stubDraft(Result<int> result) => when(() => saveDraftOrder(
+          orderId: any(named: 'orderId'),
+          customerName: any(named: 'customerName'),
+          note: any(named: 'note'),
+          orderDate: any(named: 'orderDate'),
+          shipByDate: any(named: 'shipByDate'),
+          channelId: any(named: 'channelId'),
+          items: any(named: 'items'),
+          fieldValues: any(named: 'fieldValues'),
+          terms: any(named: 'terms'),
+        )).thenAnswer((_) async => result);
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'keeps the first step as a new draft and reports its id',
+      setUp: () => stubDraft(const Success(31)),
+      build: build,
+      act: (bloc) => bloc.add(SaveDraft(details: details)),
+      expect: () => [filled(isSaving: true), const NewOrderDraftSaved(31)],
+      verify: (_) => verify(() => saveDraftOrder(
+            orderId: null,
+            customerName: 'Jessa Ramos',
+            note: 'Gift wrap',
+            orderDate: orderDate,
+            shipByDate: shipBy,
+            channelId: 2,
+            items: const [],
+            fieldValues: const {},
+            terms: any(named: 'terms'),
+          )).called(1),
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'sends no channel while none is picked',
+      setUp: () => stubDraft(const Success(32)),
+      build: build,
+      act: (bloc) => bloc
+        ..add(tulip)
+        ..add(SaveDraft(
+            details: SetCustomerDetails(
+                customerName: '', orderDate: orderDate, shipByDate: shipBy))),
+      skip: 2,
+      expect: () => [const NewOrderDraftSaved(32)],
+      verify: (_) => verify(() => saveDraftOrder(
+            orderId: null,
+            customerName: '',
+            note: null,
+            orderDate: orderDate,
+            shipByDate: shipBy,
+            channelId: null,
+            items: const [tulipInput],
+            fieldValues: const {},
+            terms: any(named: 'terms'),
+          )).called(1),
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'a failed save shows the error and returns to the form',
+      setUp: () => stubDraft(const Error(ValidationFailure('Nothing to save'))),
+      build: build,
+      act: (bloc) => bloc.add(SaveDraft(details: details)),
+      expect: () => [
+        filled(isSaving: true),
+        const NewOrderError('Nothing to save'),
+        filled(),
+      ],
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'rewrites the draft it was opened on',
+      setUp: () {
+        when(() => orderRepository.getOrderById(9))
+            .thenAnswer((_) async => Success(Order(
+                  id: 9,
+                  customerName: '',
+                  orderDate: orderDate,
+                  shipByDate: shipBy,
+                  status: OrderStatus.draft,
+                  totalSales: 0,
+                  totalMaterialCost: 0,
+                  channelFees: 0,
+                  shippingCost: 0,
+                  profit: 0,
+                  createdAt: orderDate,
+                  updatedAt: orderDate,
+                )));
+        when(() => orderRepository.getOrderItems(9))
+            .thenAnswer((_) async => const Success(<OrderItem>[]));
+        when(() => orderRepository.getOrderFieldValues(9))
+            .thenAnswer((_) async => const Success(<OrderFieldEntry>[]));
+        stubDraft(const Success(9));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(9));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(SaveDraft(details: details));
+      },
+      skip: 2,
+      expect: () => [const NewOrderDraftSaved(9)],
+      verify: (_) => verify(() => saveDraftOrder(
+            orderId: 9,
+            customerName: 'Jessa Ramos',
+            note: 'Gift wrap',
+            orderDate: orderDate,
+            shipByDate: shipBy,
+            channelId: 2,
+            items: const [],
+            fieldValues: const {},
+            terms: any(named: 'terms'),
+          )).called(1),
+    );
+
+    blocTest<NewOrderBloc, NewOrderState>(
+      'a placed order being edited is never rewritten as a draft',
+      setUp: () {
+        when(() => orderRepository.getOrderById(7))
+            .thenAnswer((_) async => Success(Order(
+                  id: 7,
+                  customerName: 'Jessa Ramos',
+                  orderDate: orderDate,
+                  shipByDate: shipBy,
+                  status: OrderStatus.pending,
+                  channelId: 2,
+                  totalSales: 0,
+                  totalMaterialCost: 0,
+                  channelFees: 0,
+                  shippingCost: 0,
+                  profit: 0,
+                  createdAt: orderDate,
+                  updatedAt: orderDate,
+                )));
+        when(() => orderRepository.getOrderItems(7))
+            .thenAnswer((_) async => const Success(<OrderItem>[]));
+        when(() => orderRepository.getOrderFieldValues(7))
+            .thenAnswer((_) async => const Success(<OrderFieldEntry>[]));
+        stubDraft(const Success(40));
+      },
+      build: build,
+      act: (bloc) async {
+        bloc.add(const LoadExistingOrder(7));
+        await Future<void>.delayed(Duration.zero);
+        bloc.add(const SaveDraft());
+      },
+      verify: (_) => verify(() => saveDraftOrder(
+            orderId: null,
+            customerName: any(named: 'customerName'),
+            note: any(named: 'note'),
+            orderDate: any(named: 'orderDate'),
+            shipByDate: any(named: 'shipByDate'),
+            channelId: any(named: 'channelId'),
+            items: any(named: 'items'),
+            fieldValues: any(named: 'fieldValues'),
+            terms: any(named: 'terms'),
           )).called(1),
     );
   });

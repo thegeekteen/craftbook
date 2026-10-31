@@ -38,12 +38,18 @@ class OrderCard extends StatelessWidget {
     final order = entry.order;
     final showProfit = amountShown == OrderAmountShown.profit;
     final amount = showProfit ? order.liveProfit : order.liveTotal;
-    final (whenText, whenUrgent) = whenLabel(context, order);
+    final draft = order.isDraft;
+    final (whenText, whenUrgent) =
+        draft ? (draftNeeds(context, entry), false) : whenLabel(context, order);
     final muted = AppTextStyles.bodySmall.copyWith(color: c.muted);
+    final unnamed = order.customerName.trim().isEmpty;
 
     return AppCard(
       onTap: onTap,
       onLongPress: onLongPress,
+      // A draft sits on the page rather than on a card: it isn't an order yet.
+      color: draft ? c.paper : null,
+      borderColor: draft ? c.muted : null,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,10 +58,15 @@ class OrderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  order.customerName,
+                  unnamed
+                      ? context.l10n.ordersDraftNoCustomer
+                      : order.customerName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyLarge.copyWith(color: c.ink),
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: unnamed ? c.muted : c.ink,
+                    fontStyle: unnamed ? FontStyle.italic : null,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -112,7 +123,8 @@ class OrderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (order.status != OrderStatus.cancelled) ...[
+              if (order.status != OrderStatus.cancelled &&
+                  !(draft && entry.lines.isEmpty)) ...[
                 const SizedBox(width: 8),
                 Text(
                   CurrencyFormatter.formatShort(amount),
@@ -138,6 +150,8 @@ class OrderCard extends StatelessWidget {
   static (String, bool) whenLabel(BuildContext context, Order order) {
     final l10n = context.l10n;
     switch (order.status) {
+      case OrderStatus.draft:
+        return (l10n.ordersStatusDraft, false);
       case OrderStatus.shipped:
         final at = order.shippedAt;
         return (
@@ -170,5 +184,19 @@ class OrderCard extends StatelessWidget {
           false
         );
     }
+  }
+
+  /// What a draft still lacks before it can be placed, or that it's ready.
+  static String draftNeeds(BuildContext context, OrderListEntry entry) {
+    final l10n = context.l10n;
+    final order = entry.order;
+    final missing = [
+      if (order.customerName.trim().isEmpty) l10n.ordersDraftNeedCustomer,
+      if (order.channelId == null) l10n.ordersDraftNeedChannel,
+      if (entry.lines.isEmpty) l10n.ordersDraftNeedItems,
+    ];
+    return missing.isEmpty
+        ? l10n.ordersDraftReady
+        : l10n.ordersDraftNeeds(missing.join(', '));
   }
 }

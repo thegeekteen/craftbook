@@ -85,7 +85,10 @@ void main() {
       final refs = shop.products.map((p) => p.ref).toSet();
       final channels = shop.channels.map((c) => c.ref).toSet();
       for (final order in shop.orders) {
-        expect(channels, contains(order.channelRef));
+        // Only a draft may still be waiting for its channel.
+        if (order.channelRef != null || !order.isDraft) {
+          expect(channels, contains(order.channelRef));
+        }
         for (final item in order.items) {
           expect(refs, contains(item.productRef),
               reason: '${order.scenario} sells a product that does not exist');
@@ -158,6 +161,32 @@ void main() {
         return 'today';
       }).toSet();
       expect(due, containsAll(<String>['overdue', 'today', 'later']));
+    });
+
+    test('every seed counts at least one shelf by hand', () {
+      for (var seed = 0; seed < 40; seed++) {
+        final shop = FakeShopGenerator(seed: seed).build();
+        expect(
+            shop.materials.any((m) => m.countedByHand) ||
+                shop.products.any((p) => p.countedByHand),
+            isTrue,
+            reason: 'seed $seed has no adjustment in any stock history');
+      }
+    });
+
+    test('drafts reserve nothing and each lacks something different', () {
+      final shop = FakeShopGenerator(seed: 15).build();
+      final drafts = shop.orders.where((o) => o.isDraft).toList();
+      expect(drafts.map((o) => o.reserves), everyElement(isFalse));
+      expect(drafts.any((o) => o.items.isEmpty), isTrue);
+      expect(drafts.any((o) => o.customer.isEmpty && o.channelRef == null),
+          isTrue);
+      expect(
+          drafts.any((o) =>
+              o.customer.isNotEmpty &&
+              o.channelRef != null &&
+              o.items.isNotEmpty),
+          isTrue);
     });
 
     test('one order answers every field type and one answers none', () {

@@ -236,7 +236,7 @@ class _StockPlanner {
         : 0;
     var counted = false;
     var start = qty(preOrder - packs * m.packSize);
-    if (packs > 0 && start > m.packSize * 2 && random.oneIn(4)) {
+    if (packs > 0 && start > m.packSize * 2 && _wantsCount()) {
       // Leave the last pack for the count to find, so the adjustment row in
       // its history has a real difference behind it.
       counted = true;
@@ -247,6 +247,7 @@ class _StockPlanner {
       counted = false;
       start = preOrder;
     }
+    if (counted) _handCounted = true;
     m.onHand = target;
     m.startOnHand = qty(max(0, start));
     m.receivedPacks = packs;
@@ -302,7 +303,7 @@ class _StockPlanner {
     var received = preOrder > 2 ? (preOrder / 2).floorToDouble() : 0.0;
     var counted = false;
     var start = qty(preOrder - received);
-    if (received > 0 && start > 3 && random.oneIn(4)) {
+    if (received > 0 && start > 3 && _wantsCount()) {
       counted = true;
       start = qty(start - 1);
     }
@@ -311,6 +312,7 @@ class _StockPlanner {
       counted = false;
       start = preOrder;
     }
+    if (counted) _handCounted = true;
     p.onHand = target;
     p.startOnHand = qty(max(0, start));
     p.receivedQuantity = received;
@@ -320,6 +322,13 @@ class _StockPlanner {
     p.receivedDaysAgo = random.intBetween(4, 60);
     p.countedByHand = counted;
   }
+
+  /// Set once any shelf has been counted by hand.
+  bool _handCounted = false;
+
+  /// The first shelf that can take a count gets one, so a stock history
+  /// always shows an adjustment; after that it's one in four.
+  bool _wantsCount() => !_handCounted || random.oneIn(4);
 
   bool _isMeasured(String unit) =>
       const {'m', 'cm', 'g', 'kg', 'ml'}.contains(unit);

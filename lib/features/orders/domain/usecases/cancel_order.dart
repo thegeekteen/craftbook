@@ -28,6 +28,9 @@ class CancelOrder {
           case OrderStatus.cancelled:
             return const Error<void>(
                 ValidationFailure('This order is already cancelled'));
+          case OrderStatus.draft:
+            return const Error<void>(ValidationFailure(
+                'A draft holds nothing to cancel; delete it instead'));
           case OrderStatus.pending:
           case OrderStatus.packed:
           case OrderStatus.shipped:

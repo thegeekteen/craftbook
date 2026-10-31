@@ -15,8 +15,11 @@ import '../../../../core/utils/quantity.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_sheet.dart';
+import '../../../../core/constants/route_names.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/create_new_row.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/widgets/stepper_input.dart';
 import '../../../stock/domain/entities/material.dart';
@@ -39,7 +42,12 @@ import '../widgets/product_profit_card.dart';
 class ProductEditorPage extends StatefulWidget {
   final int? productId;
 
-  const ProductEditorPage({super.key, this.productId});
+  /// Opened from the order wizard to make a product for the order: says so,
+  /// and pops with the new product's id instead of `true`.
+  final bool returnsNewId;
+
+  const ProductEditorPage(
+      {super.key, this.productId, this.returnsNewId = false});
 
   @override
   State<ProductEditorPage> createState() => _ProductEditorPageState();
@@ -206,7 +214,8 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         .toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     var query = '';
-    final picked = await showAppSheet<Material>(
+    // The sheet hands back a Material, or [_newMaterial] to make one.
+    final picked = await showAppSheet<Object>(
       context: context,
       title: context.l10n.productsAddMaterialTitle,
       builder: (sheetContext) => StatefulBuilder(
@@ -216,20 +225,33 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
           final visible = options
               .where((m) => m.name.toLowerCase().contains(query))
               .toList();
-          if (options.isEmpty) {
+          if (_materials.isEmpty) {
             return EmptyState(
               icon: Icons.inventory_2_outlined,
-              title: _materials.isEmpty
-                  ? l10n.productsNoMaterialsTitle
-                  : l10n.productsAllMaterialsAdded,
-              message:
-                  _materials.isEmpty ? l10n.productsAddMaterialsFirst : null,
+              title: l10n.productsNoMaterialsTitle,
+              message: l10n.productsAddMaterialsFirst,
+              actionLabel: l10n.productsNewMaterial,
+              onAction: () => Navigator.pop(sheetContext, _newMaterial),
             );
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              CreateNewRow(
+                label: l10n.productsNewMaterial,
+                onTap: () => Navigator.pop(sheetContext, _newMaterial),
+              ),
+              Divider(height: 1, color: c.hair),
+              if (options.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    l10n.productsAllMaterialsAdded,
+                    style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                  ),
+                ),
               if (options.length > 6) ...[
+                const SizedBox(height: 8),
                 AppSearchField(
                   hint: l10n.productsSearchMaterials,
                   onChanged: (v) =>
@@ -267,14 +289,37 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         },
       ),
     );
-    if (picked == null) return;
+    if (!mounted) return;
+    final Material? material = switch (picked) {
+      Material m => m,
+      _newMaterial => await _createMaterial(),
+      _ => null,
+    };
+    if (material == null || !mounted) return;
     setState(() => _bom.add(_EditableBomItem(
-          materialId: picked.id!,
-          materialName: picked.name,
-          materialUnit: picked.unit,
-          unitCost: picked.unitCost,
+          materialId: material.id!,
+          materialName: material.name,
+          materialUnit: material.unit,
+          unitCost: material.unitCost,
           quantity: 1,
         )));
+  }
+
+  /// Makes a material on its own page and comes back with it, so a product
+  /// can be set up before its materials exist.
+  Future<Material?> _createMaterial() async {
+    final id = await context.push<int>(RouteNames.newMaterial, extra: true);
+    if (id == null || !mounted) return null;
+    final result = await getIt<GetMaterials>()();
+    if (!mounted) return null;
+    switch (result) {
+      case Error(:final failure):
+        context.showSnackBar(failure.message, isError: true);
+        return null;
+      case Success(:final value):
+        setState(() => _materials = value);
+        return value.where((m) => m.id == id).firstOrNull;
+    }
   }
 
   Future<void> _save() async {
@@ -303,6 +348,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
     ];
 
     Result<void> outcome;
+    int? newId;
     if (_isNew) {
       final created = await repo.createProduct(
         name: name,
@@ -320,6 +366,7 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         case Error(:final failure):
           outcome = Error(failure);
         case Success(value: final id):
+          newId = id;
           // createProduct has no alert level; set it right after.
           if (alertLevel > 0) {
             await repo.updateProduct(id: id, alertLevel: alertLevel);
@@ -362,7 +409,11 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         context.showSnackBar(_isNew
             ? context.l10n.productsAddedSnack(name)
             : context.l10n.productsChangesSaved);
-        context.pop(true);
+        if (widget.returnsNewId && newId != null) {
+          context.pop(newId);
+        } else {
+          context.pop(true);
+        }
     }
   }
 
@@ -400,6 +451,14 @@ class _ProductEditorPageState extends State<ProductEditorPage> {
         child: ListView(
           padding: AppSpacing.page.copyWith(top: 8),
           children: [
+            if (widget.returnsNewId && _isNew) ...[
+              InlineBanner(
+                icon: Icons.receipt_long_outlined,
+                tone: BannerTone.info,
+                title: l10n.productsAddsToOrder,
+              ),
+              const SizedBox(height: 12),
+            ],
             ListenableBuilder(
               listenable: _name,
               builder: (_, __) => ProductPhotoField(
@@ -715,3 +774,6 @@ class _EditableBomItem {
 
   double get lineCost => quantity * unitCost / makes;
 }
+
+/// What the Add material sheet returns for its "New material" row.
+const _newMaterial = #newMaterial;

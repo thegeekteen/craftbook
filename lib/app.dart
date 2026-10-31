@@ -247,7 +247,10 @@ class CraftbookApp extends StatelessWidget {
           ),
           GoRoute(
             path: RouteNames.newMaterial,
-            builder: (context, state) => const NewMaterialPage(),
+            // extra == true: opened from a product's materials to add the new
+            // one there.
+            builder: (context, state) =>
+                NewMaterialPage(returnsNewId: state.extra == true),
           ),
           GoRoute(
             path: RouteNames.editMaterial,
@@ -275,7 +278,10 @@ class CraftbookApp extends StatelessWidget {
           ),
           GoRoute(
             path: RouteNames.newProduct,
-            builder: (context, state) => const ProductEditorPage(),
+            // extra == true: opened from the order wizard to add the new
+            // product to the order.
+            builder: (context, state) =>
+                ProductEditorPage(returnsNewId: state.extra == true),
           ),
           GoRoute(
             path: RouteNames.productDetail,

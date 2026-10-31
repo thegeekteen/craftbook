@@ -25,10 +25,16 @@ class StatusPill extends StatelessWidget {
       StatusPillType.coin => (c.coinSoft, c.coin),
       StatusPillType.ink => (c.ink, c.paper),
       StatusPillType.neutral => (c.hair, c.muted),
+      StatusPillType.outline => (Colors.transparent, c.muted),
     };
     return Container(
       padding: const EdgeInsets.fromLTRB(7, 3.5, 9, 3.5),
-      decoration: BoxDecoration(color: bg, borderRadius: AppRadii.pillAll),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: AppRadii.pillAll,
+        border:
+            type == StatusPillType.outline ? Border.all(color: c.muted) : null,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -55,4 +61,7 @@ enum StatusPillType {
   warning,
   coin,
   ink,
+
+  /// Muted text on a muted ring: something not yet real, like a draft.
+  outline,
 }

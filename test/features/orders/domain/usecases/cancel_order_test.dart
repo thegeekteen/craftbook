@@ -160,6 +160,16 @@ void main() {
       verifyNever(() => orderRepo.cancelOrder(any()));
     });
 
+    test('draft: refuses, a draft is deleted rather than cancelled', () async {
+      stubOrder(OrderStatus.draft);
+
+      final result = await cancelOrder(1);
+
+      expect(result, isA<Error<void>>());
+      verifyNever(() => orderRepo.getOrderMaterials(any()));
+      verifyNever(() => orderRepo.cancelOrder(any()));
+    });
+
     test('missing order: not found', () async {
       when(() => orderRepo.getOrderById(1))
           .thenAnswer((_) async => const Success<Order?>(null));

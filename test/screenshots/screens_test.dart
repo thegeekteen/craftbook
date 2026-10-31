@@ -174,6 +174,25 @@ void main() {
     });
   }
 
+  testWidgets('orders drafts', (tester) async {
+    await _boot(tester, RouteNames.orders, false);
+    await tester.tap(find.text('Drafts'));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/orders_drafts_light.png'));
+    await _teardown(tester);
+  });
+
+  testWidgets('leaving a new order', (tester) async {
+    await _boot(tester, RouteNames.newOrder, false);
+    await tester.enterText(find.byType(TextFormField).first, 'Rina Velasco');
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await _settle(tester);
+    await expectLater(find.byType(CraftbookApp),
+        matchesGoldenFile('goldens/new_order_leave_light.png'));
+    await _teardown(tester);
+  });
+
   testWidgets('reports custom range', (tester) async {
     await _boot(tester, RouteNames.reports, false);
     await tester.tap(find.text('Custom'));

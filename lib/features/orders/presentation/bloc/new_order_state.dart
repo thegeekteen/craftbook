@@ -137,6 +137,16 @@ class NewOrderSaved extends NewOrderState {
   List<Object?> get props => [orderId];
 }
 
+/// What's been entered so far was kept as the draft [orderId].
+class NewOrderDraftSaved extends NewOrderState {
+  final int orderId;
+
+  const NewOrderDraftSaved(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
 /// Error occurred while creating the order
 class NewOrderError extends NewOrderState {
   final String message;

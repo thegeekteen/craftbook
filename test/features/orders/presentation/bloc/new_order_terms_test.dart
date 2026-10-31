@@ -8,6 +8,7 @@ import 'package:craftbook/features/orders/domain/repositories/order_repository.d
 import 'package:craftbook/features/orders/domain/usecases/calculate_order_profit.dart';
 import 'package:craftbook/features/orders/domain/usecases/create_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/preview_order.dart';
+import 'package:craftbook/features/orders/domain/usecases/save_draft_order.dart';
 import 'package:craftbook/features/orders/domain/usecases/update_order.dart';
 import 'package:craftbook/features/orders/presentation/bloc/new_order_bloc.dart';
 import 'package:craftbook/features/orders/presentation/bloc/new_order_event.dart';
@@ -26,6 +27,8 @@ class _MockOrderRepository extends Mock implements OrderRepository {}
 class _MockCalculateOrderProfit extends Mock implements CalculateOrderProfit {}
 
 class _MockPreviewOrder extends Mock implements PreviewOrder {}
+
+class _MockSaveDraftOrder extends Mock implements SaveDraftOrder {}
 
 /// Discounts, tax and paid status on the new-order flow.
 void main() {
@@ -88,6 +91,7 @@ void main() {
   NewOrderBloc build() => NewOrderBloc(
         createOrder: createOrder,
         updateOrder: updateOrder,
+        saveDraftOrder: _MockSaveDraftOrder(),
         orderRepository: orders,
         calculateOrderProfit: calculate,
         previewOrder: preview,

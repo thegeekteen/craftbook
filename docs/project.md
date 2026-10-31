@@ -33,7 +33,9 @@ The app is built around 6 main user flows:
 ### Flow 2: Order Creation
 - **3-step wizard**: Customer details → Add products → Review & save
 - **Back navigation**: Users can go back to previous steps without losing data
-- **Product picker**: Shows buildable quantity from current stock
+- **Product picker**: Shows buildable quantity from current stock. Short products can still be picked (tagged Short); review shows the shortage and the buy list picks it up
+- **Create in place**: "+ New product" in the picker opens the product editor and adds the saved product to the order; the editor's materials sheet has "+ New material" the same way. Both editors pop with the new id when opened like this (`returnsNewId`, passed as the route's `extra`)
+- **Drafts**: "Save draft" on any step, or Save draft / Discard / Keep editing when backing out. A draft (`OrderStatus.draft`) needs nothing filled in, reserves no stock and is left out of All, Today, calendars, reports, receivables and product sales. Saving it as an order (`UpdateOrder`) runs the full checks and reserves then
 - **Channel selection**: Shopee, TikTok, Lazada, Facebook, Walk-in with fee rates
 - **Order fields**: The shop's own extra details (address, size, wrap, event date…) asked for after the customer name
 - **Discounts, tax, paid**: The review step adds discount lines (one-tap presets or typed in), switches the shop's tax on or off for this order, and sets paid (defaulting from the channel). Packed orders edit these on their details form
@@ -86,7 +88,8 @@ The app is built around 6 main user flows:
 | Week calendar | ✅ | Orders by ship-by date, status filters, day detail |
 | Month calendar | ✅ | Calendar grid with dots, day selection, status filters |
 | Order list | ✅ | Tabbed (All, To Pack, Packed, Shipped), search |
-| Order creation | ✅ | 3-step wizard with back navigation |
+| Order creation | ✅ | 3-step wizard with back navigation. "+ New product" in the picker (and "+ New material" in the product editor) makes the item without leaving; "Receive" on a short review line restocks it |
+| Order drafts | ✅ | Save draft from any step or when backing out; Drafts chip on Orders with what each still needs; reopens on the first incomplete step; long press: Continue, Delete. Drafts hold no stock and count nowhere until placed. No schema change: `status` is text |
 | Order detail | ✅ | Full info: dates, channel, items, materials, financial summary |
 | Material adjustment | ✅ | Actual vs planned, waste tracking, profit recalculation |
 | Pack & Ship | ✅ | Stock deduction, status updates |

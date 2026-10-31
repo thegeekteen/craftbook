@@ -44,7 +44,15 @@ class BuyListLoaded extends MaterialsState {
 class StockReceived extends MaterialsState {}
 
 /// Material was created successfully
-class MaterialCreated extends MaterialsState {}
+class MaterialCreated extends MaterialsState {
+  /// The new material's id, so a page that opened the form can use it.
+  final int id;
+
+  const MaterialCreated(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
 
 /// Material was edited successfully
 class MaterialUpdated extends MaterialsState {}

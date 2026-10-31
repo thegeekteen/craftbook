@@ -82,7 +82,7 @@ class GetCoverageReport {
 
     for (final order in all) {
       _bump('status', order.status.name);
-      if (order.status != OrderStatus.cancelled) {
+      if (order.status.isLive) {
         _bump(
           'dates',
           order.shipByDate.isBefore(startOfToday)
@@ -226,8 +226,7 @@ class GetCoverageReport {
   }
 
   Future<void> _countFields(List<Order> allOrders) async {
-    final open =
-        allOrders.where((o) => o.status != OrderStatus.cancelled).length;
+    final open = allOrders.where((o) => o.status.isLive).length;
     for (final field in await _value(fields.getFields())) {
       _bump('field types', field.type.name);
       _bump('field states', field.isArchived ? 'archived' : 'in use');

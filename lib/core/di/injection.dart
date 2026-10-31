@@ -68,6 +68,7 @@ import '../../features/orders/domain/usecases/set_order_paid.dart';
 import '../../features/orders/presentation/bloc/receivables_cubit.dart';
 import '../../features/orders/domain/usecases/update_order_note.dart';
 import '../../features/orders/domain/usecases/adjust_materials_used.dart';
+import '../../features/orders/domain/usecases/save_draft_order.dart';
 import '../../features/orders/domain/usecases/update_order.dart';
 import '../../features/orders/domain/usecases/calculate_order_profit.dart';
 import '../../features/orders/domain/usecases/cancel_order.dart';
@@ -303,6 +304,11 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         calculateOrderProfit: getIt(),
         orderRepository: getIt(),
       ));
+  getIt.registerFactory(() => SaveDraftOrder(
+        orderRepository: getIt(),
+        productRepository: getIt(),
+        channelRepository: getIt(),
+      ));
   getIt.registerFactory(() => UpdateOrder(
         orderRepository: getIt(),
         productRepository: getIt(),
@@ -379,6 +385,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
         orders: getIt(),
         savePreset: getIt(),
         createOrder: getIt(),
+        saveDraftOrder: getIt(),
         packOrder: getIt(),
         shipOrder: getIt(),
         cancelOrder: getIt(),
@@ -462,6 +469,7 @@ Future<void> configureDependencies({AppDatabase? database}) async {
   getIt.registerFactory(() => NewOrderBloc(
         createOrder: getIt(),
         updateOrder: getIt(),
+        saveDraftOrder: getIt(),
         orderRepository: getIt(),
         calculateOrderProfit: getIt(),
         previewOrder: getIt(),

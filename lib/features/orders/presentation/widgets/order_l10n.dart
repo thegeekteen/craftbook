@@ -13,6 +13,7 @@ import '../bloc/order_detail_state.dart';
 extension OrderStatusL10n on OrderStatus {
   /// User-facing name. Pending orders are called "To pack" everywhere.
   String localized(AppLocalizations l10n) => switch (this) {
+        OrderStatus.draft => l10n.ordersStatusDraft,
         OrderStatus.pending => l10n.ordersStatusToPack,
         OrderStatus.packed => l10n.ordersStatusPacked,
         OrderStatus.shipped => l10n.ordersStatusShipped,

@@ -60,7 +60,7 @@ List<OrderPlan> buildOrders(
   void add({
     required String scenario,
     String? customer,
-    required int channelRef,
+    required int? channelRef,
     required List<ItemPlan> items,
     OrderLifecycle lifecycle = OrderLifecycle.pending,
     int placedDaysAgo = 0,
@@ -259,6 +259,39 @@ List<OrderPlan> buildOrders(
     dueInDays: 1,
     paid: true,
     note: 'Back on, she changed her mind.',
+  );
+
+  // Drafts: what's left when someone backs out of the wizard part-way. Each
+  // lacks something different, so the Drafts chip shows every "Needs: …".
+  add(
+    scenario: 'draft with only a customer, waiting for its product to exist',
+    channelRef: null,
+    items: const [],
+    lifecycle: OrderLifecycle.draft,
+    dueInDays: 5,
+    paid: true,
+    note: 'Wants the lavender version, need to set it up first.',
+  );
+  add(
+    scenario: 'draft with items but no customer or channel yet',
+    customer: '',
+    channelRef: null,
+    // More than the shelf can make, which a draft is allowed: it holds nothing.
+    items: [line(tulip, 40)],
+    lifecycle: OrderLifecycle.draft,
+    dueInDays: 3,
+    paid: true,
+  );
+  add(
+    scenario: 'draft with everything filled in, ready to place',
+    channelRef: marketplace.ref,
+    items: [line(bookmark, 4), line(resell.first)],
+    lifecycle: OrderLifecycle.draft,
+    placedDaysAgo: 1,
+    dueInDays: 4,
+    discounts: [fixedPreset.asLine()],
+    tax: shopTax,
+    paid: false,
   );
 
   // The layout and arithmetic extremes: one shop has to stretch every card.

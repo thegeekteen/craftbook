@@ -1030,6 +1030,26 @@
   "ordersStatusPacked": "Packed",
   "ordersStatusShipped": "Shipped",
   "ordersStatusCancelled": "Cancelled",
+  "ordersStatusDraft": "Draft",
+  "ordersDraftsChip": "Drafts",
+  "ordersDraftNoCustomer": "No customer yet",
+  "ordersDraftNeeds": "Needs: {parts}",
+  "@ordersDraftNeeds": {
+    "placeholders": {
+      "parts": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersDraftNeedCustomer": "customer",
+  "ordersDraftNeedChannel": "channel",
+  "ordersDraftNeedItems": "items",
+  "ordersDraftReady": "Ready to save as an order",
+  "ordersContinueDraft": "Continue",
+  "ordersDeleteDraftTitle": "Delete this draft?",
+  "ordersDeleteMessageDraft": "The draft is removed. It never held any stock.",
+  "ordersNoDrafts": "No drafts",
+  "ordersNoDraftsMessage": "Back out of a new order and choose Save draft to finish it later.",
   "ordersOverdue": "Overdue",
   "ordersPaymentAny": "Any",
   "ordersPaymentUnpaid": "Unpaid",
@@ -1172,6 +1192,21 @@
   "ordersDiscardChangesTitle": "Discard changes?",
   "ordersNoteStaysMessage": "The note stays as it was.",
   "ordersDiscard": "Discard",
+  "ordersSaveDraft": "Save draft",
+  "ordersDraftSaved": "Draft saved",
+  "ordersDraftTitleId": "Draft #{id}",
+  "@ordersDraftTitleId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "ordersLeaveTitle": "Keep this order for later?",
+  "ordersLeaveMessage": "Save it as a draft and finish it any time from Orders → Drafts. Stock isn’t held until you save the order.",
+  "ordersLeaveDraftTitle": "Save changes to this draft?",
+  "ordersLeaveDraftMessage": "Discard leaves the draft as it was.",
+  "ordersShortTag": "Short",
   "ordersKeepEditing": "Keep editing",
   "ordersTitle": "Orders",
   "ordersNewOrder": "New order",
@@ -1413,7 +1448,7 @@
   "ordersAddProduct": "Add product",
   "ordersSearchProducts": "Search products",
   "ordersNoProducts": "No products yet",
-  "ordersNoProductsMessage": "Add products under More → Products first.",
+  "ordersNoProductsMessage": "Make your first one here. It goes straight onto this order.",
   "ordersOutOfStock": "Out of stock",
   "ordersCantBuild": "Can’t build: not enough materials",
   "ordersInStock": "In stock {qty}",
@@ -1500,9 +1535,7 @@
   },
   "ordersPickChannel": "Pick a sales channel",
   "ordersDiscardEditTitle": "Discard your changes?",
-  "ordersDiscardNewTitle": "Discard this order?",
   "ordersDiscardEditMessage": "The order stays as it was.",
-  "ordersDiscardNewMessage": "What you’ve entered so far will be lost.",
   "ordersSaved": "Order #{id} saved",
   "@ordersSaved": {
     "placeholders": {
@@ -1905,6 +1938,8 @@
     }
   },
   "productsNewProduct": "New product",
+  "productsNewMaterial": "New material",
+  "productsAddsToOrder": "Saving adds it to the order you’re making.",
   "productsEditProduct": "Edit product",
   "productsEnterName": "Enter a name",
   "productsDescriptionOptional": "Description (optional)",
@@ -1955,7 +1990,7 @@
   "productsAddMaterialTitle": "Add material",
   "productsNoMaterialsTitle": "No materials yet",
   "productsAllMaterialsAdded": "All materials added",
-  "productsAddMaterialsFirst": "Add materials under Stock first.",
+  "productsAddMaterialsFirst": "Make your first one here. It goes straight onto this product.",
   "productsSearchMaterials": "Search materials",
   "productsAddMaterialsHint": "Add what this is made from so the app can work out its cost and reserve stock.",
   "productsCostEach": "{cost} each",
@@ -2435,6 +2470,7 @@
   "stockMoveCounted": "Counted",
   "stockMoveWaste": "Waste",
   "stockNewTitle": "New material",
+  "stockAddsToProduct": "Saving adds it to the product’s materials.",
   "stockNameHint": "e.g. Glass seed beads 2mm",
   "stockNameRequired": "Enter a name",
   "stockCountedIn": "Counted in",

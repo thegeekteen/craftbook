@@ -26,6 +26,7 @@ import '../../../orders/domain/usecases/cancel_order.dart';
 import '../../../orders/domain/usecases/create_order.dart';
 import '../../../orders/domain/usecases/pack_order.dart';
 import '../../../orders/domain/usecases/restore_order.dart';
+import '../../../orders/domain/usecases/save_draft_order.dart';
 import '../../../orders/domain/usecases/set_order_paid.dart';
 import '../../../orders/domain/usecases/ship_order.dart';
 import '../../../products/domain/entities/channel.dart';
@@ -73,6 +74,7 @@ class SeedFakeShop {
     required this.orders,
     required this.savePreset,
     required this.createOrder,
+    required this.saveDraftOrder,
     required this.packOrder,
     required this.shipOrder,
     required this.cancelOrder,
@@ -95,6 +97,7 @@ class SeedFakeShop {
   final OrderRepository orders;
   final SaveDiscountPreset savePreset;
   final CreateOrder createOrder;
+  final SaveDraftOrder saveDraftOrder;
   final PackOrder packOrder;
   final ShipOrder shipOrder;
   final CancelOrder cancelOrder;
@@ -359,6 +362,25 @@ class SeedFakeShop {
           unitPrice: item.price ?? shop.productByRef(item.productRef).sellPrice,
         ),
     ];
+    final fieldValues = {
+      for (final answer in plan.answers.entries)
+        fieldIds[answer.key]!: answer.value,
+    };
+    if (plan.isDraft) {
+      // Through the wizard's own Save draft, so a draft holds nothing.
+      _ok(await saveDraftOrder(
+        customerName: plan.customer,
+        note: plan.note,
+        orderDate: plan.placed,
+        shipByDate: plan.due,
+        channelId: channelIds[plan.channelRef],
+        items: items,
+        fieldValues: fieldValues,
+        terms: OrderTerms(
+            discounts: plan.discounts, tax: plan.tax, isPaid: plan.paid),
+      ));
+      return;
+    }
     final sales = items.fold<double>(0, (sum, item) => sum + item.subtotal);
     final shape = channelPlans[plan.channelRef]!;
     final channel = Channel(
@@ -400,10 +422,7 @@ class SeedFakeShop {
       channelFees: fees,
       shippingCost: plan.shipping,
       items: items,
-      fieldValues: {
-        for (final answer in plan.answers.entries)
-          fieldIds[answer.key]!: answer.value,
-      },
+      fieldValues: fieldValues,
       terms: OrderTerms(
           discounts: money.discounts, tax: plan.tax, isPaid: plan.paid),
       discountTotal: money.discount,

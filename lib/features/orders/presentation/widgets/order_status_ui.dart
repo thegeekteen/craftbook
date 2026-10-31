@@ -11,6 +11,7 @@ extension OrderStatusLabel on OrderStatus {
   /// English name, for code with no [BuildContext]. Screens use
   /// [OrderStatusL10n.localized] so the name follows the app's language.
   String get label => switch (this) {
+        OrderStatus.draft => 'Draft',
         OrderStatus.pending => 'To pack',
         OrderStatus.packed => 'Packed',
         OrderStatus.shipped => 'Shipped',
@@ -67,6 +68,7 @@ class OrderStatusPill extends StatelessWidget {
           text: context.l10n.ordersOverdue, type: StatusPillType.alert);
     }
     final type = switch (status) {
+      OrderStatus.draft => StatusPillType.outline,
       OrderStatus.pending => StatusPillType.warning,
       OrderStatus.packed => StatusPillType.success,
       OrderStatus.shipped => StatusPillType.coin,
@@ -85,6 +87,7 @@ Color orderStatusColor(Order order,
     required Color muted}) {
   if (order.isOverdue) return alert;
   return switch (order.status) {
+    OrderStatus.draft => muted,
     OrderStatus.pending => warn,
     OrderStatus.packed => go,
     OrderStatus.shipped => coin,
