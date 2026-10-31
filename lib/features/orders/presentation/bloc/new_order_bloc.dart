@@ -12,6 +12,7 @@ import '../../domain/repositories/order_repository.dart';
 import '../../domain/usecases/calculate_order_profit.dart';
 import '../../domain/usecases/create_order.dart';
 import '../../domain/usecases/preview_order.dart';
+import '../../domain/usecases/save_draft_order.dart';
 import '../../domain/usecases/update_order.dart';
 import 'new_order_event.dart';
 import 'new_order_state.dart';
@@ -20,10 +21,12 @@ import 'new_order_state.dart';
 ///
 /// Tracks customer details, items list, and computed totals.
 /// On [SaveOrder], calls [CreateOrder] with all accumulated data, or
-/// [UpdateOrder] after [LoadExistingOrder].
+/// [UpdateOrder] after [LoadExistingOrder] (which places a draft). On
+/// [SaveDraft], keeps whatever is there through [SaveDraftOrder].
 class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   final CreateOrder createOrder;
   final UpdateOrder updateOrder;
+  final SaveDraftOrder saveDraftOrder;
   final OrderRepository orderRepository;
   final CalculateOrderProfit calculateOrderProfit;
   final PreviewOrder previewOrder;
@@ -34,6 +37,8 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   // Internal mutable state for building the order
   String _customerName = '';
   Map<int, String> _fieldValues = {};
+
+  /// 0 while no channel is picked (only a draft can be saved like that).
   int _channelId = 0;
   DateTime _orderDate = DateTime.now();
   DateTime _shipByDate = DateTime.now();
@@ -54,6 +59,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
   NewOrderBloc({
     required this.createOrder,
     required this.updateOrder,
+    required this.saveDraftOrder,
     required this.orderRepository,
     required this.calculateOrderProfit,
     required this.previewOrder,
@@ -72,6 +78,7 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     on<SetOrderPaidStatus>(_onSetOrderPaidStatus);
     on<RequestPreview>(_onRequestPreview);
     on<SaveOrder>(_onSaveOrder);
+    on<SaveDraft>(_onSaveDraft);
     on<ResetOrder>(_onResetOrder);
   }
 
@@ -148,16 +155,20 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
     SetCustomerDetails event,
     Emitter<NewOrderState> emit,
   ) {
+    _applyDetails(event);
+    _emitDetailsFilled(emit);
+  }
+
+  void _applyDetails(SetCustomerDetails event) {
     _customerName = event.customerName;
     _fieldValues = {..._fieldValues, ...event.fieldValues};
-    _channelId = event.channelId;
+    _channelId = event.channelId ?? 0;
     if (!_paidTouched) {
       _terms = _terms.copyWith(isPaid: event.channelPaidByDefault);
     }
     _orderDate = event.orderDate;
     _shipByDate = event.shipByDate;
     _note = event.note;
-    _emitDetailsFilled(emit);
   }
 
   void _onAddItem(AddItem event, Emitter<NewOrderState> emit) {
@@ -362,6 +373,39 @@ class NewOrderBloc extends Bloc<NewOrderEvent, NewOrderState> {
         fail(failure.message);
       case Success(:final value):
         emit(NewOrderSaved(value));
+    }
+  }
+
+  Future<void> _onSaveDraft(
+    SaveDraft event,
+    Emitter<NewOrderState> emit,
+  ) async {
+    final details = event.details;
+    if (details != null) _applyDetails(details);
+    final current = state;
+    final before = _detailsState().copyWith(
+        preview: current is NewOrderDetailsFilled ? current.preview : null);
+    emit(before.copyWith(isSaving: true));
+
+    final result = await saveDraftOrder(
+      // Only a draft is rewritten; anything else being edited isn't offered
+      // Save draft.
+      orderId: _editingStatus == OrderStatus.draft ? _editingOrderId : null,
+      customerName: _customerName,
+      fieldValues: _fieldValues,
+      note: _note,
+      orderDate: _orderDate,
+      shipByDate: _shipByDate,
+      channelId: _channelId == 0 ? null : _channelId,
+      items: _items,
+      terms: _terms,
+    );
+    switch (result) {
+      case Error(:final failure):
+        emit(NewOrderError(failure.message));
+        emit(before);
+      case Success(:final value):
+        emit(NewOrderDraftSaved(value));
     }
   }
 

@@ -9,6 +9,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/quantity_formatter.dart';
 import '../../../../core/widgets/app_search_field.dart';
 import '../../../../core/widgets/app_tag.dart';
+import '../../../../core/widgets/create_new_row.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/product_photo.dart';
 import '../../../products/domain/entities/product.dart';
@@ -18,15 +19,20 @@ import '../../../products/domain/usecases/get_products.dart';
 import '../../domain/entities/order_item.dart';
 
 /// Bottom sheet for picking a product to add to an order. Shows how many
-/// can be built (or are in stock) and disables products that can't be made.
+/// can be built (or are in stock). A product that's short can still be
+/// added, tagged as such: the review step shows the shortage and the buy
+/// list picks it up. With [onCreateNew], a "New product" row offers to make
+/// one instead.
 class ProductPickerSheet extends StatefulWidget {
   final void Function(OrderItemInput item) onSelected;
+  final VoidCallback? onCreateNew;
   final List<int> addedProductIds;
   final ScrollController? scrollController;
 
   const ProductPickerSheet({
     super.key,
     required this.onSelected,
+    this.onCreateNew,
     this.addedProductIds = const [],
     this.scrollController,
   });
@@ -34,9 +40,11 @@ class ProductPickerSheet extends StatefulWidget {
   @override
   State<ProductPickerSheet> createState() => _ProductPickerSheetState();
 
+  /// [onCreateNew] runs after the sheet has closed.
   static Future<void> show(
     BuildContext context, {
     required void Function(OrderItemInput item) onSelected,
+    VoidCallback? onCreateNew,
     List<int> addedProductIds = const [],
   }) {
     return showModalBottomSheet(
@@ -54,6 +62,12 @@ class ProductPickerSheet extends StatefulWidget {
             Navigator.pop(sheetContext);
             onSelected(item);
           },
+          onCreateNew: onCreateNew == null
+              ? null
+              : () {
+                  Navigator.pop(sheetContext);
+                  onCreateNew();
+                },
           addedProductIds: addedProductIds,
         ),
       ),
@@ -135,6 +149,14 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                 onChanged: (v) =>
                     setState(() => _query = v.trim().toLowerCase()),
               ),
+              if (widget.onCreateNew != null && _products.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                CreateNewRow(
+                  label: context.l10n.productsNewProduct,
+                  onTap: widget.onCreateNew!,
+                ),
+                Divider(height: 1, color: c.hair),
+              ],
             ],
           ),
         ),
@@ -158,6 +180,10 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                 : context.l10n.ordersNoMatches,
             message:
                 _products.isEmpty ? context.l10n.ordersNoProductsMessage : null,
+            actionLabel: _products.isEmpty && widget.onCreateNew != null
+                ? context.l10n.productsNewProduct
+                : null,
+            onAction: _products.isEmpty ? widget.onCreateNew : null,
           ),
         ],
       );
@@ -183,65 +209,60 @@ class _ProductPickerSheetState extends State<ProductPickerSheet> {
                     .ordersInStock(QuantityFormatter.withUnit(shown, p.unit))
                 : context.l10n
                     .ordersCanBuild(QuantityFormatter.withUnit(shown, p.unit)));
-        return Opacity(
-          opacity: available ? 1 : 0.45,
-          child: InkWell(
-            onTap: !available
-                ? null
-                : () => widget.onSelected(OrderItemInput(
-                      productId: p.id!,
-                      productName: p.name,
-                      quantity: 1,
-                      unitPrice: p.sellPrice,
-                      photo: p.photo,
-                    )),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                children: [
-                  ProductPhoto(bytes: p.photo, name: p.name),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(p.name,
-                                style: AppTextStyles.bodyLarge
-                                    .copyWith(color: c.ink)),
-                            if (available && isProductLow(p, qty))
-                              const AppTag.low(),
-                            if (added)
-                              AppTag(context.l10n.ordersAddedTag,
-                                  type: AppTagType.ok),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          stockText,
-                          style:
-                              AppTextStyles.bodySmall.copyWith(color: c.muted),
-                        ),
-                      ],
-                    ),
+        return InkWell(
+          onTap: () => widget.onSelected(OrderItemInput(
+            productId: p.id!,
+            productName: p.name,
+            quantity: 1,
+            unitPrice: p.sellPrice,
+            photo: p.photo,
+          )),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                ProductPhoto(bytes: p.photo, name: p.name),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(p.name,
+                              style: AppTextStyles.bodyLarge
+                                  .copyWith(color: c.ink)),
+                          if (!available)
+                            AppTag(context.l10n.ordersShortTag,
+                                type: AppTagType.warn)
+                          else if (isProductLow(p, qty))
+                            const AppTag.low(),
+                          if (added)
+                            AppTag(context.l10n.ordersAddedTag,
+                                type: AppTagType.ok),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        stockText,
+                        style: AppTextStyles.bodySmall.copyWith(color: c.muted),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    CurrencyFormatter.formatShort(p.sellPrice),
-                    style: AppTextStyles.amount
-                        .copyWith(color: c.coin, fontSize: 16),
-                  ),
-                  if (available) ...[
-                    const SizedBox(width: 6),
-                    Icon(Icons.add_circle_outline_rounded,
-                        color: c.go, size: 22),
-                  ],
-                ],
-              ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  CurrencyFormatter.formatShort(p.sellPrice),
+                  style: AppTextStyles.amount
+                      .copyWith(color: c.coin, fontSize: 16),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.add_circle_outline_rounded,
+                    color: available ? c.go : c.warn, size: 22),
+              ],
             ),
           ),
         );

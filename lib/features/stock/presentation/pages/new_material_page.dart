@@ -11,6 +11,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/extensions.dart';
 import '../../../../core/utils/l10n_extension.dart';
 import '../../../../core/widgets/bottom_action_bar.dart';
+import '../../../../core/widgets/inline_banner.dart';
 import '../../../../core/widgets/section_label.dart';
 import '../../../../core/error/result.dart';
 import '../../../units/domain/entities/unit_of_measure.dart';
@@ -27,21 +28,28 @@ import '../bloc/materials_state.dart';
 class NewMaterialPage extends StatelessWidget {
   final int? materialId;
 
-  const NewMaterialPage({super.key, this.materialId});
+  /// Opened from a product's materials to make one for it: says so, and
+  /// pops with the new material's id instead of `true`.
+  final bool returnsNewId;
+
+  const NewMaterialPage(
+      {super.key, this.materialId, this.returnsNewId = false});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<MaterialsBloc>(),
-      child: _NewMaterialView(materialId: materialId),
+      child:
+          _NewMaterialView(materialId: materialId, returnsNewId: returnsNewId),
     );
   }
 }
 
 class _NewMaterialView extends StatefulWidget {
   final int? materialId;
+  final bool returnsNewId;
 
-  const _NewMaterialView({this.materialId});
+  const _NewMaterialView({this.materialId, this.returnsNewId = false});
 
   @override
   State<_NewMaterialView> createState() => _NewMaterialViewState();
@@ -199,7 +207,11 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
       listener: (context, state) {
         if (state is MaterialCreated) {
           context.showSnackBar(l10n.stockAdded(_name.text.trim()));
-          context.pop(true);
+          if (widget.returnsNewId) {
+            context.pop(state.id);
+          } else {
+            context.pop(true);
+          }
         }
         if (state is MaterialUpdated) {
           context.showSnackBar(l10n.stockUpdated(_name.text.trim()));
@@ -226,6 +238,14 @@ class _NewMaterialViewState extends State<_NewMaterialView> {
                     child: ListView(
                       padding: AppSpacing.page.copyWith(top: 8),
                       children: [
+                        if (widget.returnsNewId && !_isEditing) ...[
+                          InlineBanner(
+                            icon: Icons.content_cut_rounded,
+                            tone: BannerTone.info,
+                            title: l10n.stockAddsToProduct,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         TextFormField(
                           controller: _name,
                           autofocus: !_isEditing,

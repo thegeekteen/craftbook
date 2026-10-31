@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:craftbook/core/widgets/create_new_row.dart';
 import 'package:craftbook/core/widgets/pip_strip.dart';
 import 'package:craftbook/core/widgets/status_pill.dart';
 import 'package:craftbook/core/widgets/currency_text.dart';
@@ -58,6 +59,30 @@ void main() {
       expect(find.text('OK'), findsOneWidget);
       expect(find.text('ERR'), findsOneWidget);
       expect(find.text('WARN'), findsOneWidget);
+    });
+
+    testWidgets('outline is a ring with no fill', (tester) async {
+      await tester.pumpWidget(localizedApp(const Scaffold(
+          body: StatusPill(text: 'Draft', type: StatusPillType.outline))));
+      final box = tester
+          .widget<Container>(find
+              .ancestor(
+                  of: find.text('DRAFT'), matching: find.byType(Container))
+              .last)
+          .decoration as BoxDecoration;
+      expect(box.border, isNotNull);
+      expect(box.color, Colors.transparent);
+    });
+  });
+
+  group('CreateNewRow', () {
+    testWidgets('shows its label and runs on tap', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(localizedApp(Scaffold(
+          body: CreateNewRow(label: 'New product', onTap: () => taps++))));
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      await tester.tap(find.text('New product'));
+      expect(taps, 1);
     });
   });
 

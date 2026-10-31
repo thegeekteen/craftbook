@@ -18,7 +18,9 @@ class SetCustomerDetails extends NewOrderEvent {
 
   /// Values for the fields shown on the form, by field id. Blank clears.
   final Map<int, String> fieldValues;
-  final int channelId;
+
+  /// Null only while a draft has no channel picked yet.
+  final int? channelId;
   final DateTime orderDate;
   final DateTime shipByDate;
   final String? note;
@@ -30,7 +32,7 @@ class SetCustomerDetails extends NewOrderEvent {
   const SetCustomerDetails({
     required this.customerName,
     this.fieldValues = const {},
-    required this.channelId,
+    this.channelId,
     required this.orderDate,
     required this.shipByDate,
     this.note,
@@ -149,6 +151,17 @@ class RequestPreview extends NewOrderEvent {}
 
 /// Save the order to the database
 class SaveOrder extends NewOrderEvent {}
+
+/// Keep what's been entered so far as a draft. [details] carries the first
+/// step's form, which only reaches the bloc on Next otherwise.
+class SaveDraft extends NewOrderEvent {
+  final SetCustomerDetails? details;
+
+  const SaveDraft({this.details});
+
+  @override
+  List<Object?> get props => [details];
+}
 
 /// Reset the order form to initial state
 class ResetOrder extends NewOrderEvent {}

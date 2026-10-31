@@ -1417,6 +1417,49 @@ class AppLocalizationsFil extends AppLocalizations {
   String get ordersStatusCancelled => 'Kinansela';
 
   @override
+  String get ordersStatusDraft => 'Draft';
+
+  @override
+  String get ordersDraftsChip => 'Mga draft';
+
+  @override
+  String get ordersDraftNoCustomer => 'Wala pang customer';
+
+  @override
+  String ordersDraftNeeds(String parts) {
+    return 'Kulang: $parts';
+  }
+
+  @override
+  String get ordersDraftNeedCustomer => 'customer';
+
+  @override
+  String get ordersDraftNeedChannel => 'channel';
+
+  @override
+  String get ordersDraftNeedItems => 'items';
+
+  @override
+  String get ordersDraftReady => 'Handa nang i-save bilang order';
+
+  @override
+  String get ordersContinueDraft => 'Ituloy';
+
+  @override
+  String get ordersDeleteDraftTitle => 'Burahin ang draft na ito?';
+
+  @override
+  String get ordersDeleteMessageDraft =>
+      'Mabubura ang draft. Wala itong nireserbang stock.';
+
+  @override
+  String get ordersNoDrafts => 'Walang draft';
+
+  @override
+  String get ordersNoDraftsMessage =>
+      'Kapag lumabas ka sa bagong order, piliin ang I-save ang draft para tapusin ito mamaya.';
+
+  @override
   String get ordersOverdue => 'Lagpas na';
 
   @override
@@ -1624,6 +1667,34 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get ordersDiscard => 'Itapon';
+
+  @override
+  String get ordersSaveDraft => 'I-save ang draft';
+
+  @override
+  String get ordersDraftSaved => 'Na-save ang draft';
+
+  @override
+  String ordersDraftTitleId(String id) {
+    return 'Draft #$id';
+  }
+
+  @override
+  String get ordersLeaveTitle => 'Itabi muna ang order na ito?';
+
+  @override
+  String get ordersLeaveMessage =>
+      'I-save ito bilang draft at tapusin kahit kailan sa Orders → Mga draft. Walang stock na nireserba hangga’t hindi mo sine-save ang order.';
+
+  @override
+  String get ordersLeaveDraftTitle => 'I-save ang mga binago sa draft?';
+
+  @override
+  String get ordersLeaveDraftMessage =>
+      'Kapag Itapon, mananatili ang draft gaya ng dati.';
+
+  @override
+  String get ordersShortTag => 'Kulang';
 
   @override
   String get ordersKeepEditing => 'Ituloy ang pag-edit';
@@ -1875,7 +1946,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get ordersNoProductsMessage =>
-      'Magdagdag muna ng mga produkto sa More → Products.';
+      'Gawin ang una dito. Diretso itong mapupunta sa order na ito.';
 
   @override
   String get ordersOutOfStock => 'Ubos na ang stock';
@@ -1957,14 +2028,8 @@ class AppLocalizationsFil extends AppLocalizations {
   String get ordersDiscardEditTitle => 'Itatapon ang mga pagbabago mo?';
 
   @override
-  String get ordersDiscardNewTitle => 'Itatapon ang order na ito?';
-
-  @override
   String get ordersDiscardEditMessage =>
       'Mananatili ang order kung paano ito dati.';
-
-  @override
-  String get ordersDiscardNewMessage => 'Mawawala ang mga nailagay mo na.';
 
   @override
   String ordersSaved(String id) {
@@ -2527,6 +2592,13 @@ class AppLocalizationsFil extends AppLocalizations {
   String get productsNewProduct => 'Bagong produkto';
 
   @override
+  String get productsNewMaterial => 'Bagong materyales';
+
+  @override
+  String get productsAddsToOrder =>
+      'Pag-save, idadagdag ito sa order na ginagawa mo.';
+
+  @override
   String get productsEditProduct => 'I-edit ang produkto';
 
   @override
@@ -2608,7 +2680,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get productsAddMaterialsFirst =>
-      'Magdagdag muna ng materyales sa Stock.';
+      'Gawin ang una dito. Diretso itong mapupunta sa produktong ito.';
 
   @override
   String get productsSearchMaterials => 'Maghanap ng materyales';
@@ -3274,6 +3346,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get stockNewTitle => 'Bagong materyales';
+
+  @override
+  String get stockAddsToProduct =>
+      'Pag-save, idadagdag ito sa materyales ng produkto.';
 
   @override
   String get stockNameHint => 'hal. Glass seed beads 2mm';

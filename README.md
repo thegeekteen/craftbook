@@ -50,7 +50,7 @@ Go to **More** and work down the list. You can change everything later.
 | **Units of measure** | More → Units of measure | What you count things in: *pc*, *sheet*, *m*, *kg*… The app starts with the common ones. Add your own, rename them, drag them into the order you like, and choose the one new items start on. Every number in the app is written with one. |
 | **Sales channels** | More → Channels & fees | Commission %, transaction fee %, fixed fee and the shipping you pay. Also choose whether orders on that channel are **paid when placed**: leave it on for marketplaces that collect first, and turn it off for walk-in, cash on delivery or chat sales. |
 | **Materials** | Inventory → **Materials** tab → **+ Material** | What it's counted in, pieces per pack, pack price (the cost per piece is worked out for you), supplier, pieces on hand and the level that counts as low. |
-| **Products** | Inventory → **+ Product** | Sell price, what it's sold in, and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how much goes in and **Makes** is how many products it makes, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. |
+| **Products** | Inventory → **+ Product** | Sell price, what it's sold in, and a photo. Then either **Handmade** (pick the materials one piece uses) or **Resell** (bought ready-made, with its own stock and cost). For each material, **Uses** is how much goes in and **Makes** is how many products it makes, so one A4 card sheet that gives 9 business cards is *Uses 1, Makes 9*. The editor shows your profit per piece as you type. A material you haven't added yet can be made right there: tap **Add**, then **+ New material**, and it's on the product when you save it. |
 | **Tax** (optional) | More → Tax | Turn on **Use tax**, set the rate and name (VAT, GST…), and choose whether new orders **start with tax on or off**. Also choose whether your prices **already include tax** or have **tax added on top**. See Tax below. |
 | **Discounts** (optional) | More → Discounts | Discounts you give often, like *Loyal customer 10%* or *Bundle ₱50*. They become one-tap chips on new orders. |
 | **Order fields** (optional) | More → Order fields | Extra details you ask for on every order: address, size, wrap, event date, card message. |
@@ -66,12 +66,23 @@ Go to **More** and work down the list. You can change everything later.
 Tap **+ New order** on the Orders tab. There are three steps:
 
 1. **Customer**: their name, your order fields, the channel, the order date, the ship-by date and a note. Notes can have checklists, so they work as a packing to-do.
-2. **Items**: pick products. The picker shows how many you can make with the stock you have now.
+2. **Items**: pick products. The picker shows how many you can make with the stock you have now. A product you're **Short** on can still be added; the order will show what's missing.
+   - **Product not set up yet?** Tap **+ New product** at the top of the picker. Fill it in (and make its materials there too, with **+ New material**). When you save it you're back on the order with the product already added. Nothing you typed is lost.
 3. **Review**: check everything before you save.
    - **Discounts**: tap a saved discount, or **+ Other** to type one just for this order. Add as many as you like; tap ✕ to remove one.
    - **Tax**: if you use tax, there's a switch here. It starts on or off depending on your setting; flip it for this order.
    - **Paid**: this starts from the channel's setting. Flip it if this customer hasn't paid yet.
-   - The **order total**, where the money goes, your profit, and which materials will be set aside. If you're short of anything you'll see a warning, but you can still save.
+   - The **order total**, where the money goes, your profit, and which materials will be set aside. If you're short of anything you'll see a warning, but you can still save. Tap **Receive** next to a short material to add the stock you just bought.
+
+### Drafts: finish it later
+
+You don't have to finish an order in one go. Tap **Save draft** at the top on any step, or just back out and choose **Save draft**. Nothing needs to be filled in yet, not even the customer or the channel.
+
+- Drafts wait under the **Drafts** chip on the Orders tab. Each one says what it still **needs** (customer, channel, items).
+- Tap a draft to carry on. It opens on the first step that still needs something.
+- **Save order** turns it into a real order. That's when its materials are set aside.
+- A draft holds no stock and isn't counted anywhere: not in **All**, Today, the calendar, Reports or Waiting for payment.
+- Long-press a draft to **Continue** or **Delete** it.
 
 ### Packing and shipping
 

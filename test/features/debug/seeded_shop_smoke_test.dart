@@ -252,8 +252,7 @@ void main() {
       final orders = await _orders(tester);
 
       await _tapChip(tester, 'All');
-      final openCount =
-          orders.where((o) => o.status != OrderStatus.cancelled).length;
+      final openCount = orders.where((o) => o.status.isLive).length;
       expect(
           find.descendant(
               of: _chipWith('All'), matching: find.text('$openCount')),
@@ -279,6 +278,21 @@ void main() {
           'a cancelled order');
       expect(find.text(cancelled.customerName), findsNothing,
           reason: 'a cancelled order leaked into the To pack pile');
+
+      // Drafts too: only under Drafts, nameless ones still findable, each
+      // saying what it lacks.
+      final named = _pick(orders, (o) => o.isDraft && o.customerName.isNotEmpty,
+          'a draft with a customer');
+      await _tapChip(tester, 'All');
+      expect(find.text('No customer yet'), findsNothing,
+          reason: 'a draft leaked into All');
+      await _tapChip(tester, 'Drafts');
+      await _reveal(tester, find.text(named.customerName));
+      expect(find.text(named.customerName), findsWidgets);
+      await _reveal(tester, find.text('No customer yet'));
+      expect(find.text('No customer yet'), findsOneWidget);
+      expect(find.text('Needs: customer, channel'), findsOneWidget);
+      expect(find.text('Ready to save as an order'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await closeApp(tester);
     });

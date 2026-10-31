@@ -172,7 +172,7 @@ class OrderRepositoryImpl implements OrderRepository {
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
-    required int channelId,
+    required int? channelId,
     required double totalSales,
     required double totalMaterialCost,
     required double channelFees,
@@ -185,6 +185,7 @@ class OrderRepositoryImpl implements OrderRepository {
     OrderTerms terms = const OrderTerms(),
     double discountTotal = 0,
     double taxAmount = 0,
+    OrderStatus status = OrderStatus.pending,
   }) async {
     try {
       final orderId = await dao.transaction(() => _insertOrder(
@@ -205,6 +206,7 @@ class OrderRepositoryImpl implements OrderRepository {
             materials: materials,
             products: products,
             fieldValues: fieldValues,
+            status: status,
           ));
       return Success(orderId);
     } catch (e) {
@@ -220,7 +222,7 @@ class OrderRepositoryImpl implements OrderRepository {
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
-    required int channelId,
+    required int? channelId,
     required double totalSales,
     required double totalMaterialCost,
     required double channelFees,
@@ -230,13 +232,14 @@ class OrderRepositoryImpl implements OrderRepository {
     required List<OrderMaterialInput> materials,
     required List<OrderProductInput> products,
     required Map<int, String> fieldValues,
+    required OrderStatus status,
   }) async {
     final orderId = await dao.createOrder(db.OrdersCompanion(
       customerName: Value(customerName),
       note: Value(note),
       orderDate: Value(orderDate),
       shipByDate: Value(shipByDate),
-      status: Value(_statusToString(OrderStatus.pending)),
+      status: Value(_statusToString(status)),
       channelId: Value(channelId),
       totalSales: Value(totalSales),
       totalMaterialCost: Value(totalMaterialCost),
@@ -297,7 +300,7 @@ class OrderRepositoryImpl implements OrderRepository {
     String? note,
     required DateTime orderDate,
     required DateTime shipByDate,
-    required int channelId,
+    required int? channelId,
     required double totalSales,
     required double totalMaterialCost,
     required double channelFees,
@@ -310,6 +313,7 @@ class OrderRepositoryImpl implements OrderRepository {
     OrderTerms? terms,
     double discountTotal = 0,
     double taxAmount = 0,
+    OrderStatus? status,
   }) async {
     try {
       await dao.transaction(() async {
@@ -322,8 +326,9 @@ class OrderRepositoryImpl implements OrderRepository {
             taxAmount: Value(taxAmount),
             taxInclusive: Value(terms.tax?.inclusive ?? true),
             isPaid: Value(terms.isPaid),
-            paidAt: Value(
-                terms.isPaid ? (existing?.paidAt ?? DateTime.now()) : null),
+            paidAt: Value(terms.isPaid
+                ? (status == null ? existing?.paidAt : null) ?? DateTime.now()
+                : null),
           ));
           await dao.replaceOrderDiscounts(id, _discountRows(terms.discounts));
         }
@@ -339,6 +344,9 @@ class OrderRepositoryImpl implements OrderRepository {
           channelFees: Value(channelFees),
           shippingCost: Value(shippingCost),
           profit: Value(profit),
+          status: status == null
+              ? const Value.absent()
+              : Value(_statusToString(status)),
           updatedAt: Value(DateTime.now()),
         ));
         if (fieldValues != null) {
@@ -701,6 +709,8 @@ class OrderRepositoryImpl implements OrderRepository {
 
   static String _statusToString(OrderStatus status) {
     switch (status) {
+      case OrderStatus.draft:
+        return 'draft';
       case OrderStatus.pending:
         return 'pending';
       case OrderStatus.packed:
@@ -714,6 +724,8 @@ class OrderRepositoryImpl implements OrderRepository {
 
   static OrderStatus _statusFromString(String status) {
     switch (status) {
+      case 'draft':
+        return OrderStatus.draft;
       case 'pending':
         return OrderStatus.pending;
       case 'packed':

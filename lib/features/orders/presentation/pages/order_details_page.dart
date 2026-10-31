@@ -445,6 +445,7 @@ class _OrderDetailViewState extends State<_OrderDetailView> {
             ),
           ),
         ]);
+      case OrderStatus.draft:
       case OrderStatus.shipped:
       case OrderStatus.cancelled:
         return null;
@@ -507,11 +508,11 @@ class _StatusTrack extends StatelessWidget {
     final c = context.colors;
     final l10n = context.l10n;
     final fmt = DateFormat('MMM d', Localizations.localeOf(context).toString());
-    if (order.status == OrderStatus.cancelled) {
+    if (!order.status.isLive) {
       return AppCard(
         child: Row(
           children: [
-            const OrderStatusPill(status: OrderStatus.cancelled),
+            OrderStatusPill(status: order.status),
             const SizedBox(width: 10),
             Text(
               l10n.ordersPlacedOn(fmt.format(order.orderDate)),

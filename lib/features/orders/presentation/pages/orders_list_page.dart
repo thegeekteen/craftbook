@@ -115,10 +115,9 @@ class _OrdersListViewState extends State<_OrdersListView> {
     final searched = all.where(_matches).toList();
     int count(OrderStatus s) =>
         searched.where((e) => e.order.status == s).length;
-    // "All" means everything still in play; cancelled orders only show
-    // under their own chip.
-    final active =
-        searched.where((e) => e.order.status != OrderStatus.cancelled).toList();
+    // "All" means every real order still in play; drafts and cancelled
+    // orders only show under their own chips.
+    final active = searched.where((e) => e.order.status.isLive).toList();
     final byStatus = _status == null
         ? active
         : searched.where((e) => e.order.status == _status).toList();
@@ -151,7 +150,12 @@ class _OrdersListViewState extends State<_OrdersListView> {
             options: [
               ChipOption(null, context.l10n.commonAll, count: active.length),
               for (final s in OrderStatus.values)
-                ChipOption(s, s.localized(context.l10n), count: count(s)),
+                ChipOption(
+                    s,
+                    s == OrderStatus.draft
+                        ? context.l10n.ordersDraftsChip
+                        : s.localized(context.l10n),
+                    count: count(s)),
             ],
           ),
         ),
@@ -191,8 +195,11 @@ class _OrdersListViewState extends State<_OrdersListView> {
                               builder: (context, shown) => OrderCard(
                                 entry: e,
                                 amountShown: shown,
-                                onTap: () =>
-                                    _open(RouteNames.orderPath(e.order.id!)),
+                                // A draft goes straight back into the
+                                // wizard: there's nothing to look at yet.
+                                onTap: () => _open(e.order.isDraft
+                                    ? RouteNames.editOrderPath(e.order.id!)
+                                    : RouteNames.orderPath(e.order.id!)),
                                 onLongPress: () async {
                                   if (await OrderActions.open(
                                           context, e.order) &&
@@ -238,6 +245,13 @@ class _OrdersListViewState extends State<_OrdersListView> {
             : context.l10n.ordersNoPaidHere,
       );
     }
+    if (_status == OrderStatus.draft) {
+      return EmptyState(
+        icon: Icons.edit_note_rounded,
+        title: context.l10n.ordersNoDrafts,
+        message: context.l10n.ordersNoDraftsMessage,
+      );
+    }
     final label = _status?.localized(context.l10n).toLowerCase() ?? '';
     return EmptyState(
       icon: Icons.check_circle_outline_rounded,
@@ -260,6 +274,12 @@ class _OrdersListViewState extends State<_OrdersListView> {
     final groups = <String, List<OrderListEntry>>{};
     void add(String key, OrderListEntry e) =>
         groups.putIfAbsent(key, () => []).add(e);
+
+    final drafts = entries.where((e) => e.order.isDraft).toList()
+      ..sort((a, b) => b.order.updatedAt.compareTo(a.order.updatedAt));
+    for (final e in drafts) {
+      add(l10n.ordersDraftsChip, e);
+    }
 
     final open = entries
         .where((e) =>

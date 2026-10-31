@@ -75,7 +75,7 @@ class GetTodayDashboard {
     // A cancelled order needs nothing doing, so it isn't news on Today.
     final placedOrders = (placedResult as Success<List<Order>>)
         .value
-        .where((o) => o.status != OrderStatus.cancelled)
+        .where((o) => o.status.isLive)
         .toList();
 
     final alertsResult = await getAlertSummary();

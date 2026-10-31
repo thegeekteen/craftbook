@@ -36,6 +36,8 @@ enum StockRole {
 /// How an order has travelled. Everything in between is done through the app's
 /// own use cases, so the shelf moves the way it does for a shop owner.
 enum OrderLifecycle {
+  /// Saved part-way through the wizard: holds nothing and isn't an order yet.
+  draft,
   pending,
   packed,
   shipped,
@@ -275,8 +277,12 @@ class OrderPlan {
 
   /// What this order exists to prove, shown in test failures.
   final String scenario;
+
+  /// Blank only on a draft nobody has named yet.
   final String customer;
-  final int channelRef;
+
+  /// Null only on a draft whose channel isn't picked yet.
+  final int? channelRef;
   final List<ItemPlan> items;
   final OrderLifecycle lifecycle;
   final DateTime placed;
@@ -348,9 +354,13 @@ class OrderPlan {
         _ => false,
       };
 
+  bool get isDraft => lifecycle == OrderLifecycle.draft;
+
   /// Still holding pieces for itself: to pack, which includes a restored one.
+  /// A draft holds nothing until it's placed.
   bool get reserves =>
       !isCancelled &&
+      !isDraft &&
       lifecycle != OrderLifecycle.packed &&
       lifecycle != OrderLifecycle.shipped;
 }

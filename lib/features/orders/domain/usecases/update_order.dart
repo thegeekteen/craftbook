@@ -16,6 +16,8 @@ import 'expand_order_items.dart';
 
 /// Edits an existing order. What can change depends on how far it got:
 ///
+/// * **draft**: everything, and saving places it: the full checks run, it
+///   becomes pending and its stock is reserved for the first time.
 /// * **pending**: everything. Reservations are released and re-made for the
 ///   new items.
 /// * **packed**: customer, order fields, note, dates, channel, discounts,
@@ -89,6 +91,7 @@ class UpdateOrder {
           shippingCost: order.shippingCost,
           profit: order.profit,
         );
+      case OrderStatus.draft:
       case OrderStatus.packed:
       case OrderStatus.pending:
         break;
@@ -182,6 +185,11 @@ class UpdateOrder {
     if (items.isEmpty) {
       return const Error(ValidationFailure('At least one item is required'));
     }
+    // A draft never reserved anything, so placing it only reserves.
+    final placing = order.status == OrderStatus.draft;
+    if (placing && channelId <= 0) {
+      return const Error(ValidationFailure('Pick a channel'));
+    }
     final orderId = order.id!;
 
     final oldMaterialsResult = await orderRepository.getOrderMaterials(orderId);
@@ -242,17 +250,20 @@ class UpdateOrder {
       items: items,
       materials: materials,
       products: products,
+      status: placing ? OrderStatus.pending : null,
     );
     if (saved case Error()) return saved;
 
     // Rows are replaced; now move the reservations from the old plan to the new.
-    for (final m in oldMaterials) {
-      await materialRepository.releaseReservedMaterials(
-          m.materialId, m.actualQuantity);
-    }
-    for (final p in oldProducts) {
-      await productRepository.releaseReservedProductStock(
-          p.productId, p.quantity);
+    if (!placing) {
+      for (final m in oldMaterials) {
+        await materialRepository.releaseReservedMaterials(
+            m.materialId, m.actualQuantity);
+      }
+      for (final p in oldProducts) {
+        await productRepository.releaseReservedProductStock(
+            p.productId, p.quantity);
+      }
     }
     for (final m in materials) {
       await materialRepository.reserveMaterials(m.materialId, m.actualQuantity);

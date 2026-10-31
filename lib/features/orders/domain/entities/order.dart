@@ -2,6 +2,9 @@ import 'package:equatable/equatable.dart';
 
 /// Order status enum
 enum OrderStatus {
+  /// Saved part-way through the wizard. Holds no stock and stays out of
+  /// reports, Today, the calendars and receivables until it's placed.
+  draft,
   pending,
   packed,
   shipped,
@@ -9,6 +12,8 @@ enum OrderStatus {
 
   String get displayName {
     switch (this) {
+      case OrderStatus.draft:
+        return 'Draft';
       case OrderStatus.pending:
         return 'Pending';
       case OrderStatus.packed:
@@ -19,6 +24,9 @@ enum OrderStatus {
         return 'Cancelled';
     }
   }
+
+  /// A real order that still counts: placed and not called off.
+  bool get isLive => this != OrderStatus.draft && this != OrderStatus.cancelled;
 }
 
 /// Order entity
@@ -82,7 +90,9 @@ class Order extends Equatable {
   bool get hasDiscount => discountTotal > 0;
 
   /// Waiting for the customer's money: unpaid and not called off.
-  bool get isAwaitingPayment => !isPaid && status != OrderStatus.cancelled;
+  bool get isAwaitingPayment => !isPaid && status.isLive;
+
+  bool get isDraft => status == OrderStatus.draft;
 
   @override
   List<Object?> get props => [

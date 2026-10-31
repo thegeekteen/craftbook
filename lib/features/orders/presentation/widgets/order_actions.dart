@@ -26,17 +26,27 @@ abstract final class OrderActions {
   static Future<bool> open(BuildContext context, Order order) async {
     final shipped = order.status == OrderStatus.shipped;
     final cancelled = order.status == OrderStatus.cancelled;
+    final draft = order.isDraft;
     final l10n = context.l10n;
+    final name = order.customerName.trim().isEmpty
+        ? l10n.ordersDraftNoCustomer
+        : order.customerName;
     final action = await showActionSheet<_OrderAction>(
       context,
-      title: context.l10n.ordersActionTitle('${order.id}', order.customerName),
+      title: context.l10n.ordersActionTitle('${order.id}', name),
       actions: [
+        // A draft is only finished or thrown away.
+        if (draft)
+          SheetAction(
+              value: _OrderAction.edit,
+              icon: Icons.edit_outlined,
+              label: l10n.ordersContinueDraft),
         if (order.status == OrderStatus.packed)
           SheetAction(
               value: _OrderAction.ship,
               icon: Icons.local_shipping_rounded,
               label: l10n.ordersMarkShipped),
-        if (!cancelled)
+        if (order.status.isLive)
           SheetAction(
               value: _OrderAction.paid,
               icon: order.isPaid
@@ -44,7 +54,7 @@ abstract final class OrderActions {
                   : Icons.payments_outlined,
               label:
                   order.isPaid ? l10n.ordersMarkUnpaid : l10n.ordersMarkPaid),
-        if (!cancelled)
+        if (order.status.isLive)
           SheetAction(
               value: _OrderAction.edit,
               icon: Icons.edit_outlined,
@@ -98,8 +108,9 @@ abstract final class OrderActions {
   }
 
   /// Any order still in play can be called off; a shipped one when it came
-  /// back or never went, so it can then be deleted.
-  static bool canCancel(Order order) => order.status != OrderStatus.cancelled;
+  /// back or never went, so it can then be deleted. A draft holds nothing,
+  /// so it's deleted instead.
+  static bool canCancel(Order order) => order.status.isLive;
 
   static Future<bool> confirmCancel(BuildContext context, Order order) {
     final l10n = context.l10n;
@@ -132,8 +143,11 @@ abstract final class OrderActions {
     final l10n = context.l10n;
     return ConfirmDialog.show(
       context,
-      title: l10n.ordersDeleteTitle('${order.id}'),
+      title: order.isDraft
+          ? l10n.ordersDeleteDraftTitle
+          : l10n.ordersDeleteTitle('${order.id}'),
       message: switch (order.status) {
+        OrderStatus.draft => l10n.ordersDeleteMessageDraft,
         OrderStatus.packed => l10n.ordersDeleteMessagePacked,
         OrderStatus.cancelled => l10n.ordersDeleteMessageCancelled,
         _ => l10n.ordersDeleteMessagePending,

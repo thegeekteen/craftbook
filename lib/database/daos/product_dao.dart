@@ -190,14 +190,15 @@ class ProductDao extends DatabaseAccessor<AppDatabase> with _$ProductDaoMixin {
         .get();
   }
 
-  /// Every order line for [productId] with its order, any status, newest
-  /// order first.
+  /// Every order line for [productId] with its order, any status but draft
+  /// (a draft isn't a sale yet), newest order first.
   Future<List<(OrderItem, Order)>> getOrderLinesForProduct(
       int productId) async {
     final query = select(orderItems).join([
       innerJoin(orders, orders.id.equalsExp(orderItems.orderId)),
     ])
-      ..where(orderItems.productId.equals(productId))
+      ..where(orderItems.productId.equals(productId) &
+          orders.status.isNotValue('draft'))
       ..orderBy(
           [OrderingTerm.desc(orders.orderDate), OrderingTerm.desc(orders.id)]);
     final rows = await query.get();

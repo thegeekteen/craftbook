@@ -17,6 +17,9 @@ import 'calculate_order_profit.dart';
 /// One thing an order will reserve: a material (BOM products) or a
 /// standalone product's own stock.
 class ReservationLine extends Equatable {
+  /// The material's id, or the product's when [isProduct]; lets a short line
+  /// lead to receiving stock for it.
+  final int? id;
   final String name;
 
   /// What [quantity] and [available] are counted in.
@@ -28,6 +31,7 @@ class ReservationLine extends Equatable {
   final bool isProduct;
 
   const ReservationLine({
+    this.id,
     required this.name,
     this.unit = AppConstants.defaultUnitLabel,
     required this.quantity,
@@ -40,7 +44,7 @@ class ReservationLine extends Equatable {
   bool get usesLast => !isShort && sameQty(remaining, 0);
 
   @override
-  List<Object?> get props => [name, unit, quantity, available, isProduct];
+  List<Object?> get props => [id, name, unit, quantity, available, isProduct];
 }
 
 /// What saving an order will do: the money split and the stock it takes.
@@ -119,6 +123,7 @@ class PreviewOrder {
       if (product != null && product.isStandalone) {
         materialCost += product.unitCost * item.quantity;
         productLines.add(ReservationLine(
+          id: product.id,
           name: product.name,
           unit: product.unit,
           quantity: item.quantity,
@@ -150,6 +155,7 @@ class PreviewOrder {
       if (materialResult case Error(:final failure)) return Error(failure);
       final material = (materialResult as Success).value;
       materialLines.add(ReservationLine(
+        id: entry.key,
         name: name,
         unit: material?.unit ?? '',
         quantity: needed,

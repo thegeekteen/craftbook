@@ -110,8 +110,8 @@ class MaterialsBloc extends Bloc<MaterialsEvent, MaterialsState> {
     switch (result) {
       case Error(:final failure):
         emit(MaterialsError(failure.message));
-      case Success():
-        emit(MaterialCreated());
+      case Success(:final value):
+        emit(MaterialCreated(value));
         add(const LoadMaterials());
     }
   }

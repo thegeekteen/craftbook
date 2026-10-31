@@ -126,8 +126,8 @@ void main() {
     expect(p.shippingCost, 40);
     expect(p.profit, 400 - 31 - 45 - 40);
     expect(p.reservations, [
-      const ReservationLine(name: 'M10', quantity: 5, available: 7),
-      const ReservationLine(name: 'M11', quantity: 3, available: 15),
+      const ReservationLine(id: 10, name: 'M10', quantity: 5, available: 7),
+      const ReservationLine(id: 11, name: 'M11', quantity: 3, available: 15),
     ]);
   });
 
@@ -148,8 +148,9 @@ void main() {
     final p = (result as Success<OrderPreview>).value;
     // 10 cards take 10/9 of a sheet, not 2 whole ones.
     expect(p.materialCost, closeTo(1.111 * 3, 1e-9));
-    expect(p.reservations,
-        [const ReservationLine(name: 'M10', quantity: 1.111, available: 50)]);
+    expect(p.reservations, [
+      const ReservationLine(id: 10, name: 'M10', quantity: 1.111, available: 50)
+    ]);
   });
 
   test('standalone products reserve their own stock and use unit cost',
@@ -166,6 +167,7 @@ void main() {
     expect(p.materialCost, 56);
     final line = p.reservations.single;
     expect(line.isProduct, isTrue);
+    expect(line.id, 3, reason: 'a short line needs its id to receive stock');
     expect(line.available, 1);
     expect(line.isShort, isTrue);
     verifyNever(() => products.getBomItems(any()));

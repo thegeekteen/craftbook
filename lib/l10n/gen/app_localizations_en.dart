@@ -1473,6 +1473,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ordersStatusCancelled => 'Cancelled';
 
   @override
+  String get ordersStatusDraft => 'Draft';
+
+  @override
+  String get ordersDraftsChip => 'Drafts';
+
+  @override
+  String get ordersDraftNoCustomer => 'No customer yet';
+
+  @override
+  String ordersDraftNeeds(String parts) {
+    return 'Needs: $parts';
+  }
+
+  @override
+  String get ordersDraftNeedCustomer => 'customer';
+
+  @override
+  String get ordersDraftNeedChannel => 'channel';
+
+  @override
+  String get ordersDraftNeedItems => 'items';
+
+  @override
+  String get ordersDraftReady => 'Ready to save as an order';
+
+  @override
+  String get ordersContinueDraft => 'Continue';
+
+  @override
+  String get ordersDeleteDraftTitle => 'Delete this draft?';
+
+  @override
+  String get ordersDeleteMessageDraft =>
+      'The draft is removed. It never held any stock.';
+
+  @override
+  String get ordersNoDrafts => 'No drafts';
+
+  @override
+  String get ordersNoDraftsMessage =>
+      'Back out of a new order and choose Save draft to finish it later.';
+
+  @override
   String get ordersOverdue => 'Overdue';
 
   @override
@@ -1703,6 +1746,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ordersDiscard => 'Discard';
+
+  @override
+  String get ordersSaveDraft => 'Save draft';
+
+  @override
+  String get ordersDraftSaved => 'Draft saved';
+
+  @override
+  String ordersDraftTitleId(String id) {
+    return 'Draft #$id';
+  }
+
+  @override
+  String get ordersLeaveTitle => 'Keep this order for later?';
+
+  @override
+  String get ordersLeaveMessage =>
+      'Save it as a draft and finish it any time from Orders → Drafts. Stock isn’t held until you save the order.';
+
+  @override
+  String get ordersLeaveDraftTitle => 'Save changes to this draft?';
+
+  @override
+  String get ordersLeaveDraftMessage => 'Discard leaves the draft as it was.';
+
+  @override
+  String get ordersShortTag => 'Short';
 
   @override
   String get ordersKeepEditing => 'Keep editing';
@@ -1952,7 +2022,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ordersNoProductsMessage =>
-      'Add products under More → Products first.';
+      'Make your first one here. It goes straight onto this order.';
 
   @override
   String get ordersOutOfStock => 'Out of stock';
@@ -2034,14 +2104,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ordersDiscardEditTitle => 'Discard your changes?';
 
   @override
-  String get ordersDiscardNewTitle => 'Discard this order?';
-
-  @override
   String get ordersDiscardEditMessage => 'The order stays as it was.';
-
-  @override
-  String get ordersDiscardNewMessage =>
-      'What you’ve entered so far will be lost.';
 
   @override
   String ordersSaved(String id) {
@@ -2603,6 +2666,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productsNewProduct => 'New product';
 
   @override
+  String get productsNewMaterial => 'New material';
+
+  @override
+  String get productsAddsToOrder =>
+      'Saving adds it to the order you’re making.';
+
+  @override
   String get productsEditProduct => 'Edit product';
 
   @override
@@ -2681,7 +2751,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productsAllMaterialsAdded => 'All materials added';
 
   @override
-  String get productsAddMaterialsFirst => 'Add materials under Stock first.';
+  String get productsAddMaterialsFirst =>
+      'Make your first one here. It goes straight onto this product.';
 
   @override
   String get productsSearchMaterials => 'Search materials';
@@ -3341,6 +3412,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stockNewTitle => 'New material';
+
+  @override
+  String get stockAddsToProduct => 'Saving adds it to the product’s materials.';
 
   @override
   String get stockNameHint => 'e.g. Glass seed beads 2mm';
